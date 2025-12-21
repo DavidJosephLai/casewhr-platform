@@ -1,34 +1,33 @@
-import React from 'react';
+import { useState } from 'react';
 
 export default function App() {
+  const [count, setCount] = useState(0);
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="max-w-2xl mx-auto p-8 text-center">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-2xl w-full text-center">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          CaseWhr Platform
+          🚀 CaseWhr Platform
         </h1>
-        <p className="text-xl text-gray-600 mb-8">
-          專業的三語言全球接案平台
+        <p className="text-xl text-gray-600 mb-6">
+          Professional Global Freelancing Platform
         </p>
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h2 className="text-2xl font-semibold mb-4">🚀 部署成功！</h2>
-          <p className="text-gray-700">
-            這是 CaseWhr 平台的基礎版本。
+        <div className="bg-blue-50 rounded-lg p-6 mb-6">
+          <p className="text-lg text-gray-700 mb-4">
+            ✅ Vercel 部署成功！
+          </p>
+          <p className="text-sm text-gray-600">
+            完整的平台功能即将上线！
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-blue-900 mb-2">✅ 三語言支持</h3>
-            <p className="text-sm text-blue-700">繁中/簡中/英文</p>
-          </div>
-          <div className="bg-green-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-green-900 mb-2">💰 三幣種計價</h3>
-            <p className="text-sm text-green-700">TWD/USD/CNY</p>
-          </div>
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-purple-900 mb-2">🔒 企業級功能</h3>
-            <p className="text-sm text-purple-700">完整訂閱系統</p>
-          </div>
+        <button
+          onClick={() => setCount(count + 1)}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+        >
+          点击测试: {count}
+        </button>
+        <div className="mt-8 text-sm text-gray-500">
+          <p>🌍 三语言支持 | 💰 三货币系统 | 💳 多支付集成</p>
         </div>
       </div>
     </div>
