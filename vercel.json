@@ -3,17 +3,13 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/robots.txt",
-      "destination": "/api/robots"
-    },
-    {
       "source": "/sitemap.xml",
       "destination": "https://bihplitfentxioxyjalb.supabase.co/functions/v1/make-server-215f78a5/sitemap.xml"
     }
   ],
   "headers": [
     {
-      "source": "/api/robots",
+      "source": "/robots.txt",
       "headers": [
         {
           "key": "Content-Type",
