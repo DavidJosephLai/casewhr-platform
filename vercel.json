@@ -1,12 +1,16 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "rewrites": [
-    {
-      "source": "/robots.txt",
-      "destination": "https://bihplitfentxioxyjalb.supabase.co/functions/v1/make-server-215f78a5/robots.txt"
-    },
     {
       "source": "/sitemap.xml",
       "destination": "https://bihplitfentxioxyjalb.supabase.co/functions/v1/make-server-215f78a5/sitemap.xml"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/robots.txt",
+      "dest": "/robots.txt"
     }
   ],
   "headers": [
