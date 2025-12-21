@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/robots.txt",
-      "destination": "/api/robots.txt"
+      "destination": "/api/robots"
     },
     {
       "source": "/sitemap.xml",
@@ -13,7 +13,7 @@
   ],
   "headers": [
     {
-      "source": "/api/robots.txt",
+      "source": "/api/robots",
       "headers": [
         {
           "key": "Content-Type",
