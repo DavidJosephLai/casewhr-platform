@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/robots.txt",
-      "destination": "https://qpvrzttuwznhxbwjjlfe.supabase.co/functions/v1/make-server-215f78a5/robots.txt"
+      "destination": "https://bihplitfentxioxyjalb.supabase.co/functions/v1/make-server-215f78a5/robots.txt"
     },
     {
       "source": "/sitemap.xml",
-      "destination": "https://qpvrzttuwznhxbwjjlfe.supabase.co/functions/v1/make-server-215f78a5/sitemap.xml"
+      "destination": "https://bihplitfentxioxyjalb.supabase.co/functions/v1/make-server-215f78a5/sitemap.xml"
     }
   ],
   "headers": [
