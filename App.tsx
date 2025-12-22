@@ -3,7 +3,7 @@ import './utils/errorHandler';
 import { useView, ViewProvider } from './contexts/ViewContext';
 import { useLanguage, LanguageProvider } from './lib/LanguageContext';
 import { useAuth, AuthProvider } from './contexts/AuthContext';
-import { toast, Toaster } from 'sonner@2.0.3';
+import { toast, Toaster } from 'sonner';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { Hero } from './components/Hero';
@@ -14,7 +14,6 @@ function AppContent() {
   const { view, setView } = useView();
   const { user, loading } = useAuth();
 
-  // 处理 URL 路由
   useEffect(() => {
     const path = window.location.pathname;
     if (path.includes('/dashboard')) setView('dashboard');
@@ -50,7 +49,7 @@ function AppContent() {
                   {language === 'zh-TW' ? '平台功能' : language === 'en' ? 'Platform Features' : '平台功能'}
                 </h2>
                 <div className="grid md:grid-cols-3 gap-8">
-                  <div className="p-6 bg-white rounded-lg shadow-soft-teal">
+                  <div className="p-6 bg-white rounded-lg shadow-lg">
                     <div className="text-4xl mb-4">🌍</div>
                     <h3 className="text-xl font-bold mb-2">
                       {language === 'zh-TW' ? '三語言支援' : language === 'en' ? 'Multilingual Support' : '三语言支持'}
@@ -61,14 +60,14 @@ function AppContent() {
                        '繁体中文、English、简体中文'}
                     </p>
                   </div>
-                  <div className="p-6 bg-white rounded-lg shadow-soft-lime">
+                  <div className="p-6 bg-white rounded-lg shadow-lg">
                     <div className="text-4xl mb-4">💱</div>
                     <h3 className="text-xl font-bold mb-2">
                       {language === 'zh-TW' ? '三幣種計價' : language === 'en' ? 'Multi-Currency' : '三币种计价'}
                     </h3>
                     <p className="text-muted-foreground">TWD / USD / CNY</p>
                   </div>
-                  <div className="p-6 bg-white rounded-lg shadow-soft-teal">
+                  <div className="p-6 bg-white rounded-lg shadow-lg">
                     <div className="text-4xl mb-4">💳</div>
                     <h3 className="text-xl font-bold mb-2">
                       {language === 'zh-TW' ? '多支付方式' : language === 'en' ? 'Multiple Payment Methods' : '多支付方式'}
