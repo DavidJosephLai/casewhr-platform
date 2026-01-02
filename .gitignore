@@ -1,24 +1,63 @@
+# Dependencies
 node_modules
-.pnp
+/.pnp
 .pnp.js
-coverage
-build
-dist
-.DS_Store
+
+# Testing
+/coverage
+
+# Production
+/dist
+/build
+
+# Environment Variables (重要：保护敏感信息)
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+pnpm-debug.log*
+*.log
+
+# Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Vercel
+.vercel
+
+# Supabase
+.supabase
+
+# TypeScript
+*.tsbuildinfo
+
+# Cache
+.cache
+.parcel-cache
+.turbo
+.eslintcache
+
+# OS
+.DS_Store
+Thumbs.db
 *.swp
 *.swo
-*~
-.vercel
-.vite
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+tmp/
