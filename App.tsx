@@ -1,22 +1,20 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
-import { Toaster, toast } from "sonner"; // ✅ 移除版本号
-// import { HelmetProvider } from 'react-helmet-async'; // ❌ 移除 - 未安装的依赖
-import { Header } from './components/Header';
-import { Hero } from './components/Hero';
-import { useAuth } from './contexts/AuthContext';
-import { useView } from './contexts/ViewContext';
-import { useLanguage, LanguageProvider } from './lib/LanguageContext';
-import { AuthProvider } from './contexts/AuthContext';
-import { ViewProvider } from './contexts/ViewContext';
-import { projectId, publicAnonKey } from './utils/supabase/info';
-import { useExchangeRate } from './hooks/useExchangeRate';
-import { SEO } from './components/SEO';
-import { getPageSEO } from './lib/seoConfig';
-import { DevModeLogin } from "./components/DevModeLogin";
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { NetworkErrorNotice } from "./components/NetworkErrorNotice";
 import { APP_VERSION, BUILD_DATE, BUILD_TIME } from './components/VERSION';
-import { autoRegisterServiceWorker } from './utils/serviceWorker.ts';
-import { startPerformanceMonitoring } from './utils/performanceMonitor.ts';
+import { autoRegisterServiceWorker } from './utils/serviceWorker';
+import { startPerformanceMonitoring } from './utils/performanceMonitor';
+import { LanguageProvider, useLanguage } from './lib/LanguageContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ViewProvider, useView } from './contexts/ViewContext';
+import { useExchangeRate } from './hooks/useExchangeRate';
+import { Header } from './components/Header';
+import { Hero } from './components/Hero';
+import { SEO } from './components/SEO';
+import { getPageSEO } from './lib/seoConfig';
+import { Toaster, toast } from 'sonner';
+import { DevModeLogin } from './components/DevModeLogin';
+import { projectId, publicAnonKey } from './utils/supabase/info';
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));
