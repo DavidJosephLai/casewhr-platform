@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { useLanguage } from "../lib/LanguageContext";
 import { Plus, Trash2, Target, DollarSign, Calendar } from "lucide-react";
 import { formatCurrency, type Currency } from "../lib/currency";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner"; // ✅ 移除版本号
 
 export interface Milestone {
   id?: string;

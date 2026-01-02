@@ -1,4 +1,4 @@
-import { Helmet } from 'react-helmet-async';
+import { useEffect } from 'react';
 import { useLanguage } from '../lib/LanguageContext';
 
 interface SEOProps {
@@ -63,156 +63,193 @@ export function SEO({
   const finalKeywords = keywords || content.defaultKeywords;
   const finalImage = image || `${siteUrl}/og-image.png`;
 
-  // 結構化數據 - Organization
-  const organizationSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: siteName,
-    alternateName: language === 'en' ? 'CaseWHR' : 'CaseWHR 接得準',
-    url: siteUrl,
-    logo: `${siteUrl}/logo-512.png`,
-    description: finalDescription,
-    sameAs: [
-      'https://www.facebook.com/casewhr',
-      'https://twitter.com/casewhr',
-      'https://www.linkedin.com/company/casewhr',
-    ],
-    contactPoint: {
-      '@type': 'ContactPoint',
-      contactType: 'Customer Service',
-      availableLanguage: ['English', 'Traditional Chinese', 'Simplified Chinese'],
-      areaServed: 'Worldwide',
-    },
-    address: {
-      '@type': 'PostalAddress',
-      addressCountry: 'TW',
-      addressRegion: 'Taiwan',
-    },
-  };
-
-  // 結構化數據 - WebSite
-  const websiteSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: siteName,
-    url: siteUrl,
-    description: finalDescription,
-    inLanguage: language === 'en' ? 'en' : language === 'zh-CN' ? 'zh-CN' : 'zh-TW',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: {
-        '@type': 'EntryPoint',
-        urlTemplate: `${siteUrl}/search?q={search_term_string}`,
-      },
-      'query-input': 'required name=search_term_string',
-    },
-  };
-
-  // 結構化數據 - BreadcrumbList
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: language === 'en' ? 'Home' : language === 'zh-CN' ? '首页' : '首頁',
-        item: siteUrl,
-      },
-    ],
-  };
-
   // 語言代碼映射
   const langCode = language === 'en' ? 'en' : language === 'zh-CN' ? 'zh-CN' : 'zh-TW';
   const ogLocale = language === 'en' ? 'en_US' : language === 'zh-CN' ? 'zh_CN' : 'zh_TW';
 
-  return (
-    <Helmet>
-      {/* 基本 Meta 標籤 */}
-      <html lang={langCode} />
-      <title>{finalTitle}</title>
-      <meta name="description" content={finalDescription} />
-      <meta name="keywords" content={finalKeywords} />
+  // 使用 useEffect 更新 meta 標籤
+  useEffect(() => {
+    // 更新 title
+    document.title = finalTitle;
 
-      {/* Robots */}
-      {noindex ? (
-        <meta name="robots" content="noindex, nofollow" />
-      ) : (
-        <>
-          <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-          <meta name="googlebot" content="index, follow" />
-          <meta name="bingbot" content="index, follow" />
-        </>
-      )}
+    // 更新 html lang 属性
+    document.documentElement.lang = langCode;
 
-      {/* Canonical URL */}
-      <link rel="canonical" href={canonicalUrl} />
+    // 輔助函數：設置或更新 meta 標籤
+    const setMeta = (name: string, content: string, property = false) => {
+      const attr = property ? 'property' : 'name';
+      let element = document.querySelector(`meta[${attr}="${name}"]`);
+      
+      if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute(attr, name);
+        document.head.appendChild(element);
+      }
+      
+      element.setAttribute('content', content);
+    };
 
-      {/* Open Graph / Facebook */}
-      <meta property="og:type" content={type} />
-      <meta property="og:url" content={currentUrl} />
-      <meta property="og:title" content={finalTitle} />
-      <meta property="og:description" content={finalDescription} />
-      <meta property="og:image" content={finalImage} />
-      <meta property="og:image:width" content="1200" />
-      <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content={finalTitle} />
-      <meta property="og:site_name" content={siteName} />
-      <meta property="og:locale" content={ogLocale} />
-      <meta property="og:locale:alternate" content="en_US" />
-      <meta property="og:locale:alternate" content="zh_TW" />
-      <meta property="og:locale:alternate" content="zh_CN" />
+    // 輔助函數：設置或更新 link 標籤
+    const setLink = (rel: string, href: string, hreflang?: string) => {
+      const selector = hreflang 
+        ? `link[rel="${rel}"][hreflang="${hreflang}"]`
+        : `link[rel="${rel}"]`;
+      
+      let element = document.querySelector(selector) as HTMLLinkElement;
+      
+      if (!element) {
+        element = document.createElement('link');
+        element.rel = rel;
+        if (hreflang) element.hreflang = hreflang;
+        document.head.appendChild(element);
+      }
+      
+      element.href = href;
+    };
 
-      {/* Article Meta (if applicable) */}
-      {article && (
-        <>
-          <meta property="article:publisher" content={siteUrl} />
-          <meta property="article:author" content={siteName} />
-        </>
-      )}
+    // 基本 Meta 標籤
+    setMeta('description', finalDescription);
+    setMeta('keywords', finalKeywords);
 
-      {/* Twitter Card */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:url" content={currentUrl} />
-      <meta name="twitter:title" content={finalTitle} />
-      <meta name="twitter:description" content={finalDescription} />
-      <meta name="twitter:image" content={finalImage} />
-      <meta name="twitter:image:alt" content={finalTitle} />
-      <meta name="twitter:site" content="@CaseWHR" />
-      <meta name="twitter:creator" content="@CaseWHR" />
+    // Robots
+    if (noindex) {
+      setMeta('robots', 'noindex, nofollow');
+    } else {
+      setMeta('robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
+      setMeta('googlebot', 'index, follow');
+      setMeta('bingbot', 'index, follow');
+    }
 
-      {/* 多語言替代版本 */}
-      <link rel="alternate" hreflang="en" href={`${siteUrl}${currentPath}?lang=en`} />
-      <link rel="alternate" hreflang="zh-TW" href={`${siteUrl}${currentPath}?lang=zh-TW`} />
-      <link rel="alternate" hreflang="zh-CN" href={`${siteUrl}${currentPath}?lang=zh-CN`} />
-      <link rel="alternate" hreflang="x-default" href={`${siteUrl}${currentPath}`} />
+    // Canonical URL
+    setLink('canonical', canonicalUrl);
 
-      {/* 地理和語言 */}
-      <meta name="language" content={langCode} />
-      <meta name="geo.region" content="TW" />
-      <meta name="geo.placename" content="Taiwan" />
+    // Open Graph / Facebook
+    setMeta('og:type', type, true);
+    setMeta('og:url', currentUrl, true);
+    setMeta('og:title', finalTitle, true);
+    setMeta('og:description', finalDescription, true);
+    setMeta('og:image', finalImage, true);
+    setMeta('og:image:width', '1200', true);
+    setMeta('og:image:height', '630', true);
+    setMeta('og:image:alt', finalTitle, true);
+    setMeta('og:site_name', siteName, true);
+    setMeta('og:locale', ogLocale, true);
 
-      {/* 結構化數據 */}
-      <script type="application/ld+json">
-        {JSON.stringify(organizationSchema)}
-      </script>
-      <script type="application/ld+json">
-        {JSON.stringify(websiteSchema)}
-      </script>
-      <script type="application/ld+json">
-        {JSON.stringify(breadcrumbSchema)}
-      </script>
+    // Twitter Card
+    setMeta('twitter:card', 'summary_large_image');
+    setMeta('twitter:url', currentUrl);
+    setMeta('twitter:title', finalTitle);
+    setMeta('twitter:description', finalDescription);
+    setMeta('twitter:image', finalImage);
+    setMeta('twitter:image:alt', finalTitle);
+    setMeta('twitter:site', '@CaseWHR');
+    setMeta('twitter:creator', '@CaseWHR');
 
-      {/* PWA & Mobile */}
-      <meta name="mobile-web-app-capable" content="yes" />
-      <meta name="apple-mobile-web-app-capable" content="yes" />
-      <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-      <meta name="apple-mobile-web-app-title" content="CaseWHR" />
-      <meta name="application-name" content="CaseWHR" />
+    // 多語言替代版本
+    setLink('alternate', `${siteUrl}${currentPath}?lang=en`, 'en');
+    setLink('alternate', `${siteUrl}${currentPath}?lang=zh-TW`, 'zh-TW');
+    setLink('alternate', `${siteUrl}${currentPath}?lang=zh-CN`, 'zh-CN');
+    setLink('alternate', `${siteUrl}${currentPath}`, 'x-default');
 
-      {/* Theme Color */}
-      <meta name="theme-color" content="#17a2b8" />
-      <meta name="msapplication-TileColor" content="#17a2b8" />
-    </Helmet>
-  );
+    // 地理和語言
+    setMeta('language', langCode);
+    setMeta('geo.region', 'TW');
+    setMeta('geo.placename', 'Taiwan');
+
+    // Theme Color
+    setMeta('theme-color', '#17a2b8');
+    setMeta('msapplication-TileColor', '#17a2b8');
+
+    // 結構化數據
+    const organizationSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: siteName,
+      alternateName: language === 'en' ? 'CaseWHR' : 'CaseWHR 接得準',
+      url: siteUrl,
+      logo: `${siteUrl}/logo-512.png`,
+      description: finalDescription,
+      sameAs: [
+        'https://www.facebook.com/casewhr',
+        'https://twitter.com/casewhr',
+        'https://www.linkedin.com/company/casewhr',
+      ],
+      contactPoint: {
+        '@type': 'ContactPoint',
+        contactType: 'Customer Service',
+        availableLanguage: ['English', 'Traditional Chinese', 'Simplified Chinese'],
+        areaServed: 'Worldwide',
+      },
+      address: {
+        '@type': 'PostalAddress',
+        addressCountry: 'TW',
+        addressRegion: 'Taiwan',
+      },
+    };
+
+    const websiteSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: siteName,
+      url: siteUrl,
+      description: finalDescription,
+      inLanguage: langCode,
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${siteUrl}/search?q={search_term_string}`,
+        },
+        'query-input': 'required name=search_term_string',
+      },
+    };
+
+    const breadcrumbSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: language === 'en' ? 'Home' : language === 'zh-CN' ? '首页' : '首頁',
+          item: siteUrl,
+        },
+      ],
+    };
+
+    // 插入或更新結構化數據
+    const insertSchema = (id: string, schema: object) => {
+      let script = document.getElementById(id);
+      if (!script) {
+        script = document.createElement('script');
+        script.id = id;
+        script.type = 'application/ld+json';
+        document.head.appendChild(script);
+      }
+      script.textContent = JSON.stringify(schema);
+    };
+
+    insertSchema('schema-organization', organizationSchema);
+    insertSchema('schema-website', websiteSchema);
+    insertSchema('schema-breadcrumb', breadcrumbSchema);
+
+  }, [
+    finalTitle, 
+    finalDescription, 
+    finalKeywords, 
+    finalImage, 
+    langCode, 
+    ogLocale, 
+    canonicalUrl, 
+    currentUrl, 
+    type, 
+    noindex, 
+    language, 
+    currentPath, 
+    siteUrl, 
+    siteName
+  ]);
+
+  // 這個組件不渲染任何 DOM，只是副作用
+  return null;
 }

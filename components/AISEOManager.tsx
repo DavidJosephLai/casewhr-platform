@@ -8,7 +8,7 @@ import {
   calculateKeywordDensity,
   type SEOGenerationRequest,
 } from '../lib/aiSeoService';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner'; // ✅ 移除版本号
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { useAuth } from '../contexts/AuthContext';
 import { JSONFileUploader } from './JSONFileUploader';

@@ -1,3 +1,4 @@
+import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { useState } from 'react';
 import { Sparkles, TrendingUp, Target, Zap, Search, Globe, BarChart3, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 
@@ -130,11 +131,11 @@ export function AISEOAnalyzer({ language, currentPage = 'home', onApplyOptimizat
       
       // 調用後端 AI SEO 分析 API
       const response = await fetch(
-        `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/make-server-215f78a5/ai-seo/analyze`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai-seo/analyze`,
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Authorization': `Bearer ${publicAnonKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({

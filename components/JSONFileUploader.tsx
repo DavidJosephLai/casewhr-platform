@@ -1,8 +1,6 @@
-import { useState } from 'react';
-import { Upload, File, CheckCircle, AlertCircle, Loader2, Cloud } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner'; // ✅ 移除版本号
 import { projectId } from '../utils/supabase/info';
 
 interface JSONFileUploaderProps {

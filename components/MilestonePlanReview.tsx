@@ -1,13 +1,6 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Textarea } from "./ui/textarea";
-import { useLanguage } from "../lib/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { projectId, publicAnonKey } from "../utils/supabase/info";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner"; // ✅ 移除版本号
 import { 
   Loader2, 
   CheckCircle, 

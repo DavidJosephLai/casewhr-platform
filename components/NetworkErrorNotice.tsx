@@ -53,13 +53,11 @@ export function NetworkErrorNotice() {
     };
   }, []);
 
-  // 检查是否在开发环境
+  // 🧪 只在开发环境显示（生产环境永不显示）
   const isDevelopment = 
     window.location.hostname === 'localhost' ||
-    window.location.hostname.includes('figma') ||
     window.location.hostname.includes('127.0.0.1') ||
-    window.location.hostname.includes('preview') ||
-    import.meta.env.DEV;
+    window.location.hostname.includes('preview');
 
   // 只在开发环境且有错误时显示
   if (!show || !isDevelopment || errorCount === 0) {

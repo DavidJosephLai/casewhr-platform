@@ -15,7 +15,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card } from "./ui/card";
 import { useState, useEffect } from "react";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner"; // ✅ 移除版本号
 import { createClient } from "@supabase/supabase-js";
 import { Shield, AlertTriangle, Zap } from "lucide-react";
 
@@ -24,6 +24,18 @@ interface DevModeLoginProps {
 }
 
 export function DevModeLogin({ onDevLogin }: DevModeLoginProps) {
+  // 🚀 PRODUCTION MODE: 完全禁用开发模式登录
+  // 生产环境不显示此组件
+  const isProduction = (!window.location.hostname.includes('localhost') && 
+    !window.location.hostname.includes('127.0.0.1') &&
+    !window.location.hostname.includes('figma') &&
+    !window.location.hostname.includes('preview'));
+  
+  if (isProduction) {
+    return null;
+  }
+
+  // 以下代码仅在开发环境运行
   const [devEmail, setDevEmail] = useState('davidlai117@yahoo.com.tw'); // 🔥 改為特殊用戶郵箱
   const [devName, setDevName] = useState('David Lai'); // 🔥 改為對應名稱
   const [accountType, setAccountType] = useState<'client' | 'freelancer'>('client');
@@ -49,8 +61,7 @@ export function DevModeLogin({ onDevLogin }: DevModeLoginProps) {
     window.location.hostname === 'localhost' ||
     window.location.hostname.includes('figma') ||
     window.location.hostname.includes('127.0.0.1') ||
-    window.location.hostname.includes('preview') ||
-    import.meta.env.DEV;
+    window.location.hostname.includes('preview');
   
   // 检查是否有 Supabase 连接错误
   useEffect(() => {

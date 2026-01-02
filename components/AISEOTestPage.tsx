@@ -1,12 +1,8 @@
-import { useState } from 'react';
-import { Cloud, Upload, Download, CheckCircle } from 'lucide-react';
-import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { JSONFileUploader } from './JSONFileUploader';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner'; // ✅ 移除版本号
 
 export function AISEOTestPage() {
-  const { language } = useLanguage();
   const { session, user } = useAuth();
   const [currentTitle, setCurrentTitle] = useState('Test SEO Report');
   const [currentDescription, setCurrentDescription] = useState('This is a test SEO report description');

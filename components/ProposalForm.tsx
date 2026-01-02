@@ -1,15 +1,6 @@
-import { useState } from "react";
-import { getTranslation } from "../lib/translations";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
-import { Switch } from "./ui/switch";
-import { useLanguage } from "../lib/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { proposalApi } from "../lib/api";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner"; // ✅ 移除版本号
 import { Loader2, Target } from "lucide-react";
 import { MilestoneBuilder, type Milestone } from "./MilestoneBuilder";
 import { CurrencySelector } from "./CurrencySelector";

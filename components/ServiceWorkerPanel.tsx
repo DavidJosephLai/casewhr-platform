@@ -16,7 +16,7 @@ import {
   skipWaitingAndActivate,
   checkForUpdates,
   getServiceWorkerStatus,
-} from '../utils/serviceWorker';
+} from '../utils/serviceWorker.ts';
 import { toast } from 'sonner';
 
 export function ServiceWorkerPanel() {

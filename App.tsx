@@ -1,6 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
-import { Toaster, toast } from "sonner@2.0.3";
-import { HelmetProvider } from 'react-helmet-async';
+import { Toaster, toast } from "sonner"; // ✅ 移除版本号
+// import { HelmetProvider } from 'react-helmet-async'; // ❌ 移除 - 未安装的依赖
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { useAuth } from './contexts/AuthContext';
@@ -15,8 +15,8 @@ import { getPageSEO } from './lib/seoConfig';
 import { DevModeLogin } from "./components/DevModeLogin";
 import { NetworkErrorNotice } from "./components/NetworkErrorNotice";
 import { APP_VERSION, BUILD_DATE, BUILD_TIME } from './components/VERSION';
-import { autoRegisterServiceWorker } from './utils/serviceWorker';
-import { startPerformanceMonitoring } from './utils/performanceMonitor';
+import { autoRegisterServiceWorker } from './utils/serviceWorker.ts';
+import { startPerformanceMonitoring } from './utils/performanceMonitor.ts';
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));
@@ -694,14 +694,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <HelmetProvider>
-      <LanguageProvider>
-        <AuthProvider>
-          <ViewProvider>
-            <AppContent />
-          </ViewProvider>
-        </AuthProvider>
-      </LanguageProvider>
-    </HelmetProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <ViewProvider>
+          <AppContent />
+        </ViewProvider>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }

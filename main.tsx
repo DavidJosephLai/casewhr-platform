@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { HelmetProvider } from 'react-helmet-async'; // ✅ Added for SEO
+// import { HelmetProvider } from 'react-helmet-async'; // ❌ 移除 - 未安装的依赖
 import App from './App.tsx';
 import './styles/globals.css';
 // import { registerServiceWorker } from './utils/serviceWorkerUtils';
@@ -24,9 +24,7 @@ console.log('🚀 [main.tsx] Starting...');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <HelmetProvider>
-      <App />
-    </HelmetProvider>
+    <App />
   </React.StrictMode>,
 );
 

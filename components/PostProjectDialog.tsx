@@ -16,7 +16,7 @@ import { LimitReachedDialog } from "./LimitReachedDialog";
 import { CurrencySelector } from "./CurrencySelector";
 import { Currency, formatCurrency, convertCurrency, getExchangeRateText, getDefaultCurrency } from "../lib/currency";
 import { ProjectAISEOHelper } from "./ProjectAISEOHelper";
-import { toast } from "sonner@2.0.3"; // 🔥 使用正確的 toast 庫
+import { toast } from "sonner"; // ✅ 移除版本号
 
 interface PostProjectDialogProps {
   open: boolean;
