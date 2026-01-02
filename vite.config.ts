@@ -32,6 +32,11 @@ export default defineConfig({
   ],
   publicDir: 'public', // 明確指定 public 文件夾
   
+  // ⚡ 模块解析配置 - 确保 Vite 能正确解析 .ts 和 .tsx 文件
+  resolve: {
+    extensions: ['.mjs', '.js', '.ts', '.tsx', '.json', '.jsx'],
+  },
+  
   // 🔧 明确指定入口文件，避免扫描其他 HTML
   root: process.cwd(),
   
