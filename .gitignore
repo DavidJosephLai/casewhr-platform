@@ -1,34 +1,94 @@
-# Dependencies
-node_modules
+# 🚀 CaseWhr Platform - Git Ignore File
 
-# Environment Variables
+# ==================== 依赖 ====================
+node_modules/
+.pnp
+.pnp.js
+
+# ==================== 构建输出 ====================
+dist/
+dist-ssr/
+*.local
+build/
+.next/
+out/
+
+# ==================== 环境变量（重要！）====================
 .env
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.production
 .env.*.local
 
-# Build output
-dist
-build
-.vercel
-
-# Logs
-*.log
+# ==================== 日志 ====================
 npm-debug.log*
 yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# Cache
-.cache
-.turbo
-.eslintcache
-
-# OS
-.DS_Store
-Thumbs.db
-
-# IDE
+# ==================== 编辑器和 IDE ====================
 .vscode/*
 !.vscode/extensions.json
 .idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*~
 
-# Supabase local
-.supabase
+# ==================== 测试 ====================
+coverage
+*.lcov
+.nyc_output
+
+# ==================== 操作系统 ====================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==================== Vercel ====================
+.vercel
+
+# ==================== Temporary ====================
+*.tmp
+*.temp
+.cache
+
+# ==================== 文档文件（可选 - 如果不想提交）====================
+# 注意：保留这些注释，您可以根据需要取消注释
+# *.md
+# !README.md
+# !PRODUCTION_DEPLOYMENT_CHECKLIST.md
+
+# ==================== HTML 工具文件（开发用）====================
+BATCH_DOWNLOAD_ALL.html
+BROWSER_FIX_TOOL.html
+check-stripe-url.html
+debug-route.html
+diagnose-wasm-error.html
+diagnostic.html
+env-check.html
+fix-*.html
+test-*.html
+*.html
+!index.html
+!google*.html
+
+# ==================== 脚本工具（保留在本地）====================
+*.bat
+*.ps1
+*.sh
+!deploy*.sh
+!scripts/*.sh
+
+# ==================== 其他临时文件 ====================
+*.log
+*.cache
+.temp/
+temp/

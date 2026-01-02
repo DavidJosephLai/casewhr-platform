@@ -2,13 +2,181 @@
 <html lang="zh-TW">
   <head>
     <meta charset="UTF-8" />
+    
+    <!-- 🎨 Favicon -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="CaseWhr - Professional Global Freelance Platform with Multi-Currency Support" />
-    <title>CaseWhr - Professional Freelance Platform</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    
+    <!-- 📱 Viewport and Mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="CaseWHR" />
+    
+    <!-- 🎨 Theme Colors -->
+    <meta name="theme-color" content="#17a2b8" />
+    <meta name="msapplication-TileColor" content="#17a2b8" />
+    <meta name="msapplication-TileImage" content="/mstile-144x144.png" />
+    
+    <!-- 📱 PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- 🔍 SEO Meta Tags -->
+    <meta name="google-site-verification" content="9Ehf9UQIP35HCGnahNU8JKWqxoGAv17ge72yB4t8yWA" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="bingbot" content="index, follow" />
+    <meta name="rating" content="General" />
+    <meta name="referrer" content="no-referrer-when-downgrade" />
+    
+    <!-- 🌏 Geographic and Language -->
+    <meta name="language" content="zh-TW" />
+    <meta name="geo.region" content="TW" />
+    <meta name="geo.placename" content="Taiwan" />
+    
+    <!-- 📊 Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CaseWHR 接得準" />
+    <meta property="og:locale" content="zh_TW" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:locale:alternate" content="zh_CN" />
+    
+    <!-- 🐦 Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@CaseWHR" />
+    <meta name="twitter:creator" content="@CaseWHR" />
+    
+    <!-- 🔤 Font Optimization - 使用系统字体，无需加载 -->
+    <style>
+      /* ⚡ 首屏关键 CSS - 内联以提升 FCP */
+      /* 预定义字体，避免 FOIT (Flash of Invisible Text) */
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', 'STHeiti', sans-serif;
+        font-display: swap;
+        margin: 0;
+        padding: 0;
+        background-color: #ffffff;
+        color: #1a1a1a;
+      }
+      
+      /* 预防布局偏移 (CLS) */
+      #root {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      /* 首屏加载指示器 - 优化用户体验 */
+      .initial-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #17a2b8 0%, #5bc0de 100%);
+        color: white;
+        font-size: 18px;
+        z-index: 9999;
+        transition: opacity 0.3s ease-out;
+      }
+      
+      .initial-loader.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      
+      /* 加载动画 */
+      .loader-spinner {
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top: 3px solid white;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* 关键布局样式 - 避免首屏闪烁 */
+      * {
+        box-sizing: border-box;
+      }
+      
+      /* 图片优化 - 防止布局偏移 */
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+    </style>
+    
+    <!-- ⚡ 资源预载入优化 -->
+    <!-- 预加载关键 CSS -->
+    <link rel="preload" href="/styles/globals.css" as="style" />
+    
+    <!-- 预加载主 JS 模块 -->
+    <link rel="modulepreload" href="/main.tsx" />
+    
+    <!-- 📊 Preconnect to external domains -->
+    <link rel="preconnect" href="https://supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://supabase.co" />
+    <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+    
+    <!-- 🔗 Canonical URL - Will be updated by React -->
+    <link rel="canonical" href="https://casewhr.com" />
+    
+    <!-- 🌍 Alternate Language Versions -->
+    <link rel="alternate" hreflang="en" href="https://casewhr.com?lang=en" />
+    <link rel="alternate" hreflang="zh-TW" href="https://casewhr.com?lang=zh-TW" />
+    <link rel="alternate" hreflang="zh-CN" href="https://casewhr.com?lang=zh-CN" />
+    <link rel="alternate" hreflang="x-default" href="https://casewhr.com" />
+    
+    <title>CaseWHR 接得準 - 全球專業接案平台 | 台灣最佳自由工作者媒合平台</title>
+    <meta name="description" content="台灣領先的全球接案平台，提供專業的自由工作者媒合服務。支援新台幣、美金、人民幣三幣計價，整合 ECPay 綠界金流與 PayPal 國際支付。包含合約管理、發票系統、企業品牌客製化等完整功能。超過 10,000 位專業人才，服務遍及全球。" />
+    <meta name="keywords" content="接案平台, 自由工作者, 台灣接案, 遠距工作, 外包平台, 接案網站, 斜槓工作, 兼職平台, 專案外包, 在家工作, 接案媒合, 人才平台, 台灣外包, 綠界金流, ECPay, freelance, remote work, global freelancing, 合約管理, 發票系統" />
   </head>
   <body>
     <div id="root"></div>
+    
+    <!-- 🔧 临时诊断脚本 - 在 React 加载前执行 -->
+    <script>
+      console.log('🚀 [index.html] Inline script executing...');
+      console.log('🚀 [index.html] Timestamp:', new Date().toISOString());
+      console.log('🚀 [index.html] Document readyState:', document.readyState);
+      console.log('🚀 [index.html] User Agent:', navigator.userAgent);
+      
+      // 测试 DOM 操作
+      const root = document.getElementById('root');
+      console.log('🚀 [index.html] Root element found:', !!root);
+      
+      // 添加视觉指示器
+      if (root) {
+        root.innerHTML = '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; font-family: Arial, sans-serif;"><h1>🔍 诊断中...</h1><p>如果你看到这个，说明 HTML 和内联脚本正常工作！</p><p>时间: ' + new Date().toLocaleTimeString() + '</p></div>';
+        console.log('✅ [index.html] Visual indicator added to #root');
+      }
+      
+      // 监听 DOMContentLoaded
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('✅ [index.html] DOMContentLoaded event fired');
+      });
+      
+      // 监听 load
+      window.addEventListener('load', function() {
+        console.log('✅ [index.html] Window load event fired');
+      });
+      
+      console.log('✅ [index.html] Inline script completed');
+    </script>
+    
     <script type="module" src="/main.tsx"></script>
   </body>
 </html>
