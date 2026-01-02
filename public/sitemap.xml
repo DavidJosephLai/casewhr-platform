@@ -1,8 +1,173 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <!-- Homepage - 最高優先級 -->
   <url>
     <loc>https://casewhr.com/</loc>
+    <lastmod>2024-12-31</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://casewhr.com/?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://casewhr.com/?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://casewhr.com/?lang=zh-CN" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://casewhr.com/" />
   </url>
+
+  <!-- Projects - 高優先級 -->
+  <url>
+    <loc>https://casewhr.com/projects</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://casewhr.com/projects?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://casewhr.com/projects?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://casewhr.com/projects?lang=zh-CN" />
+  </url>
+
+  <!-- Freelancers - 高優先級 -->
+  <url>
+    <loc>https://casewhr.com/freelancers</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://casewhr.com/freelancers?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://casewhr.com/freelancers?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://casewhr.com/freelancers?lang=zh-CN" />
+  </url>
+
+  <!-- About - 中優先級 -->
+  <url>
+    <loc>https://casewhr.com/about</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://casewhr.com/about?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://casewhr.com/about?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://casewhr.com/about?lang=zh-CN" />
+  </url>
+
+  <!-- Pricing - 中優先級 -->
+  <url>
+    <loc>https://casewhr.com/pricing</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://casewhr.com/pricing?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://casewhr.com/pricing?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://casewhr.com/pricing?lang=zh-CN" />
+  </url>
+
+  <!-- Login - 中低優先級 -->
+  <url>
+    <loc>https://casewhr.com/login</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://casewhr.com/login?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://casewhr.com/login?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://casewhr.com/login?lang=zh-CN" />
+  </url>
+
+  <!-- Signup - 中低優先級 -->
+  <url>
+    <loc>https://casewhr.com/signup</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://casewhr.com/signup?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://casewhr.com/signup?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://casewhr.com/signup?lang=zh-CN" />
+  </url>
+
+  <!-- Dashboard - 低優先級（需登入） -->
+  <url>
+    <loc>https://casewhr.com/dashboard</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.4</priority>
+  </url>
+
+  <!-- 項目分類頁面 -->
+  <url>
+    <loc>https://casewhr.com/projects?category=web-development</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://casewhr.com/projects?category=mobile-development</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://casewhr.com/projects?category=design</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://casewhr.com/projects?category=writing</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://casewhr.com/projects?category=marketing</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 會員方案頁面 -->
+  <url>
+    <loc>https://casewhr.com/membership</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://casewhr.com/membership?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://casewhr.com/membership?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://casewhr.com/membership?lang=zh-CN" />
+  </url>
+
+  <!-- 部落格/資源頁面（如果有） -->
+  <url>
+    <loc>https://casewhr.com/blog</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- 幫助中心 -->
+  <url>
+    <loc>https://casewhr.com/help</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <xhtml:link rel="alternate" hreflang="en" href="https://casewhr.com/help?lang=en" />
+    <xhtml:link rel="alternate" hreflang="zh-TW" href="https://casewhr.com/help?lang=zh-TW" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://casewhr.com/help?lang=zh-CN" />
+  </url>
+
+  <!-- 法律頁面 -->
+  <url>
+    <loc>https://casewhr.com/terms</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <url>
+    <loc>https://casewhr.com/privacy</loc>
+    <lastmod>2024-12-31</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
 </urlset>

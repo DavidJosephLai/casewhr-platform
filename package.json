@@ -1,31 +1,35 @@
 {
   "name": "casewhr-platform",
-  "private": true,
   "version": "1.0.0",
   "type": "module",
+  "private": true,
+  "description": "CaseWhr - Professional Global Freelancing Platform with Trilingual Support (EN/繁體中文/简体中文)",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit",
+    "test:perf": "node scripts/test-performance.js",
+    "analyze": "npm run build && npm run test:perf",
+    "build:analyze": "vite build --mode production && npm run test:perf",
+    "check:performance": "node scripts/check-performance-budget.js",
+    "generate:report": "node scripts/generate-performance-report.js",
+    "performance:full": "npm run build && npm run check:performance && npm run generate:report"
   },
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "@supabase/supabase-js": "^2.39.0",
-    "lucide-react": "^0.263.1",
-    "sonner": "^1.4.0",
-    "recharts": "^2.10.3",
-    "motion": "^10.16.4"
+    "sonner": "^1.5.0",
+    "lucide-react": "latest",
+    "tailwindcss": "^3.4.1",
+    "postcss": "^8.4.35",
+    "autoprefixer": "^10.4.17"
   },
   "devDependencies": {
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.2.1",
-    "typescript": "^5.3.3",
-    "vite": "^5.1.0",
-    "tailwindcss": "^4.0.0-alpha.25",
-    "@tailwindcss/postcss": "^4.0.0-alpha.25",
-    "autoprefixer": "^10.4.17",
-    "postcss": "^8.4.33"
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.2",
+    "typescript": "^5.5.3"
   }
 }

@@ -1,49 +1,56 @@
-# Case Where 接得準 - Robots.txt
-# 更新日期: 2024-12-21
+# robots.txt for CaseWHR.com
+# Updated: 2024-12-31
 
-# 允許所有搜索引擎爬取
+# Allow all search engines
 User-agent: *
 Allow: /
 
-# 允許重要頁面
-Allow: /pricing
-Allow: /about
-Allow: /terms-of-service
-Allow: /privacy-policy
-
-# 禁止爬取私密頁面
-Disallow: /dashboard
-Disallow: /admin
+# Disallow admin and private pages
+Disallow: /admin/
 Disallow: /api/
+Disallow: /dashboard/settings/
+Disallow: /*.json$
+Disallow: /*?*accessToken=
+Disallow: /*?*session=
+Disallow: /supabase/
 
-# 禁止爬取測試頁面
-Disallow: /test
-Disallow: /*test*.html
-Disallow: /brevo-test
-Disallow: /email-test
-Disallow: /env-check
+# Allow public pages
+Allow: /
+Allow: /projects
+Allow: /freelancers
+Allow: /about
+Allow: /pricing
+Allow: /login
+Allow: /signup
 
-# Sitemap 位置
+# Sitemap location
 Sitemap: https://casewhr.com/sitemap.xml
 
-# 爬蟲速率限制（每次請求間隔 1 秒）
+# Crawl delay (optional - be nice to servers)
 Crawl-delay: 1
 
-# Google 機器人特定規則
+# Specific bot rules
 User-agent: Googlebot
 Allow: /
-Disallow: /dashboard
-Disallow: /admin
 
-# Bing 機器人特定規則
 User-agent: Bingbot
 Allow: /
-Disallow: /dashboard
-Disallow: /admin
 
-# 社交媒體機器人
-User-agent: facebookexternalhit
+User-agent: Slurp
 Allow: /
 
-User-agent: Twitterbot
+User-agent: DuckDuckBot
 Allow: /
+
+# Block malicious bots
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /

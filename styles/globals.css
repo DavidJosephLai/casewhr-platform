@@ -1,76 +1,407 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
-  /* 主题颜色 */
-  --color-primary: #0066cc;
-  --color-secondary: #00cc99;
-  --color-accent: #ff6b6b;
-  
-  /* 灰度 */
-  --color-muted: #6b7280;
-  --color-muted-foreground: #9ca3af;
-  
-  /* 阴影 */
-  --shadow-soft-teal: 0 4px 20px rgba(0, 204, 153, 0.15);
-  --shadow-soft-lime: 0 4px 20px rgba(204, 255, 0, 0.15);
-  
-  /* 圆角 */
-  --radius-lg: 0.75rem;
-  --radius-md: 0.5rem;
-  --radius-sm: 0.25rem;
-}
+@layer base {
+  :root {
+    /* 🔤 字体优化 - 使用系统字体栈，无需下载 */
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, 'PingFang SC', 'Microsoft YaHei', 'STHeiti', sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+    
+    --font-size: 14px;
+    --background: #ffffff;
+    --foreground: oklch(0.145 0 0);
+    --card: #ffffff;
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: #17a2b8;
+    --primary-foreground: #ffffff;
+    --secondary: #a4d65e;
+    --secondary-foreground: #1a1a1a;
+    --muted: #ececf0;
+    --muted-foreground: #717182;
+    --accent: #e9ebef;
+    --accent-foreground: #030213;
+    --destructive: #d4183d;
+    --destructive-foreground: #ffffff;
+    --border: #d1d5db; /* 改為實色邊框 - 更明顯 */
+    --input: transparent;
+    --input-background: #f3f3f5;
+    --switch-background: #cbced4;
+    --font-weight-medium: 500;
+    --font-weight-normal: 400;
+    --ring: oklch(0.708 0 0);
+    --chart-1: #17a2b8;
+    --chart-2: #a4d65e;
+    --chart-3: #398AB9;
+    --chart-4: #73C0A9;
+    --chart-5: #B8D475;
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: #17a2b8;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+    
+    /* Kemenkes Brand Colors */
+    --kemenkes-teal: #17a2b8;
+    --kemenkes-lime: #a4d65e;
+    --kemenkes-dark-teal: #138496;
+    --kemenkes-light-teal: #5bc0de;
+    --kemenkes-dark-lime: #85b946;
+    --kemenkes-light-lime: #c3e88d;
+    
+    /* Indonesian Cultural Colors */
+    --indonesia-red: #dc2626;
+    --indonesia-white: #ffffff;
+    --garuda-gold: #fbbf24;
+    --batik-brown: #92400e;
+    --nature-green: #16a34a;
+    --ocean-blue: #2563eb;
+    --heritage-maroon: #7c2d12;
+    --traditional-yellow: #eab308;
+  }
 
-/* 全局样式 */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+  .dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.145 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.145 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: #5bc0de;
+    --primary-foreground: #1a1a1a;
+    --secondary: #c3e88d;
+    --secondary-foreground: #1a1a1a;
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.396 0.141 25.723);
+    --destructive-foreground: oklch(0.637 0.237 25.331);
+    --border: oklch(0.269 0 0);
+    --input: oklch(0.269 0 0);
+    --ring: oklch(0.439 0 0);
+    --font-weight-medium: 500;
+    --font-weight-normal: 400;
+    --chart-1: #5bc0de;
+    --chart-2: #c3e88d;
+    --chart-3: #73C0A9;
+    --chart-4: #B8D475;
+    --chart-5: #85b946;
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: #5bc0de;
+    --sidebar-primary-foreground: #1a1a1a;
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(0.269 0 0);
+    --sidebar-ring: oklch(0.439 0 0);
+  }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: #f9fafb;
-  color: #111827;
-  min-height: 100vh;
-}
+  @theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-input-background: var(--input-background);
+    --color-switch-background: var(--switch-background);
+    --color-ring: var(--ring);
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+    
+    /* Kemenkes Brand Color Classes */
+    --color-kemenkes-teal: var(--kemenkes-teal);
+    --color-kemenkes-lime: var(--kemenkes-lime);
+    --color-kemenkes-dark-teal: var(--kemenkes-dark-teal);
+    --color-kemenkes-light-teal: var(--kemenkes-light-teal);
+    --color-kemenkes-dark-lime: var(--kemenkes-dark-lime);
+    --color-kemenkes-light-lime: var(--kemenkes-light-lime);
+    
+    /* Indonesian Cultural Color Classes */
+    --color-indonesia-red: var(--indonesia-red);
+    --color-indonesia-white: var(--indonesia-white);
+    --color-garuda-gold: var(--garuda-gold);
+    --color-batik-brown: var(--batik-brown);
+    --color-nature-green: var(--nature-green);
+    --color-ocean-blue: var(--ocean-blue);
+    --color-heritage-maroon: var(--heritage-maroon);
+    --color-traditional-yellow: var(--traditional-yellow);
+  }
 
-h1 {
-  font-size: 3rem;
-  font-weight: 700;
-  line-height: 1.2;
-}
+  @layer base {
+    * {
+      @apply border-border outline-ring/50;
+    }
 
-h2 {
-  font-size: 2.25rem;
-  font-weight: 700;
-  line-height: 1.3;
-}
+    body {
+      @apply bg-background text-foreground;
+    }
+  }
 
-h3 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1.4;
-}
+  /**
+   * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
+   */
+  @layer base {
+    :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
+      h1 {
+        font-size: var(--text-2xl);
+        font-weight: var(--font-weight-medium);
+        line-height: 1.5;
+      }
 
-p {
-  font-size: 1rem;
-  line-height: 1.6;
-}
+      h2 {
+        font-size: var(--text-xl);
+        font-weight: var(--font-weight-medium);
+        line-height: 1.5;
+      }
 
-button {
-  cursor: pointer;
-  font-family: inherit;
-}
+      h3 {
+        font-size: var(--text-lg);
+        font-weight: var(--font-weight-medium);
+        line-height: 1.5;
+      }
 
-/* 自定义工具类 */
-.shadow-soft-teal {
-  box-shadow: 0 4px 20px rgba(0, 204, 153, 0.15);
-}
+      h4 {
+        font-size: var(--text-base);
+        font-weight: var(--font-weight-medium);
+        line-height: 1.5;
+      }
 
-.shadow-soft-lime {
-  box-shadow: 0 4px 20px rgba(204, 255, 0, 0.15);
+      p {
+        font-size: var(--text-base);
+        font-weight: var(--font-weight-normal);
+        line-height: 1.5;
+      }
+
+      label {
+        font-size: var(--text-base);
+        font-weight: var(--font-weight-medium);
+        line-height: 1.5;
+      }
+
+      button {
+        font-size: var(--text-base);
+        font-weight: var(--font-weight-medium);
+        line-height: 1.5;
+      }
+
+      input {
+        font-size: var(--text-base);
+        font-weight: var(--font-weight-normal);
+        line-height: 1.5;
+      }
+    }
+  }
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  /* Kemenkes Brand Utilities */
+  @layer utilities {
+    .bg-kemenkes-gradient {
+      background: linear-gradient(135deg, var(--kemenkes-teal), var(--kemenkes-lime));
+    }
+    
+    .bg-kemenkes-teal {
+      background-color: var(--kemenkes-teal);
+    }
+    
+    .bg-kemenkes-lime {
+      background-color: var(--kemenkes-lime);
+    }
+    
+    .text-kemenkes-teal {
+      color: var(--kemenkes-teal);
+    }
+    
+    .text-kemenkes-lime {
+      color: var(--kemenkes-lime);
+    }
+    
+    .border-kemenkes-teal {
+      border-color: var(--kemenkes-teal);
+    }
+    
+    .border-kemenkes-lime {
+      border-color: var(--kemenkes-lime);
+    }
+    
+    /* Subtle and Colorful Shadows */
+    .shadow-soft-teal {
+      box-shadow: 0 4px 15px rgba(23, 162, 184, 0.08), 0 2px 4px rgba(23, 162, 184, 0.05);
+    }
+    
+    .shadow-soft-lime {
+      box-shadow: 0 4px 15px rgba(164, 214, 94, 0.08), 0 2px 4px rgba(164, 214, 94, 0.05);
+    }
+    
+    .shadow-soft-gradient {
+      box-shadow: 0 4px 15px rgba(23, 162, 184, 0.06), 0 2px 8px rgba(164, 214, 94, 0.04), 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    .shadow-gentle-cultural {
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.05), 0 2px 4px rgba(251, 191, 36, 0.03);
+    }
+    
+    .shadow-warm-gold {
+      box-shadow: 0 3px 12px rgba(251, 191, 36, 0.1), 0 1px 3px rgba(251, 191, 36, 0.05);
+    }
+    
+    .shadow-colorful-blend {
+      box-shadow: 
+        0 4px 15px rgba(23, 162, 184, 0.04),
+        0 2px 8px rgba(164, 214, 94, 0.03),
+        0 1px 4px rgba(251, 191, 36, 0.02);
+    }
+    
+    .gradient-kemenkes-light {
+      background: linear-gradient(135deg, var(--kemenkes-light-teal), var(--kemenkes-light-lime));
+    }
+    
+    .gradient-kemenkes-dark {
+      background: linear-gradient(135deg, var(--kemenkes-dark-teal), var(--kemenkes-dark-lime));
+    }
+
+    /* Indonesian Cultural Patterns and Utilities */
+    .bg-indonesia-flag {
+      background: linear-gradient(180deg, var(--indonesia-red) 50%, var(--indonesia-white) 50%);
+    }
+    
+    .text-garuda-gold {
+      color: var(--garuda-gold);
+    }
+    
+    .bg-garuda-gold {
+      background-color: var(--garuda-gold);
+    }
+    
+    .border-garuda-gold {
+      border-color: var(--garuda-gold);
+    }
+    
+    .text-batik-brown {
+      color: var(--batik-brown);
+    }
+    
+    .bg-batik-brown {
+      background-color: var(--batik-brown);
+    }
+    
+    .text-heritage-maroon {
+      color: var(--heritage-maroon);
+    }
+    
+    .bg-heritage-maroon {
+      background-color: var(--heritage-maroon);
+    }
+    
+    .pattern-batik {
+      background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2317a2b8' fill-opacity='0.05' fill-rule='evenodd'%3E%3Cpath d='M20 20c0-11.046 8.954-20 20-20s20 8.954 20 20-8.954 20-20 20-20-8.954-20-20zm10-10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10z'/%3E%3C/g%3E%3C/svg%3E");
+    }
+    
+    .pattern-traditional {
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23a4d65e' fill-opacity='0.08'%3E%3Cpath d='M30 30c0-16.569 13.431-30 30-30s30 13.431 30 30-13.431 30-30 30-30-13.431-30-30zm15-15c0-8.284 6.716-15 15-15s15 6.716 15 15-6.716 15-15 15-15-6.716-15-15z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    
+    .gradient-indonesia {
+      background: linear-gradient(135deg, var(--indonesia-red), var(--indonesia-white), var(--indonesia-red));
+    }
+    
+    .gradient-cultural {
+      background: linear-gradient(135deg, var(--heritage-maroon), var(--garuda-gold), var(--nature-green));
+    }
+  }
+
+  /* Kemenkes Animation Keyframes */
+  @keyframes kemenkes-pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes kemenkes-flow {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 100% 100%;
+    }
+  }
+
+  .animate-kemenkes-pulse {
+    animation: kemenkes-pulse 2s ease-in-out infinite;
+  }
+
+  .animate-kemenkes-flow {
+    animation: kemenkes-flow 20s linear infinite;
+  }
+
+  /* Cultural Animation Keyframes */
+  @keyframes cultural-pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.05);
+    }
+  }
+
+  @keyframes batik-flow {
+    0% {
+      background-position: 0% 0%;
+    }
+    100% {
+      background-position: 100% 100%;
+    }
+  }
+
+  .animate-cultural-pulse {
+    animation: cultural-pulse 2s ease-in-out infinite;
+  }
+
+  .animate-batik-flow {
+    animation: batik-flow 20s linear infinite;
+  }
 }

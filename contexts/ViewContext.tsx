@@ -1,19 +1,127 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useMemo, useCallback, useEffect } from 'react';
 
-type View = 'home' | 'browse' | 'pricing' | 'dashboard' | 'admin' | 'about' | 'privacy' | 'terms' | 'disclaimer' | 'cookies';
+type ViewType = 'home' | 'dashboard' | 'pricing' | 'admin' | 'brevo-test' | 'email-test' | 'env-check' | 'email-management' | 'email-integration' | 'stripe-env-check' | 'accept-invitation' | 'auth-callback' | 'reset-password' | 'auth-verify' | 'privacy-policy' | 'cookies-policy' | 'disclaimer' | 'about' | 'cases' | 'terms-of-service' | 'google-dns-verifier';
 
 interface ViewContextType {
-  view: View;
-  setView: (view: View) => void;
+  view: ViewType;
+  setView: (view: ViewType) => void;
+  manualOverride: boolean;
+  setManualOverride: (override: boolean) => void;
 }
 
 const ViewContext = createContext<ViewContextType | undefined>(undefined);
 
 export function ViewProvider({ children }: { children: ReactNode }) {
-  const [view, setView] = useState<View>('home');
+  const [view, setViewState] = useState<ViewType>('home');
+  const [manualOverride, setManualOverrideState] = useState(false);
+
+  // Stable setView function
+  const setView = useCallback((newView: ViewType) => {
+    console.log('🔄 [ViewContext] Setting view to:', newView);
+    setViewState(newView);
+  }, []);
+
+  // Stable setManualOverride function
+  const setManualOverride = useCallback((override: boolean) => {
+    setManualOverrideState(override);
+  }, []);
+
+  // 監聽 URL hash 變化
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1); // 移除 # 符號
+      const pathname = window.location.pathname;
+      console.log('🔗 [ViewContext] Hash changed to:', hash);
+      console.log('🔗 [ViewContext] Pathname:', pathname);
+      
+      // 優先檢查 pathname（用於 /reset-password 這類頁面）
+      if (pathname.includes('/reset-password')) {
+        console.log('✅ [ViewContext] Reset password page detected, switching view');
+        setView('reset-password');
+        setManualOverride(true);
+        return;
+      }
+      
+      // 🔥 NEW: 檢查 auth/verify 路由
+      if (pathname.includes('/auth/verify')) {
+        console.log('✅ [ViewContext] Auth verify page detected, switching view');
+        setView('auth-verify');
+        setManualOverride(true);
+        return;
+      }
+      
+      if (pathname.includes('/auth/callback')) {
+        console.log('✅ [ViewContext] Auth callback detected, switching view');
+        setView('auth-callback');
+        setManualOverride(true);
+        return;
+      }
+      
+      if (pathname.includes('/team/accept-invitation')) {
+        console.log('✅ [ViewContext] Accept invitation detected, switching view');
+        setView('accept-invitation');
+        setManualOverride(true);
+        return;
+      }
+      
+      // 根據 hash 設置對應的 view
+      const hashToView: Record<string, ViewType> = {
+        'email-management': 'email-management',
+        'admin': 'admin',
+        'dashboard': 'dashboard',
+        'pricing': 'pricing',
+        'brevo-test': 'brevo-test',
+        'email-test': 'email-test',
+        'env-check': 'env-check',
+        'email-integration': 'email-integration',
+        'stripe-env-check': 'stripe-env-check',
+        'accept-invitation': 'accept-invitation',
+        'auth-callback': 'auth-callback',
+        'reset-password': 'reset-password',
+        'privacy-policy': 'privacy-policy',
+        'cookies-policy': 'cookies-policy',
+        'disclaimer': 'disclaimer',
+        'about': 'about',
+        'cases': 'cases',
+        'terms-of-service': 'terms-of-service',
+        'google-dns-verifier': 'google-dns-verifier',
+      };
+      
+      if (hash && hashToView[hash]) {
+        console.log('✅ [ViewContext] Switching to view:', hashToView[hash]);
+        setView(hashToView[hash]);
+        setManualOverride(true);
+      } else if (hash === '' && pathname === '/') {
+        // ⚠️ FIX: 只有在非手動覆蓋模式下才切換到 home
+        // 這樣可以防止儀表板被自動重定向
+        console.log('🏠 [ViewContext] Empty hash on root path - checking manual override');
+        // 不強制重定向，保持當前視圖
+      }
+    };
+    
+    // 初始檢查
+    handleHashChange();
+    
+    // 監聽 hash 變化
+    window.addEventListener('hashchange', handleHashChange);
+    // 監聽 popstate（處理瀏覽器前進/後退）
+    window.addEventListener('popstate', handleHashChange);
+    
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('popstate', handleHashChange);
+    };
+  }, [setView, setManualOverride]);
+
+  const value = useMemo(() => ({
+    view,
+    setView,
+    manualOverride,
+    setManualOverride
+  }), [view, setView, manualOverride, setManualOverride]);
 
   return (
-    <ViewContext.Provider value={{ view, setView }}>
+    <ViewContext.Provider value={value}>
       {children}
     </ViewContext.Provider>
   );
@@ -21,8 +129,8 @@ export function ViewProvider({ children }: { children: ReactNode }) {
 
 export function useView() {
   const context = useContext(ViewContext);
-  if (!context) {
-    throw new Error('useView must be used within ViewProvider');
+  if (context === undefined) {
+    throw new Error('useView must be used within a ViewProvider');
   }
   return context;
 }

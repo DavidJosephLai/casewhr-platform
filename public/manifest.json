@@ -1,0 +1,29 @@
+{
+  "name": "Case Where - 全球接案平台",
+  "short_name": "CaseWHR",
+  "description": "專業的雙語接案平台，連接全球人才與項目",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "zh-TW",
+  "dir": "auto",
+  "scope": "/",
+  "prefer_related_applications": false
+}

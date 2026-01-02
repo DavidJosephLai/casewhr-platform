@@ -1,0 +1,5 @@
+# Edge Function Configuration
+# 禁用 JWT 验证以允许公开访问测试端点
+
+[function]
+verify_jwt = false

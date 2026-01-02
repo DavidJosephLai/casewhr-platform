@@ -1,0 +1,47 @@
+# Netlify 部署配置 - Case Where 接得準
+# 網站：casewhr.com
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# SEO 文件重定向到 Supabase API
+[[redirects]]
+  from = "/robots.txt"
+  to = "https://bihplitfentxioxyjalb.supabase.co/functions/v1/make-server-215f78a5/robots.txt"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "https://bihplitfentxioxyjalb.supabase.co/functions/v1/make-server-215f78a5/sitemap.xml"
+  status = 200
+  force = true
+
+# SPA 路由支持
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
+# Headers for security and performance
+[[headers]]
+  for = "/robots.txt"
+  [headers.values]
+    Content-Type = "text/plain; charset=utf-8"
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Content-Type = "application/xml; charset=utf-8"
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
