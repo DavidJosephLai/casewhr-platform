@@ -222,7 +222,7 @@ const AIChatbot: React.FC<AIChatbotProps> = ({
   }
 
   return (
-    <Card className="fixed bottom-6 right-6 w-96 h-[600px] shadow-2xl z-50 flex flex-col">
+    <Card className="fixed bottom-6 right-6 w-96 h-[600px] shadow-2xl z-50 flex flex-col bg-white">
       <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg pb-4">
         <div className="flex items-center justify-between">
           <div className="flex-1">

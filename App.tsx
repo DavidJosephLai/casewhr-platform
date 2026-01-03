@@ -12,8 +12,8 @@ import { toast, Toaster } from 'sonner';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { DevModeLogin } from './components/DevModeLogin';
 
-// 🔥 Version marker to force cache invalidation - v2.0.32
-console.log('🚀 [App v2.0.32] FIX: SLADocumentation lazy import with named export');
+// 🔥 Version marker to force cache invalidation - v2.0.33
+console.log('🚀 [App v2.0.33] FIX: AIChatbot background color (white)');
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));
