@@ -406,12 +406,6 @@ export function SLAMonitoring({ language = 'en' }: SLAMonitoringProps) {
 
   const t = translations[language] || translations.en; // ✅ Fallback to English
 
-  // 🔍 安全檢查：確保 t 和 benefits 存在
-  if (!t || !t.benefits || !t.benefits.items) {
-    console.error('❌ [SLAMonitoring] Translation or benefits.items missing!', { language, t });
-    return null;
-  }
-
   useEffect(() => {
     if (user) {
       fetchData();
