@@ -130,7 +130,7 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
     loading: loading
   });
 
-  const t = {
+  const translations = {
     en: {
       title: 'Enterprise Features',
       subtitle: 'Exclusive features for Enterprise members',
@@ -261,7 +261,13 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
     }
   };
 
-  const content = t[language] || t.en;
+  const t = translations[language] || translations.en; // ✅ Fallback to English
+
+  // 🔍 安全檢查：確保 t 和 features 存在
+  if (!t || !t.features) {
+    console.error('❌ [EnterpriseFeaturesPanel] Translation or features missing!', { language, t });
+    return null;
+  }
 
   if (loading) {
     return (
@@ -285,17 +291,11 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
   // 🔍 調試日誌：檢查 content 和 features 結構
   console.log('🔍 [EnterpriseFeaturesPanel] Content check:', {
     language,
-    hasContent: !!content,
-    hasFeatures: !!content?.features,
-    featuresKeys: content?.features ? Object.keys(content.features) : [],
-    content: content
+    hasContent: !!t,
+    hasFeatures: !!t?.features,
+    featuresKeys: t?.features ? Object.keys(t.features) : [],
+    content: t
   });
-
-  // ✅ 安全檢查：確保 content.features 存在
-  if (!content || !content.features) {
-    console.error('❌ [EnterpriseFeaturesPanel] content.features is undefined!', { language, content });
-    return null;
-  }
 
   return (
     <>
@@ -305,16 +305,16 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Crown className="h-6 w-6 text-purple-600" />
-                {content.title}
+                {t.title}
               </CardTitle>
               <CardDescription className="mt-1">
-                {content.subtitle}
+                {t.subtitle}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
               {isEnterprise && (
                 <Badge className="bg-purple-600 text-white">
-                  {content.upgradeRequired}
+                  {t.upgradeRequired}
                 </Badge>
               )}
               {/* 🔧 調試按鈕：手動刷新訂閱狀態 */}
@@ -337,7 +337,7 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {features.map((feature) => {
               const Icon = feature.icon;
-              const featureContent = content.features[feature.key as keyof typeof content.features];
+              const featureContent = t.features[feature.key as keyof typeof t.features];
               
               return (
                 <Button
@@ -359,7 +359,7 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
                   </p>
                   {!isEnterprise && (
                     <Badge variant="outline" className="text-xs mt-auto">
-                      {content.upgradeRequired}
+                      {t.upgradeRequired}
                     </Badge>
                   )}
                 </Button>
@@ -386,7 +386,7 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
                     window.dispatchEvent(new CustomEvent('showPricing', { detail: {} }));
                   }}
                 >
-                  {content.upgrade}
+                  {t.upgrade}
                 </Button>
               </div>
             </div>
