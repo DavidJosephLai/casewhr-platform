@@ -1,8 +1,6 @@
 import { useLanguage } from '../lib/LanguageContext';
 import { translations, getTranslation } from "../lib/translations";
-// 🆕 使用 CaseWhrLogo 组件替代 figma:asset
-// import logo from "figma:asset/f57ca824e16ab20584164cfe41da96be15934ce1.png";
-import CaseWhrLogo from "./CaseWhrLogo";
+import logo from "figma:asset/f57ca824e16ab20584164cfe41da96be15934ce1.png";
 import { AuthDialogs } from "./AuthDialogs";
 import { UserProfile } from "./UserProfile";
 import { MessageCenter } from "./MessageCenter";
@@ -217,7 +215,7 @@ export function Header() {
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <button onClick={scrollToTop} className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
-              <CaseWhrLogo className="h-12 w-auto" />
+              <img src={logo} className="h-12 w-auto" alt="CaseWhr Logo" />
               <span className="text-2xl font-bold text-gray-800 whitespace-nowrap leading-none">接得準</span>
             </button>
 

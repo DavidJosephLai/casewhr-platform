@@ -1,8 +1,6 @@
 import { useLanguage } from '../lib/LanguageContext';
 import { translations, getTranslation } from "../lib/translations";
-// 🆕 使用 CaseWhrLogo 组件替代 figma:asset
-// import logo from "figma:asset/f57ca824e16ab20584164cfe41da96be15934ce1.png";
-import CaseWhrLogo from './CaseWhrLogo';
+import logo from "figma:asset/f57ca824e16ab20584164cfe41da96be15934ce1.png";
 import { Separator } from './ui/separator';
 import { Facebook, Twitter, Linkedin, Instagram, Mail, MapPin, Phone } from 'lucide-react';
 import { useView } from '../contexts/ViewContext';
@@ -41,7 +39,7 @@ export function Footer() {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3 mb-4">
-              <CaseWhrLogo className="h-16 w-auto brightness-0 invert" />
+              <img src={logo} className="h-16 w-auto" alt="接得準 Logo" />
               <span className="text-2xl font-bold text-white whitespace-nowrap leading-none">接得準</span>
             </div>
             <p className="text-gray-400 text-sm mb-4">{t.description}</p>
