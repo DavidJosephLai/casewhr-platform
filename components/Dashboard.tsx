@@ -86,7 +86,10 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
 
   // ✅ Memoize role checks
   const isClient = useMemo(() => {
-    const result = profile?.is_client || profile?.account_type === 'client';
+    const result = profile?.is_client || 
+      (Array.isArray(profile?.account_type) 
+        ? profile.account_type.includes('client') 
+        : profile?.account_type === 'client');
     console.log('🔍 [Dashboard] isClient calculation:', {
       profile_is_client: profile?.is_client,
       account_type: profile?.account_type,
@@ -97,7 +100,10 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
   }, [profile?.is_client, profile?.account_type, user?.email]);
   
   const isFreelancer = useMemo(() => {
-    const result = profile?.is_freelancer || profile?.account_type === 'freelancer';
+    const result = profile?.is_freelancer || 
+      (Array.isArray(profile?.account_type) 
+        ? profile.account_type.includes('freelancer') 
+        : profile?.account_type === 'freelancer');
     console.log('🔍 [Dashboard] isFreelancer calculation:', {
       profile_is_freelancer: profile?.is_freelancer,
       account_type: profile?.account_type,
@@ -660,7 +666,10 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
       />
       
       {/* 🔥 只有客戶才能看到發布項目對話框 */}
-      {(profile?.is_client || profile?.account_type === 'client') && (
+      {(profile?.is_client || 
+        (Array.isArray(profile?.account_type) 
+          ? profile.account_type.includes('client') 
+          : profile?.account_type === 'client')) && (
         <PostProjectDialog
           open={showPostDialog}
           onOpenChange={setShowPostDialog}
