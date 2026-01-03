@@ -4798,11 +4798,27 @@ app.post("/make-server-215f78a5/subscription/upgrade", async (c) => {
 
     // ⭐ 將訂閱收入轉入平台擁有者錢包 (davidlai117@yahoo.com.tw)
     try {
+      console.log('💰 [Platform Revenue] Starting transfer to platform wallet...');
+      console.log('💰 [Platform Revenue] Subscription details:', {
+        user: user.email,
+        plan,
+        billingCycle,
+        amount: priceInUSD,
+        currency: validCurrency,
+        displayAmount: price
+      });
+      
       // 查找平台擁有者的用戶 ID
       const { data: platformOwnerData } = await supabase.auth.admin.listUsers();
       const platformOwner = platformOwnerData?.users?.find(
         u => u.email === 'davidlai117@yahoo.com.tw'
       );
+      
+      console.log('💰 [Platform Revenue] Platform owner lookup:', { 
+        found: !!platformOwner, 
+        email: platformOwner?.email,
+        id: platformOwner?.id 
+      });
 
       if (platformOwner) {
         const platformWalletKey = `wallet_${platformOwner.id}`;
@@ -4836,7 +4852,7 @@ app.post("/make-server-215f78a5/subscription/upgrade", async (c) => {
 
         // 記錄平台收入交易
         const platformTransactionKey = `transaction_${Date.now()}_platform_${platformOwner.id}`;
-        await kv.set(platformTransactionKey, {
+        const platformTransaction = {
           id: platformTransactionKey,
           user_id: platformOwner.id,
           type: 'subscription_revenue',
@@ -4848,6 +4864,14 @@ app.post("/make-server-215f78a5/subscription/upgrade", async (c) => {
           from_user_id: user.id,
           from_user_email: user.email,
           created_at: new Date().toISOString(),
+        };
+        await kv.set(platformTransactionKey, platformTransaction);
+        
+        console.log('💰 [Platform Revenue] Transaction recorded:', {
+          key: platformTransactionKey,
+          amount: priceInUSD,
+          type: 'subscription_revenue',
+          from: user.email
         });
       } else {
         console.warn(`⚠️ [Platform Revenue] Platform owner not found (davidlai117@yahoo.com.tw)`);
