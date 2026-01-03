@@ -73,10 +73,15 @@ function WalletComponent({ refreshKey }: WalletProps) {
   const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'ecpay' | 'paypal'>('ecpay');
-  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(getDefaultCurrency());
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(getDefaultCurrency(language));
   const { convertedAmount, getConvertedAmount, isLoading: rateLoading } = useExchangeRate();
   const [showECPayDiagnostic, setShowECPayDiagnostic] = useState(false);
   const [showQuickGuide, setShowQuickGuide] = useState(false);
+
+  // 🌍 當語言變更時，自動更新顯示貨幣
+  useEffect(() => {
+    setSelectedCurrency(getDefaultCurrency(language));
+  }, [language]);
 
   // 🔥 添加認證 headers 處理函數
   const getHeaders = () => {
@@ -300,7 +305,7 @@ function WalletComponent({ refreshKey }: WalletProps) {
           toast.error(
             language === 'en' 
               ? '💳 PayPal payment is not available. Please contact support.' 
-              : '💳 PayPal 支付不可用。請聯繫客服。'
+              : '💳 PayPal 支付不可用。���聯繫客服。'
           );
           setLoading(false);
           return;
@@ -968,7 +973,7 @@ function WalletComponent({ refreshKey }: WalletProps) {
               {language === 'en' 
                 ? '💵 Minimum deposit amount: NT$300 (≈ $10 USD)' 
                 : language === 'zh-CN'
-                ? '💵 最低充值金额：NT$300（约 ¥70 民币 / $10 美���）'
+                ? '💵 最低充值金额：NT$300（约 ¥70 民币 / $10 美）'
                 : '💵 最低充值金額：NT$300（約 $10 USD）'}
             </p>
             <p className="text-xs text-green-700 whitespace-pre-line">
