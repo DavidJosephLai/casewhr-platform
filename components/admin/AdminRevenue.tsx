@@ -91,7 +91,7 @@ export function AdminRevenue() {
       customer: 'Customer',
       amount: 'Amount',
       type: 'Type',
-      description: 'Description',
+      descriptionColumn: 'Description',  // ✅ 重命名以避免與頁面 description 衝突
       subscription: 'Subscription',
       serviceFee: 'Service Fee',
       total: 'Total',
@@ -122,7 +122,7 @@ export function AdminRevenue() {
       customer: '客戶',
       amount: '金額',
       type: '類型',
-      description: '描述',
+      descriptionColumn: '描述',  // ✅ 重命名以避免與頁面 description 衝突
       subscription: '訂閱',
       serviceFee: '服務費',
       total: '總計',
@@ -153,7 +153,7 @@ export function AdminRevenue() {
       customer: '客户',
       amount: '金额',
       type: '类型',
-      description: '描述',
+      descriptionColumn: '描述',  // ✅ 重命名以避免與頁面 description 衝突
       subscription: '订阅',
       serviceFee: '服务费',
       total: '总计',
@@ -543,7 +543,7 @@ export function AdminRevenue() {
                   <th className="text-left py-3 px-4 font-medium text-gray-600">{text.customer}</th>
                   <th className="text-left py-3 px-4 font-medium text-gray-600">{text.type}</th>
                   <th className="text-right py-3 px-4 font-medium text-gray-600">{text.amount}</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">{text.description}</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-600">{text.descriptionColumn}</th>
                 </tr>
               </thead>
               <tbody>
