@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ViewProvider, useView } from './contexts/ViewContext';
 import { useExchangeRate } from './hooks/useExchangeRate';
 import { NetworkErrorNotice } from './components/NetworkErrorNotice';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { SEO } from './components/SEO';
@@ -114,12 +115,9 @@ function AppContent() {
     });
   }, [language]);
   
-  // 調試：檢查用戶狀態
+  // 🔥 監聽用戶登入狀態變化，並為特殊用戶自動刷新訂閱
   useEffect(() => {
-    console.log('👤 [App] User state:', { 
-      email: user?.email, 
-      hasUser: !!user 
-    });
+    if (!user) return;
     
     // 🔥 檢查是否為特殊用戶，如果是則自動刷新訂閱
     if (user?.email) {
@@ -130,8 +128,12 @@ function AppContent() {
         console.log('🎁 [App] Special user detected:', user.email);
         // 延遲觸發刷新事件，確保所有組件已載入
         setTimeout(() => {
-          console.log('🔄 [App] Triggering refreshSubscription event for special user');
-          window.dispatchEvent(new Event('refreshSubscription'));
+          try {
+            console.log('🔄 [App] Triggering refreshSubscription event for special user');
+            window.dispatchEvent(new Event('refreshSubscription'));
+          } catch (error) {
+            console.error('❌ [App] Error triggering refreshSubscription event:', error);
+          }
         }, 1000);
       }
     }
@@ -346,7 +348,7 @@ function AppContent() {
             toast.error(
               language === 'en'
                 ? `Payment processing error: ${error.message}`
-                : `付款處理錯���：${error.message}`,
+                : `付款處理錯：${error.message}`,
               { duration: 8000 }
             );
             
@@ -376,7 +378,7 @@ function AppContent() {
       toast.error(
         language === 'en'
           ? '❌ Payment cancelled. No charges were made.'
-          : '❌ 付款已取消��未產生任何費用。',
+          : '❌ 付款已取消未產生任何費用。',
         { duration: 5000 }
       );
       // 清除 URL 參數
@@ -420,9 +422,11 @@ function AppContent() {
       {view === 'dashboard' ? (
         <div className="pt-32">
           <SEO {...getPageSEO('dashboard', language)} noindex />
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Dashboard initialTab={dashboardTab} onTabChange={() => setDashboardTab(undefined)} />
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <Dashboard initialTab={dashboardTab} onTabChange={() => setDashboardTab(undefined)} />
+            </Suspense>
+          </ErrorBoundary>
         </div>
       ) : view === 'pricing' ? (
         <div className="pt-24">

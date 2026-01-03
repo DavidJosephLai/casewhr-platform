@@ -12,9 +12,10 @@ import { AdminEmailSender } from '../components/admin/AdminEmailSender';
 import { AdminSettings } from '../components/admin/AdminSettings';
 import { AdminMessages } from '../components/admin/AdminMessages';
 import { AdminInvoicePrefixManager } from '../components/admin/AdminInvoicePrefixManager';
+import { AdminRevenue } from '../components/admin/AdminRevenue';
 import { InvoiceManager } from '../components/InvoiceManager';
 import { TestClientCleaner } from '../components/TestClientCleaner';
-import { QuickDepositHelper } from '../components/QuickDepositHelper';
+// ❌ 已移除 QuickDepositHelper - 不再為 davidjosephilai1@outlook.com 提供儲值功能
 import { UserCreationHelper } from '../components/UserCreationHelper';
 import { EnterpriseTestHelper } from '../components/EnterpriseTestHelper';
 import { SitemapGenerator } from '../components/SitemapGenerator';
@@ -56,6 +57,7 @@ export default function AdminPage() {
         projects: 'Projects',
         withdrawals: 'Withdrawals',
         transactions: 'Transactions',
+        revenue: 'Platform Revenue',
         memberships: 'Memberships',
         bankAccounts: 'Bank Accounts',
         invoices: 'Invoices',
@@ -85,6 +87,7 @@ export default function AdminPage() {
         projects: '項目管理',
         withdrawals: '提現管理',
         transactions: '交易記錄',
+        revenue: '平台收入',
         memberships: '會員管理',
         bankAccounts: '銀行帳戶',
         ecpayPayments: '綠界付款',
@@ -115,6 +118,7 @@ export default function AdminPage() {
         projects: '项目管理',
         withdrawals: '提现管理',
         transactions: '交易记录',
+        revenue: '平台收入',
         memberships: '会员管理',
         bankAccounts: '银行账户',
         ecpayPayments: '绿界付款',
@@ -356,6 +360,11 @@ export default function AdminPage() {
                 {t.tabs.transactions}
               </TabsTrigger>
             )}
+            {canViewTab('revenue') && (
+              <TabsTrigger key="revenue" value="revenue" className="text-xs sm:text-sm">
+                {t.tabs.revenue}
+              </TabsTrigger>
+            )}
             {canViewTab('bankAccounts') && (
               <TabsTrigger key="bankAccounts" value="bankAccounts" className="text-xs sm:text-sm">
                 {t.tabs.bankAccounts}
@@ -395,7 +404,7 @@ export default function AdminPage() {
 
             <TabsContent value="users" className="mt-0">
               <div className="space-y-6">
-                <QuickDepositHelper />
+                {/* ❌ 已移除 QuickDepositHelper - 不再為 davidjosephilai1@outlook.com 提供儲值功能 */}
                 <UserCreationHelper />
                 <EnterpriseTestHelper />
                 <AdminUsers adminLevel={adminLevel} />
@@ -416,6 +425,10 @@ export default function AdminPage() {
 
             <TabsContent value="transactions" className="mt-0">
               <AdminTransactions adminLevel={adminLevel} />
+            </TabsContent>
+
+            <TabsContent value="revenue" className="mt-0">
+              <AdminRevenue />
             </TabsContent>
 
             <TabsContent value="bankAccounts" className="mt-0">
