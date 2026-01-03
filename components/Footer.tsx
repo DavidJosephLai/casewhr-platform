@@ -1,8 +1,6 @@
 import { useLanguage } from '../lib/LanguageContext';
-import { translations, getTranslation } from "../lib/translations";
-import logo from "figma:asset/f57ca824e16ab20584164cfe41da96be15934ce1.png";
+import { getTranslation } from '../lib/translations';
 import { Separator } from './ui/separator';
-import { Facebook, Twitter, Linkedin, Instagram, Mail, MapPin, Phone } from 'lucide-react';
 import { useView } from '../contexts/ViewContext';
 
 export function Footer() {
@@ -10,13 +8,11 @@ export function Footer() {
   const { setView, setManualOverride } = useView();
   const t = getTranslation(language as any).footer;
 
-  // 統一的滾動到聯絡我們函數
   const scrollToContact = () => {
     setView('home');
     setManualOverride(true);
     window.location.hash = '';
     
-    // 使用重試機制確保元素已渲染
     const scrollToElement = () => {
       const contactSection = document.getElementById('contact');
       if (contactSection) {
@@ -39,7 +35,11 @@ export function Footer() {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3 mb-4">
-              <img src={logo} className="h-16 w-auto" alt="接得準 Logo" />
+              <img 
+                src="/Case Where.png" 
+                className="h-16 w-auto" 
+                alt="Case Where Logo"
+              />
               <span className="text-2xl font-bold text-white whitespace-nowrap leading-none">接得準</span>
             </div>
             <p className="text-gray-400 text-sm mb-4">{t.description}</p>
@@ -130,7 +130,6 @@ export function Footer() {
 
         <Separator className="bg-gray-800 mb-8" />
 
-        {/* Legal Links */}
         <div className="mb-8">
           <h4 className="text-white mb-4">{t.legal}</h4>
           <div className="grid md:grid-cols-4 gap-4 text-sm">
@@ -173,7 +172,6 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Legal Disclaimers */}
         <div className="space-y-4 text-xs text-gray-500 mb-8">
           <p className="leading-relaxed">{t.disclaimer}</p>
           <div className="grid md:grid-cols-2 gap-4">
@@ -188,7 +186,6 @@ export function Footer() {
 
         <Separator className="bg-gray-800 mb-6" />
 
-        {/* Copyright */}
         <div className="text-center text-gray-400 text-sm">
           <p>{t.copyright}</p>
         </div>

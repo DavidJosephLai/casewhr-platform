@@ -130,11 +130,11 @@ export function Hero() {
               {t.vision}
             </p>
             <div className="flex flex-wrap gap-4">
-              <Button size="lg" onClick={scrollToTalents} className="bg-blue-600 hover:bg-blue-700">
+              <Button size="lg" onClick={scrollToTalents} className="bg-blue-600 hover:bg-blue-700 text-white">
                 {t.cta1}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button size="lg" onClick={scrollToProjects} className="bg-green-600 hover:bg-green-700">
+              <Button size="lg" onClick={scrollToProjects} className="bg-green-600 hover:bg-green-700 text-white">
                 {t.cta3}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>

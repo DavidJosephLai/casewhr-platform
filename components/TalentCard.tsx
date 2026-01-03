@@ -112,7 +112,7 @@ export function TalentCard({ talent, onViewProfile }: TalentCardProps) {
               </div>
               {/* Subscription badge in top right */}
               {talent.subscription_plan && talent.subscription_plan !== 'free' && (
-                <Badge variant="secondary" className="text-xs flex-shrink-0">
+                <Badge variant="secondary" className="text-xs flex-shrink-0 bg-blue-100 text-blue-700">
                   {talent.subscription_plan === 'pro' ? (language === 'en' ? 'Pro' : '專業版') : (language === 'en' ? 'Enterprise' : '企業版')}
                 </Badge>
               )}
@@ -184,7 +184,7 @@ export function TalentCard({ talent, onViewProfile }: TalentCardProps) {
         <Button
           onClick={onViewProfile}
           size="sm"
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-blue-600 hover:bg-blue-700 text-white"
         >
           {t.card.viewProfile}
         </Button>

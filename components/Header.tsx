@@ -1,6 +1,9 @@
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
+import { Crown, ChevronDown, Menu, X, Globe, User, Settings, LogOut, MessageSquare, Bell, LayoutDashboard, Briefcase, Target, Shield, MessageCircle } from "lucide-react";
 import { useLanguage } from '../lib/LanguageContext';
 import { translations, getTranslation } from "../lib/translations";
-import logo from "figma:asset/f57ca824e16ab20584164cfe41da96be15934ce1.png";
 import { AuthDialogs } from "./AuthDialogs";
 import { UserProfile } from "./UserProfile";
 import { MessageCenter } from "./MessageCenter";
@@ -10,10 +13,6 @@ import { useAuth } from "../contexts/AuthContext";
 import { useView } from "../contexts/ViewContext";
 import { useSubscription } from "../hooks/useSubscription";
 import { isAnyAdmin, getAdminLevel, AdminLevel } from "../config/admin";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
-import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
-import { Crown, ChevronDown, Menu, X, Globe, User, Settings, LogOut, MessageSquare, Bell, LayoutDashboard, Briefcase, Target, Shield, MessageCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -145,7 +144,7 @@ export function Header() {
         window.location.href = window.location.origin;
       } catch (e) {
         console.error('❌ [Header] Failed to clear storage:', e);
-        // 最後手段：強制刷新當前頁面
+        // 最���手段：強制刷新當前頁面
         window.location.reload();
       }
     }
@@ -215,7 +214,11 @@ export function Header() {
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <button onClick={scrollToTop} className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
-              <img src={logo} className="h-12 w-auto" alt="CaseWhr Logo" />
+              <img 
+                src="/Case Where.png" 
+                className="h-12 w-auto" 
+                alt="Case Where Logo"
+              />
               <span className="text-2xl font-bold text-gray-800 whitespace-nowrap leading-none">接得準</span>
             </button>
 
@@ -229,24 +232,24 @@ export function Header() {
                   {language === 'en' ? 'Dashboard' : '儀表板'}
                 </button>
               )}
-              <button onClick={() => scrollToSection('services')} className="text-gray-700 hover:text-blue-600 transition-colors">
+              <button onClick={() => scrollToSection('services')} className="text-[#111827] hover:text-blue-600 transition-colors font-medium">
                 {t.nav.services}
               </button>
-              <button onClick={() => scrollToSection('talents')} className="text-gray-700 hover:text-blue-600 transition-colors">
+              <button onClick={() => scrollToSection('talents')} className="text-[#111827] hover:text-blue-600 transition-colors font-medium">
                 {language === 'en' ? 'Browse Talent' : '瀏覽人才'}
               </button>
-              <button onClick={() => scrollToSection('projects')} className="text-gray-700 hover:text-blue-600 transition-colors">
+              <button onClick={() => scrollToSection('projects')} className="text-[#111827] hover:text-blue-600 transition-colors font-medium">
                 {language === 'en' ? 'Browse Posted Projects' : '瀏覽發案項目'}
               </button>
-              <button onClick={() => scrollToSection('cases')} className="text-gray-700 hover:text-blue-600 transition-colors -ml-3 xl:-ml-4">
+              <button onClick={() => scrollToSection('cases')} className="text-[#111827] hover:text-blue-600 transition-colors -ml-3 xl:-ml-4 font-medium">
                 {t.nav.cases}
               </button>
-              <button onClick={() => scrollToSection('categories')} className="text-gray-700 hover:text-blue-600 transition-colors">
+              <button onClick={() => scrollToSection('categories')} className="text-[#111827] hover:text-blue-600 transition-colors font-medium">
                 {t.nav.categories}
               </button>
               <button 
                 onClick={handleShowPricing} 
-                className="hover:text-blue-600 transition-colors font-medium text-blue-600 flex items-center gap-1"
+                className="text-blue-600 hover:text-blue-700 transition-colors font-medium flex items-center gap-1"
               >
                 <Crown className="h-4 w-4" />
                 {language === 'en' ? 'Pricing' : '方案'}
@@ -255,7 +258,7 @@ export function Header() {
               {/* 流程下拉菜單 */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
+                  <button className="text-[#111827] hover:text-blue-600 transition-colors flex items-center gap-1 font-medium">
                     {t.nav.process}
                     <ChevronDown className="h-3 w-3" />
                   </button>
@@ -286,7 +289,7 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              <button onClick={() => scrollToSection('contact')} className="text-gray-700 hover:text-blue-600 transition-colors">
+              <button onClick={() => scrollToSection('contact')} className="text-[#111827] hover:text-blue-600 transition-colors font-medium">
                 {t.nav.contact}
               </button>
             </nav>
@@ -323,7 +326,7 @@ export function Header() {
                     onClick={() => setLanguage('zh-CN')}
                     className={language === 'zh-CN' ? 'bg-blue-50 text-blue-700' : ''}
                   >
-                    🇨🇳 简体中文
+                    🇨🇳 简体���文
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -377,7 +380,7 @@ export function Header() {
                     </Button>
                   )}
                   
-                  {/*  訊息按鈕 - 含未讀徽章 */}
+                  {/*  訊息按鈕 - 含未讀章 */}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -449,7 +452,7 @@ export function Header() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setLoginOpen(true)}
-                    className="hidden sm:inline-flex"
+                    className="hidden sm:inline-flex text-[#111827] hover:text-blue-600 hover:bg-blue-50"
                   >
                     {t.nav.login}
                   </Button>
@@ -457,7 +460,7 @@ export function Header() {
                   <Button
                     size="sm"
                     onClick={() => setSignupOpen(true)}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     {t.nav.signup}
                   </Button>
