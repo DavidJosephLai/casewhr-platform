@@ -306,7 +306,7 @@ export function SLAMonitoring({ language = 'en' }: SLAMonitoringProps) {
           '🔔 自動違約警報防止 SLA 違規',
           '⏱️ 即時追蹤並附帶倒數計時器',
           '📊 效能分析和合規報告',
-          '🎯 基於優先級的 SLA 目標以實現最佳服務',
+          '🎯 基於優先級的 SLA 目標以實現最���服務',
           '📈 詳細合規報告供相關方參考'
         ]
       },
@@ -552,7 +552,7 @@ export function SLAMonitoring({ language = 'en' }: SLAMonitoringProps) {
           <div className="bg-white/50 rounded-lg p-6 mt-4">
             <h4 className="font-semibold text-indigo-900 mb-4">{t.benefits.title}</h4>
             <ul className="text-left space-y-2 max-w-md mx-auto">
-              {t.benefits.items.map((item, index) => (
+              {(t.benefits?.items || []).map((item, index) => (
                 <li key={index} className="flex items-start gap-2 text-indigo-800">
                   <CheckCircle2 className="size-5 text-indigo-600 shrink-0 mt-0.5" />
                   <span>{item}</span>
