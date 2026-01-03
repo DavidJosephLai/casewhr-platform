@@ -406,4 +406,13 @@
   .animate-batik-flow {
     animation: batik-flow 20s linear infinite;
   }
+
+  /* 🔥 Force Select dropdown to be on top of everything */
+  [data-radix-popper-content-wrapper] {
+    z-index: 999999 !important;
+  }
+  
+  [data-slot="select-content"] {
+    z-index: 999999 !important;
+  }
 }
