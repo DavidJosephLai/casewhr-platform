@@ -14,7 +14,7 @@ const ECPAY_CONFIG = {
   merchantId: Deno.env.get('ECPAY_MERCHANT_ID') || '',
   hashKey: Deno.env.get('ECPAY_HASH_KEY') || '',
   hashIV: Deno.env.get('ECPAY_HASH_IV') || '',
-  mode: Deno.env.get('ECPAY_MODE') || 'production', // ✅ 生產環境
+  mode: Deno.env.get('ECPAY_MODE') || 'sandbox', // ✅ 先切回測試環境
   
   // API URLs
   get apiUrl() {
@@ -604,6 +604,32 @@ export function registerECPayRoutes(app: any) {
   console.log('[ECPay] Registering ECPay payment routes...');
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🔧 ECPay Configuration Check Endpoint
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  app.get('/make-server-215f78a5/ecpay/config-check', async (c: Context) => {
+    try {
+      const configured = !!(
+        ECPAY_CONFIG.merchantId &&
+        ECPAY_CONFIG.hashKey &&
+        ECPAY_CONFIG.hashIV
+      );
+
+      return c.json({
+        configured,
+        mode: ECPAY_CONFIG.mode,
+        merchantId: ECPAY_CONFIG.merchantId ? '✅ Set' : '❌ Missing',
+        hashKey: ECPAY_CONFIG.hashKey ? '✅ Set' : '❌ Missing',
+        hashIV: ECPAY_CONFIG.hashIV ? '✅ Set' : '❌ Missing',
+        apiUrl: ECPAY_CONFIG.apiUrl,
+        callbackUrl: `${Deno.env.get('SUPABASE_URL')}/functions/v1/make-server-215f78a5/ecpay/callback`,
+      });
+    } catch (error: any) {
+      console.error('[ECPay] Config check error:', error);
+      return c.json({ error: error.message }, 500);
+    }
+  });
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 🆕 Create ECPay Order - 創建綠界訂單
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   app.post('/make-server-215f78a5/ecpay/create-order', async (c: Context) => {
@@ -708,7 +734,7 @@ export function registerECPayRoutes(app: any) {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 🆕 ECPay Callback - 接收付款通知
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━��━━━━━━━━
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   app.post('/make-server-215f78a5/ecpay/callback', async (c: Context) => {
     try {
       const formData = await c.req.formData();
@@ -848,6 +874,125 @@ export function registerECPayRoutes(app: any) {
     } catch (error) {
       console.error('[ECPay API] Error getting user payments:', error);
       return c.json({ error: 'Failed to get payments' }, 500);
+    }
+  });
+
+  // Get payments (支持按狀態和用戶篩選)
+  app.get('/make-server-215f78a5/ecpay-payments', async (c: Context) => {
+    const accessToken = c.req.header('X-Dev-Token') || c.req.header('Authorization')?.split(' ')[1];
+    const { user, error } = await getUserFromToken(accessToken);
+
+    if (!user || error) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    try {
+      const status = c.req.query('status'); // pending, confirmed, rejected
+      const userEmail = c.req.query('userEmail');
+
+      let payments: ECPayPayment[] = [];
+
+      if (userEmail) {
+        // Get specific user's payments
+        const userPaymentIds = await kv.get(`ecpay_payments:user:${user.id}`) || [];
+        for (const id of userPaymentIds) {
+          const payment = await kv.get(`ecpay_payment:${id}`);
+          if (payment && payment.user_email === userEmail) {
+            payments.push(payment);
+          }
+        }
+      } else {
+        // Get all user's payments
+        const userPaymentIds = await kv.get(`ecpay_payments:user:${user.id}`) || [];
+        for (const id of userPaymentIds) {
+          const payment = await kv.get(`ecpay_payment:${id}`);
+          if (payment) {
+            payments.push(payment);
+          }
+        }
+      }
+
+      // Filter by status if provided
+      if (status) {
+        payments = payments.filter(p => p.status === status);
+      }
+
+      // Sort by created_at (newest first)
+      payments.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      return c.json({ payments });
+    } catch (error) {
+      console.error('[ECPay API] Error getting payments:', error);
+      return c.json({ error: 'Failed to get payments' }, 500);
+    }
+  });
+
+  // Get payment by order ID
+  app.get('/make-server-215f78a5/ecpay-payments/by-order/:orderId', async (c: Context) => {
+    const accessToken = c.req.header('X-Dev-Token') || c.req.header('Authorization')?.split(' ')[1];
+    const { user, error } = await getUserFromToken(accessToken);
+
+    if (!user || error) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    try {
+      const orderId = c.req.param('orderId');
+      
+      // Search for payment with this ECPay transaction ID
+      const allPayments = await kv.getByPrefix('ecpay_payment:');
+      const payment = allPayments.find(p => 
+        p && p.ecpay_transaction_id === orderId && p.user_id === user.id
+      );
+
+      if (!payment) {
+        return c.json({ error: 'Payment not found' }, 404);
+      }
+
+      return c.json({ payment });
+    } catch (error) {
+      console.error('[ECPay API] Error getting payment by order ID:', error);
+      return c.json({ error: 'Failed to get payment' }, 500);
+    }
+  });
+
+  // User confirm their own payment
+  app.post('/make-server-215f78a5/ecpay-payments/:id/confirm', async (c: Context) => {
+    const accessToken = c.req.header('X-Dev-Token') || c.req.header('Authorization')?.split(' ')[1];
+    const { user, error } = await getUserFromToken(accessToken);
+
+    if (!user || error) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const paymentId = c.req.param('id');
+    
+    try {
+      // Verify user owns this payment
+      const payment = await getPaymentById(paymentId);
+      if (!payment) {
+        return c.json({ error: 'Payment not found' }, 404);
+      }
+
+      if (payment.user_id !== user.id) {
+        return c.json({ error: 'Forbidden' }, 403);
+      }
+
+      const result = await confirmPayment(paymentId, `User self-confirm: ${user.email}`);
+
+      if (!result.success) {
+        return c.json({ error: result.error }, 400);
+      }
+
+      return c.json({ 
+        success: true,
+        payment: await getPaymentById(paymentId)
+      });
+    } catch (error) {
+      console.error('[ECPay API] Error confirming payment:', error);
+      return c.json({ error: 'Failed to confirm payment' }, 500);
     }
   });
 

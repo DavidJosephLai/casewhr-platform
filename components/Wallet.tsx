@@ -11,6 +11,9 @@ import { useExchangeRate } from "../hooks/useExchangeRate";
 import { fetchWithRetry, parseJsonResponse } from "../lib/apiErrorHandler";
 import { ECPayDiagnostic } from "./ECPayDiagnostic";
 import { DiagnosticQuickGuide } from "./DiagnosticQuickGuide";
+import { ECPayManualConfirm } from "./ECPayManualConfirm";
+import { ECPayCallbackDiagnostic } from "./ECPayCallbackDiagnostic";
+import { ECPayConfigChecker } from "./ECPayConfigChecker";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -532,7 +535,7 @@ function WalletComponent({ refreshKey }: WalletProps) {
             ? `Failed to create order: ${errorData.error}`
             : language === 'zh-CN'
             ? `创建订单失败：${errorData.error}`
-            : `創建訂單失敗：${errorData.error}`
+            : `創���訂單失敗：${errorData.error}`
         );
       }
     } catch (error: any) {
@@ -554,7 +557,7 @@ function WalletComponent({ refreshKey }: WalletProps) {
     const amount = parseFloat(depositAmount);
     
     if (!amount || amount <= 0) {
-      toast.error(language === 'en' ? 'Please enter a valid amount' : '請輸入有效金額');
+      toast.error(language === 'en' ? 'Please enter a valid amount' : '請輸入有效額');
       return;
     }
 
@@ -767,6 +770,12 @@ function WalletComponent({ refreshKey }: WalletProps) {
     <div className="space-y-6">
       {/* 三幣別匯率指示器 */}
       <ExchangeRateIndicator />
+
+      {/* 🔧 ECPay 配置檢查器 */}
+      <ECPayConfigChecker />
+
+      {/* 🆕 ECPay 手動確認工具 */}
+      <ECPayManualConfirm />
 
       {/* Wallet Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
