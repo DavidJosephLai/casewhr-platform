@@ -1,9 +1,7 @@
-import { Button } from "./ui/button";
-import { Briefcase, Globe, User, LogOut, LayoutDashboard, Home, Shield, Crown, DollarSign, MessageCircle, ChevronDown, Target } from "lucide-react";
-import { useLanguage } from "../lib/LanguageContext";
+import { useLanguage } from '../lib/LanguageContext';
 import { translations, getTranslation } from "../lib/translations";
-// 🆕 使用新的 Figma 提供的 logo
-import logo from "figma:asset/f57ca824e16ab20584164cfe41da96be15934ce1.png";
+// 🆕 使用 CaseWhrLogo 组件替代 figma:asset
+// import logo from "figma:asset/f57ca824e16ab20584164cfe41da96be15934ce1.png";
 import CaseWhrLogo from "./CaseWhrLogo";
 import { AuthDialogs } from "./AuthDialogs";
 import { UserProfile } from "./UserProfile";
@@ -15,7 +13,9 @@ import { useView } from "../contexts/ViewContext";
 import { useSubscription } from "../hooks/useSubscription";
 import { isAnyAdmin, getAdminLevel, AdminLevel } from "../config/admin";
 import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
+import { Crown, ChevronDown, Menu, X, Globe, User, Settings, LogOut, MessageSquare, Bell, LayoutDashboard, Briefcase, Target, Shield, MessageCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -217,7 +217,7 @@ export function Header() {
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <button onClick={scrollToTop} className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
-              <img src={logo} alt="Case Where" className="h-12 w-auto" />
+              <CaseWhrLogo className="h-12 w-auto" />
               <span className="text-2xl font-bold text-gray-800 whitespace-nowrap leading-none">接得準</span>
             </button>
 

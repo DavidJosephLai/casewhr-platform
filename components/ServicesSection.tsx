@@ -1,24 +1,26 @@
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import { ArrowRight, Stethoscope, Users, ShieldCheck, Heart, Calendar, FileText, Phone, MapPin, Clock, Award, Zap, Globe } from "lucide-react";
+import { useLanguage } from '../lib/LanguageContext';
+import { translations, getTranslation } from '../lib/translations';
+import { CheckCircle, Users, Shield, TrendingUp, ArrowRight, Zap } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
 import { motion } from "framer-motion";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import satuSehatImage from 'figma:asset/822c7988ed2baf3bffdfaafe3b1ba3c9b8e61473.png';
+// import satuSehatImage from 'figma:asset/822c7988ed2baf3bffdfaafe3b1ba3c9b8e61473.png';
 
 export function ServicesSection() {
   const mainServices = [
     {
-      icon: Stethoscope,
+      icon: CheckCircle,
       title: "Platform SatuSehat",
       description: "Sistem informasi kesehatan terintegrasi untuk memudahkan akses layanan kesehatan di seluruh Indonesia.",
-      image: satuSehatImage,
+      image: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
       features: ["Rekam Medis Digital", "Telemedicine", "Booking Online"],
       badge: "PRIORITAS",
       color: "from-kemenkes-teal to-blue-500"
     },
     {
-      icon: ShieldCheck,
+      icon: Shield,
       title: "Penanggulangan Penyakit",
       description: "Program komprehensif pencegahan dan pengendalian penyakit menular dan tidak menular.",
       image: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
@@ -27,7 +29,7 @@ export function ServicesSection() {
       color: "from-red-500 to-pink-500"
     },
     {
-      icon: Heart,
+      icon: TrendingUp,
       title: "Farmasi dan Alat Kesehatan",
       description: "Pengawasan dan distribusi obat-obatan serta alat kesehatan untuk menjamin kualitas dan keamanan.",
       image: "https://images.unsplash.com/photo-1631549916768-4119b2e5f926?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
@@ -43,46 +45,37 @@ export function ServicesSection() {
       features: ["Analisis Kebijakan", "Evaluasi Program", "Koordinasi Lintas Sektor"],
       badge: "STRATEGIS",
       color: "from-purple-500 to-indigo-500"
-    },
-    {
-      icon: Award,
-      title: "Pantauan Kejadian Krisis Kesehatan",
-      description: "Sistem monitoring dan respons cepat untuk menangani krisis kesehatan dan bencana.",
-      image: "https://images.unsplash.com/photo-1584515933487-779824d29309?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
-      features: ["Alert System", "Emergency Response", "Crisis Management"],
-      badge: "SIAGA",
-      color: "from-orange-500 to-red-500"
     }
   ];
 
   const quickServices = [
-    { icon: Calendar, title: "Buat Janji Temu", desc: "Booking online Puskesmas & RS", urgent: false },
-    { icon: FileText, title: "Cek Hasil Lab", desc: "Akses hasil pemeriksaan", urgent: false },
-    { icon: Phone, title: "Konsultasi Online", desc: "Telehealth 24/7", urgent: true },
-    { icon: MapPin, title: "Lokasi Faskes", desc: "Cari fasilitas terdekat", urgent: false },
-    { icon: ShieldCheck, title: "Status Imunisasi", desc: "Cek riwayat vaksin", urgent: false },
-    { icon: Clock, title: "Layanan Darurat", desc: "Hotline 119", urgent: true }
+    { icon: CheckCircle, title: "Buat Janji Temu", desc: "Booking online Puskesmas & RS", urgent: false },
+    { icon: CheckCircle, title: "Cek Hasil Lab", desc: "Akses hasil pemeriksaan", urgent: false },
+    { icon: CheckCircle, title: "Konsultasi Online", desc: "Telehealth 24/7", urgent: true },
+    { icon: CheckCircle, title: "Lokasi Faskes", desc: "Cari fasilitas terdekat", urgent: false },
+    { icon: CheckCircle, title: "Status Imunisasi", desc: "Cek riwayat vaksin", urgent: false },
+    { icon: CheckCircle, title: "Layanan Darurat", desc: "Hotline 119", urgent: true }
   ];
 
   const digitalServices = [
     {
       title: "SIKM (Sistem Informasi Kesehatan Masyarakat)",
       description: "Portal terintegrasi untuk layanan kesehatan digital",
-      icon: Globe,
+      icon: CheckCircle,
       stats: "2.1M+ pengguna",
       image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&q=80"
     },
     {
       title: "E-Puskesmas",
       description: "Sistem manajemen Puskesmas berbasis digital",
-      icon: Stethoscope,
+      icon: CheckCircle,
       stats: "11,847 Puskesmas",
       image: "https://images.unsplash.com/photo-1638202993928-7267aad84c31?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&q=80"
     },
     {
       title: "Aplikasi PeduliLindungi",
       description: "Tracing dan monitoring kesehatan masyarakat",
-      icon: ShieldCheck,
+      icon: CheckCircle,
       stats: "234M+ unduhan",
       image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&q=80"
     }

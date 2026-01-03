@@ -119,11 +119,9 @@ export const auth = {
       console.log('✅ [SignIn] Login successful');
       return { user: data.user, access_token: data.session?.access_token || null };
     } catch (error: any) {
-      // 🧪 在 Figma Make 環境中，Supabase 認證通常會失敗，這是正常的
-      // 直接提示用戶使用開發模式，不顯示詳細錯誤
-      const devError = new Error('請使用開發模式登入（右下角黃色卡片）');
-      (devError as any).code = 'need_dev_mode';
-      throw devError;
+      // 重新拋出原始錯誤，讓上層處理
+      console.error('❌ [SignIn] Login failed:', error.message);
+      throw error;
     }
   },
 
