@@ -32,7 +32,7 @@ export function CurrencySelector({
         {showIcon && <DollarSign className="h-4 w-4 mr-2 opacity-50" />}
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="z-[99999]">
         {CURRENCIES.map((currencyCode) => {
           const currencyInfo = getCurrencyInfo(currencyCode);
           const displayName = language === 'en' 
