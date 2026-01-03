@@ -83,6 +83,11 @@ function WalletComponent({ refreshKey }: WalletProps) {
     setSelectedCurrency(getDefaultCurrency(language));
   }, [language]);
 
+  // 💱 錢包金額換算輔助函數（資料庫存 USD，顯示時換算）
+  const convertWalletAmount = (usdAmount: number): number => {
+    return convertCurrency(usdAmount, 'USD', selectedCurrency);
+  };
+
   // 🔥 添加認證 headers 處理函數
   const getHeaders = () => {
     const isDevMode = accessToken?.startsWith('dev-user-');
@@ -305,7 +310,7 @@ function WalletComponent({ refreshKey }: WalletProps) {
           toast.error(
             language === 'en' 
               ? '💳 PayPal payment is not available. Please contact support.' 
-              : '💳 PayPal 支付不可用。���聯繫客服。'
+              : '💳 PayPal 支付不可用。聯繫客服。'
           );
           setLoading(false);
           return;
@@ -808,7 +813,7 @@ function WalletComponent({ refreshKey }: WalletProps) {
           </CardHeader>
           <CardContent>
             <p className="text-3xl text-blue-600">
-              {formatCurrency(wallet?.available_balance || 0, selectedCurrency)}
+              {formatCurrency(convertWalletAmount(wallet?.available_balance || 0), selectedCurrency)}
             </p>
             <div className="flex gap-2 mt-4">
               <Button 
@@ -855,7 +860,7 @@ function WalletComponent({ refreshKey }: WalletProps) {
           </CardHeader>
           <CardContent>
             <p className="text-3xl text-gray-700">
-              {formatCurrency(wallet?.pending_withdrawal || 0, selectedCurrency)}
+              {formatCurrency(convertWalletAmount(wallet?.pending_withdrawal || 0), selectedCurrency)}
             </p>
             <p className="text-sm text-gray-500 mt-2">
               {isClient 
@@ -878,8 +883,8 @@ function WalletComponent({ refreshKey }: WalletProps) {
           <CardContent>
             <p className="text-3xl text-gray-700">
               {isFreelancer 
-                ? formatCurrency(wallet?.total_earned || 0, selectedCurrency)
-                : formatCurrency(wallet?.total_spent || 0, selectedCurrency)}
+                ? formatCurrency(convertWalletAmount(wallet?.total_earned || 0), selectedCurrency)
+                : formatCurrency(convertWalletAmount(wallet?.total_spent || 0), selectedCurrency)}
             </p>
             <p className="text-sm text-gray-500 mt-2">
               {language === 'en' ? 'Lifetime' : '歷史總計'}
