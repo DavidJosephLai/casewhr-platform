@@ -620,7 +620,7 @@ export function TeamManagement({ language = 'en' }: TeamManagementProps) {
                 >
                   <div className="flex items-center gap-4 flex-1">
                     <Avatar className="h-12 w-12 bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white font-semibold">
-                      {member.name[0].toUpperCase()}
+                      {member.name?.[0]?.toUpperCase() || '?'}
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
