@@ -7,7 +7,7 @@ import { sendDepositConfirmation } from './deposit_email_helper.tsx';
 // PayPal Configuration
 const PAYPAL_CLIENT_ID = (Deno.env.get('PAYPAL_CLIENT_ID') || '').trim();
 const PAYPAL_CLIENT_SECRET = (Deno.env.get('PAYPAL_CLIENT_SECRET') || '').trim();
-const PAYPAL_MODE = (Deno.env.get('PAYPAL_MODE') || 'sandbox').trim(); // 'sandbox' or 'live'
+const PAYPAL_MODE = (Deno.env.get('PAYPAL_MODE') || 'live').trim(); // 'sandbox' or 'live' - ✅ 生產環境
 
 // PayPal API Base URLs
 const PAYPAL_API_BASE = PAYPAL_MODE === 'live'

@@ -15422,7 +15422,7 @@ app.post("/make-server-215f78a5/api/paypal/config-test", async (c) => {
   try {
     const PAYPAL_CLIENT_ID = (Deno.env.get('PAYPAL_CLIENT_ID') || '').trim();
     const PAYPAL_CLIENT_SECRET = (Deno.env.get('PAYPAL_CLIENT_SECRET') || '').trim();
-    const PAYPAL_MODE = (Deno.env.get('PAYPAL_MODE') || 'sandbox').trim();
+    const PAYPAL_MODE = (Deno.env.get('PAYPAL_MODE') || 'live').trim(); // ✅ 生產環境
     const PAYPAL_API_BASE = PAYPAL_MODE === 'live'
       ? 'https://api-m.paypal.com'
       : 'https://api-m.sandbox.paypal.com';

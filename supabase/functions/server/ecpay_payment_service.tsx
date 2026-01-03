@@ -11,10 +11,10 @@ const supabase = createClient(
 // 🇹🇼 ECPay Configuration
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const ECPAY_CONFIG = {
-  merchantId: Deno.env.get('ECPAY_MERCHANT_ID') || '2000132',
+  merchantId: Deno.env.get('ECPAY_MERCHANT_ID') || '',
   hashKey: Deno.env.get('ECPAY_HASH_KEY') || '',
   hashIV: Deno.env.get('ECPAY_HASH_IV') || '',
-  mode: Deno.env.get('ECPAY_MODE') || 'production', // ✅ 默認生產模式
+  mode: Deno.env.get('ECPAY_MODE') || 'production', // ✅ 生產環境
   
   // API URLs
   get apiUrl() {
@@ -605,7 +605,7 @@ export function registerECPayRoutes(app: any) {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 🆕 Create ECPay Order - 創建綠界訂單
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━��━━━━━━━
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   app.post('/make-server-215f78a5/ecpay/create-order', async (c: Context) => {
     const accessToken = c.req.header('Authorization')?.split(' ')[1];
     const { user, error } = await getUserFromToken(accessToken);
@@ -674,7 +674,7 @@ export function registerECPayRoutes(app: any) {
         ClientBackURL: clientBackURL, // 用戶支付後跳轉 URL
         ChoosePayment: 'Credit', // 信用卡
         EncryptType: 1,
-        // 自定義���位 - 儲存 user_id 和 payment_id
+        // 自定義位 - 儲存 user_id 和 payment_id
         CustomField1: user.id,
         CustomField2: paymentResult.payment?.id,
       };
@@ -708,7 +708,7 @@ export function registerECPayRoutes(app: any) {
 
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 🆕 ECPay Callback - 接收付款通知
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━���━━━━━━━━━━━━
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━��━━━━━━━━
   app.post('/make-server-215f78a5/ecpay/callback', async (c: Context) => {
     try {
       const formData = await c.req.formData();
