@@ -168,7 +168,7 @@ export function SLAMonitoring({ language = 'en' }: SLAMonitoringProps) {
       stats: '效能統計',
       avgResponse: '平均回應時間',
       avgResponseDesc: '所有工單的平均首次回應時間',
-      avgResolution: '平均��決時間',
+      avgResolution: '平均解決時間',
       avgResolutionDesc: '所有工單的平均解決時間',
       slaTarget: 'SLA 目標',
       met: '達成',
@@ -405,6 +405,17 @@ export function SLAMonitoring({ language = 'en' }: SLAMonitoringProps) {
   };
 
   const t = translations[language];
+
+  // 🔍 安全檢查：確保 t 存在
+  if (!t) {
+    console.error('❌ [SLAMonitoring] Translation not found for language:', language);
+    // Fallback to English
+    const tFallback = translations['en'];
+    if (!tFallback) {
+      console.error('❌ [SLAMonitoring] Critical: English translations missing!');
+      return null;
+    }
+  }
 
   useEffect(() => {
     if (user) {
