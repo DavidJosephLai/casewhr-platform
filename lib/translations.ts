@@ -584,11 +584,13 @@ export const translations = {
       depositFunds: "Deposit Funds",
       withdrawFunds: "Withdraw Funds",
       transactionTypes: {
-        deposit: "Deposit",
-        withdrawal: "Withdrawal",
-        escrow: "Escrow",
-        release: "Release",
-        refund: "Refund"
+        deposit: "存款",
+        withdrawal: "提款",
+        escrow: "托管",
+        release: "釋放",
+        refund: "退款",
+        subscription_upgrade: "訂閱升級",
+        subscription_revenue: "訂閱收入"
       }
     },
     subscription: {
@@ -1267,7 +1269,9 @@ export const translations = {
         withdrawal: "提款",
         escrow: "托管",
         release: "釋放",
-        refund: "退款"
+        refund: "退款",
+        subscription_upgrade: "訂閱升級",
+        subscription_revenue: "訂閱收入"
       }
     },
     subscription: {
