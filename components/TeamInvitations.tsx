@@ -108,6 +108,15 @@ export function TeamInvitations({ language = 'en' }: TeamInvitationsProps) {
   };
 
   const t = translations[language] || translations.en;
+  
+  // ✅ 安全檢查：確保 invitations 是數組
+  const safeInvitations = Array.isArray(invitations) ? invitations : [];
+  
+  console.log('📬 [TeamInvitations] State check:', {
+    invitations,
+    isArray: Array.isArray(invitations),
+    length: safeInvitations.length
+  });
 
   useEffect(() => {
     if (user && accessToken) {
@@ -242,7 +251,7 @@ export function TeamInvitations({ language = 'en' }: TeamInvitationsProps) {
           </div>
         ) : (
           <div className="space-y-4">
-            {invitations.map((invitation) => (
+            {safeInvitations.map((invitation) => (
               <Card key={invitation.id} className="overflow-hidden border-2 border-purple-100 hover:border-purple-300 transition-colors">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between gap-4">
