@@ -13,7 +13,6 @@ import { ECPayDiagnostic } from "./ECPayDiagnostic";
 import { DiagnosticQuickGuide } from "./DiagnosticQuickGuide";
 import { ECPayManualConfirm } from "./ECPayManualConfirm";
 import { ECPayCallbackDiagnostic } from "./ECPayCallbackDiagnostic";
-import { ECPayConfigChecker } from "./ECPayConfigChecker";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -794,9 +793,6 @@ function WalletComponent({ refreshKey }: WalletProps) {
     <div className="space-y-6">
       {/* 三幣別匯率指示器 */}
       <ExchangeRateIndicator />
-
-      {/* 🔧 ECPay 配置檢查器 */}
-      <ECPayConfigChecker />
 
       {/* 🆕 ECPay 手動確認工具 */}
       <ECPayManualConfirm />
