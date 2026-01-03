@@ -87,6 +87,45 @@ function WalletComponent({ refreshKey }: WalletProps) {
     return convertCurrency(usdAmount, 'USD', selectedCurrency);
   };
 
+  // 🐛 調試函數：顯示原始 USD 數據
+  const showDebugInfo = () => {
+    if (!wallet) return;
+    
+    // 獲取當前匯率
+    const twdRate = convertCurrency(1, 'USD', 'TWD');
+    const cnyRate = convertCurrency(1, 'USD', 'CNY');
+    
+    const debugInfo = `
+🔍 錢包調試信息：
+
+💰 原始數據（USD）：
+- 可用餘額：$${wallet.available_balance?.toFixed(2) || '0.00'} USD
+- 托管中：$${wallet.pending_withdrawal?.toFixed(2) || '0.00'} USD
+- 總收入：$${wallet.total_earned?.toFixed(2) || '0.00'} USD
+- 總支出：$${wallet.total_spent?.toFixed(2) || '0.00'} USD
+
+💱 顯示數據（${selectedCurrency}）：
+- 可用餘額：${formatCurrency(convertWalletAmount(wallet.available_balance || 0), selectedCurrency)}
+- 托管中：${formatCurrency(convertWalletAmount(wallet.pending_withdrawal || 0), selectedCurrency)}
+- 總收入：${formatCurrency(convertWalletAmount(wallet.total_earned || 0), selectedCurrency)}
+- 總支出：${formatCurrency(convertWalletAmount(wallet.total_spent || 0), selectedCurrency)}
+
+⚙️ 當前即時匯率：
+1 USD = ${twdRate.toFixed(4)} TWD
+1 USD = ${cnyRate.toFixed(4)} CNY
+
+📊 匯率來源：
+${rateLoading ? '⏳ 載入中...' : '✅ API 即時匯率（緩存 1 小時）'}
+
+🧮 計算驗證：
+$${wallet.available_balance?.toFixed(2)} × ${twdRate.toFixed(4)} = NT$${(wallet.available_balance || 0) * twdRate}
+$${wallet.total_spent?.toFixed(2)} × ${twdRate.toFixed(4)} = NT$${(wallet.total_spent || 0) * twdRate}
+    `.trim();
+    
+    console.log(debugInfo);
+    alert(debugInfo);
+  };
+  
   // 🔥 添加認證 headers 處理函數
   const getHeaders = () => {
     const isDevMode = accessToken?.startsWith('dev-user-');
@@ -793,6 +832,30 @@ function WalletComponent({ refreshKey }: WalletProps) {
     <div className="space-y-6">
       {/* 三幣別匯率指示器 */}
       <ExchangeRateIndicator />
+
+      {/* 🐛 調試按鈕（開發模式） */}
+      {accessToken?.startsWith('dev-user-') && (
+        <div className="bg-purple-50 border-2 border-purple-300 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-purple-900">
+                🐛 開發者調試工具
+              </p>
+              <p className="text-xs text-purple-700">
+                查看原始 USD 數據和貨幣轉換詳情
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={showDebugInfo}
+              className="border-purple-300 text-purple-700 hover:bg-purple-100"
+            >
+              顯示調試信息
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* 🆕 ECPay 手動確認工具 */}
       <ECPayManualConfirm />

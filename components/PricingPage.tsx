@@ -1,3 +1,4 @@
+import { convertCurrency } from "../lib/currency";
 import { useSubscription } from "../hooks/useSubscription";
 import { toast } from "sonner";
 import { getDefaultCurrency, formatCurrency, type Currency } from "../lib/currency";
@@ -327,9 +328,20 @@ export function PricingPage() {
                     {fetchingBalance ? (
                       <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
                     ) : (
-                      <p className="text-lg font-semibold text-gray-900">
-                        ${walletBalance.toFixed(2)}
-                      </p>
+                      <div>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {formatCurrency(
+                            convertCurrency(walletBalance, 'USD', selectedCurrency),
+                            selectedCurrency
+                          )}
+                        </p>
+                        {/* 🐛 開發模式：顯示原始 USD 值 */}
+                        {accessToken?.startsWith('dev-user-') && (
+                          <p className="text-xs text-purple-600 mt-1">
+                            💾 原始: ${walletBalance.toFixed(2)} USD
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -410,7 +422,7 @@ export function PricingPage() {
                         </Badge>
                       )}
                       
-                      {/* 當前方案徽章 - 根據���案類型使用不同顏色 */}
+                      {/* 當前方案徽章 - 根據方案類型使用不同顏色 */}
                       {user && subscription?.plan === plan.id && (
                         <Badge className={`absolute -top-3 right-4 ${badgeColor[plan.id]}`}>
                           {language === 'en' ? 'Current Plan' : '當前方案'}
