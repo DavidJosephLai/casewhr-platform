@@ -231,19 +231,19 @@ export function Header() {
                   {language === 'en' ? 'Dashboard' : '儀表板'}
                 </button>
               )}
-              <button onClick={() => scrollToSection('services')} className="hover:text-blue-600 transition-colors">
+              <button onClick={() => scrollToSection('services')} className="text-gray-700 hover:text-blue-600 transition-colors">
                 {t.nav.services}
               </button>
-              <button onClick={() => scrollToSection('talents')} className="hover:text-blue-600 transition-colors">
+              <button onClick={() => scrollToSection('talents')} className="text-gray-700 hover:text-blue-600 transition-colors">
                 {language === 'en' ? 'Browse Talent' : '瀏覽人才'}
               </button>
-              <button onClick={() => scrollToSection('projects')} className="hover:text-blue-600 transition-colors">
+              <button onClick={() => scrollToSection('projects')} className="text-gray-700 hover:text-blue-600 transition-colors">
                 {language === 'en' ? 'Browse Posted Projects' : '瀏覽發案項目'}
               </button>
-              <button onClick={() => scrollToSection('cases')} className="hover:text-blue-600 transition-colors -ml-3 xl:-ml-4">
+              <button onClick={() => scrollToSection('cases')} className="text-gray-700 hover:text-blue-600 transition-colors -ml-3 xl:-ml-4">
                 {t.nav.cases}
               </button>
-              <button onClick={() => scrollToSection('categories')} className="hover:text-blue-600 transition-colors">
+              <button onClick={() => scrollToSection('categories')} className="text-gray-700 hover:text-blue-600 transition-colors">
                 {t.nav.categories}
               </button>
               <button 
@@ -257,7 +257,7 @@ export function Header() {
               {/* 流程下拉菜單 */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="hover:text-blue-600 transition-colors flex items-center gap-1">
+                  <button className="text-gray-700 hover:text-blue-600 transition-colors flex items-center gap-1">
                     {t.nav.process}
                     <ChevronDown className="h-3 w-3" />
                   </button>
@@ -288,7 +288,7 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              <button onClick={() => scrollToSection('contact')} className="hover:text-blue-600 transition-colors">
+              <button onClick={() => scrollToSection('contact')} className="text-gray-700 hover:text-blue-600 transition-colors">
                 {t.nav.contact}
               </button>
             </nav>

@@ -41,7 +41,7 @@ export function Footer() {
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3 mb-4">
-              <CaseWhrLogo className="h-16 w-auto brightness-0 invert opacity-70" style={{ filter: 'brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(180deg) brightness(1.1)' }} />
+              <CaseWhrLogo className="h-16 w-auto brightness-0 invert" />
               <span className="text-2xl font-bold text-white whitespace-nowrap leading-none">接得準</span>
             </div>
             <p className="text-gray-400 text-sm mb-4">{t.description}</p>
