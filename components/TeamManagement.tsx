@@ -243,7 +243,7 @@ export function TeamManagement({ language = 'en' }: TeamManagementProps) {
     }
   };
 
-  const t = translations[language];
+  const t = translations[language] || translations.en; // ✅ Fallback to English
 
   useEffect(() => {
     fetchMembers();
