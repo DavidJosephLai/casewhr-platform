@@ -76,6 +76,14 @@ function WalletComponent({ refreshKey }: WalletProps) {
   const { convertedAmount, getConvertedAmount, isLoading: rateLoading } = useExchangeRate();
   const [showECPayDiagnostic, setShowECPayDiagnostic] = useState(false);
   const [showQuickGuide, setShowQuickGuide] = useState(false);
+  
+  // ⭐ 平台收入統計（僅顯示給 davidlai117@yahoo.com.tw）
+  const [platformRevenue, setPlatformRevenue] = useState<{
+    total: number;
+    subscription: number;
+    serviceFee: number;
+  } | null>(null);
+  const isPlatformOwner = user?.email === 'davidlai117@yahoo.com.tw' || user?.email === 'davidlai234@hotmail.com';
 
   // 🌍 當語言變更時，自動更新顯示貨幣
   useEffect(() => {
@@ -243,6 +251,30 @@ $${wallet.total_spent?.toFixed(2)} × ${twdRate.toFixed(4)} = NT$${(wallet.total
       } else {
         console.error('[Wallet] Error loading transactions:', transactionsResponse.status);
         setTransactions([]);
+      }
+
+      // ⭐ 加載平台收入統計（僅平台擁有者）
+      if (isPlatformOwner) {
+        try {
+          const revenueTransactions = (transactionsData as any).transactions?.filter(
+            (t: Transaction) => t.type === 'subscription_revenue'
+          ) || [];
+          
+          const subscriptionRevenue = revenueTransactions.reduce(
+            (sum: number, t: Transaction) => sum + (t.amount || 0), 
+            0
+          );
+
+          setPlatformRevenue({
+            total: subscriptionRevenue,
+            subscription: subscriptionRevenue,
+            serviceFee: 0 // 未來可以加入服務費統計
+          });
+
+          console.log('💰 [Platform Revenue] Loaded:', { subscriptionRevenue });
+        } catch (error) {
+          console.error('Error loading platform revenue:', error);
+        }
       }
     } catch (error: any) {
       console.error('[Wallet] Error loading wallet data:', error.message);
@@ -859,6 +891,49 @@ $${wallet.total_spent?.toFixed(2)} × ${twdRate.toFixed(4)} = NT$${(wallet.total
 
       {/* 🆕 ECPay 手動確認工具 */}
       <ECPayManualConfirm />
+
+      {/* ⭐ 平台收入統計（僅顯示給平台擁有者） */}
+      {isPlatformOwner && platformRevenue && (
+        <Card className="border-2 border-green-300 bg-gradient-to-br from-green-50 to-white mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-900">
+              <TrendingUp className="h-5 w-5" />
+              {language === 'en' ? 'Platform Revenue' : '平台收入'}
+            </CardTitle>
+            <CardDescription>
+              {language === 'en' ? 'Total subscription revenue received' : '總訂閱收入'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">
+                  {language === 'en' ? 'Total Revenue' : '總收入'}
+                </p>
+                <p className="text-2xl text-green-600">
+                  {formatCurrency(convertWalletAmount(platformRevenue.total), selectedCurrency)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">
+                  {language === 'en' ? 'Subscription' : '訂閱收入'}
+                </p>
+                <p className="text-2xl text-blue-600">
+                  {formatCurrency(convertWalletAmount(platformRevenue.subscription), selectedCurrency)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">
+                  {language === 'en' ? 'Service Fees' : '服務費'}
+                </p>
+                <p className="text-2xl text-purple-600">
+                  {formatCurrency(convertWalletAmount(platformRevenue.serviceFee), selectedCurrency)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Wallet Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
