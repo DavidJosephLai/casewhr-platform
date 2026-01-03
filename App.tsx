@@ -12,8 +12,8 @@ import { toast, Toaster } from 'sonner';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { DevModeLogin } from './components/DevModeLogin';
 
-// 🔥 Version marker to force cache invalidation - v2.0.29
-console.log('🚀 [App v2.0.29] FIX: Currency selector z-index with !important in globals.css');
+// 🔥 Version marker to force cache invalidation - v2.0.31
+console.log('🚀 [App v2.0.31] FIX: SLA button text color (white) and navigation to sla-documentation view');
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));

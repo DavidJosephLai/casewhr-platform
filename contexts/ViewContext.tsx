@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useMemo, useCallback, useEffect } from 'react';
 
-type ViewType = 'home' | 'dashboard' | 'pricing' | 'admin' | 'brevo-test' | 'email-test' | 'env-check' | 'email-management' | 'email-integration' | 'stripe-env-check' | 'accept-invitation' | 'auth-callback' | 'reset-password' | 'auth-verify' | 'privacy-policy' | 'cookies-policy' | 'disclaimer' | 'about' | 'cases' | 'terms-of-service' | 'google-dns-verifier';
+type ViewType = 'home' | 'dashboard' | 'pricing' | 'admin' | 'brevo-test' | 'email-test' | 'env-check' | 'email-management' | 'email-integration' | 'stripe-env-check' | 'accept-invitation' | 'auth-callback' | 'reset-password' | 'auth-verify' | 'privacy-policy' | 'cookies-policy' | 'disclaimer' | 'about' | 'cases' | 'terms-of-service' | 'google-dns-verifier' | 'sla-documentation' | 'api-documentation' | 'auth-diagnostic' | 'simple-login-test' | 'figma-env-diagnostic' | 'ecpay-diagnostic' | 'google-oauth-test' | 'ai-seo' | 'ai-seo-test';
 
 interface ViewContextType {
   view: ViewType;
@@ -85,6 +85,15 @@ export function ViewProvider({ children }: { children: ReactNode }) {
         'cases': 'cases',
         'terms-of-service': 'terms-of-service',
         'google-dns-verifier': 'google-dns-verifier',
+        'sla-documentation': 'sla-documentation',
+        'api-documentation': 'api-documentation',
+        'auth-diagnostic': 'auth-diagnostic',
+        'simple-login-test': 'simple-login-test',
+        'figma-env-diagnostic': 'figma-env-diagnostic',
+        'ecpay-diagnostic': 'ecpay-diagnostic',
+        'google-oauth-test': 'google-oauth-test',
+        'ai-seo': 'ai-seo',
+        'ai-seo-test': 'ai-seo-test',
       };
       
       if (hash && hashToView[hash]) {

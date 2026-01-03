@@ -528,15 +528,20 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
                       : '查看我們對可靠、高品質服務的承諾'}
                   </CardDescription>
                 </div>
-                <Button
-                  onClick={() => {
-                    setView('sla-documentation');
-                    setManualOverride(true);
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {language === 'en' ? 'View SLA' : language === 'zh-CN' ? '查看 SLA' : '查看 SLA'}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm px-3 py-1 bg-blue-100 text-blue-700 rounded-full">
+                    {language === 'en' ? 'Enterprise Only' : language === 'zh-CN' ? '企业版专属' : '企業版專屬'}
+                  </span>
+                  <Button
+                    onClick={() => {
+                      setView('sla-documentation');
+                      setManualOverride(true);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {language === 'en' ? 'View SLA' : language === 'zh-CN' ? '查看 SLA' : '查看 SLA'}
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
