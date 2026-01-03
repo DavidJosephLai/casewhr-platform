@@ -252,6 +252,12 @@ export const MembershipCard = memo(function MembershipCard() {
   const planDetails = t.plans[subscription.plan];
   const nextTierPlan = subscription.plan === 'free' ? 'pro' : subscription.plan === 'pro' ? 'enterprise' : null;
 
+  // ✅ 安全檢查：確保 planDetails 和 features 存在
+  if (!planDetails) {
+    console.error('❌ [MembershipCard] Plan details not found for plan:', subscription.plan);
+    return null;
+  }
+
   return (
     <>
       <Card className="overflow-hidden">
@@ -297,11 +303,15 @@ export const MembershipCard = memo(function MembershipCard() {
               {language === 'en' ? 'Key Features:' : '主要功能：'}
             </p>
             <ul className="space-y-1">
-              {planDetails.features.slice(0, 3).map((feature, index) => (
+              {planDetails.features?.slice(0, 3).map((feature, index) => (
                 <li key={index} className="text-sm text-gray-700">
                   • {feature}
                 </li>
-              ))}
+              )) || (
+                <li className="text-sm text-gray-500">
+                  {language === 'en' ? 'No features available' : '暫無功能列表'}
+                </li>
+              )}
             </ul>
           </div>
 

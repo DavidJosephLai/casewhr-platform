@@ -13,8 +13,8 @@ import { toast, Toaster } from 'sonner';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { DevModeLogin } from './components/DevModeLogin';
 
-// 🔥 Version marker to force cache invalidation - v2.0.2
-console.log('🚀 [App v2.0.2] Dashboard hotfix deployed - unified sonner imports');
+// 🔥 Version marker to force cache invalidation - v2.0.4
+console.log('🚀 [App v2.0.4] Fixed missing React lazy import');
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));
