@@ -634,7 +634,7 @@ export function TeamManagement({ language = 'en' }: TeamManagementProps) {
                       <p className="text-sm text-gray-600">{member.email}</p>
                       <div className="flex flex-wrap gap-2 mt-2">
                         {Object.entries(member.permissions).map(([key, value]) => (
-                          value && (
+                          value && t?.permissionLabels?.[key as keyof typeof t.permissionLabels] && (
                             <Badge key={key} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                               {t.permissionLabels[key as keyof typeof t.permissionLabels]}
                             </Badge>
