@@ -12,8 +12,8 @@ import { toast, Toaster } from 'sonner';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { DevModeLogin } from './components/DevModeLogin';
 
-// 🔥 Version marker to force cache invalidation - v2.0.5
-console.log('🚀 [App v2.0.5] Enhanced MembershipCard features array safety');
+// 🔥 Version marker to force cache invalidation - v2.0.6
+console.log('🚀 [App v2.0.6] CRITICAL FIX: MembershipCard features array complete safety check');
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));

@@ -258,6 +258,16 @@ export const MembershipCard = memo(function MembershipCard() {
     return null;
   }
 
+  // 🔍 調試日誌：檢查 features 數組
+  console.log('🔍 [MembershipCard] Plan details:', {
+    plan: subscription.plan,
+    hasPlanDetails: !!planDetails,
+    hasFeatures: !!planDetails.features,
+    isArray: Array.isArray(planDetails.features),
+    featuresLength: planDetails.features?.length,
+    features: planDetails.features
+  });
+
   return (
     <>
       <Card className="overflow-hidden">
