@@ -303,11 +303,13 @@ export const MembershipCard = memo(function MembershipCard() {
               {language === 'en' ? 'Key Features:' : '主要功能：'}
             </p>
             <ul className="space-y-1">
-              {planDetails.features?.slice(0, 3).map((feature, index) => (
-                <li key={index} className="text-sm text-gray-700">
-                  • {feature}
-                </li>
-              )) || (
+              {planDetails.features && Array.isArray(planDetails.features) && planDetails.features.length > 0 ? (
+                planDetails.features.slice(0, 3).map((feature, index) => (
+                  <li key={index} className="text-sm text-gray-700">
+                    • {feature}
+                  </li>
+                ))
+              ) : (
                 <li className="text-sm text-gray-500">
                   {language === 'en' ? 'No features available' : '暫無功能列表'}
                 </li>

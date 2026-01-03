@@ -1,20 +1,19 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { useEffect, useState, Suspense, lazy } from 'react';
+import { Hero } from './components/Hero';
+import { Header } from './components/Header';
+import { NetworkErrorNotice } from './components/NetworkErrorNotice';
+import { SEO, getPageSEO } from './components/SEO';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { LanguageProvider, useLanguage } from './lib/LanguageContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ViewProvider, useView } from './contexts/ViewContext';
 import { useExchangeRate } from './hooks/useExchangeRate';
-import { NetworkErrorNotice } from './components/NetworkErrorNotice';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { Header } from './components/Header';
-import { Hero } from './components/Hero';
-import { SEO } from './components/SEO';
-import { getPageSEO } from './lib/seoConfig';
 import { toast, Toaster } from 'sonner';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { DevModeLogin } from './components/DevModeLogin';
 
-// 🔥 Version marker to force cache invalidation - v2.0.4
-console.log('🚀 [App v2.0.4] Fixed missing React lazy import');
+// 🔥 Version marker to force cache invalidation - v2.0.5
+console.log('🚀 [App v2.0.5] Enhanced MembershipCard features array safety');
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));
@@ -680,7 +679,7 @@ function AppContent() {
       <NetworkErrorNotice />
       {/* ✅ 全局管理員浮動按鈕 - 只有管理員可見 */}
       <AdminFloatingButton />
-      {/* ✅ 快速管理面板 - 只有管理員可見 */}
+      {/* ✅ 快速管理板 - 只有管理員可見 */}
       <QuickAdminPanel />
       {/* ✨ AI SEO 管理器浮動按鈕 - 只有管理員可見 */}
       <AISEOFloatingButton />
