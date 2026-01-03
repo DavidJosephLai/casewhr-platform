@@ -15,7 +15,7 @@ import { DowngradeDialog } from "./DowngradeDialog";
 import { SubscriptionBadge, getSubscriptionName } from "./SubscriptionBadge";
 import { Wallet, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { projectId } from "../utils/supabase/info";
-import { CurrencySelector } from "./CurrencySelector";
+import { SimpleCurrencyDropdown } from "./SimpleCurrencyDropdown";
 
 export function PricingPage() {
   const { language } = useLanguage();
@@ -278,7 +278,7 @@ export function PricingPage() {
                   ? '查看价格：'
                   : '查看價格：'}
               </span>
-              <CurrencySelector
+              <SimpleCurrencyDropdown
                 value={selectedCurrency}
                 onChange={setSelectedCurrency}
                 className="w-32"
