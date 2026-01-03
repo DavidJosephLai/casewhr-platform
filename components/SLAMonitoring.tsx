@@ -404,17 +404,12 @@ export function SLAMonitoring({ language = 'en' }: SLAMonitoringProps) {
     }
   };
 
-  const t = translations[language];
+  const t = translations[language] || translations.en; // ✅ Fallback to English
 
-  // 🔍 安全檢查：確保 t 存在
-  if (!t) {
-    console.error('❌ [SLAMonitoring] Translation not found for language:', language);
-    // Fallback to English
-    const tFallback = translations['en'];
-    if (!tFallback) {
-      console.error('❌ [SLAMonitoring] Critical: English translations missing!');
-      return null;
-    }
+  // 🔍 安全檢查：確保 t 和 benefits 存在
+  if (!t || !t.benefits || !t.benefits.items) {
+    console.error('❌ [SLAMonitoring] Translation or benefits.items missing!', { language, t });
+    return null;
   }
 
   useEffect(() => {
