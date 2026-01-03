@@ -89,6 +89,8 @@ export function ECPayManualConfirm() {
 
     setLoading(true);
     try {
+      console.log('💰 [Manual Confirm] Starting payment confirmation:', { paymentId, userId: user?.id });
+      
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay-payments/${paymentId}/confirm`,
         {
@@ -103,8 +105,12 @@ export function ECPayManualConfirm() {
         }
       );
 
+      console.log('💰 [Manual Confirm] Response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('💰 [Manual Confirm] Response data:', data);
+        
         toast.success(
           language === 'en'
             ? `✅ Payment confirmed! $${data.payment?.amount_usd} added to wallet`
@@ -114,14 +120,21 @@ export function ECPayManualConfirm() {
         // 刷新付款列表
         await loadMyPendingPayments();
         
+        console.log('💰 [Manual Confirm] Dispatching refreshWallet event...');
         // 觸發錢包刷新
         window.dispatchEvent(new CustomEvent('refreshWallet'));
+        
+        // 等待一下讓事件處理完成
+        setTimeout(() => {
+          console.log('💰 [Manual Confirm] Wallet should be refreshed now');
+        }, 1000);
       } else {
         const error = await response.json();
+        console.error('💰 [Manual Confirm] Error response:', error);
         toast.error(error.error || '確認失敗');
       }
     } catch (error) {
-      console.error('Error confirming payment:', error);
+      console.error('💰 [Manual Confirm] Exception:', error);
       toast.error('確認付款失敗');
     } finally {
       setLoading(false);

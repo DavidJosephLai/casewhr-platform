@@ -98,6 +98,20 @@ function WalletComponent({ refreshKey }: WalletProps) {
     }
   }, [user?.id, accessToken, refreshKey]); // ✅ 添加 refreshKey 依賴
 
+  // 🔄 監聽錢包刷新事件
+  useEffect(() => {
+    const handleRefreshWallet = () => {
+      console.log('🔄 [Wallet] Received refreshWallet event, reloading data...');
+      loadWalletData();
+    };
+
+    window.addEventListener('refreshWallet', handleRefreshWallet);
+    
+    return () => {
+      window.removeEventListener('refreshWallet', handleRefreshWallet);
+    };
+  }, [user?.id, accessToken]); // 依賴於 user 和 token
+
   const loadWalletData = async () => {
     if (!user?.id || !accessToken) return;
 
@@ -535,7 +549,7 @@ function WalletComponent({ refreshKey }: WalletProps) {
             ? `Failed to create order: ${errorData.error}`
             : language === 'zh-CN'
             ? `创建订单失败：${errorData.error}`
-            : `創���訂單失敗：${errorData.error}`
+            : `創訂單失敗：${errorData.error}`
         );
       }
     } catch (error: any) {
@@ -954,7 +968,7 @@ function WalletComponent({ refreshKey }: WalletProps) {
               {language === 'en' 
                 ? '💵 Minimum deposit amount: NT$300 (≈ $10 USD)' 
                 : language === 'zh-CN'
-                ? '💵 最低充值金额：NT$300（约 ¥70 民币 / $10 美元）'
+                ? '💵 最低充值金额：NT$300（约 ¥70 民币 / $10 美���）'
                 : '💵 最低充值金額：NT$300（約 $10 USD）'}
             </p>
             <p className="text-xs text-green-700 whitespace-pre-line">
