@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { projectId, publicAnonKey } from "../utils/supabase/info";
-import { formatCurrency, type Currency } from "../lib/currency";
+import { formatCurrency, convertCurrency, type Currency } from "../lib/currency";
 import { useLanguage } from "../lib/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { getTranslation } from "../lib/translations";
@@ -130,8 +130,9 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
       return;
     }
 
-    // ⭐ 錢包餘額和價格都是 TWD，直接比較
-    if (walletBalance < planPriceTWD) {
+    // ⭐ 錢包餘額是 USD，需要轉換成目標貨幣比較
+    const walletBalanceInCurrency = convertCurrency(walletBalance, 'USD', selectedCurrency);
+    if (walletBalanceInCurrency < planPriceDisplay) {
       toast.error(t.upgradeDialog.insufficientBalance);
       return;
     }
@@ -171,8 +172,9 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
   };
 
   const planDetails = t.plans[targetPlan];
-  // ⭐ 錢包餘額和價格都是 TWD，直接比較
-  const hasEnoughBalance = walletBalance >= planPriceTWD;
+  // ⭐ 錢包餘額是 USD，需要轉換成目標貨幣比較
+  const walletBalanceInCurrency = convertCurrency(walletBalance, 'USD', selectedCurrency);
+  const hasEnoughBalance = walletBalanceInCurrency >= planPriceDisplay;
   
   // 根據計費週期設置顯示的價格和週期
   const displayPrice = formatCurrency(planPriceDisplay, selectedCurrency);
@@ -222,9 +224,10 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <span className={`font-medium ${hasEnoughBalance ? 'text-green-600' : 'text-red-600'}`}>
-                  {language === 'en' 
-                    ? `$${(walletBalance / 31.29).toFixed(2)}` 
-                    : `NT$${Math.round(walletBalance)}`}
+                  {formatCurrency(
+                    convertCurrency(walletBalance, 'USD', selectedCurrency),
+                    selectedCurrency
+                  )}
                 </span>
               )}
             </div>
@@ -239,8 +242,8 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
                 <p className="text-sm text-red-800">{t.upgradeDialog.insufficientBalance}</p>
                 <p className="text-xs text-red-600 mt-1">
                   {language === 'en' 
-                    ? `You need $${((planPriceTWD - walletBalance) / 31.29).toFixed(2)} more` 
-                    : `您還需要 NT$${Math.round(planPriceTWD - walletBalance)}`}
+                    ? `You need ${formatCurrency(planPriceDisplay - walletBalanceInCurrency, selectedCurrency)} more` 
+                    : `您還需要 ${formatCurrency(planPriceDisplay - walletBalanceInCurrency, selectedCurrency)}`}
                 </p>
                 <Button
                   variant="outline"

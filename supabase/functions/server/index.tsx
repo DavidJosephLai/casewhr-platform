@@ -4796,6 +4796,67 @@ app.post("/make-server-215f78a5/subscription/upgrade", async (c) => {
 
     console.log(`✅ [Subscription Upgrade] Deducted ${priceInUSD.toFixed(2)} USD, New balance: ${wallet.available_balance.toFixed(2)} USD`);
 
+    // ⭐ 將訂閱收入轉入平台擁有者錢包 (davidlai117@yahoo.com.tw)
+    try {
+      // 查找平台擁有者的用戶 ID
+      const { data: platformOwnerData } = await supabase.auth.admin.listUsers();
+      const platformOwner = platformOwnerData?.users?.find(
+        u => u.email === 'davidlai117@yahoo.com.tw'
+      );
+
+      if (platformOwner) {
+        const platformWalletKey = `wallet_${platformOwner.id}`;
+        let platformWallet = await kv.get(platformWalletKey);
+
+        // 如果平台錢包不存在，創建一個
+        if (!platformWallet) {
+          platformWallet = {
+            user_id: platformOwner.id,
+            balance: 0,
+            available_balance: 0,
+            locked: 0,
+            pending_withdrawal: 0,
+            total_earned: 0,
+            total_spent: 0,
+            currency: 'USD',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+        }
+
+        // 將訂閱收入加入平台錢包
+        platformWallet.available_balance = (platformWallet.available_balance || 0) + priceInUSD;
+        platformWallet.balance = (platformWallet.balance || 0) + priceInUSD;
+        platformWallet.total_earned = (platformWallet.total_earned || 0) + priceInUSD;
+        platformWallet.updated_at = new Date().toISOString();
+        await kv.set(platformWalletKey, platformWallet);
+
+        console.log(`💰 [Platform Revenue] Added ${priceInUSD.toFixed(2)} USD to platform wallet (${platformOwner.email})`);
+        console.log(`💰 [Platform Revenue] New platform balance: ${platformWallet.available_balance.toFixed(2)} USD`);
+
+        // 記錄平台收入交易
+        const platformTransactionKey = `transaction_${Date.now()}_platform_${platformOwner.id}`;
+        await kv.set(platformTransactionKey, {
+          id: platformTransactionKey,
+          user_id: platformOwner.id,
+          type: 'subscription_revenue',
+          amount: priceInUSD,
+          currency: 'USD',
+          display_currency: validCurrency,
+          display_amount: price,
+          description: `Platform Revenue: ${user.email} upgraded to ${plan} (${cycleLabel}) - ${price} ${validCurrency}`,
+          from_user_id: user.id,
+          from_user_email: user.email,
+          created_at: new Date().toISOString(),
+        });
+      } else {
+        console.warn(`⚠️ [Platform Revenue] Platform owner not found (davidlai117@yahoo.com.tw)`);
+      }
+    } catch (error) {
+      console.error('❌ [Platform Revenue] Error transferring to platform wallet:', error);
+      // 不中斷訂閱流程，即使轉帳失敗
+    }
+
     // Record transaction
     const transactionKey = `transaction_${Date.now()}_${user.id}`;
     const cycleLabel = billingCycle === 'yearly' ? 'Yearly' : 'Monthly';
