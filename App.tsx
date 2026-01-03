@@ -9,7 +9,8 @@ import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { SEO } from './components/SEO';
 import { getPageSEO } from './lib/seoConfig';
-import { toast, Toaster } from 'sonner@2.0.3';
+import { toast } from 'sonner@2.0.3';
+import { Toaster } from 'sonner';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { DevModeLogin } from './components/DevModeLogin';
 
@@ -372,7 +373,7 @@ function AppContent() {
         );
         // 清除 URL 參數
         window.history.replaceState({}, '', window.location.pathname);
-        // 導��到錢包頁面
+        // 導航到錢包頁面
         setView('dashboard');
         setDashboardTab('wallet');
       }

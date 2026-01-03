@@ -9,7 +9,7 @@ export default defineConfig({
   publicDir: 'public',
   
   resolve: {
-    extensions: ['.mjs', '.js', '.ts', '.tsx', '.json', '.jsx'],
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.json'],
     alias: {
       '@': path.resolve(__dirname, './'),
       '@components': path.resolve(__dirname, './components'),
