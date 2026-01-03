@@ -12,8 +12,8 @@ import { toast, Toaster } from 'sonner';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { DevModeLogin } from './components/DevModeLogin';
 
-// 🔥 Version marker to force cache invalidation - v2.0.31
-console.log('🚀 [App v2.0.31] FIX: SLA button text color (white) and navigation to sla-documentation view');
+// 🔥 Version marker to force cache invalidation - v2.0.32
+console.log('🚀 [App v2.0.32] FIX: SLADocumentation lazy import with named export');
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));
@@ -59,7 +59,7 @@ const AboutPage = lazy(() => import('./components/AboutPage'));
 const CaseStudies = lazy(() => import('./components/CaseStudies'));
 const TermsOfServicePage = lazy(() => import('./components/TermsOfServicePage'));
 const ApiDocumentation = lazy(() => import('./components/ApiDocumentation'));
-const SLADocumentation = lazy(() => import('./components/SLADocumentation'));
+const SLADocumentation = lazy(() => import('./components/SLADocumentation').then(module => ({ default: module.SLADocumentation })));
 
 // Loading fallback components
 function LoadingFallback() {
