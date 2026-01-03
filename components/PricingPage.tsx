@@ -271,7 +271,7 @@ export function PricingPage() {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">{t.subtitle}</p>
           
           {/* Currency Selector - NEW */}
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 flex justify-center relative z-[100]">
             <div className="inline-flex items-center gap-3 bg-white border border-gray-200 rounded-lg px-4 py-2 shadow-sm">
               <span className="text-sm text-gray-600">
                 {language === 'en' 

@@ -12,8 +12,8 @@ import { toast, Toaster } from 'sonner';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { DevModeLogin } from './components/DevModeLogin';
 
-// 🔥 Version marker to force cache invalidation - v2.0.25
-console.log('🚀 [App v2.0.25] CRITICAL FIX: AdminRevenue API route + platform revenue data loading');
+// 🔥 Version marker to force cache invalidation - v2.0.27
+console.log('🚀 [App v2.0.27] FIX: Currency selector z-index on pricing page');
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));

@@ -18,7 +18,7 @@ import * as messageService from "./message_service.tsx";
 import * as adminCheck from "./admin_check.tsx";
 import * as adminService from "./admin_service.tsx";
 import { registerECPayRoutes } from "./ecpay_payment_service.tsx";
-import { EXCHANGE_RATES, toUSD } from "./exchange_rates.tsx";
+import { EXCHANGE_RATES, toUSD, getExchangeRates } from "./exchange_rates.tsx";
 import { registerInternationalPayoutRoutes } from "./international_payout_service.tsx";
 import { registerLinePayRoutes } from "./linepay_service.tsx";
 import { registerSubscriptionNotificationRoutes, checkSubscriptionsAndNotify } from "./subscription_notification_service.tsx";
