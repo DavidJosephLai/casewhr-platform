@@ -4,7 +4,7 @@ import { Button } from '../ui/button';
 import { TrendingUp, DollarSign, Users, Calendar, Download, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../lib/LanguageContext';
-import { projectId } from '../../utils/supabase/info';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { toast } from 'sonner';
 import {
   LineChart,
@@ -172,15 +172,25 @@ export function AdminRevenue() {
 
     setLoading(true);
     try {
-      // 獲取平台擁有者的所有交易記錄
+      // 🔥 修復：使用新的 /admin/revenue API 而不是 /wallet/transactions
+      const isDevMode = accessToken.startsWith('dev-user-');
+      const authToken = isDevMode ? publicAnonKey : accessToken;
+      
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      };
+      
+      // Add dev mode token in custom header
+      if (isDevMode) {
+        headers['X-Dev-Token'] = accessToken;
+      }
+      
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/wallet/transactions`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/admin/revenue`,
         {
           method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
+          headers,
         }
       );
 

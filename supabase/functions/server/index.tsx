@@ -13450,6 +13450,94 @@ app.get("/make-server-215f78a5/admin/stats", async (c) => {
   }
 });
 
+// Get admin revenue data (all admin levels can view)
+app.get("/make-server-215f78a5/admin/revenue", async (c) => {
+  try {
+    console.log('💰 [Revenue API] Request received');
+    const authHeader = c.req.header('Authorization');
+    const devToken = c.req.header('X-Dev-Token');
+    
+    console.log('💰 [Revenue API] Authorization header:', authHeader ? `Bearer ${authHeader.substring(7, 30)}...` : 'MISSING');
+    console.log('💰 [Revenue API] X-Dev-Token header:', devToken ? devToken.substring(0, 30) + '...' : 'MISSING');
+    
+    // 🧪 DEV MODE: Use dev token if provided
+    let accessToken = authHeader?.split(' ')[1];
+    if (devToken && devToken.startsWith('dev-user-')) {
+      console.log('🧪 [Revenue API] Dev mode detected, using X-Dev-Token');
+      accessToken = devToken;
+    }
+    
+    if (!accessToken) {
+      console.log('❌ [Revenue API] No access token');
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+    
+    console.log('💰 [Revenue API] Access token extracted:', accessToken.substring(0, 30) + '...');
+
+    const { user, error: authError } = await getUserFromToken(accessToken);
+    if (authError || !user?.id || !user?.email) {
+      console.log('❌ [Revenue API] Auth error:', authError);
+      console.log('❌ [Revenue API] User object:', user);
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+    
+    console.log('✅ [Revenue API] User authenticated:', user.id, 'Email:', user.email);
+
+    // Check if user is admin (any level can view revenue)
+    console.log('🔍 [Revenue API] Checking admin level for:', user.email);
+    const userAdminLevel = await adminCheck.getAdminLevelAsync(user.email);
+    console.log('🔍 [Revenue API] Admin level result:', userAdminLevel);
+    
+    if (!userAdminLevel) {
+      console.log('❌ [Revenue API] User', user.email, 'is not an admin. Returning 403.');
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+
+    console.log('✅ [Revenue API] Admin level verified:', userAdminLevel);
+
+    // 獲取所有交易數據
+    console.log('🔍 [Revenue API] Fetching transactions...');
+    
+    const deduplicateById = (arr: any[]) => {
+      const seen = new Set();
+      return arr.filter((item: any) => {
+        const id = item.id;
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+    };
+    
+    const allTransactionsColon = await kv.getByPrefix('transaction:') || [];
+    const allTransactionsUnderscore = await kv.getByPrefix('transaction_') || [];
+    const allTransactions = deduplicateById([...allTransactionsColon, ...allTransactionsUnderscore]);
+
+    console.log('📊 [Revenue API] Total transactions:', allTransactions.length);
+
+    // 返回所有交易數據
+    const transactions = allTransactions.map((t: any) => ({
+      id: t.id,
+      user_id: t.user_id,
+      type: t.type,
+      amount: t.amount || 0,
+      currency: t.currency || 'USD',
+      display_currency: t.display_currency,
+      display_amount: t.display_amount,
+      description: t.description || '',
+      from_user_id: t.from_user_id,
+      from_user_email: t.from_user_email,
+      created_at: t.created_at || new Date().toISOString(),
+      status: t.status || 'completed',
+    }));
+
+    console.log('✅ [Revenue API] Returning', transactions.length, 'transactions');
+    return c.json({ transactions });
+  } catch (error) {
+    console.error('❌ [Revenue API] Error:', error);
+    return c.json({ error: 'Failed to fetch revenue data' }, 500);
+  }
+});
+
 // Admin: Add test balance to wallet (for testing without Stripe)
 app.post("/make-server-215f78a5/admin/add-test-balance", async (c) => {
   try {
