@@ -144,7 +144,7 @@ export function Header() {
         window.location.href = window.location.origin;
       } catch (e) {
         console.error('❌ [Header] Failed to clear storage:', e);
-        // 最���手段：強制刷新當前頁面
+        // 最手段：強制刷新當前頁面
         window.location.reload();
       }
     }
@@ -326,7 +326,7 @@ export function Header() {
                     onClick={() => setLanguage('zh-CN')}
                     className={language === 'zh-CN' ? 'bg-blue-50 text-blue-700' : ''}
                   >
-                    🇨🇳 简体���文
+                    🇨🇳 简体中文
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
