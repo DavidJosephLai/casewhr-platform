@@ -282,6 +282,21 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
     { icon: TrendingUp, key: 'analytics', action: () => setShowAnalyticsDialog(true) },
   ];
 
+  // 🔍 調試日誌：檢查 content 和 features 結構
+  console.log('🔍 [EnterpriseFeaturesPanel] Content check:', {
+    language,
+    hasContent: !!content,
+    hasFeatures: !!content?.features,
+    featuresKeys: content?.features ? Object.keys(content.features) : [],
+    content: content
+  });
+
+  // ✅ 安全檢查：確保 content.features 存在
+  if (!content || !content.features) {
+    console.error('❌ [EnterpriseFeaturesPanel] content.features is undefined!', { language, content });
+    return null;
+  }
+
   return (
     <>
       <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50">
