@@ -236,7 +236,7 @@ export function SLAMonitoring({ language = 'en' }: SLAMonitoringProps) {
       title: 'SLA 監控',
       subtitle: '即時服務等級協議追蹤並自動警報',
       description: '自動追蹤並監控所有支援票據的響應時間。當 SLA 目標有風險時，立即收到警報。',
-      howItWorks: 'SLA 監控如何運作',
+      howItWorks: 'SLA 監控如何運���',
       howItWorksDesc: '我們的系統自動追蹤每個支援票據從創建到解決的過程，測量響應和解決時間是否符合基於優先級的保證 SLA 目標。',
       enterpriseOnly: '企業版專屬功能',
       upgrade: '升級至企業版',
@@ -306,7 +306,7 @@ export function SLAMonitoring({ language = 'en' }: SLAMonitoringProps) {
           '🔔 自動違約警報防止 SLA 違規',
           '⏱️ 即時追蹤並附帶倒數計時器',
           '📊 效能分析和合規報告',
-          '🎯 基於優先級的 SLA 目標以實現最���服務',
+          '🎯 基於優先級的 SLA 目標以實現最���務',
           '📈 詳細合規報告供相關方參考'
         ]
       },
@@ -527,25 +527,36 @@ export function SLAMonitoring({ language = 'en' }: SLAMonitoringProps) {
           <div className="bg-white/50 rounded-lg p-6 mt-6">
             <h4 className="font-semibold text-indigo-900 mb-4">{t.slaTargets.title}</h4>
             <div className="grid md:grid-cols-2 gap-4 text-left">
-              {(['urgent', 'high', 'normal', 'low'] as const).map((priority) => (
-                <Card key={priority} className="bg-white/70">
-                  <CardContent className="p-3">
-                    <Badge className={getPriorityColor(priority)}>
-                      {t[priority]}
-                    </Badge>
-                    <div className="mt-2 space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">{t.responseTime}:</span>
-                        <span className="font-semibold">{t.slaTargets[priority].response}</span>
+              {(['urgent', 'high', 'normal', 'low'] as const).map((priority) => {
+                // ✅ 安全檢查：確保翻譯存在
+                const priorityLabel = t[priority];
+                const priorityTargets = t.slaTargets?.[priority];
+                
+                if (!priorityLabel || !priorityTargets) {
+                  console.warn(`⚠️ [SLAMonitoring] Missing translation for priority: ${priority}`);
+                  return null;
+                }
+                
+                return (
+                  <Card key={priority} className="bg-white/70">
+                    <CardContent className="p-3">
+                      <Badge className={getPriorityColor(priority)}>
+                        {priorityLabel}
+                      </Badge>
+                      <div className="mt-2 space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">{t.responseTime}:</span>
+                          <span className="font-semibold">{priorityTargets.response}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">{t.resolutionTime}:</span>
+                          <span className="font-semibold">{priorityTargets.resolution}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">{t.resolutionTime}:</span>
-                        <span className="font-semibold">{t.slaTargets[priority].resolution}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
 
