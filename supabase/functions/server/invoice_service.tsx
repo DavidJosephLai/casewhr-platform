@@ -650,117 +650,6 @@ async function sendInvoiceEmail(invoice: Invoice) {
   console.log(`✅ Invoice email sent to ${invoice.user_email}`);
 }
 
-// 生成发票 HTML（用于 PDF 和邮件）
-function generateInvoiceHTML(invoice: Invoice): string {
-  return `
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <title>电子发票 ${invoice.invoice_number}</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
-    .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
-    .invoice-title { font-size: 24px; margin-bottom: 10px; }
-    .invoice-number { font-size: 18px; color: #666; }
-    .section { margin-bottom: 20px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .label { color: #666; font-size: 12px; margin-bottom: 5px; }
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-    th { background-color: #f8f9fa; }
-    .text-right { text-align: right; }
-    .total-section { margin-top: 20px; float: right; width: 300px; }
-    .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
-    .total-final { border-top: 2px solid #333; padding-top: 8px; font-size: 18px; }
-    .footer { margin-top: 60px; text-align: center; color: #666; font-size: 12px; border-top: 1px solid #ddd; padding-top: 20px; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="invoice-title">电子发票 Electronic Invoice</div>
-    <div class="invoice-number">${invoice.invoice_number}</div>
-  </div>
-
-  <div class="section grid">
-    <div>
-      <div class="label">卖方 Seller</div>
-      <div>CaseWhr 接案平台</div>
-      <div>统一编号: ${invoice.seller_tax_id}</div>
-    </div>
-    <div>
-      <div class="label">买方 Buyer</div>
-      <div>${invoice.user_name}</div>
-      <div>${invoice.user_email}</div>
-      ${invoice.tax_id ? `<div>统一编号: ${invoice.tax_id}</div>` : ''}
-    </div>
-  </div>
-
-  <div class="section grid">
-    <div>
-      <div class="label">开票日期 Invoice Date</div>
-      <div>${invoice.invoice_date}</div>
-    </div>
-    <div>
-      <div class="label">币别 Currency</div>
-      <div>${invoice.currency}</div>
-    </div>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>品名 Description</th>
-        <th class="text-right">数量 Quantity</th>
-        <th class="text-right">单价 Unit Price</th>
-        <th class="text-right">金额 Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${invoice.items.map(item => `
-        <tr>
-          <td>${item.description}</td>
-          <td class="text-right">${item.quantity}</td>
-          <td class="text-right">${item.unit_price.toLocaleString()}</td>
-          <td class="text-right">${item.amount.toLocaleString()}</td>
-        </tr>
-      `).join('')}
-    </tbody>
-  </table>
-
-  <div class="total-section">
-    <div class="total-row">
-      <span>小计 Subtotal:</span>
-      <span>${invoice.currency} ${invoice.subtotal.toLocaleString()}</span>
-    </div>
-    <div class="total-row">
-      <span>营业税 Tax (${(invoice.tax_rate * 100).toFixed(0)}%):</span>
-      <span>${invoice.currency} ${invoice.tax_amount.toLocaleString()}</span>
-    </div>
-    <div class="total-row total-final">
-      <span>总计 Total:</span>
-      <span>${invoice.currency} ${invoice.total.toLocaleString()}</span>
-    </div>
-  </div>
-
-  <div style="clear: both;"></div>
-
-  ${invoice.notes ? `
-    <div class="section">
-      <div class="label">备注 Notes</div>
-      <div>${invoice.notes}</div>
-    </div>
-  ` : ''}
-
-  <div class="footer">
-    <div>此发票依台湾税法开立 This invoice is issued in accordance with Taiwan tax law</div>
-    <div>CaseWhr 全球接案平台 | www.casewhr.com</div>
-  </div>
-</body>
-</html>
-  `;
-}
-
 // 生成发票邮件 HTML
 function generateInvoiceEmailHTML(invoice: Invoice): string {
   return `
@@ -861,3 +750,209 @@ function generateInvoiceEmailHTML(invoice: Invoice): string {
 }
 
 export default app;
+
+// ========== 導出的工具函數 ==========
+
+// 發票詳情介面（用於生成 HTML）
+export interface InvoiceDetails {
+  customer_name: string;
+  customer_email: string;
+  customer_address?: string;
+  company_name: string;
+  company_address: string;
+  company_tax_id: string;
+  company_email: string;
+}
+
+// 生成訂閱發票的函數
+export function createSubscriptionInvoice(params: {
+  userId: string;
+  plan: string;
+  amount: number;
+  transactionId: string;
+  language: 'en' | 'zh' | 'zh-CN' | 'zh-TW';
+  currency: string;
+}) {
+  const { userId, plan, amount, transactionId, language, currency } = params;
+  
+  // 生成發票號碼
+  const invoiceNumber = generateInvoiceNumberSync();
+  
+  // 訂閱計劃名稱映射
+  const planNames: Record<string, { en: string; zh: string }> = {
+    basic: { en: 'Basic Plan', zh: '基礎方案' },
+    pro: { en: 'Pro Plan', zh: '專業方案' },
+    enterprise: { en: 'Enterprise Plan', zh: '企業方案' },
+  };
+  
+  const planName = planNames[plan] || { en: plan, zh: plan };
+  const description = language === 'en' ? planName.en : planName.zh;
+  
+  // 計算稅金（台灣營業稅 5%）
+  const subtotal = amount;
+  const taxRate = 0.05;
+  const taxAmount = subtotal * taxRate;
+  const total = subtotal + taxAmount;
+  
+  return {
+    invoice_number: invoiceNumber,
+    invoice_date: new Date().toISOString().split('T')[0],
+    transaction_id: transactionId,
+    user_id: userId,
+    items: [
+      {
+        description: `${description} - Subscription`,
+        quantity: 1,
+        unit_price: amount,
+        amount: amount,
+      },
+    ],
+    subtotal,
+    tax_rate: taxRate,
+    tax_amount: taxAmount,
+    total,
+    currency: currency || 'USD',
+    status: 'issued' as const,
+  };
+}
+
+// 同步生成發票號碼（簡化版，不查詢 KV）
+function generateInvoiceNumberSync(): string {
+  // 生成兩位大寫字母
+  const letters = String.fromCharCode(65 + Math.floor(Math.random() * 26)) + 
+                  String.fromCharCode(65 + Math.floor(Math.random() * 26));
+  
+  // 生成 8 位數字
+  const numbers = String(Math.floor(Math.random() * 100000000)).padStart(8, '0');
+  
+  return `${letters}${numbers}`;
+}
+
+// 生成帶詳細信息的發票 HTML
+export function generateInvoiceHTML(
+  invoice: any,
+  details?: InvoiceDetails,
+  language?: 'en' | 'zh' | 'zh-CN' | 'zh-TW'
+): string {
+  const lang = language || 'zh-TW';
+  const isEnglish = lang === 'en';
+  
+  // 如果沒有提供詳細信息，使用默認值
+  const customerName = details?.customer_name || invoice.user_name || 'Customer';
+  const customerEmail = details?.customer_email || invoice.user_email || '';
+  const companyName = details?.company_name || 'Case Where 接得準公司';
+  const companyAddress = details?.company_address || 'Taiwan';
+  const companyTaxId = details?.company_tax_id || '12345678';
+  const sellerTaxId = invoice.seller_tax_id || companyTaxId;
+  
+  return `
+<!DOCTYPE html>
+<html lang="${isEnglish ? 'en' : 'zh-TW'}">
+<head>
+  <meta charset="UTF-8">
+  <title>${isEnglish ? 'Invoice' : '電子發票'} ${invoice.invoice_number}</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
+    .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
+    .invoice-title { font-size: 24px; margin-bottom: 10px; }
+    .invoice-number { font-size: 18px; color: #666; }
+    .section { margin-bottom: 20px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .label { color: #666; font-size: 12px; margin-bottom: 5px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    th { background-color: #f8f9fa; }
+    .text-right { text-align: right; }
+    .total-section { margin-top: 20px; float: right; width: 300px; }
+    .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
+    .total-final { border-top: 2px solid #333; padding-top: 8px; font-size: 18px; }
+    .footer { margin-top: 60px; text-align: center; color: #666; font-size: 12px; border-top: 1px solid #ddd; padding-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="invoice-title">${isEnglish ? 'Electronic Invoice' : '電子發票'}</div>
+    <div class="invoice-number">${invoice.invoice_number}</div>
+  </div>
+
+  <div class="section grid">
+    <div>
+      <div class="label">${isEnglish ? 'Seller' : '賣方'}</div>
+      <div>${companyName}</div>
+      <div>${isEnglish ? 'Tax ID' : '統一編號'}: ${sellerTaxId}</div>
+      <div>${companyAddress}</div>
+    </div>
+    <div>
+      <div class="label">${isEnglish ? 'Buyer' : '買方'}</div>
+      <div>${customerName}</div>
+      <div>${customerEmail}</div>
+      ${invoice.tax_id ? `<div>${isEnglish ? 'Tax ID' : '統一編號'}: ${invoice.tax_id}</div>` : ''}
+    </div>
+  </div>
+
+  <div class="section grid">
+    <div>
+      <div class="label">${isEnglish ? 'Invoice Date' : '開票日期'}</div>
+      <div>${invoice.invoice_date}</div>
+    </div>
+    <div>
+      <div class="label">${isEnglish ? 'Currency' : '幣別'}</div>
+      <div>${invoice.currency}</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>${isEnglish ? 'Description' : '品名'}</th>
+        <th class="text-right">${isEnglish ? 'Quantity' : '數量'}</th>
+        <th class="text-right">${isEnglish ? 'Unit Price' : '單價'}</th>
+        <th class="text-right">${isEnglish ? 'Amount' : '金額'}</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${invoice.items.map((item: InvoiceItem) => `
+        <tr>
+          <td>${item.description}</td>
+          <td class="text-right">${item.quantity}</td>
+          <td class="text-right">${invoice.currency} ${item.unit_price.toLocaleString()}</td>
+          <td class="text-right">${invoice.currency} ${item.amount.toLocaleString()}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+
+  <div class="total-section">
+    <div class="total-row">
+      <span>${isEnglish ? 'Subtotal' : '小計'}:</span>
+      <span>${invoice.currency} ${invoice.subtotal.toLocaleString()}</span>
+    </div>
+    <div class="total-row">
+      <span>${isEnglish ? 'Tax' : '營業稅'} (${(invoice.tax_rate * 100).toFixed(0)}%):</span>
+      <span>${invoice.currency} ${invoice.tax_amount.toLocaleString()}</span>
+    </div>
+    <div class="total-row total-final">
+      <span>${isEnglish ? 'Total' : '總計'}:</span>
+      <span>${invoice.currency} ${invoice.total.toLocaleString()}</span>
+    </div>
+  </div>
+
+  <div style="clear: both;"></div>
+
+  ${invoice.notes ? `
+    <div class="section">
+      <div class="label">${isEnglish ? 'Notes' : '備註'}</div>
+      <div>${invoice.notes}</div>
+    </div>
+  ` : ''}
+
+  <div class="footer">
+    <div>${isEnglish 
+      ? 'This invoice is issued in accordance with Taiwan tax law' 
+      : '此發票依台灣稅法開立'}</div>
+    <div>${companyName} | www.casewhr.com</div>
+  </div>
+</body>
+</html>
+  `;
+}

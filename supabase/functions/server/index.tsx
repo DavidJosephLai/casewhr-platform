@@ -18,6 +18,7 @@ import * as messageService from "./message_service.tsx";
 import * as adminCheck from "./admin_check.tsx";
 import * as adminService from "./admin_service.tsx";
 import { registerECPayRoutes } from "./ecpay_payment_service.tsx";
+import { EXCHANGE_RATES, toUSD } from "./exchange_rates.tsx";
 import { registerInternationalPayoutRoutes } from "./international_payout_service.tsx";
 import { registerLinePayRoutes } from "./linepay_service.tsx";
 import { registerSubscriptionNotificationRoutes, checkSubscriptionsAndNotify } from "./subscription_notification_service.tsx";
@@ -4763,19 +4764,35 @@ app.post("/make-server-215f78a5/subscription/upgrade", async (c) => {
     const validCurrency = ['USD', 'TWD', 'CNY'].includes(currency) ? currency : 'USD';
     const price = planPrices[plan as keyof typeof planPrices][billingCycle as 'monthly' | 'yearly'][validCurrency as 'USD' | 'TWD' | 'CNY'];
 
+    // ⭐ 重要：將選擇的貨幣價格轉換為 USD（錢包統一存儲為 USD）
+    // 使用統一匯率模組（與前端完全一致）
+    const priceInUSD = toUSD(price, validCurrency as 'USD' | 'TWD' | 'CNY');
+
+    console.log(`💰 [Subscription Upgrade] Plan: ${plan}, Cycle: ${billingCycle}, Currency: ${validCurrency}`);
+    console.log(`💰 [Subscription Upgrade] Price: ${price} ${validCurrency} = ${priceInUSD.toFixed(2)} USD`);
+
     // Get user's wallet
     const walletKey = `wallet_${user.id}`;
     const wallet = await kv.get(walletKey);
     
-    if (!wallet || wallet.available_balance < price) {
-      return c.json({ error: 'Insufficient wallet balance' }, 400);
+    console.log(`💰 [Subscription Upgrade] Wallet balance: ${wallet?.available_balance || 0} USD`);
+    
+    if (!wallet || wallet.available_balance < priceInUSD) {
+      console.log(`❌ [Subscription Upgrade] Insufficient balance: ${wallet?.available_balance || 0} < ${priceInUSD}`);
+      return c.json({ 
+        error: 'Insufficient wallet balance',
+        required: priceInUSD,
+        available: wallet?.available_balance || 0
+      }, 400);
     }
 
-    // Deduct from wallet
-    wallet.available_balance -= price;
-    wallet.total_spent = (wallet.total_spent || 0) + price;
-    wallet.currency = validCurrency; // 記錄錢包使用的貨幣
+    // Deduct from wallet (in USD)
+    wallet.available_balance -= priceInUSD;
+    wallet.total_spent = (wallet.total_spent || 0) + priceInUSD;
+    // 不要修改 wallet.currency，錢包統一存 USD
     await kv.set(walletKey, wallet);
+
+    console.log(`✅ [Subscription Upgrade] Deducted ${priceInUSD.toFixed(2)} USD, New balance: ${wallet.available_balance.toFixed(2)} USD`);
 
     // Record transaction
     const transactionKey = `transaction_${Date.now()}_${user.id}`;
@@ -4784,9 +4801,11 @@ app.post("/make-server-215f78a5/subscription/upgrade", async (c) => {
       id: transactionKey,
       user_id: user.id,
       type: 'subscription_upgrade',
-      amount: -price,
-      currency: validCurrency, // 記錄交易貨幣
-      description: `Upgraded to ${plan} plan (${cycleLabel})`,
+      amount: -priceInUSD, // ⭐ 記錄 USD 金額
+      currency: 'USD', // ⭐ 錢包統一存 USD
+      display_currency: validCurrency, // 記錄用戶選擇的顯示貨幣
+      display_amount: price, // 記錄顯示金額
+      description: `Upgraded to ${plan} plan (${cycleLabel}) - ${price} ${validCurrency}`,
       created_at: new Date().toISOString(),
     });
 
@@ -4822,10 +4841,10 @@ app.post("/make-server-215f78a5/subscription/upgrade", async (c) => {
     const invoiceData = invoiceService.createSubscriptionInvoice({
       userId: user.id,
       plan,
-      amount: price,
+      amount: price, // 使用顯示貨幣的金額（用於發票顯示）
       transactionId: transactionKey,
       language,
-      currency: validCurrency, // ⭐ 傳入選擇的貨幣
+      currency: validCurrency, // ⭐ 傳入選擇的貨幣（用於發票顯示）
     });
 
     const invoiceKey = `invoice_${Date.now()}_${user.id}`;
