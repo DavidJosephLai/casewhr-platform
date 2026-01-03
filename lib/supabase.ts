@@ -109,17 +109,41 @@ export const auth = {
     }
     
     try {
+      console.log('🔐 [SignIn] Attempting login for:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ [SignIn] Supabase error:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
+        
+        // 提供更友好的錯誤訊息
+        if (error.message.includes('Invalid login credentials')) {
+          const friendlyError = new Error('郵箱或密碼錯誤 / Invalid email or password');
+          (friendlyError as any).code = 'invalid_credentials';
+          throw friendlyError;
+        } else if (error.message.includes('Email not confirmed')) {
+          const friendlyError = new Error('郵箱未驗證 / Email not confirmed');
+          (friendlyError as any).code = 'email_not_confirmed';
+          throw friendlyError;
+        } else if (error.message.includes('User not found')) {
+          const friendlyError = new Error('用戶不存在，請先註冊 / User not found, please sign up first');
+          (friendlyError as any).code = 'user_not_found';
+          throw friendlyError;
+        }
+        
+        throw error;
+      }
       
-      console.log('✅ [SignIn] Login successful');
+      console.log('✅ [SignIn] Login successful for:', data.user?.email);
       return { user: data.user, access_token: data.session?.access_token || null };
     } catch (error: any) {
-      // 重新拋出原始錯誤，讓上層處理
       console.error('❌ [SignIn] Login failed:', error.message);
       throw error;
     }
