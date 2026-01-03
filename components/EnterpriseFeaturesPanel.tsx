@@ -265,9 +265,19 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
 
   // 🔍 安全檢查：確保 t 和 features 存在
   if (!t || !t.features) {
-    console.error('❌ [EnterpriseFeaturesPanel] Translation or features missing!', { language, t });
+    console.error('❌ [EnterpriseFeaturesPanel] Translation or features missing!', { language, t, hasTranslation: !!translations[language] });
     return null;
   }
+  
+  // 🔍 調試日誌：檢查 language 和 t 對象
+  console.log('🔍 [EnterpriseFeaturesPanel] Translation check:', {
+    language,
+    languageType: typeof language,
+    hasLanguageTranslation: !!translations[language],
+    tObject: t,
+    hasFeatures: !!t.features,
+    featureKeys: t.features ? Object.keys(t.features) : []
+  });
 
   if (loading) {
     return (
