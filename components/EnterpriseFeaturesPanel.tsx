@@ -339,6 +339,12 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
               const Icon = feature.icon;
               const featureContent = t.features[feature.key as keyof typeof t.features];
               
+              // ✅ 安全檢查：如果翻譯不存在則跳過
+              if (!featureContent) {
+                console.warn(`⚠️ [EnterpriseFeaturesPanel] Missing translation for feature: ${feature.key}`);
+                return null;
+              }
+              
               return (
                 <Button
                   key={feature.key}
