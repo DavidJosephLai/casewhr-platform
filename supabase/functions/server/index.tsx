@@ -4765,11 +4765,13 @@ app.post("/make-server-215f78a5/subscription/upgrade", async (c) => {
     const price = planPrices[plan as keyof typeof planPrices][billingCycle as 'monthly' | 'yearly'][validCurrency as 'USD' | 'TWD' | 'CNY'];
 
     // ⭐ 重要：將選擇的貨幣價格轉換為 USD（錢包統一存儲為 USD）
-    // 使用統一匯率模組（與前端完全一致）
-    const priceInUSD = toUSD(price, validCurrency as 'USD' | 'TWD' | 'CNY');
+    // 使用即時匯率（會自動從 API 獲取或使用緩存）
+    const rates = await getExchangeRates();
+    const priceInUSD = price / rates[validCurrency as 'USD' | 'TWD' | 'CNY'];
 
     console.log(`💰 [Subscription Upgrade] Plan: ${plan}, Cycle: ${billingCycle}, Currency: ${validCurrency}`);
     console.log(`💰 [Subscription Upgrade] Price: ${price} ${validCurrency} = ${priceInUSD.toFixed(2)} USD`);
+    console.log(`💱 [Subscription Upgrade] Exchange Rate: 1 USD = ${rates.TWD} TWD, ${rates.CNY} CNY`);
 
     // Get user's wallet
     const walletKey = `wallet_${user.id}`;

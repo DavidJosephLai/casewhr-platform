@@ -1,7 +1,7 @@
 import { Context } from "npm:hono";
 import * as kv from "./kv_store.tsx";
 import { createClient } from "npm:@supabase/supabase-js";
-import { EXCHANGE_RATES, toUSD } from "./exchange_rates.tsx";
+import { getExchangeRates, getExchangeRatesSync, toUSD } from "./exchange_rates.tsx";
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
@@ -651,8 +651,12 @@ export function registerECPayRoutes(app: any) {
 
       // 轉換為 TWD（ECPay 只支持 TWD）
       const amountTWD = Math.round(amount);
-      // ⭐ 使用統一匯率模組轉換為 USD
-      const amountUSD = Math.round(toUSD(amount, 'TWD') * 100) / 100;
+      
+      // ⭐ 使用即時匯率轉換為 USD
+      const rates = await getExchangeRates();
+      const amountUSD = Math.round((amount / rates.TWD) * 100) / 100;
+      
+      console.log(`💱 [ECPay] Exchange Rate: 1 USD = ${rates.TWD} TWD (${rates.CNY} CNY)`);
 
       // 檢查最低金額
       if (amountTWD < 300) {
