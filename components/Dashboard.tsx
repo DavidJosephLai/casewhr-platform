@@ -79,6 +79,8 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
     totalEarnings: 0,
     pendingProposals: 0,
     totalMilestones: 0,
+    totalProposals: 0,  // ✅ Add missing property
+    acceptedProposals: 0,  // ✅ Add missing property
   });
   const [loading, setLoading] = useState(true);
 
@@ -189,6 +191,8 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
             completedProjects,
             balance: 0,
             unreadMessages: 0,
+            totalProposals: 0,  // ✅ Add missing property
+            acceptedProposals: 0,  // ✅ Add missing property
             subscription: { tier: subscription.plan || 'free', status: subscription.status || 'active' }
           });
         } catch (error: any) {
@@ -199,6 +203,8 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
             completedProjects: 0,
             balance: 0,
             unreadMessages: 0,
+            totalProposals: 0,  // ✅ Add missing property
+            acceptedProposals: 0,  // ✅ Add missing property
             subscription: { tier: 'free', status: 'active' }
           });
         }
@@ -245,6 +251,8 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
           completedProjects: 0,
           balance: 0,
           unreadMessages: 0,
+          totalProposals: 0,  // ✅ Add missing property
+          acceptedProposals: 0,  // ✅ Add missing property
           subscription: { tier: 'free', status: 'inactive' }
         });
       }
@@ -264,6 +272,8 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
         completedProjects: 0,
         balance: 0,
         unreadMessages: 0,
+        totalProposals: 0,  // ✅ Add missing property
+        acceptedProposals: 0,  // ✅ Add missing property
         subscription: { tier: 'free', status: 'inactive' }
       });
     } finally {
@@ -528,7 +538,7 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
                 <div className="bg-white rounded-lg p-4 border border-blue-200">
                   <div className="text-2xl font-bold text-blue-600 mb-1">99.9%</div>
                   <div className="text-sm text-gray-600">
-                    {language === 'en' ? 'Uptime Guarantee' : language === 'zh-CN' ? '正常运行时间保' : '正��運行時間保證'}
+                    {language === 'en' ? 'Uptime Guarantee' : language === 'zh-CN' ? '正常运行时间保' : '正運行時間保證'}
                   </div>
                 </div>
                 <div className="bg-white rounded-lg p-4 border border-blue-200">
