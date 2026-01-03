@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Users, Briefcase, DollarSign, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Users, Briefcase, DollarSign, TrendingUp, TrendingDown, Clock, CheckCircle, CreditCard, ArrowUpRight } from 'lucide-react';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { createAuthHeaders } from '../../lib/api'; // ✅ Import the helper function
 import { fetchWithRetry, parseJsonResponse } from '../../lib/apiErrorHandler';

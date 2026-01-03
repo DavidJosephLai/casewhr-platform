@@ -12,8 +12,8 @@ import { toast, Toaster } from 'sonner';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { DevModeLogin } from './components/DevModeLogin';
 
-// 🔥 Version marker to force cache invalidation - v2.0.6
-console.log('🚀 [App v2.0.6] CRITICAL FIX: MembershipCard features array complete safety check');
+// 🔥 Version marker to force cache invalidation - v2.0.24
+console.log('🚀 [App v2.0.24] CRITICAL FIX: PlatformStats missing icon imports');
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));
@@ -217,7 +217,7 @@ function AppContent() {
     }
     
     if (urlPath === '/terms' || urlPath === '/terms-of-service') {
-      console.log('📄 [App] Terms of service page detected');
+      console.log(' [App] Terms of service page detected');
       setView('terms-of-service');
       return;
     }
