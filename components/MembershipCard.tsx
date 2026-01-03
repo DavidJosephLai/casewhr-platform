@@ -252,9 +252,19 @@ export const MembershipCard = memo(function MembershipCard() {
   const planDetails = t.plans[subscription.plan];
   const nextTierPlan = subscription.plan === 'free' ? 'pro' : subscription.plan === 'pro' ? 'enterprise' : null;
 
+  // 🔍 調試日誌：檢查整個 subscription 和 t 對象
+  console.log('🔍 [MembershipCard] Full debug:', {
+    subscriptionPlan: subscription.plan,
+    tPlans: t.plans,
+    tPlansKeys: Object.keys(t.plans || {}),
+    planDetailsRaw: t.plans?.[subscription.plan],
+    planDetails: planDetails,
+  });
+
   // ✅ 安全檢查：確保 planDetails 和 features 存在
   if (!planDetails) {
     console.error('❌ [MembershipCard] Plan details not found for plan:', subscription.plan);
+    console.error('❌ [MembershipCard] Available plans:', Object.keys(t.plans || {}));
     return null;
   }
 
