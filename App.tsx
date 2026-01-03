@@ -9,13 +9,12 @@ import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { SEO } from './components/SEO';
 import { getPageSEO } from './lib/seoConfig';
-import { toast } from 'sonner@2.0.3';
-import { Toaster } from 'sonner';
+import { toast, Toaster } from 'sonner';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { DevModeLogin } from './components/DevModeLogin';
 
-// 🔥 Version marker to force cache invalidation - v2.0.1
-console.log('🚀 [App v2.0.1] Dashboard hotfix deployed - account_type array support');
+// 🔥 Version marker to force cache invalidation - v2.0.2
+console.log('🚀 [App v2.0.2] Dashboard hotfix deployed - unified sonner imports');
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));
