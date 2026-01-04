@@ -147,36 +147,6 @@
   <body>
     <div id="root"></div>
     
-    <!-- 🔧 临时诊断脚本 - 在 React 加载前执行 -->
-    <script>
-      console.log('🚀 [index.html] Inline script executing...');
-      console.log('🚀 [index.html] Timestamp:', new Date().toISOString());
-      console.log('🚀 [index.html] Document readyState:', document.readyState);
-      console.log('🚀 [index.html] User Agent:', navigator.userAgent);
-      
-      // 测试 DOM 操作
-      const root = document.getElementById('root');
-      console.log('🚀 [index.html] Root element found:', !!root);
-      
-      // 添加视觉指示器
-      if (root) {
-        root.innerHTML = '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; font-family: Arial, sans-serif;"><h1>🔍 诊断中...</h1><p>如果你看到这个，说明 HTML 和内联脚本正常工作！</p><p>时间: ' + new Date().toLocaleTimeString() + '</p></div>';
-        console.log('✅ [index.html] Visual indicator added to #root');
-      }
-      
-      // 监听 DOMContentLoaded
-      document.addEventListener('DOMContentLoaded', function() {
-        console.log('✅ [index.html] DOMContentLoaded event fired');
-      });
-      
-      // 监听 load
-      window.addEventListener('load', function() {
-        console.log('✅ [index.html] Window load event fired');
-      });
-      
-      console.log('✅ [index.html] Inline script completed');
-    </script>
-    
     <script type="module" src="/main.tsx"></script>
   </body>
 </html>
