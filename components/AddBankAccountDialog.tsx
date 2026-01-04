@@ -8,7 +8,6 @@ import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { projectId } from "../utils/supabase/info";
 import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 interface AddBankAccountDialogProps {
   open: boolean;
@@ -180,7 +179,7 @@ export function AddBankAccountDialog({ open, onOpenChange, onSuccess }: AddBankA
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md overflow-visible">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
@@ -191,24 +190,26 @@ export function AddBankAccountDialog({ open, onOpenChange, onSuccess }: AddBankA
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 overflow-visible">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Bank Name */}
           <div className="space-y-2">
             <Label htmlFor="bank-name">
               {t.bankName} <span className="text-red-500">*</span>
             </Label>
-            <Select value={bankName} onValueChange={setBankName}>
-              <SelectTrigger>
-                <SelectValue placeholder={t.selectBank} />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {TAIWAN_BANKS.map((bank) => (
-                  <SelectItem key={bank.code} value={bank.name}>
-                    {bank.code} - {bank.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select
+              id="bank-name"
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)}
+              className="border-input data-[placeholder]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 flex w-full items-center justify-between gap-2 rounded-md border-2 bg-input-background px-3 py-2 text-sm transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 h-9"
+              required
+            >
+              <option value="">{t.selectBank}</option>
+              {TAIWAN_BANKS.map((bank) => (
+                <option key={bank.code} value={bank.name}>
+                  {bank.code} - {bank.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Account Number */}
