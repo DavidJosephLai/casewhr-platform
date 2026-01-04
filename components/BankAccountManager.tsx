@@ -4,10 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Badge } from './ui/badge';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../lib/LanguageContext';
-import { Building2, Plus, Trash2, Loader2, Check } from 'lucide-react';
+import { Building2, Plus, Trash2, Loader2, Check, Globe } from 'lucide-react';
 import { projectId } from "../utils/supabase/info";
 import { toast } from "sonner";
 import { AddBankAccountDialog } from "./AddBankAccountDialog";
+import { AddInternationalBankDialog } from "./AddInternationalBankDialog"; // ✅ 導入國際銀行對話框
 
 interface BankAccount {
   id: string;
@@ -36,6 +37,7 @@ export const BankAccountManager = memo(function BankAccountManager() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showAddInternationalDialog, setShowAddInternationalDialog] = useState(false); // ✅ 添加國際銀行對話框狀態
 
   const content = {
     en: {
@@ -44,6 +46,7 @@ export const BankAccountManager = memo(function BankAccountManager() {
       add: 'Add',
       noAccounts: 'No bank accounts added yet',
       addAccount: 'Add Bank Account',
+      addInternationalAccount: 'Add International Bank', // ✅ 新增
       default: 'Default',
       setDefault: 'Set Default',
       accountHolder: 'Account Holder',
@@ -62,6 +65,7 @@ export const BankAccountManager = memo(function BankAccountManager() {
       description: '管理您的提現銀行帳戶',
       noAccounts: '尚未添加銀行帳戶',
       addAccount: '添加銀行帳戶',
+      addInternationalAccount: '添加國際銀行', // ✅ 新增
       accountHolder: '帳戶持有人',
       accountNumber: '帳戶號碼',
       bankName: '銀行名稱',
@@ -82,6 +86,7 @@ export const BankAccountManager = memo(function BankAccountManager() {
       description: '管理您的提现银行账户',
       noAccounts: '尚未添加银行账户',
       addAccount: '添加银行账户',
+      addInternationalAccount: '添加国际银行', // ✅ 新增
       accountHolder: '账户持有人',
       accountNumber: '账户号码',
       bankName: '银行名称',
@@ -223,10 +228,16 @@ export const BankAccountManager = memo(function BankAccountManager() {
                 {t.description}
               </CardDescription>
             </div>
-            <Button size="sm" onClick={() => setShowAddDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t.addAccount}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" onClick={() => setShowAddDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                {t.addAccount}
+              </Button>
+              <Button size="sm" onClick={() => setShowAddInternationalDialog(true)} variant="outline">
+                <Globe className="h-4 w-4 mr-2" />
+                {t.addInternationalAccount}
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
@@ -357,6 +368,15 @@ export const BankAccountManager = memo(function BankAccountManager() {
         onOpenChange={setShowAddDialog}
         onSuccess={() => {
           setShowAddDialog(false);
+          fetchBankAccounts();
+        }}
+      />
+
+      <AddInternationalBankDialog
+        open={showAddInternationalDialog}
+        onOpenChange={setShowAddInternationalDialog}
+        onSuccess={() => {
+          setShowAddInternationalDialog(false);
           fetchBankAccounts();
         }}
       />
