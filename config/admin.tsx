@@ -37,38 +37,10 @@ export interface AdminUser {
  */
 export const ROOT_ADMINS: AdminUser[] = [
   {
-    email: 'davidlai117@yahoo.com.tw',
-    level: AdminLevel.SUPER_ADMIN,
-    name: 'David Lai (Root)',
-    addedAt: '2024-12-07',
-    permissions: ['*'], // 所有權限
-  },
-  {
     email: 'davidlai234@hotmail.com',
     level: AdminLevel.SUPER_ADMIN,
     name: 'David Lai (Root)',
     addedAt: '2024-12-13',
-    permissions: ['*'], // 所有權限
-  },
-  {
-    email: 'davidjosephlai@gmail.com',
-    level: AdminLevel.SUPER_ADMIN,
-    name: 'David Lai (Gmail)',
-    addedAt: '2024-12-21',
-    permissions: ['*'], // 所有權限
-  },
-  {
-    email: 'davidjosephlai@casewhr.com',
-    level: AdminLevel.SUPER_ADMIN,
-    name: 'David Lai (CaseWHR)',
-    addedAt: '2024-12-21',
-    permissions: ['*'], // 所有權限
-  },
-  {
-    email: 'admin@casewhr.com',
-    level: AdminLevel.SUPER_ADMIN,
-    name: 'CaseWHR Admin',
-    addedAt: '2024-12-14',
     permissions: ['*'], // 所有權限
   },
 ];

@@ -142,7 +142,12 @@ export default function AdminPage() {
   }, [user, profile]);
 
   const checkAdminPermission = async () => {
+    console.log('🔍 [AdminPage] Checking admin permission...');
+    console.log('🔍 [AdminPage] User:', user?.email);
+    console.log('🔍 [AdminPage] Profile:', profile);
+    
     if (!user) {
+      console.error('❌ [AdminPage] No user found');
       toast.error('未經授權的訪問');
       setView('home');
       setManualOverride(true);
@@ -150,8 +155,10 @@ export default function AdminPage() {
     }
 
     const userIsAdmin = isAnyAdmin(user.email || '', profile);
+    console.log('🔍 [AdminPage] isAnyAdmin result:', userIsAdmin);
 
     if (!userIsAdmin) {
+      console.error('❌ [AdminPage] User is not admin:', user.email);
       toast.error('未經授權的訪問');
       setView('home');
       setManualOverride(true);
@@ -159,6 +166,7 @@ export default function AdminPage() {
     }
 
     const level = getAdminLevel(user.email || '', profile);
+    console.log('✅ [AdminPage] Admin level:', level);
     setAdminLevel(level);
     setIsAdmin(true);
     setLoading(false);

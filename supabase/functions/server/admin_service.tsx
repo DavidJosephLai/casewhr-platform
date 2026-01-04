@@ -50,13 +50,6 @@ export const ADMIN_KEYS = {
 
 const ROOT_ADMINS: AdminUser[] = [
   {
-    email: 'davidlai117@yahoo.com.tw',
-    level: AdminLevel.SUPER_ADMIN,
-    name: 'David Lai (Root)',
-    addedAt: '2024-12-07',
-    permissions: ['*'],
-  },
-  {
     email: 'davidlai234@hotmail.com',
     level: AdminLevel.SUPER_ADMIN,
     name: 'David Lai (Root)',

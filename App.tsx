@@ -12,8 +12,8 @@ import { toast, Toaster } from 'sonner';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { DevModeLogin } from './components/DevModeLogin';
 
-// 🔥 Version marker to force cache invalidation - v2.0.38
-console.log('🚀 [App v2.0.38] BREAKING: Removed davidlai117@yahoo.com.tw from platform owner, only davidlai234@hotmail.com now');
+// 🔥 Version marker to force cache invalidation - v2.0.40
+console.log('🚀 [App v2.0.40] BREAKING: Completely removed davidlai117@yahoo.com.tw from all admin access');
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));
@@ -592,7 +592,7 @@ function AppContent() {
         <div className="pt-20">
           <SEO 
             title={language === 'en' ? 'Success Stories | Case Where' : '成功案例 | Case Where 接得準'}
-            description={language === 'en' ? 'View success stories and client testimonials on Case Where platform.' : '查看 Case Where 平台上的成功案例和客戶故事。'}
+            description={language === 'en' ? 'View success stories and client testimonials on Case Where platform.' : '查看 Case Where 平台���的成功案例和客戶故事。'}
             keywords={language === 'en' ? 'success stories, testimonials, case studies' : '成功案例, 客戶見證, 案例研究'}
           />
           <Suspense fallback={<PageLoadingFallback />}>
