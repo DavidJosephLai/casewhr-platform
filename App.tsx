@@ -1,19 +1,8 @@
-import { useEffect, useState, Suspense, lazy } from 'react';
-import { Hero } from './components/Hero';
-import { Header } from './components/Header';
-import { NetworkErrorNotice } from './components/NetworkErrorNotice';
-import { SEO, getPageSEO } from './components/SEO';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { LanguageProvider, useLanguage } from './lib/LanguageContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { ViewProvider, useView } from './contexts/ViewContext';
-import { useExchangeRate } from './hooks/useExchangeRate';
-import { toast, Toaster } from 'sonner';
-import { projectId, publicAnonKey } from './utils/supabase/info';
 import { DevModeLogin } from './components/DevModeLogin';
 
-// 🔥 Version marker to force cache invalidation - v2.0.50
-console.log('🚀 [App v2.0.50] Fixed admin top-up: Convert NT$100,000 → USD using real-time exchange rate (backend)');
+// 🔥 Version marker to force cache invalidation - v2.0.53
+// 🔄 Rebuild trigger: 2026-01-04 11:03 UTC
+console.log('🚀 [App v2.0.53] BUGFIX: Fixed withdraw dialog currency conversion (NT$10,155 not NT$323)');
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));
@@ -414,7 +403,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* ✅ 全局 SEO 組件 */}
+      {/* ✅ 全局 SEO 組 */}
       <SEO 
         {...getPageSEO(view === 'home' ? 'home' : view, language)}
       />
