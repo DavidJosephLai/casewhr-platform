@@ -455,7 +455,7 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
                 <SelectContent className="max-h-[300px]">
                   {getBankList().map((bank: any, idx) => (
                     <SelectItem key={idx} value={bank.name || bank.name_en}>
-                      {language === 'en' && bank.name_en ? bank.name_en : bank.name}
+                      {language === 'en' ? (bank.name_en || bank.name) : bank.name}
                       {bank.code && ` (${bank.code})`}
                     </SelectItem>
                   ))}
