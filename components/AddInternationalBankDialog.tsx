@@ -239,7 +239,7 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
       accountHolderName: '帳戶持有人姓名',
       accountHolderPlaceholder: '與帳戶上顯示的全名一致',
       swiftCode: 'SWIFT/BIC 代碼',
-      swiftCodePlaceholder: '例如：HSBCHKHH',
+      swiftCodePlaceholder: '例如���HSBCHKHH',
       routingNumber: 'Routing 號碼',
       routingPlaceholder: '9 位數 routing 號碼',
       branchCode: '分行/Sort 代碼',
@@ -428,18 +428,24 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Country Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="country">
-              {t.country} <span className="text-red-500">*</span>
+          {/* ⭐ IMPORTANT: Country Selection - MUST BE FIRST */}
+          <div className="space-y-2 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+            <Label htmlFor="country" className="text-base font-semibold text-blue-900">
+              🌍 {t.country} <span className="text-red-500">*</span>
             </Label>
+            <p className="text-xs text-blue-700 mb-2">
+              {language === 'en' 
+                ? 'Select your country first. The bank list will change based on your selection.'
+                : '請先選擇您的國家。銀行列表會根據您的選擇而改變。'
+              }
+            </p>
             <Select value={country} onValueChange={handleCountryChange}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-white border-2 border-blue-300 h-12 text-base font-medium">
                 <SelectValue placeholder={t.selectCountry} />
               </SelectTrigger>
               <SelectContent className="max-h-[300px]">
                 {COUNTRIES.map((c) => (
-                  <SelectItem key={c.code} value={c.code}>
+                  <SelectItem key={c.code} value={c.code} className="text-base py-3">
                     {language === 'en' ? c.name_en : c.name_zh} ({c.currency})
                   </SelectItem>
                 ))}
