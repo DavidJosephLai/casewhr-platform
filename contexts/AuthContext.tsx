@@ -73,10 +73,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let timeoutId: NodeJS.Timeout;
+
+    // ⏱️ 添加超时保护 - 如果 10 秒内没有完成初始化，强制设置 loading 为 false
+    timeoutId = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('⚠️ [AuthContext] Session check timeout after 10s, forcing loading=false');
+        setLoading(false);
+      }
+    }, 10000);
 
     // Check initial session
     auth.getSession().then(async (result) => {
       if (!mounted) return;
+      
+      // 清除超时定时器
+      clearTimeout(timeoutId);
       
       // 處理返回結構: { data: { session }, error }
       const session = result?.data?.session || null;
@@ -259,6 +271,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false;
+      clearTimeout(timeoutId); // 清除超时定时器
       subscription.unsubscribe();
       window.removeEventListener('dev-mode-login', handleDevModeLogin as EventListener);
       window.removeEventListener('storage', handleStorageChange);

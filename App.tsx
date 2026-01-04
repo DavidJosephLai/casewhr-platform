@@ -1,3 +1,8 @@
+import { DevModeLogin } from './components/DevModeLogin';
+import { lazy, Suspense, useState, useEffect } from 'react';
+import { LanguageProvider, useLanguage } from './lib/LanguageContext';
+import { ViewProvider, useView } from './contexts/ViewContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { NetworkErrorNotice } from './components/NetworkErrorNotice';
@@ -6,9 +11,9 @@ import { SEO, getPageSEO } from './components/SEO';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 
-// 🔥 Version marker to force cache invalidation - v2.0.78
-// 🐛 Fix: Project detail dialog null check + Remove build errors
-console.log('🚀 [App v2.0.78] BUG FIX: Project dialog null check + Build optimization');
+// 🔥 Version marker to force cache invalidation - v2.0.79
+// ⏱️ Fix: Add timeout protection for infinite loading + null check
+console.log('🚀 [App v2.0.79] FIX: Timeout protection + ProjectDialog null check');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
