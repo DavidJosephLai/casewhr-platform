@@ -325,7 +325,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       return;
     }
 
-    // 檢查最低儲值金額 300 NTD
+    // 檢查最低儲值金��� 300 NTD
     const twdAmount = selectedCurrency === 'TWD'
       ? amount
       : convertCurrency(amount, selectedCurrency, 'TWD');
@@ -485,7 +485,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
             toast.dismiss(); // Dismiss loading toast
             toast.success(
               language === 'en' 
-                ? `🎉 Payment successful! $${data.amount.toLocaleString()} added to your wallet.` 
+                ? `��� Payment successful! $${data.amount.toLocaleString()} added to your wallet.` 
                 : `🎉 付款成功！已將 $${data.amount.toLocaleString()} 加入您的錢包。`,
               { duration: 5000 }
             );
@@ -714,26 +714,32 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       return;
     }
 
-    if (amount > (wallet?.available_balance || 0)) {
+    // ✅ 修复：使用转换后的余额进行比较（当地货币 vs 当地货币）
+    if (amount > displayedAvailableBalance) {
       toast.error(language === 'en' ? 'Insufficient balance' : '餘額不足');
       return;
     }
 
     setLoading(true);
     try {
+      // ���️ 重要：后端需要 USD，所以要转回 USD
+      const usdAmount = selectedCurrency === 'USD'
+        ? amount
+        : convertCurrency(amount, selectedCurrency, 'USD');
+
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/wallet/withdraw`,
         {
           method: 'POST',
           headers: getHeaders(),
-          body: JSON.stringify({ amount }),
+          body: JSON.stringify({ amount: usdAmount }),  // ✅ 发送 USD 到后端
         }
       );
 
       if (response.ok) {
         const data = await response.json();
         setWallet(data.wallet);
-        toast.success(language === 'en' ? `Withdrawn $${amount.toLocaleString()}` : `已提領 $${amount.toLocaleString()}`);
+        toast.success(language === 'en' ? `Withdrawn ${formatCurrency(amount, selectedCurrency)}` : `已提領 ${formatCurrency(amount, selectedCurrency)}`);
         setWithdrawAmount("");
         setShowWithdrawDialog(false);
         loadWalletData(); // 重新加载以更新交易记录
@@ -1066,7 +1072,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            {getTranslation(language).wallet?.transactionHistory || (language === 'en' ? 'Transaction History' : '交易記���')}
+            {getTranslation(language).wallet?.transactionHistory || (language === 'en' ? 'Transaction History' : '交易記')}
           </CardTitle>
           <CardDescription>
             {language === 'en' 
