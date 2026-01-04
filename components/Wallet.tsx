@@ -96,6 +96,12 @@ function WalletComponent({ refreshKey }: WalletProps) {
     return convertCurrency(usdAmount, 'USD', selectedCurrency);
   };
 
+  // 💰 計算當前顯示的錢包餘額（轉換一次後存儲，避免重複計算）
+  const displayedAvailableBalance = convertWalletAmount(wallet?.available_balance || 0);
+  const displayedPendingWithdrawal = convertWalletAmount(wallet?.pending_withdrawal || 0);
+  const displayedTotalEarned = convertWalletAmount(wallet?.total_earned || 0);
+  const displayedTotalSpent = convertWalletAmount(wallet?.total_spent || 0);
+
   // 🐛 調試函數：顯示原始 USD 數據
   const showDebugInfo = () => {
     if (!wallet) return;
@@ -105,7 +111,7 @@ function WalletComponent({ refreshKey }: WalletProps) {
     const cnyRate = convertCurrency(1, 'USD', 'CNY');
     
     const debugInfo = `
-🔍 錢包調試信息：
+ 錢包調試信息：
 
 💰 原始數據（USD）：
 - 可用餘額：$${wallet.available_balance?.toFixed(2) || '0.00'} USD
@@ -114,10 +120,10 @@ function WalletComponent({ refreshKey }: WalletProps) {
 - 總支出：$${wallet.total_spent?.toFixed(2) || '0.00'} USD
 
 💱 顯示數據（${selectedCurrency}）：
-- 可用餘額：${formatCurrency(convertWalletAmount(wallet.available_balance || 0), selectedCurrency)}
-- 托管中：${formatCurrency(convertWalletAmount(wallet.pending_withdrawal || 0), selectedCurrency)}
-- 總收入：${formatCurrency(convertWalletAmount(wallet.total_earned || 0), selectedCurrency)}
-- 總支出：${formatCurrency(convertWalletAmount(wallet.total_spent || 0), selectedCurrency)}
+- 可用餘額：${formatCurrency(displayedAvailableBalance, selectedCurrency)}
+- 托管中：${formatCurrency(displayedPendingWithdrawal, selectedCurrency)}
+- 總收入：${formatCurrency(displayedTotalEarned, selectedCurrency)}
+- 總支出：${formatCurrency(displayedTotalSpent, selectedCurrency)}
 
 ⚙️ 當前即時匯率：
 1 USD = ${twdRate.toFixed(4)} TWD
@@ -975,7 +981,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
           </CardHeader>
           <CardContent>
             <p className="text-3xl text-blue-600">
-              {formatCurrency(convertWalletAmount(wallet?.available_balance || 0), selectedCurrency)}
+              {formatCurrency(displayedAvailableBalance, selectedCurrency)}
             </p>
             <div className="flex gap-2 mt-4">
               <Button 
@@ -1022,7 +1028,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
           </CardHeader>
           <CardContent>
             <p className="text-3xl text-gray-700">
-              {formatCurrency(convertWalletAmount(wallet?.pending_withdrawal || 0), selectedCurrency)}
+              {formatCurrency(displayedPendingWithdrawal, selectedCurrency)}
             </p>
             <p className="text-sm text-gray-500 mt-2">
               {isClient 
@@ -1045,8 +1051,8 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
           <CardContent>
             <p className="text-3xl text-gray-700">
               {isFreelancer 
-                ? formatCurrency(convertWalletAmount(wallet?.total_earned || 0), selectedCurrency)
-                : formatCurrency(convertWalletAmount(wallet?.total_spent || 0), selectedCurrency)}
+                ? formatCurrency(displayedTotalEarned, selectedCurrency)
+                : formatCurrency(displayedTotalSpent, selectedCurrency)}
             </p>
             <p className="text-sm text-gray-500 mt-2">
               {language === 'en' ? 'Lifetime' : '歷史總計'}
@@ -1060,7 +1066,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            {getTranslation(language).wallet?.transactionHistory || (language === 'en' ? 'Transaction History' : '交易記錄')}
+            {getTranslation(language).wallet?.transactionHistory || (language === 'en' ? 'Transaction History' : '交易記���')}
           </CardTitle>
           <CardDescription>
             {language === 'en' 
@@ -1147,7 +1153,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
               {language === 'en'
                 ? '• ECPay (Taiwan): Credit/Debit cards, ATM, convenience stores\n• PayPal: International payments via PayPal account'
                 : language === 'zh-CN'
-                ? '• 绿界支付（台湾）：信用卡/借记卡、ATM、便利店\n• PayPal：通过 PayPal 账号国际支付'
+                ? '• 界支付（台湾）：信用卡/借记卡、ATM、便利店\n• PayPal：通过 PayPal 账号国际支付'
                 : '• 綠界支付（台灣）：信用卡/金融卡、ATM、超商代碼\n• PayPal：透過 PayPal 帳號國際支付'}
             </p>
           </div>
@@ -1346,8 +1352,8 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
               />
               <p className="text-sm text-gray-600">
                 {language === 'en' 
-                  ? `Available balance: ${formatCurrency(wallet?.available_balance || 0, selectedCurrency)}` 
-                  : `可用餘額：${formatCurrency(wallet?.available_balance || 0, selectedCurrency)}`}
+                  ? `Available balance: ${formatCurrency(displayedAvailableBalance, selectedCurrency)}` 
+                  : `可用餘額：${formatCurrency(displayedAvailableBalance, selectedCurrency)}`}
               </p>
             </div>
           </div>

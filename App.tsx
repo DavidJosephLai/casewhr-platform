@@ -1,8 +1,19 @@
 import { DevModeLogin } from './components/DevModeLogin';
+import { lazy, Suspense, useState, useEffect } from 'react';
+import { LanguageProvider, useLanguage } from './lib/LanguageContext';
+import { ViewProvider, useView } from './contexts/ViewContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Header } from './components/Header';
+import { Hero } from './components/Hero';
+import { NetworkErrorNotice } from './components/NetworkErrorNotice';
+import { Toaster, toast } from 'sonner';
+import { SEO, getPageSEO } from './components/SEO';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { projectId, publicAnonKey } from './utils/supabase/info';
 
-// 🔥 Version marker to force cache invalidation - v2.0.53
-// 🔄 Rebuild trigger: 2026-01-04 11:03 UTC
-console.log('🚀 [App v2.0.53] BUGFIX: Fixed withdraw dialog currency conversion (NT$10,155 not NT$323)');
+// 🔥 Version marker to force cache invalidation - v2.0.54
+// 🔄 Rebuild trigger: 2026-01-04 16:25 UTC
+console.log('🚀 [App v2.0.54] FIXED: Correct context paths + Wallet currency fix');
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));
@@ -160,14 +171,8 @@ function AppContent() {
   }, []); // 只在應用啟動時顯示一次
   
   // 初始化匯率系統
-  const { rate, loading: rateLoading } = useExchangeRate();
+  // Note: useExchangeRate hook 已在各組件中按需使用
   
-  useEffect(() => {
-    if (!rateLoading && rate) {
-      console.log(`💱 Exchange rate initialized: 1 USD = ${rate.toFixed(2)} TWD`);
-    }
-  }, [rate, rateLoading]);
-
   // 檢測團隊邀請 URL
   useEffect(() => {
     const urlPath = window.location.pathname;
