@@ -161,33 +161,59 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user?.id || !accessToken) return;
+    console.log('🔍 [WithdrawalRequest] Form submitted');
+    console.log('🔍 [WithdrawalRequest] User:', user?.id);
+    console.log('🔍 [WithdrawalRequest] Access Token:', accessToken ? 'exists' : 'missing');
+    console.log('🔍 [WithdrawalRequest] Amount:', amount);
+    console.log('🔍 [WithdrawalRequest] Selected Method:', selectedMethod);
+    console.log('🔍 [WithdrawalRequest] Wallet:', wallet);
+    
+    if (!user?.id || !accessToken) {
+      console.error('❌ [WithdrawalRequest] Missing user or token');
+      toast.error(language === 'en' ? 'Please sign in to continue' : '請先登入');
+      return;
+    }
 
     const withdrawalAmount = parseFloat(amount);
+    console.log('🔍 [WithdrawalRequest] Parsed amount:', withdrawalAmount);
 
     // Validation
     if (isNaN(withdrawalAmount) || withdrawalAmount <= 0) {
+      console.error('❌ [WithdrawalRequest] Invalid amount');
       toast.error(t.invalidAmount);
       return;
     }
 
     if (withdrawalAmount < MINIMUM_WITHDRAWAL) {
-      toast.error(t.minimumAmount);
+      console.error('❌ [WithdrawalRequest] Amount below minimum:', withdrawalAmount, '<', MINIMUM_WITHDRAWAL);
+      toast.error(`${t.minimumAmount}: $${MINIMUM_WITHDRAWAL} USD`);
       return;
     }
 
     if (!wallet || withdrawalAmount > wallet.available_balance) {
+      console.error('❌ [WithdrawalRequest] Insufficient balance');
+      console.log('Wallet:', wallet);
+      console.log('Amount:', withdrawalAmount);
+      console.log('Available:', wallet?.available_balance);
       toast.error(t.insufficientBalance);
       return;
     }
 
     if (!selectedMethod) {
+      console.error('❌ [WithdrawalRequest] No method selected');
       toast.error(language === 'en' ? 'Please select a withdrawal method' : '請選擇提現方式');
       return;
     }
 
+    console.log('✅ [WithdrawalRequest] All validations passed, submitting...');
     setLoading(true);
     try {
+      const requestBody = {
+        amount: withdrawalAmount,
+        method_id: selectedMethod,
+      };
+      console.log('📤 [WithdrawalRequest] Request body:', requestBody);
+      
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/withdrawals/request`,
         {
@@ -196,14 +222,15 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            amount: withdrawalAmount,
-            method_id: selectedMethod,
-          }),
+          body: JSON.stringify(requestBody),
         }
       );
 
+      console.log('📥 [WithdrawalRequest] Response status:', response.status);
+      
       if (response.ok) {
+        const data = await response.json();
+        console.log('✅ [WithdrawalRequest] Success:', data);
         toast.success(t.success);
         setAmount("");
         loadData(); // Reload wallet balance
@@ -212,13 +239,16 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
         window.dispatchEvent(new Event('withdrawal-submitted'));
       } else {
         const error = await response.json();
+        console.error('❌ [WithdrawalRequest] API error:', error);
+        toast.error(error.error || t.error);
         throw new Error(error.error || 'Failed to submit withdrawal');
       }
     } catch (error) {
-      console.error('Error submitting withdrawal:', error);
-      toast.error(t.error);
+      console.error('❌ [WithdrawalRequest] Exception:', error);
+      toast.error(t.error + ': ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setLoading(false);
+      console.log('🏁 [WithdrawalRequest] Request completed');
     }
   };
 
@@ -305,7 +335,9 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
                 disabled={methods.length === 0}
               />
             </div>
-            <p className="text-xs text-gray-500">{t.minimumAmount}</p>
+            <p className="text-xs text-orange-600 font-medium">
+              ⚠️ {t.minimumAmount}: ${MINIMUM_WITHDRAWAL} USD
+            </p>
           </div>
 
           {/* Withdrawal Method */}
