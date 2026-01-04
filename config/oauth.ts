@@ -75,7 +75,9 @@ export const oauthConfig = {
   
   // 啟用/禁用 Facebook 登入 / Enable/Disable Facebook Login
   // ✅ Facebook 登入已啟用！請確保已完成配置
-  enableFacebookAuth: false, // ⚠️ 暫時禁用，需要先在 Supabase 配置 Facebook OAuth
+  // ✅ Facebook login enabled! Make sure configuration is complete
+  // 📖 配置指南: 請按照以下步驟在 Supabase 和 Facebook 配置 OAuth
+  enableFacebookAuth: true, // ✅ 已啟用 Facebook OAuth！請完成 Facebook App 和 Supabase 配置
 };
 
 /**
