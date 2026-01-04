@@ -11,22 +11,24 @@ import { SEO, getPageSEO } from './components/SEO';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 
-// 🔥 Version marker to force cache invalidation - v2.0.54
-// 🔄 Rebuild trigger: 2026-01-04 16:25 UTC
-console.log('🚀 [App v2.0.54] FIXED: Correct context paths + Wallet currency fix');
+// 🔥 Version marker to force cache invalidation - v2.0.75
+// 🔄 Rebuild trigger: 2026-01-04 Performance Fix
+console.log('🚀 [App v2.0.75] PERFORMANCE FIX: Removed excessive lazy loading');
 
-// Lazy load components
-const CoreValues = lazy(() => import('./components/CoreValues'));
-const Services = lazy(() => import('./components/Services'));
-const MilestoneFeature = lazy(() => import('./components/MilestoneFeature'));
-const Process = lazy(() => import('./components/Process'));
-const DevelopmentCategories = lazy(() => import('./components/DevelopmentCategories'));
-const TalentDirectory = lazy(() => import('./components/TalentDirectory'));
-const WhoCanTakeOver = lazy(() => import('./components/WhoCanTakeOver'));
-const Categories = lazy(() => import('./components/Categories'));
-const BrowseProjects = lazy(() => import('./components/BrowseProjects'));
-const Contact = lazy(() => import('./components/Contact'));
-const Footer = lazy(() => import('./components/Footer').then(module => ({ default: module.Footer })));
+// ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
+import { CoreValues } from './components/CoreValues';
+import { Services } from './components/Services';
+import { MilestoneFeature } from './components/MilestoneFeature';
+import { Process } from './components/Process';
+import { DevelopmentCategories } from './components/DevelopmentCategories';
+import { TalentDirectory } from './components/TalentDirectory';
+import { WhoCanTakeOver } from './components/WhoCanTakeOver';
+import { Categories } from './components/Categories';
+import { BrowseProjects } from './components/BrowseProjects';
+import { Contact } from './components/Contact';
+import { Footer } from './components/Footer';
+
+// ✅ 只對大型頁面使用 Lazy Load（真正需要代碼分割的）
 const Dashboard = lazy(() => import('./components/Dashboard'));
 const PricingPage = lazy(() => import('./components/PricingPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
@@ -35,6 +37,8 @@ const QuickAdminPanel = lazy(() => import('./components/QuickAdminPanel').then(m
 const AISEOFloatingButton = lazy(() => import('./components/AISEOFloatingButton').then(module => ({ default: module.AISEOFloatingButton })));
 const AIChatbot = lazy(() => import('./components/AIChatbot'));
 const AISEOManager = lazy(() => import('./components/AISEOManager').then(module => ({ default: module.AISEOManager })));
+
+// 🔧 測試和診斷頁面 - Lazy Load（不常用）
 const AISEOTestPage = lazy(() => import('./components/AISEOTestPage'));
 const BrevoTestPage = lazy(() => import('./components/BrevoTestPage'));
 const EmailTestPage = lazy(() => import('./components/EmailTestPage'));
@@ -52,6 +56,8 @@ const AcceptInvitationPage = lazy(() => import('./components/AcceptInvitationPag
 const AuthCallback = lazy(() => import('./components/AuthCallback'));
 const ResetPasswordPage = lazy(() => import('./components/ResetPasswordPage'));
 const AuthVerifyPage = lazy(() => import('./components/AuthVerifyPage'));
+
+// 📄 內容頁面 - Lazy Load（SEO 相關頁面）
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
 const CookiesPolicyPage = lazy(() => import('./components/CookiesPolicyPage'));
 const DisclaimerPage = lazy(() => import('./components/DisclaimerPage'));
@@ -635,49 +641,35 @@ function AppContent() {
         <>
           <SEO {...getPageSEO('home', language)} />
           <Hero />
-          <Suspense fallback={<LoadingFallback />}>
-            <CoreValues />
-          </Suspense>
-          <Suspense fallback={<LoadingFallback />}>
-            <Services />
-          </Suspense>
-          <Suspense fallback={<LoadingFallback />}>
-            <MilestoneFeature />
-          </Suspense>
-          <Suspense fallback={<LoadingFallback />}>
-            <Process />
-          </Suspense>
-          <Suspense fallback={<LoadingFallback />}>
-            <DevelopmentCategories />
-          </Suspense>
-          <Suspense fallback={<LoadingFallback />}>
-            <TalentDirectory />
-          </Suspense>
-          <Suspense fallback={<LoadingFallback />}>
-            <WhoCanTakeOver />
-          </Suspense>
-          <Suspense fallback={<LoadingFallback />}>
-            <Categories />
-          </Suspense>
-          <Suspense fallback={<LoadingFallback />}>
-            <BrowseProjects />
-          </Suspense>
-          <Suspense fallback={<LoadingFallback />}>
-            <Contact />
-          </Suspense>
+          {/* ⚡ 首頁組件 - 移除 Suspense 以提升性能 */}
+          <CoreValues />
+          <Services />
+          <MilestoneFeature />
+          <Process />
+          <DevelopmentCategories />
+          <TalentDirectory />
+          <WhoCanTakeOver />
+          <Categories />
+          <BrowseProjects />
+          <Contact />
         </>
       )}
       <Footer />
       {/* 🌐 网络错误提示 - 检测到 Supabase 错误时显示 */}
       <NetworkErrorNotice />
-      {/* ✅ 全局管理員浮動按鈕 - 只有管理員可見 */}
-      <AdminFloatingButton />
-      {/* ✅ 快速管理板 - 只有管理員可見 */}
-      <QuickAdminPanel />
-      {/* ✨ AI SEO 管理器浮動按鈕 - 只有管理員可見 */}
-      <AISEOFloatingButton />
-      {/* ✅ 全局智能客服氣泡 - 所有訪客可見 */}
-      <AIChatbot language={chatbotLanguage} />
+      {/* ✅ 全局功能 - 使用 Suspense 以避免阻塞主內容 */}
+      <Suspense fallback={null}>
+        <AdminFloatingButton />
+      </Suspense>
+      <Suspense fallback={null}>
+        <QuickAdminPanel />
+      </Suspense>
+      <Suspense fallback={null}>
+        <AISEOFloatingButton />
+      </Suspense>
+      <Suspense fallback={null}>
+        <AIChatbot language={chatbotLanguage} />
+      </Suspense>
       {/* 🧪 開發模式登錄 - 僅在開發環境顯示 */}
       <DevModeLogin />
       <Toaster />
