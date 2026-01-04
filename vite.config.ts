@@ -24,22 +24,28 @@ export default defineConfig({
     target: 'esnext',
     rollupOptions: {
       input: path.resolve(__dirname, 'index.html'),
-      output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'vendor': ['lucide-react', '@supabase/supabase-js']
-        },
-      },
+      external: [
+        // ✅ 排除 Supabase Edge Functions（使用 Deno 語法，不應由 Vite 構建）
+        /^\/supabase\//,
+      ],
     },
     chunkSizeWarningLimit: 1000,
     cssCodeSplit: true,
-    minify: 'esbuild', // ✅ 改用 esbuild，更快且更穩定
+    minify: 'esbuild',
     sourcemap: false,
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    },
   },
   
+  // ✅ 排除 Supabase 後端文件
   server: {
     hmr: {
       overlay: false
+    },
+    watch: {
+      ignored: ['**/supabase/**', '**/node_modules/**']
     }
   },
   
@@ -49,5 +55,18 @@ export default defineConfig({
       'react-dom',
       'react/jsx-runtime',
     ],
+    exclude: [
+      '/supabase/**',
+    ],
+    esbuildOptions: {
+      target: 'esnext',
+      logLevel: 'error', // 只顯示錯誤，忽略警告
+    },
+  },
+  
+  // ✅ 添加 esbuild 配置以处理依赖
+  esbuild: {
+    logOverride: { 'this-is-undefined-in-esm': 'silent' },
+    jsx: 'automatic',
   },
 });

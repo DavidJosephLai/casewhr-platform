@@ -161,7 +161,7 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
       local: '本地帳戶',
       international: '國際帳戶（IBAN/SWIFT）',
       bankName: '銀行名稱',
-      selectBank: '選您的���行',
+      selectBank: '選您的銀行',
       customBank: '其他銀行',
       accountNumber: '帳號',
       accountNumberPlaceholder: '輸入您的帳號',
@@ -245,7 +245,7 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
       branchCode: '分行/Sort 代碼',
       branchCodePlaceholder: '分行代碼或 sort code',
       currency: '帳戶幣別',
-      submit: '��加銀行帳戶',
+      submit: '加銀行帳戶',
       submitting: '添加中...',
       fillRequired: '請填寫所有必填欄位',
       success: '銀行帳戶添加成功',
@@ -469,12 +469,20 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
                   <SelectValue placeholder={t.selectBank} />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
-                  {getBankList().map((bank: any, idx) => (
-                    <SelectItem key={idx} value={bank.name || bank.name_en}>
-                      {language === 'en' ? (bank.name_en || bank.name) : bank.name}
-                      {bank.code && ` (${bank.code})`}
-                    </SelectItem>
-                  ))}
+                  {getBankList().map((bank: any, idx) => {
+                    // 統一使用 name 作為 value，確保一致性
+                    const bankValue = bank.name || bank.name_en;
+                    const bankDisplay = language === 'en' 
+                      ? (bank.name_en || bank.name) 
+                      : (bank.name || bank.name_en);
+                    
+                    return (
+                      <SelectItem key={idx} value={bankValue}>
+                        {bankDisplay}
+                        {bank.code && ` (${bank.code})`}
+                      </SelectItem>
+                    );
+                  })}
                   <SelectItem value="other">{t.customBank}</SelectItem>
                 </SelectContent>
               </Select>
