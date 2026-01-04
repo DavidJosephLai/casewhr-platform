@@ -13,6 +13,7 @@ import { ECPayDiagnostic } from "./ECPayDiagnostic";
 import { DiagnosticQuickGuide } from "./DiagnosticQuickGuide";
 import { ECPayManualConfirm } from "./ECPayManualConfirm";
 import { ECPayCallbackDiagnostic } from "./ECPayCallbackDiagnostic";
+import { PlatformRevenueFixTool } from "./PlatformRevenueFixTool";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -77,13 +78,13 @@ function WalletComponent({ refreshKey }: WalletProps) {
   const [showECPayDiagnostic, setShowECPayDiagnostic] = useState(false);
   const [showQuickGuide, setShowQuickGuide] = useState(false);
   
-  // ⭐ 平台收入統計（僅顯示給 davidlai117@yahoo.com.tw）
+  // ⭐ 平台收入統計（僅顯示給 davidlai234@hotmail.com）
   const [platformRevenue, setPlatformRevenue] = useState<{
     total: number;
     subscription: number;
     serviceFee: number;
   } | null>(null);
-  const isPlatformOwner = user?.email === 'davidlai117@yahoo.com.tw' || user?.email === 'davidlai234@hotmail.com';
+  const isPlatformOwner = user?.email === 'davidlai234@hotmail.com';
 
   // 🌍 當語言變更時，自動更新顯示貨幣
   useEffect(() => {
@@ -353,7 +354,7 @@ $${wallet.total_spent?.toFixed(2)} × ${twdRate.toFixed(4)} = NT$${(wallet.total
     }
 
     if (usdAmount > 1000000) {
-      toast.error(language === 'en' ? 'Maximum deposit amount is $1,000,000' : '最大充值金額為 $1,000,000 USD');
+      toast.error(language === 'en' ? 'Maximum deposit amount is $1,000,000' : '最充值金額為 $1,000,000 USD');
       return;
     }
 
@@ -601,7 +602,7 @@ $${wallet.total_spent?.toFixed(2)} × ${twdRate.toFixed(4)} = NT$${(wallet.total
               language === 'en'
                 ? '🔄 Redirecting to ECPay payment page...'
                 : language === 'zh-CN'
-                ? '🔄 正在跳转到绿界付款页面...'
+                ? '🔄 正跳到绿界付款页面...'
                 : '🔄 正在跳轉到綠界付款頁面...',
               { duration: 3000 }
             );
@@ -928,6 +929,30 @@ $${wallet.total_spent?.toFixed(2)} × ${twdRate.toFixed(4)} = NT$${(wallet.total
                 </p>
                 <p className="text-2xl text-purple-600">
                   {formatCurrency(convertWalletAmount(platformRevenue.serviceFee), selectedCurrency)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 🔧 平台收入修復工具（僅平台擁有者可見） */}
+      {isPlatformOwner && <PlatformRevenueFixTool />}
+
+      {/* 💡 平台擁有者提示（非平台擁有者時顯示） */}
+      {!isPlatformOwner && user?.email && (
+        <Card className="border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-white mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-yellow-900 mb-1">
+                  {language === 'en' ? 'Platform Owner Tools' : '平台擁有者工具'}
+                </p>
+                <p className="text-sm text-yellow-800">
+                  {language === 'en' 
+                    ? `You are logged in as: ${user.email}. Platform revenue tools are only available for platform owner (davidlai234@hotmail.com).`
+                    : `您目前登入為：${user.email}。平台收入工具僅限平台擁有者 (davidlai234@hotmail.com) 使用。`}
                 </p>
               </div>
             </div>

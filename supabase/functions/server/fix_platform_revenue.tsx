@@ -20,21 +20,15 @@ export async function fixPlatformRevenue(c: any) {
     }
 
     // 只允許平台擁有者執行
-    if (user.email !== 'davidlai117@yahoo.com.tw' && user.email !== 'davidlai234@hotmail.com') {
+    if (user.email !== 'davidlai234@hotmail.com') {
       return c.json({ error: 'Forbidden: Admin only' }, 403);
     }
 
     console.log('🔧 [Fix Platform Revenue] Starting revenue reconciliation...');
 
-    // 查找平台擁有者
-    const { data: platformOwnerData } = await supabase.auth.admin.listUsers();
-    const platformOwner = platformOwnerData?.users?.find(
-      (u: any) => u.email === 'davidlai117@yahoo.com.tw'
-    );
-
-    if (!platformOwner) {
-      return c.json({ error: 'Platform owner not found' }, 404);
-    }
+    // 使用當前登入的平台擁有者帳號
+    const platformOwner = user;
+    console.log(`💰 [Fix] Platform owner: ${platformOwner.email}`);
 
     // 獲取所有訂閱升級交易
     const allTransactions = await kv.getByPrefix('transaction_') || [];

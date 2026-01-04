@@ -12,8 +12,8 @@ import { toast, Toaster } from 'sonner';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { DevModeLogin } from './components/DevModeLogin';
 
-// 🔥 Version marker to force cache invalidation - v2.0.33
-console.log('🚀 [App v2.0.33] FIX: AIChatbot background color (white)');
+// 🔥 Version marker to force cache invalidation - v2.0.38
+console.log('🚀 [App v2.0.38] BREAKING: Removed davidlai117@yahoo.com.tw from platform owner, only davidlai234@hotmail.com now');
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));
@@ -123,7 +123,7 @@ function AppContent() {
     
     // 🔥 檢查是否為特殊用戶，如果是則自動刷新訂閱
     if (user?.email) {
-      const specialEmails = ['davidlai117@yahoo.com.tw', 'davidlai234@hotmail.com'];
+      const specialEmails = ['davidlai234@hotmail.com'];
       const isSpecialUser = specialEmails.includes(user.email);
       
       if (isSpecialUser) {
@@ -165,7 +165,6 @@ function AppContent() {
   // 🔑 顯示測試帳號密碼提示 (僅在開發環境)
   useEffect(() => {
     console.log('%c🔑 測試帳號登入資訊', 'color: #10b981; font-size: 16px; font-weight: bold;');
-    console.log('%c📧 Email: davidlai117@yahoo.com.tw', 'color: #3b82f6; font-size: 14px;');
     console.log('%c📧 Email: davidlai234@hotmail.com', 'color: #3b82f6; font-size: 14px;');
     console.log('%c🔐 密碼: CaseWHR2025! (固定密碼)', 'color: #f59e0b; font-size: 14px; font-weight: bold;');
     console.log('%c💡 提示: 點擊右下角藍色盾牌 → 設置特殊用戶', 'color: #6b7280; font-size: 12px;');
