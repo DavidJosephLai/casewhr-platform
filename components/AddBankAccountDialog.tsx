@@ -201,7 +201,7 @@ export function AddBankAccountDialog({ open, onOpenChange, onSuccess }: AddBankA
               <SelectTrigger>
                 <SelectValue placeholder={t.selectBank} />
               </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
+              <SelectContent className="max-h-[300px] z-[9999]" position="popper" sideOffset={5}>
                 {TAIWAN_BANKS.map((bank) => (
                   <SelectItem key={bank.code} value={bank.name}>
                     {bank.code} - {bank.name}
