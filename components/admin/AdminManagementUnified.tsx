@@ -1,11 +1,8 @@
-import { AdminDashboard } from './AdminDashboard';
-import { AdminUsers } from './AdminUsers';
-import { AdminProjects } from './AdminProjects';
-import { AdminTransactions } from './AdminTransactions';
-import { AdminWithdrawals } from './AdminWithdrawals';
-import { AdminMemberships } from './AdminMemberships';
-import { AdminMessages } from './AdminMessages';
-import { AdminInvoicePrefixManager } from './AdminInvoicePrefixManager';
+import { useState, useEffect } from 'react';
+import { useLanguage } from '../../lib/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { AdminLevel, AdminUser, isRootAdmin } from '../../config/admin';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
