@@ -58,46 +58,46 @@ const TAIWAN_BANKS = [
 
 // 美國主要銀行
 const US_BANKS = [
-  { name: 'JPMorgan Chase Bank', swift: 'CHASUS33' },
-  { name: 'Bank of America', swift: 'BOFAUS3N' },
-  { name: 'Wells Fargo Bank', swift: 'WFBIUS6S' },
-  { name: 'Citibank', swift: 'CITIUS33' },
-  { name: 'U.S. Bank', swift: 'USBKUS44' },
-  { name: 'PNC Bank', swift: 'PNCCUS33' },
-  { name: 'Capital One', swift: 'HIBKUS44' },
-  { name: 'TD Bank', swift: 'NRTHUS33' },
-  { name: 'Fifth Third Bank', swift: 'FTBCUS3C' },
-  { name: 'HSBC Bank USA', swift: 'MRMDUS33' },
+  { name: 'JPMorgan Chase Bank', name_zh: '摩根大通銀行', swift: 'CHASUS33' },
+  { name: 'Bank of America', name_zh: '美國銀行', swift: 'BOFAUS3N' },
+  { name: 'Wells Fargo Bank', name_zh: '富國銀行', swift: 'WFBIUS6S' },
+  { name: 'Citibank', name_zh: '花旗銀行', swift: 'CITIUS33' },
+  { name: 'U.S. Bank', name_zh: '美國合眾銀行', swift: 'USBKUS44' },
+  { name: 'PNC Bank', name_zh: 'PNC 銀行', swift: 'PNCCUS33' },
+  { name: 'Capital One', name_zh: '第一資本銀行', swift: 'HIBKUS44' },
+  { name: 'TD Bank', name_zh: '道明銀行', swift: 'NRTHUS33' },
+  { name: 'Fifth Third Bank', name_zh: '第五第三銀行', swift: 'FTBCUS3C' },
+  { name: 'HSBC Bank USA', name_zh: '匯豐銀行（美國）', swift: 'MRMDUS33' },
 ];
 
 // 歐洲主要銀行
 const EUROPEAN_BANKS = [
-  { name: 'HSBC Bank (UK)', country: 'GB', swift: 'HBUKGB4B' },
-  { name: 'Barclays Bank', country: 'GB', swift: 'BARCGB22' },
-  { name: 'Lloyds Bank', country: 'GB', swift: 'LOYDGB2L' },
-  { name: 'Deutsche Bank', country: 'DE', swift: 'DEUTDEFF' },
-  { name: 'Commerzbank', country: 'DE', swift: 'COBADEFF' },
-  { name: 'BNP Paribas', country: 'FR', swift: 'BNPAFRPP' },
-  { name: 'Société Générale', country: 'FR', swift: 'SOGEFRPP' },
-  { name: 'UniCredit', country: 'IT', swift: 'UNCRITMM' },
-  { name: 'Intesa Sanpaolo', country: 'IT', swift: 'BCITITMM' },
-  { name: 'ING Bank', country: 'NL', swift: 'INGBNL2A' },
-  { name: 'UBS', country: 'CH', swift: 'UBSWCHZH' },
-  { name: 'Credit Suisse', country: 'CH', swift: 'CRESCHZZ' },
+  { name: 'HSBC Bank (UK)', name_zh: '匯豐銀行（英國）', country: 'GB', swift: 'HBUKGB4B' },
+  { name: 'Barclays Bank', name_zh: '巴克萊銀行', country: 'GB', swift: 'BARCGB22' },
+  { name: 'Lloyds Bank', name_zh: '勞埃德銀行', country: 'GB', swift: 'LOYDGB2L' },
+  { name: 'Deutsche Bank', name_zh: '德意志銀行', country: 'DE', swift: 'DEUTDEFF' },
+  { name: 'Commerzbank', name_zh: '德國商業銀行', country: 'DE', swift: 'COBADEFF' },
+  { name: 'BNP Paribas', name_zh: '法國巴黎銀行', country: 'FR', swift: 'BNPAFRPP' },
+  { name: 'Société Générale', name_zh: '法國興業銀行', country: 'FR', swift: 'SOGEFRPP' },
+  { name: 'UniCredit', name_zh: '裕信銀行', country: 'IT', swift: 'UNCRITMM' },
+  { name: 'Intesa Sanpaolo', name_zh: '聖保羅銀行', country: 'IT', swift: 'BCITITMM' },
+  { name: 'ING Bank', name_zh: '荷蘭國際集團', country: 'NL', swift: 'INGBNL2A' },
+  { name: 'UBS', name_zh: '瑞銀集團', country: 'CH', swift: 'UBSWCHZH' },
+  { name: 'Credit Suisse', name_zh: '瑞士信貸', country: 'CH', swift: 'CRESCHZZ' },
 ];
 
 // 亞洲主要銀行
 const ASIAN_BANKS = [
-  { name: 'HSBC Hong Kong', country: 'HK', swift: 'HSBCHKHH' },
-  { name: 'Hang Seng Bank', country: 'HK', swift: 'HASEHKHH' },
-  { name: 'DBS Bank (Singapore)', country: 'SG', swift: 'DBSSSGSG' },
-  { name: 'OCBC Bank', country: 'SG', swift: 'OCBCSGSG' },
-  { name: 'UOB Bank', country: 'SG', swift: 'UOVBSGSG' },
-  { name: 'Mitsubishi UFJ Bank', country: 'JP', swift: 'BOTKJPJT' },
-  { name: 'Sumitomo Mitsui Banking', country: 'JP', swift: 'SMBCJPJT' },
-  { name: 'Mizuho Bank', country: 'JP', swift: 'MHCBJPJT' },
-  { name: 'Industrial and Commercial Bank of China', country: 'CN', swift: 'ICBKCNBJ' },
-  { name: 'China Construction Bank', country: 'CN', swift: 'PCBCCNBJ' },
+  { name: 'HSBC Hong Kong', name_zh: '匯豐銀行（香港）', country: 'HK', swift: 'HSBCHKHH' },
+  { name: 'Hang Seng Bank', name_zh: '恒生銀行', country: 'HK', swift: 'HASEHKHH' },
+  { name: 'DBS Bank (Singapore)', name_zh: '星展銀行（新加坡）', country: 'SG', swift: 'DBSSSGSG' },
+  { name: 'OCBC Bank', name_zh: '華僑銀行', country: 'SG', swift: 'OCBCSGSG' },
+  { name: 'UOB Bank', name_zh: '大華銀行', country: 'SG', swift: 'UOVBSGSG' },
+  { name: 'Mitsubishi UFJ Bank', name_zh: '三菱日聯銀行', country: 'JP', swift: 'BOTKJPJT' },
+  { name: 'Sumitomo Mitsui Banking', name_zh: '三井住友銀行', country: 'JP', swift: 'SMBCJPJT' },
+  { name: 'Mizuho Bank', name_zh: '瑞穗銀行', country: 'JP', swift: 'MHCBJPJT' },
+  { name: 'Industrial and Commercial Bank of China', name_zh: '中國工商銀行', country: 'CN', swift: 'ICBKCNBJ' },
+  { name: 'China Construction Bank', name_zh: '中國建設銀行', country: 'CN', swift: 'PCBCCNBJ' },
 ];
 
 export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: AddInternationalBankDialogProps) {
@@ -470,16 +470,27 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
                   {getBankList().map((bank: any, idx) => {
-                    // 統一使用 name 作為 value，確保一致性
-                    const bankValue = bank.name || bank.name_en;
-                    const bankDisplay = language === 'en' 
-                      ? (bank.name_en || bank.name) 
-                      : (bank.name || bank.name_en);
+                    // 根據銀行數據結構決定顯示方式
+                    let bankValue: string;
+                    let bankDisplay: string;
+                    
+                    if (bank.code) {
+                      // 台灣銀行：有 code, name, name_en
+                      bankValue = bank.name || bank.name_en;
+                      bankDisplay = language === 'en' 
+                        ? `${bank.code} - ${bank.name_en}` 
+                        : `${bank.code} - ${bank.name}`;
+                    } else {
+                      // 國際銀行：有 name (英文), name_zh (中文), swift
+                      bankValue = bank.name;
+                      bankDisplay = language === 'en' 
+                        ? bank.name 
+                        : (bank.name_zh || bank.name);
+                    }
                     
                     return (
                       <SelectItem key={idx} value={bankValue}>
                         {bankDisplay}
-                        {bank.code && ` (${bank.code})`}
                       </SelectItem>
                     );
                   })}
