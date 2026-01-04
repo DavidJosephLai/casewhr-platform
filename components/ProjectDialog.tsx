@@ -522,7 +522,7 @@ export function ProjectDialog({ project, open, onOpenChange, onUpdate }: Project
                                   setShowProposalListDialog(true);
                                 }}
                               >
-                                {language === 'en' ? 'View Proposal Details' : '查看提案詳情'}
+                                {language === 'en' ? 'View Proposal Details' : '���看提案詳情'}
                               </Button>
                             )}
                             
@@ -698,7 +698,7 @@ export function ProjectDialog({ project, open, onOpenChange, onUpdate }: Project
                                 return;
                               }
                               
-                              // 获取对��名字
+                              // 获取对名字
                               try {
                                 const response = await fetch(
                                   `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/profile/${recipientId}`,
