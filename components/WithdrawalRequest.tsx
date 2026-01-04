@@ -10,7 +10,7 @@ import { useLanguage } from '../lib/LanguageContext';
 import { Loader2, ArrowDownCircle, AlertCircle, DollarSign, Info } from 'lucide-react';
 import { projectId } from "../utils/supabase/info";
 import { toast } from "sonner";
-import { formatCurrency } from "../lib/currency";
+import { formatCurrency, convertCurrency, type Currency } from "../lib/currency"; // ✅ 导入 convertCurrency
 
 interface WithdrawalMethod {
   id: string;
@@ -34,10 +34,18 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
   const [loadingData, setLoadingData] = useState(true);
 
   // 根據語言選擇顯示貨幣
-  const displayCurrency = language === 'zh' ? 'TWD' : 'USD';
+  const displayCurrency: Currency = (language === 'zh' ? 'TWD' : 'USD') as Currency; // ✅ 明确类型
 
-  const MINIMUM_WITHDRAWAL = 50; // $50 minimum
+  const MINIMUM_WITHDRAWAL = 50; // $50 minimum (USD)
   const WITHDRAWAL_FEE_RATE = 0.02; // 2% fee
+
+  // ✅ 💰 计算显示的钱包余额（USD → 当地货币）
+  const displayedAvailableBalance = wallet 
+    ? convertCurrency(wallet.available_balance || 0, 'USD', displayCurrency)
+    : 0;
+
+  // ✅ 💱 计算当地货币的最小提现金额
+  const minimumWithdrawalInDisplayCurrency = convertCurrency(MINIMUM_WITHDRAWAL, 'USD', displayCurrency);
 
   // ✅ Memoize content translations
   const content = useMemo(() => ({
@@ -164,7 +172,8 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
     console.log('🔍 [WithdrawalRequest] Form submitted');
     console.log('🔍 [WithdrawalRequest] User:', user?.id);
     console.log('🔍 [WithdrawalRequest] Access Token:', accessToken ? 'exists' : 'missing');
-    console.log('🔍 [WithdrawalRequest] Amount:', amount);
+    console.log('🔍 [WithdrawalRequest] Amount (input):', amount);
+    console.log('🔍 [WithdrawalRequest] Display Currency:', displayCurrency);
     console.log('🔍 [WithdrawalRequest] Selected Method:', selectedMethod);
     console.log('🔍 [WithdrawalRequest] Wallet:', wallet);
     
@@ -174,27 +183,32 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
       return;
     }
 
-    const withdrawalAmount = parseFloat(amount);
-    console.log('🔍 [WithdrawalRequest] Parsed amount:', withdrawalAmount);
+    const withdrawalAmountInDisplayCurrency = parseFloat(amount);
+    console.log('🔍 [WithdrawalRequest] Parsed amount (display currency):', withdrawalAmountInDisplayCurrency, displayCurrency);
 
     // Validation
-    if (isNaN(withdrawalAmount) || withdrawalAmount <= 0) {
+    if (isNaN(withdrawalAmountInDisplayCurrency) || withdrawalAmountInDisplayCurrency <= 0) {
       console.error('❌ [WithdrawalRequest] Invalid amount');
       toast.error(t.invalidAmount);
       return;
     }
 
-    if (withdrawalAmount < MINIMUM_WITHDRAWAL) {
-      console.error('❌ [WithdrawalRequest] Amount below minimum:', withdrawalAmount, '<', MINIMUM_WITHDRAWAL);
-      toast.error(`${t.minimumAmount}: $${MINIMUM_WITHDRAWAL} USD`);
+    // ✅ 修复：比较当地货币 vs 当地货币
+    if (withdrawalAmountInDisplayCurrency < minimumWithdrawalInDisplayCurrency) {
+      console.error('❌ [WithdrawalRequest] Amount below minimum:', withdrawalAmountInDisplayCurrency, '<', minimumWithdrawalInDisplayCurrency);
+      toast.error(
+        displayCurrency === 'USD'
+          ? `${t.minimumAmount}: $${MINIMUM_WITHDRAWAL} USD`
+          : `${t.minimumAmount}: ${formatCurrency(minimumWithdrawalInDisplayCurrency, displayCurrency)}`
+      );
       return;
     }
 
-    if (!wallet || withdrawalAmount > wallet.available_balance) {
+    // ✅ 修复：比较当地货币余额
+    if (!wallet || withdrawalAmountInDisplayCurrency > displayedAvailableBalance) {
       console.error('❌ [WithdrawalRequest] Insufficient balance');
-      console.log('Wallet:', wallet);
-      console.log('Amount:', withdrawalAmount);
-      console.log('Available:', wallet?.available_balance);
+      console.log('Amount (display):', withdrawalAmountInDisplayCurrency, displayCurrency);
+      console.log('Available (display):', displayedAvailableBalance, displayCurrency);
       toast.error(t.insufficientBalance);
       return;
     }
@@ -205,11 +219,18 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
       return;
     }
 
+    // ✅ 转换为 USD 发送到后端
+    const withdrawalAmountInUSD = displayCurrency === 'USD'
+      ? withdrawalAmountInDisplayCurrency
+      : convertCurrency(withdrawalAmountInDisplayCurrency, displayCurrency, 'USD');
+
     console.log('✅ [WithdrawalRequest] All validations passed, submitting...');
+    console.log('💱 [WithdrawalRequest] Amount to submit (USD):', withdrawalAmountInUSD);
+
     setLoading(true);
     try {
       const requestBody = {
-        amount: withdrawalAmount,
+        amount: withdrawalAmountInUSD, // ✅ 发送 USD 到后端
         method_id: selectedMethod,
       };
       console.log('📤 [WithdrawalRequest] Request body:', requestBody);
@@ -304,7 +325,7 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">{t.availableBalance}</span>
               <span className="text-2xl font-semibold text-blue-600">
-                {formatCurrency(wallet?.available_balance || 0, displayCurrency)}
+                {formatCurrency(displayedAvailableBalance, displayCurrency)}
               </span>
             </div>
           </div>
@@ -319,15 +340,17 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
 
           {/* Withdrawal Amount */}
           <div className="space-y-2">
-            <Label htmlFor="amount">{t.withdrawalAmount}</Label>
+            <Label htmlFor="amount">
+              {displayCurrency === 'USD' ? t.withdrawalAmount : `${t.amount} (${displayCurrency})`}
+            </Label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 id="amount"
                 type="number"
-                step="0.01"
-                min={MINIMUM_WITHDRAWAL}
-                max={wallet?.available_balance || 0}
+                step={displayCurrency === 'USD' ? '0.01' : '1'}
+                min={Math.ceil(minimumWithdrawalInDisplayCurrency)}
+                max={Math.floor(displayedAvailableBalance)}
                 placeholder={t.enterAmount}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
@@ -336,7 +359,8 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
               />
             </div>
             <p className="text-xs text-orange-600 font-medium">
-              ⚠️ {t.minimumAmount}: ${MINIMUM_WITHDRAWAL} USD
+              ⚠️ {t.minimumAmount}: {formatCurrency(minimumWithdrawalInDisplayCurrency, displayCurrency)}
+              {displayCurrency !== 'USD' && ` (≈ $${MINIMUM_WITHDRAWAL} USD)`}
             </p>
           </div>
 
@@ -394,7 +418,13 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
           <Button
             type="submit"
             className="w-full"
-            disabled={loading || methods.length === 0 || !amount || parseFloat(amount) < MINIMUM_WITHDRAWAL}
+            disabled={
+              loading || 
+              methods.length === 0 || 
+              !amount || 
+              parseFloat(amount) < minimumWithdrawalInDisplayCurrency || // ✅ 使用当地货币最小值
+              parseFloat(amount) > displayedAvailableBalance // ✅ 检查余额
+            }
           >
             {loading ? (
               <>
