@@ -473,12 +473,14 @@ export function EnhancedInvoiceManager() {
       cancelled: { variant: 'secondary', icon: AlertCircle, className: 'bg-gray-100 text-gray-800 border-gray-200' },
     };
 
-    const { icon: Icon, className } = config[status];
+    // 🔧 添加安全檢查，防止未定義的狀態導致崩潰
+    const statusConfig = config[status] || config.pending; // 默認使用 pending 配置
+    const { icon: Icon, className } = statusConfig;
 
     return (
       <Badge className={className}>
         <Icon className="h-3 w-3 mr-1" />
-        {t.statuses[status]}
+        {t.statuses[status] || status}
       </Badge>
     );
   };
