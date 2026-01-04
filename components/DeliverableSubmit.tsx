@@ -4,7 +4,7 @@ import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { Upload, FileText, X, Loader2, CheckCircle2, AlertCircle, Clock, Download, RefreshCw } from 'lucide-react';
+import { Upload, FileText, X, Loader2, CheckCircle2, AlertCircle, Clock, Download, RefreshCw, AlertTriangle, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
@@ -80,6 +80,11 @@ export function DeliverableSubmit({
       download: 'Download',
       refresh: 'Refresh',
       noDeliverables: 'No deliverables found',
+      fileRetentionWarning: '⚠️ File Retention Notice',
+      fileRetentionMessage: 'Files will be available for download for 15 days after submission. After this period, files will be automatically deleted from the server. Please remind the client to download within this timeframe.',
+      daysRemaining: 'days remaining',
+      expired: 'Expired',
+      expiresOn: 'Expires on',
     },
     zh: {
       title: '提交交付物',
@@ -105,6 +110,11 @@ export function DeliverableSubmit({
       download: '下載',
       refresh: '刷新',
       noDeliverables: '沒有找到交付物',
+      fileRetentionWarning: '⚠️ 文件保留期限通知',
+      fileRetentionMessage: '文件提交後將保留 15 天供下載。超過此期限後，文件將自動從伺服器刪除。請提醒案主在期限內下載。',
+      daysRemaining: '天後過期',
+      expired: '已過期',
+      expiresOn: '過期日期',
     },
     'zh-TW': {
       title: '提交交付物',
@@ -119,7 +129,7 @@ export function DeliverableSubmit({
       submitting: '提交中...',
       noFiles: '請至少上傳一個文件',
       uploadError: '文件上傳失敗',
-      submitError: '提��交付物失敗',
+      submitError: '提交交付物失敗',
       submitSuccess: '交付物提交成功！案主將審核你的工作。',
       uploading: '上傳中...',
       pendingReview: '等待審核',
@@ -130,6 +140,11 @@ export function DeliverableSubmit({
       download: '下載',
       refresh: '刷新',
       noDeliverables: '沒有找到交付物',
+      fileRetentionWarning: '⚠️ 文件保留期限通知',
+      fileRetentionMessage: '文件提交後將保留 15 天供下載。超過此期限後，文件將自動從伺服器刪除。請提醒案主在期限內下載。',
+      daysRemaining: '天後過期',
+      expired: '已過期',
+      expiresOn: '過期日期',
     },
     'zh-CN': {
       title: '提交交付物',
@@ -155,10 +170,32 @@ export function DeliverableSubmit({
       download: '下载',
       refresh: '刷新',
       noDeliverables: '没有找到交付物',
+      fileRetentionWarning: '⚠️ 文件保留期限通知',
+      fileRetentionMessage: '文件提交后将保留 15 天供下载。超过此期限后，文件将自动从服务器删除。请提醒客户在期限内下载。',
+      daysRemaining: '天后过期',
+      expired: '已过期',
+      expiresOn: '过期日期',
     },
   };
 
-  const t = getTranslation(language);
+  const t = translations[language] || translations['en'];
+
+  // 📅 計算文件過期時間（15天後）
+  const calculateExpiryDate = (submittedAt: string) => {
+    const submitDate = new Date(submittedAt);
+    const expiryDate = new Date(submitDate);
+    expiryDate.setDate(expiryDate.getDate() + 15); // 加 15 天
+    return expiryDate;
+  };
+
+  // 📅 計算剩餘天數
+  const calculateDaysRemaining = (submittedAt: string) => {
+    const now = new Date();
+    const expiryDate = calculateExpiryDate(submittedAt);
+    const diffTime = expiryDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
@@ -239,6 +276,15 @@ export function DeliverableSubmit({
       toast.error(t.noFiles);
       return;
     }
+
+    // ⚠️ 顯示 15 天下載期限警告
+    toast.warning(
+      t.fileRetentionMessage,
+      {
+        duration: 8000, // 8 秒
+        icon: <AlertTriangle className="size-5" />,
+      }
+    );
 
     setSubmitting(true);
 
@@ -443,6 +489,22 @@ export function DeliverableSubmit({
                           {new Date(deliverable.reviewed_at).toLocaleString(language === 'en' ? 'en-US' : 'zh-TW')}
                         </span>
                       )}
+                    </div>
+
+                    {/* File Retention Notice */}
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded">
+                      <p className="text-sm mb-1">
+                        <strong className="text-yellow-900">{t.fileRetentionWarning}:</strong>
+                      </p>
+                      <p className="text-sm text-yellow-900">
+                        {t.fileRetentionMessage}
+                      </p>
+                      <p className="text-sm text-yellow-900">
+                        {calculateDaysRemaining(deliverable.submitted_at) > 0
+                          ? `${calculateDaysRemaining(deliverable.submitted_at)} ${t.daysRemaining}`
+                          : `${t.expired} (${t.expiresOn}: ${new Date(deliverable.submitted_at).toLocaleDateString(language === 'en' ? 'en-US' : 'zh-TW', { year: 'numeric', month: 'long', day: 'numeric' })})`
+                        }
+                      </p>
                     </div>
                   </div>
                 </Card>

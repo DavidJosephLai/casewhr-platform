@@ -18,6 +18,7 @@ import * as messageService from "./message_service.tsx";
 import * as adminCheck from "./admin_check.tsx";
 import * as adminService from "./admin_service.tsx";
 import { registerECPayRoutes } from "./ecpay_payment_service.tsx";
+import * as deliverableEmails from "./email_templates_deliverables.tsx";
 import { EXCHANGE_RATES, toUSD, getExchangeRates } from "./exchange_rates.tsx";
 import { registerInternationalPayoutRoutes } from "./international_payout_service.tsx";
 import { registerLinePayRoutes } from "./linepay_service.tsx";
@@ -3474,25 +3475,41 @@ app.post("/make-server-215f78a5/deliverables/submit", async (c) => {
     project.updated_at = new Date().toISOString();
     await kv.set(`project:${project_id}`, project);
 
-    // 📧 發送雙語郵件通知給案主（發案者）
+    // 📧 發送郵件通知給案主（發案者）- 包含 15 天期限警告
     try {
       const clientProfile = await kv.get(`profile_${project.user_id}`);
       const freelancerProfile = await kv.get(`profile_${project.assigned_freelancer_id}`);
       
       if (clientProfile?.email) {
-        const emailHtml = bilingualEmails.getDeliverableSubmittedEmailForClient({
-          clientName: clientProfile.name || clientProfile.email,
-          freelancerName: freelancerProfile?.name || '接案者 | Freelancer',
+        // 計算過期日期（15天後）
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + 15);
+        const formattedExpiryDate = expiryDate.toLocaleDateString(
+          clientProfile.language === 'en' ? 'en-US' : 'zh-TW',
+          { year: 'numeric', month: 'long', day: 'numeric' }
+        );
+
+        // 使用新的郵件模板（包含 15 天期限警告）
+        const emailHtml = deliverableEmails.getDeliverableSubmittedEmail({
+          name: clientProfile.name || clientProfile.email,
           projectTitle: project.title,
+          freelancerName: freelancerProfile?.name || '接案者',
+          fileCount: files.length,
+          expiryDate: formattedExpiryDate,
+          language: clientProfile.language || 'zh',
         });
+
+        const subject = clientProfile.language === 'en' 
+          ? '📁 New Deliverable Submitted - Download Within 15 Days - Case Where'
+          : '📁 新交付物已提交 - 請在 15 天內下載 - Case Where';
 
         await emailService.sendEmail({
           to: clientProfile.email,
-          subject: '📦 收到新的交付物 | New Deliverable Submitted - Case Where',
+          subject,
           html: emailHtml,
         });
         
-        console.log(`📧 Bilingual deliverable submitted email sent to client ${clientProfile.email}`);
+        console.log(`📧 Deliverable submitted email (with 15-day warning) sent to client ${clientProfile.email}`);
       }
     } catch (emailError) {
       console.error('Error sending deliverable submitted email to client:', emailError);
@@ -18304,6 +18321,101 @@ console.log('✅ [SERVER] Team member check API registered');
 // 🔧 平台收入修復端點
 app.post('/make-server-215f78a5/admin/fix-platform-revenue', fixPlatformRevenue);
 console.log('✅ [SERVER] Platform revenue fix API registered');
+
+// 📁 新增：檢查並發送即將過期的文件提醒（Cron Job）
+app.post('/make-server-215f78a5/deliverables/check-expiring-files', async (c) => {
+  try {
+    console.log('🔍 [Cron] Checking for expiring deliverable files...');
+
+    // 獲取所有專案的交付物
+    const allProjects = await kv.getByPrefix('project:');
+    let emailsSent = 0;
+    let filesChecked = 0;
+
+    for (const project of allProjects) {
+      const deliverableIds = await kv.get(`deliverables:project:${project.id}`) || [];
+
+      for (const deliverableId of deliverableIds) {
+        const deliverable = await kv.get(`deliverable:${deliverableId}`);
+        
+        if (!deliverable) continue;
+
+        filesChecked++;
+
+        // 計算提交日期和當前日期的差異
+        const submittedAt = new Date(deliverable.submitted_at);
+        const now = new Date();
+        const daysPassed = Math.floor((now.getTime() - submittedAt.getTime()) / (1000 * 60 * 60 * 24));
+        const daysRemaining = 15 - daysPassed;
+
+        // 如果剩餘 3 天，發送緊急提醒
+        if (daysRemaining === 3 && !deliverable.expiry_reminder_sent) {
+          const clientProfile = await kv.get(`profile_${deliverable.client_id}`);
+          
+          if (clientProfile?.email) {
+            // 計算過期日期
+            const expiryDate = new Date(submittedAt);
+            expiryDate.setDate(expiryDate.getDate() + 15);
+            const formattedExpiryDate = expiryDate.toLocaleDateString(
+              clientProfile.language === 'en' ? 'en-US' : 'zh-TW',
+              { year: 'numeric', month: 'long', day: 'numeric' }
+            );
+
+            // 發送郵件
+            const emailHtml = deliverableEmails.getFileExpiryReminderEmail({
+              name: clientProfile.name || clientProfile.email,
+              projectTitle: project.title,
+              daysRemaining: 3,
+              expiryDate: formattedExpiryDate,
+              fileCount: deliverable.files.length,
+              language: clientProfile.language || 'zh',
+            });
+
+            const subject = clientProfile.language === 'en'
+              ? '⚠️ Urgent: Files Expiring in 3 Days - Case Where'
+              : '⚠️ 緊急：文件 3 天後過期 - Case Where';
+
+            await emailService.sendEmail({
+              to: clientProfile.email,
+              subject,
+              html: emailHtml,
+            });
+
+            // 標記已發送提醒
+            deliverable.expiry_reminder_sent = true;
+            deliverable.expiry_reminder_sent_at = new Date().toISOString();
+            await kv.set(`deliverable:${deliverableId}`, deliverable);
+
+            emailsSent++;
+            console.log(`📧 [Cron] Expiry reminder sent to ${clientProfile.email} for project ${project.title}`);
+          }
+        }
+
+        // 如果超過 15 天，記錄過期（實際刪除可以另外處理）
+        if (daysRemaining <= 0 && !deliverable.expired) {
+          deliverable.expired = true;
+          deliverable.expired_at = new Date().toISOString();
+          await kv.set(`deliverable:${deliverableId}`, deliverable);
+          console.log(`⏰ [Cron] Marked deliverable ${deliverableId} as expired`);
+        }
+      }
+    }
+
+    return c.json({
+      success: true,
+      filesChecked,
+      emailsSent,
+      message: `Checked ${filesChecked} deliverables, sent ${emailsSent} expiry reminders`,
+    });
+  } catch (error: any) {
+    console.error('❌ [Cron] Error checking expiring files:', error);
+    return c.json({
+      success: false,
+      error: error.message,
+    }, 500);
+  }
+});
+console.log('✅ [SERVER] Deliverable expiry checker API registered');
 
 console.log('🎉 [SERVER] All routes registered, starting server...');
 
