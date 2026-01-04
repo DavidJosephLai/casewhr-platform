@@ -180,7 +180,7 @@ export function AddBankAccountDialog({ open, onOpenChange, onSuccess }: AddBankA
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md overflow-visible">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="h-5 w-5" />
@@ -191,7 +191,7 @@ export function AddBankAccountDialog({ open, onOpenChange, onSuccess }: AddBankA
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-visible">
           {/* Bank Name */}
           <div className="space-y-2">
             <Label htmlFor="bank-name">
@@ -201,7 +201,7 @@ export function AddBankAccountDialog({ open, onOpenChange, onSuccess }: AddBankA
               <SelectTrigger>
                 <SelectValue placeholder={t.selectBank} />
               </SelectTrigger>
-              <SelectContent className="max-h-[300px] z-[9999]" position="popper" sideOffset={5}>
+              <SelectContent className="max-h-[300px]">
                 {TAIWAN_BANKS.map((bank) => (
                   <SelectItem key={bank.code} value={bank.name}>
                     {bank.code} - {bank.name}
