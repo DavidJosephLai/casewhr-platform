@@ -203,7 +203,7 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
       features: {
         chat: {
           title: '企業即時聊天',
-          description: '與客戶經理和團隊成員即時溝通'
+          description: '與���戶經理和團隊成員即時溝通'
         },
         team: {
           title: '團隊管理',
@@ -322,9 +322,14 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              {isEnterprise && (
-                <Badge className="bg-purple-600 text-white">
-                  {t.upgradeRequired}
+              {/* 🔧 訂閱狀態標籤 */}
+              {isEnterprise ? (
+                <Badge className="bg-purple-600 text-white hover:bg-purple-700">
+                  ✅ {language === 'en' ? 'Active' : '已啟用'}
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="border-purple-300 text-purple-700">
+                  🔒 {t.upgradeRequired}
                 </Badge>
               )}
               {/* 🔧 調試按鈕：手動刷新訂閱狀態 */}
@@ -335,7 +340,8 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
                   console.log('🔄 [DEBUG] Manual refresh subscription...');
                   fetchSubscription();
                 }}
-                className="text-xs"
+                className="text-xs hover:bg-purple-100"
+                title={language === 'en' ? 'Refresh subscription status' : '刷新訂閱狀態'}
               >
                 🔄
               </Button>

@@ -1,19 +1,8 @@
-import { DevModeLogin } from './components/DevModeLogin';
-import { lazy, Suspense, useState, useEffect } from 'react';
-import { LanguageProvider, useLanguage } from './lib/LanguageContext';
-import { ViewProvider, useView } from './contexts/ViewContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { Header } from './components/Header';
-import { Hero } from './components/Hero';
-import { NetworkErrorNotice } from './components/NetworkErrorNotice';
-import { Toaster, toast } from 'sonner';
-import { SEO, getPageSEO } from './components/SEO';
-import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 
-// 🔥 Version marker to force cache invalidation - v2.0.79
-// ⏱️ Fix: Add timeout protection for infinite loading + null check
-console.log('🚀 [App v2.0.79] FIX: Timeout protection + ProjectDialog null check');
+// 🔥 Version marker to force cache invalidation - v2.0.82
+// ⚡ Performance: Remove loading spinner on homepage
+console.log('🚀 [App v2.0.82] PERF: Homepage loads instantly without spinner');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
@@ -174,7 +163,7 @@ function AppContent() {
     console.log('%c📧 Email: davidlai234@hotmail.com', 'color: #3b82f6; font-size: 14px;');
     console.log('%c🔐 密碼: CaseWHR2025! (固定密碼)', 'color: #f59e0b; font-size: 14px; font-weight: bold;');
     console.log('%c💡 提示: 點擊右下角藍色盾牌 → 設置特殊用戶', 'color: #6b7280; font-size: 12px;');
-  }, []); // 只在應用啟動時顯示一次
+  }, []); // 只應用啟動時顯示一次
   
   // 初始化匯率系統
   // Note: useExchangeRate hook 已在各組件中按需使用

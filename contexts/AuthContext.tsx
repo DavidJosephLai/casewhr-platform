@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // ✅ 改為 false，不阻擋主頁渲染
 
   // Load user profile
   const loadProfile = useCallback(async (userId: string) => {
