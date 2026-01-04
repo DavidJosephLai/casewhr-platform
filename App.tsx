@@ -1,8 +1,19 @@
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { LanguageProvider, useLanguage } from './lib/LanguageContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ViewProvider, useView } from './contexts/ViewContext';
+import { Header } from './components/Header';
+import { Hero } from './components/Hero';
+import { DevModeLogin } from './components/DevModeLogin';
+import { NetworkErrorNotice } from './components/NetworkErrorNotice';
+import { SEO, getPageSEO } from './components/SEO';
+import { Toaster, toast } from 'sonner@2.0.3';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 
-// 🔥 Version marker to force cache invalidation - v2.0.82
-// ⚡ Performance: Remove loading spinner on homepage
-console.log('🚀 [App v2.0.82] PERF: Homepage loads instantly without spinner');
+// 🔥 Version marker to force cache invalidation - v2.0.86
+// 🐛 Fix: Correct import path for LanguageProvider (from ./lib/ not ./contexts/)
+console.log('🚀 [App v2.0.86] FIX: Corrected LanguageProvider import path');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
@@ -181,7 +192,7 @@ function AppContent() {
     // 檢查是否是 robots.txt 或 sitemap.xml
     if (urlPath === '/robots.txt' || urlPath === '/sitemap.xml') {
       console.log(`🤖 [App] SEO file requested: ${urlPath}`);
-      // 重定向到後端 API 端點
+      // 重定向到後端 API 端
       const apiUrl = `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5${urlPath}`;
       window.location.replace(apiUrl);
       return;
@@ -219,7 +230,7 @@ function AppContent() {
     
     // 檢查是否是 OAuth 回調
     if (urlPath.includes('/auth/callback')) {
-      console.log('🔐 [App] OAuth callback detected');
+      console.log('�� [App] OAuth callback detected');
       setView('auth-callback');
       return;
     }
@@ -581,7 +592,7 @@ function AppContent() {
         <div className="pt-20">
           <SEO 
             title={language === 'en' ? 'Success Stories | Case Where' : '成功案例 | Case Where 接得準'}
-            description={language === 'en' ? 'View success stories and client testimonials on Case Where platform.' : '查看 Case Where 平台的成功案例和客戶故事。'}
+            description={language === 'en' ? 'View success stories and client testimonials on Case Where platform.' : '查看 Case Where 平台的成功案例和戶故事。'}
             keywords={language === 'en' ? 'success stories, testimonials, case studies' : '成功案例, 客戶見證, 案例研究'}
           />
           <Suspense fallback={<PageLoadingFallback />}>
@@ -659,7 +670,7 @@ function AppContent() {
       <Suspense fallback={null}>
         <AIChatbot language={chatbotLanguage} />
       </Suspense>
-      {/* 🧪 開發模式登錄 - 僅在開發環境顯示 */}
+      {/* 🧪 開模式登錄 - 僅在開發環境顯示 */}
       <DevModeLogin />
       <Toaster />
     </div>
