@@ -161,7 +161,7 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
       local: '本地帳戶',
       international: '國際帳戶（IBAN/SWIFT）',
       bankName: '銀行名稱',
-      selectBank: '選您的銀行',
+      selectBank: '選您的���行',
       customBank: '其他銀行',
       accountNumber: '帳號',
       accountNumberPlaceholder: '輸入您的帳號',
@@ -245,7 +245,7 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
       branchCode: '分行/Sort 代碼',
       branchCodePlaceholder: '分行代碼或 sort code',
       currency: '帳戶幣別',
-      submit: '添加銀行帳戶',
+      submit: '��加銀行帳戶',
       submitting: '添加中...',
       fillRequired: '請填寫所有必填欄位',
       success: '銀行帳戶添加成功',
@@ -385,11 +385,27 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
         onSuccess();
       } else {
         const data = await response.json();
+        console.error('❌ Add bank account failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: data.error,
+          data: data
+        });
         throw new Error(data.error || 'Failed to add bank account');
       }
     } catch (error: any) {
-      console.error('Error adding bank account:', error);
-      toast.error(error.message || t.error);
+      console.error('❌ Error adding international bank account:', error);
+      
+      // Show detailed error message
+      const errorMessage = error.message || t.error;
+      toast.error(
+        <div className="space-y-1">
+          <div className="font-semibold">
+            {language === 'en' ? 'Failed to add bank account' : '添加銀行帳戶失敗'}
+          </div>
+          <div className="text-sm text-gray-600">{errorMessage}</div>
+        </div>
+      );
     } finally {
       setLoading(false);
     }

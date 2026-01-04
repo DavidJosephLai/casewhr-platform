@@ -11544,31 +11544,48 @@ app.post("/make-server-215f78a5/bank-accounts", async (c) => {
     const accessToken = c.req.header('Authorization')?.split(' ')[1];
     
     if (!accessToken) {
+      console.error('❌ Bank account add failed: No access token');
       return c.json({ error: 'Authorization required' }, 401);
     }
 
     const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
     if (authError || !user?.id) {
+      console.error('❌ Bank account add failed: Auth error', authError);
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
     const body = await c.req.json();
+    console.log('📝 Received bank account data:', {
+      user_id: user.id,
+      country: body.country,
+      account_type: body.account_type,
+      bank_name: body.bank_name,
+      has_account_number: !!body.account_number,
+      has_iban: !!body.iban,
+      has_swift: !!body.swift_code,
+      currency: body.currency
+    });
+    
     const { country, account_type, bank_name, account_number, iban, account_holder_name, branch_code, swift_code, routing_number, currency } = body;
 
     if (!bank_name || !account_holder_name) {
-      return c.json({ error: 'Missing required fields' }, 400);
+      console.error('❌ Bank account add failed: Missing required fields', { bank_name, account_holder_name });
+      return c.json({ error: 'Missing required fields (bank name or account holder name)' }, 400);
     }
 
     if (account_type === 'international') {
       if (!iban && !swift_code) {
+        console.error('❌ Bank account add failed: International account missing IBAN/SWIFT');
         return c.json({ error: 'IBAN or SWIFT code is required for international accounts' }, 400);
       }
     } else {
       if (!account_number) {
-        return c.json({ error: 'Account number is required' }, 400);
+        console.error('❌ Bank account add failed: Local account missing account number');
+        return c.json({ error: 'Account number is required for local accounts' }, 400);
       }
       if (account_number && !/^\d+$/.test(account_number)) {
-        return c.json({ error: 'Invalid account number format' }, 400);
+        console.error('❌ Bank account add failed: Invalid account number format', account_number);
+        return c.json({ error: 'Invalid account number format (must be digits only)' }, 400);
       }
     }
 

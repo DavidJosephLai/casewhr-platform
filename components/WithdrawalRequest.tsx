@@ -7,10 +7,11 @@ import { Alert, AlertDescription } from './ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../lib/LanguageContext';
-import { Loader2, ArrowDownCircle, AlertCircle, DollarSign, Info } from 'lucide-react';
+import { Loader2, ArrowDownCircle, AlertCircle, DollarSign, Info, Plus, Landmark } from 'lucide-react';
 import { projectId } from "../utils/supabase/info";
 import { toast } from "sonner";
 import { formatCurrency, convertCurrency, type Currency } from "../lib/currency"; // ✅ 导入 convertCurrency
+import { AddInternationalBankDialog } from './AddInternationalBankDialog'; // ✅ 导入国际银行对话框
 
 interface WithdrawalMethod {
   id: string;
@@ -32,6 +33,7 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
   const [wallet, setWallet] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [showAddBankDialog, setShowAddBankDialog] = useState(false); // ✅ 添加银行对话框状态
 
   // ✅ 修复：根据语言选择显示货币（支持 zh-TW 和 zh-CN）
   const displayCurrency: Currency = (language === 'en' ? 'USD' : 'TWD') as Currency;
@@ -330,12 +332,23 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
             </div>
           </div>
 
-          {/* No Methods Warning */}
+          {/* No Methods Warning + Add Button */}
           {methods.length === 0 && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{t.noMethods}</AlertDescription>
-            </Alert>
+            <div className="space-y-3">
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{t.noMethods}</AlertDescription>
+              </Alert>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowAddBankDialog(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {language === 'en' ? 'Add Bank Account' : language === 'zh-CN' ? '添加银行账户' : '添加銀行帳戶'}
+              </Button>
+            </div>
           )}
 
           {/* Withdrawal Amount */}
@@ -440,6 +453,16 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
           </Button>
         </form>
       </CardContent>
+
+      {/* ✅ 添加银行账户对话框 */}
+      <AddInternationalBankDialog
+        open={showAddBankDialog}
+        onOpenChange={setShowAddBankDialog}
+        onSuccess={() => {
+          setShowAddBankDialog(false);
+          loadData(); // ✅ 重新加载银行账户列表
+        }}
+      />
     </Card>
   );
 });
