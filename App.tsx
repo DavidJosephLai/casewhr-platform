@@ -1,12 +1,7 @@
-import { DevModeLogin } from './components/DevModeLogin';
-import { lazy, Suspense, useState, useEffect } from 'react';
-import { LanguageProvider, useLanguage } from './lib/LanguageContext';
-import { ViewProvider, useView } from './contexts/ViewContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { NetworkErrorNotice } from './components/NetworkErrorNotice';
-import { Toaster, toast } from 'sonner@2.0.3';
+import { Toaster, toast } from 'sonner';
 import { SEO, getPageSEO } from './components/SEO';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
