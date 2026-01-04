@@ -29,6 +29,7 @@ import * as smartEmailSender from "./smart_email_sender.tsx";
 import { milestoneRoutes } from "./milestone_service.tsx";
 import * as aiSeoService from "./ai_seo_service.tsx";
 import aiChatbotService from "./ai_chatbot_service.tsx";
+import { fixPlatformRevenue } from "./fix_platform_revenue.tsx";
 import aiSeoRoutes from "./ai-seo.ts";
 
 console.log('🚀 [SERVER STARTUP] Edge Function v2.0.5 - Subscription Notifications - Starting...');
@@ -12134,7 +12135,15 @@ app.post("/make-server-215f78a5/admin/setup-special-users", async (c) => {
 
       await kv.set(subscriptionKey, subscription);
 
-      // 2. Setup wallet with balance (100,000 TWD)
+      // 2. Setup wallet with balance (100,000 TWD → USD using real-time exchange rate)
+      // ⭐ 重要：錢包統一存儲 USD，所以要先轉換貨幣
+      const rates = await getExchangeRates();
+      const amountTWD = 100000; // NT$100,000
+      const amountUSD = Math.round((amountTWD / rates.TWD) * 100) / 100; // 轉換為 USD 並四捨五入到小數點後兩位
+      
+      console.log(`💱 [Admin/Setup] Exchange Rate: 1 USD = ${rates.TWD} TWD`);
+      console.log(`💱 [Admin/Setup] Converting NT$${amountTWD.toLocaleString()} → $${amountUSD.toFixed(2)} USD`);
+      
       const walletKey = `wallet_${userId}`;
       let wallet = await kv.get(walletKey);
 
@@ -12142,7 +12151,7 @@ app.post("/make-server-215f78a5/admin/setup-special-users", async (c) => {
         // Create new wallet
         wallet = {
           user_id: userId,
-          available_balance: 100000, // NT$100,000
+          available_balance: amountUSD, // ✅ 存儲 USD（已從 TWD 轉換）
           pending_withdrawal: 0,
           total_earned: 0,
           total_spent: 0,
@@ -12151,7 +12160,7 @@ app.post("/make-server-215f78a5/admin/setup-special-users", async (c) => {
         };
       } else {
         // Update existing wallet
-        wallet.available_balance = 100000; // NT$100,000
+        wallet.available_balance = amountUSD; // ✅ 存儲 USD（已從 TWD 轉換）
         wallet.updated_at = now.toISOString();
       }
 
@@ -12165,7 +12174,7 @@ app.post("/make-server-215f78a5/admin/setup-special-users", async (c) => {
         id: transactionId,
         user_id: userId,
         type: 'deposit',
-        amount: 100000,
+        amount: amountUSD, // ✅ 存儲 USD（已從 TWD 轉換）
         status: 'completed',
         description: '🎁 管理員充值 - 測試用企業帳號 (Admin top-up for testing)',
         created_at: now.toISOString(),
@@ -12174,15 +12183,16 @@ app.post("/make-server-215f78a5/admin/setup-special-users", async (c) => {
 
       await kv.set(transactionKey, transaction);
 
-      console.log(`✅ [Admin] Setup completed for ${email}: Enterprise + NT$100,000`);
+      console.log(`✅ [Admin] Setup completed for ${email}: Enterprise + NT$${amountTWD.toLocaleString()} ($${amountUSD.toFixed(2)} USD)`);
       
       results.push({
         email,
         userId,
         status: 'success',
         subscription: 'enterprise',
-        wallet_balance: 100000,
-        message: 'Enterprise subscription activated + NT$100,000 added to wallet'
+        wallet_balance_usd: amountUSD, // ✅ 返回 USD 金額
+        wallet_balance_twd: amountTWD, // ✅ 同時返回 TWD 金額供參考
+        message: `Enterprise subscription activated + NT$${amountTWD.toLocaleString()} ($${amountUSD.toFixed(2)} USD) added to wallet`
       });
     }
 
@@ -12335,7 +12345,15 @@ app.post("/make-server-215f78a5/public/initialize-special-users", async (c) => {
 
       await kv.set(subscriptionKey, subscription);
 
-      // 2. Setup wallet with balance (100,000 TWD)
+      // 2. Setup wallet with balance (100,000 TWD → USD using real-time exchange rate)
+      // ⭐ 重要：錢包統一存儲 USD，所以要先轉換貨幣
+      const rates2 = await getExchangeRates();
+      const amountTWD2 = 100000; // NT$100,000
+      const amountUSD2 = Math.round((amountTWD2 / rates2.TWD) * 100) / 100; // 轉換為 USD 並四捨五入到小數點後兩位
+      
+      console.log(`💱 [Public/InitSpecialUsers] Exchange Rate: 1 USD = ${rates2.TWD} TWD`);
+      console.log(`💱 [Public/InitSpecialUsers] Converting NT$${amountTWD2.toLocaleString()} → $${amountUSD2.toFixed(2)} USD`);
+      
       const walletKey = `wallet_${userId}`;
       let wallet = await kv.get(walletKey);
 
@@ -12343,7 +12361,7 @@ app.post("/make-server-215f78a5/public/initialize-special-users", async (c) => {
         // Create new wallet
         wallet = {
           user_id: userId,
-          available_balance: 100000, // NT$100,000
+          available_balance: amountUSD2, // ✅ 存儲 USD（已從 TWD 轉換）
           pending_withdrawal: 0,
           total_earned: 0,
           total_spent: 0,
@@ -12352,7 +12370,7 @@ app.post("/make-server-215f78a5/public/initialize-special-users", async (c) => {
         };
       } else {
         // Update existing wallet
-        wallet.available_balance = 100000; // NT$100,000
+        wallet.available_balance = amountUSD2; // ✅ 存儲 USD（已從 TWD 轉換）
         wallet.updated_at = now.toISOString();
       }
 
@@ -12366,7 +12384,7 @@ app.post("/make-server-215f78a5/public/initialize-special-users", async (c) => {
         id: transactionId,
         user_id: userId,
         type: 'deposit',
-        amount: 100000,
+        amount: amountUSD2, // ✅ 存儲 USD（已從 TWD 轉換）
         status: 'completed',
         description: '🎁 管理員充值 - 測試用企業帳號 (Admin top-up for testing)',
         created_at: now.toISOString(),
@@ -12375,7 +12393,7 @@ app.post("/make-server-215f78a5/public/initialize-special-users", async (c) => {
 
       await kv.set(transactionKey, transaction);
 
-      console.log(`✅ [Public/InitSpecialUsers] Setup completed for ${email}: Enterprise + NT$100,000`);
+      console.log(`✅ [Public/InitSpecialUsers] Setup completed for ${email}: Enterprise + NT$${amountTWD2.toLocaleString()} ($${amountUSD2.toFixed(2)} USD)`);
       
       // 🔍 驗證設置是否成功
       const verifySubscription = await kv.get(subscriptionKey);
@@ -12389,8 +12407,9 @@ app.post("/make-server-215f78a5/public/initialize-special-users", async (c) => {
         userId,
         status: 'success',
         subscription: 'enterprise',
-        wallet_balance: 100000,
-        message: 'Enterprise subscription activated + NT$100,000 added to wallet'
+        wallet_balance_usd: amountUSD2, // ✅ 返回 USD 金額
+        wallet_balance_twd: amountTWD2, // ✅ 同時返回 TWD 金額供參考
+        message: `Enterprise subscription activated + NT$${amountTWD2.toLocaleString()} ($${amountUSD2.toFixed(2)} USD) added to wallet`
       });
     }
 
@@ -18188,6 +18207,11 @@ app.get("/make-server-215f78a5/check-team-member", async (c) => {
 });
 
 console.log('✅ [SERVER] Team member check API registered');
+
+// 🔧 平台收入修復端點
+app.post('/make-server-215f78a5/admin/fix-platform-revenue', fixPlatformRevenue);
+console.log('✅ [SERVER] Platform revenue fix API registered');
+
 console.log('🎉 [SERVER] All routes registered, starting server...');
 
 // 禁用 JWT 验证（允许匿名访问测试端点）

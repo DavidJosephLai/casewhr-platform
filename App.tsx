@@ -12,8 +12,8 @@ import { toast, Toaster } from 'sonner';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { DevModeLogin } from './components/DevModeLogin';
 
-// 🔥 Version marker to force cache invalidation - v2.0.48
-console.log('🚀 [App v2.0.48] Fixed transaction currency display - database stores USD not TWD');
+// 🔥 Version marker to force cache invalidation - v2.0.50
+console.log('🚀 [App v2.0.50] Fixed admin top-up: Convert NT$100,000 → USD using real-time exchange rate (backend)');
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));

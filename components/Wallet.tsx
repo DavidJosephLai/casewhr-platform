@@ -127,8 +127,11 @@ function WalletComponent({ refreshKey }: WalletProps) {
 ${rateLoading ? '⏳ 載入中...' : '✅ API 即時匯率（緩存 1 小時）'}
 
 🧮 計算驗證：
-$${wallet.available_balance?.toFixed(2)} × ${twdRate.toFixed(4)} = NT$${(wallet.available_balance || 0) * twdRate}
-$${wallet.total_spent?.toFixed(2)} × ${twdRate.toFixed(4)} = NT$${(wallet.total_spent || 0) * twdRate}
+$${wallet.available_balance?.toFixed(2)} × ${twdRate.toFixed(4)} = NT$${((wallet.available_balance || 0) * twdRate).toFixed(2)}
+$${wallet.total_spent?.toFixed(2)} × ${twdRate.toFixed(4)} = NT$${((wallet.total_spent || 0) * twdRate).toFixed(2)}
+
+📝 最近 5 筆交易（原始 USD）：
+${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFixed(2)} USD (${t.description})`).join('\n')}
     `.trim();
     
     console.log(debugInfo);
