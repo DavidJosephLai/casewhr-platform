@@ -910,6 +910,78 @@ app.post("/make-server-215f78a5/test-email", async (c) => {
   }
 });
 
+// 🔍 Check user email configuration
+app.post("/make-server-215f78a5/check-user-email", async (c) => {
+  try {
+    const body = await c.req.json();
+    const { email } = body;
+
+    if (!email) {
+      return c.json({ error: 'Email is required' }, 400);
+    }
+
+    console.log('🔍 [Email Check] Checking email:', email);
+
+    // Search for user by email
+    const { data: { users }, error } = await supabase.auth.admin.listUsers();
+    
+    if (error) {
+      console.error('❌ [Email Check] Error listing users:', error);
+      return c.json({ 
+        found: false, 
+        error: 'Failed to check users' 
+      }, 500);
+    }
+
+    const user = users.find(u => u.email === email);
+
+    if (!user) {
+      console.log('❌ [Email Check] User not found:', email);
+      return c.json({ 
+        found: false, 
+        message: 'No user found with this email' 
+      });
+    }
+
+    console.log('✅ [Email Check] Found user:', user.id);
+
+    // Check if user has a profile
+    const profileKey = `profile_${user.id}`;
+    const profile = await kv.get(profileKey);
+
+    if (!profile) {
+      console.log('⚠️ [Email Check] User found but no profile:', user.id);
+      return c.json({
+        found: true,
+        user_id: user.id,
+        email: user.email,
+        has_profile: false,
+        warning: 'User exists but has no profile in KV store',
+      });
+    }
+
+    console.log('✅ [Email Check] Profile found:', profile);
+
+    return c.json({
+      found: true,
+      user_id: user.id,
+      email: (profile as any).email || user.email,
+      name: (profile as any).name || (profile as any).full_name,
+      language: (profile as any).language,
+      account_type: (profile as any).account_type,
+      has_profile: true,
+    });
+
+  } catch (error: any) {
+    console.error('❌ [Email Check] Exception:', error);
+    return c.json({ 
+      found: false,
+      error: 'Server error',
+      details: error.message 
+    }, 500);
+  }
+});
+
 // 🎨 測試增強版郵件模板
 app.post("/make-server-215f78a5/test-enhanced-email", async (c) => {
   try {
@@ -12159,9 +12231,11 @@ app.post("/make-server-215f78a5/admin/setup-special-users", async (c) => {
           updated_at: now.toISOString(),
         };
       } else {
-        // Update existing wallet
-        wallet.available_balance = amountUSD; // ✅ 存儲 USD（已從 TWD 轉換）
+        // Update existing wallet - ADD to balance instead of replacing
+        const oldBalance = wallet.available_balance || 0;
+        wallet.available_balance = oldBalance + amountUSD; // ✅ 增加餘額，不是覆蓋！
         wallet.updated_at = now.toISOString();
+        console.log(`💰 [Admin/Setup] Balance updated: $${oldBalance.toFixed(2)} → $${wallet.available_balance.toFixed(2)} USD (+$${amountUSD.toFixed(2)})`);
       }
 
       await kv.set(walletKey, wallet);
@@ -12369,9 +12443,11 @@ app.post("/make-server-215f78a5/public/initialize-special-users", async (c) => {
           updated_at: now.toISOString(),
         };
       } else {
-        // Update existing wallet
-        wallet.available_balance = amountUSD2; // ✅ 存儲 USD（已從 TWD 轉換）
+        // Update existing wallet - ADD to balance instead of replacing
+        const oldBalance = wallet.available_balance || 0;
+        wallet.available_balance = oldBalance + amountUSD2; // ✅ 增加餘額，不是覆蓋！
         wallet.updated_at = now.toISOString();
+        console.log(`💰 [Public/InitSpecialUsers] Balance updated: $${oldBalance.toFixed(2)} → $${wallet.available_balance.toFixed(2)} USD (+$${amountUSD2.toFixed(2)})`);
       }
 
       await kv.set(walletKey, wallet);

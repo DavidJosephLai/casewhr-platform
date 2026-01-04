@@ -2,6 +2,11 @@ import { Card } from './ui/card';
 import { toast } from 'sonner';
 import { Mail, Send, Loader2 } from 'lucide-react';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { useLanguage } from '../lib/LanguageContext';
+import { useState } from 'react';
+import { Input } from './ui/input';
+import { Button } from './ui/button';
+import { EmailDiagnosticTool } from './EmailDiagnosticTool'; // ✅ 添加诊断工具
 
 export function EmailTestPage() {
   const { language } = useLanguage();
@@ -216,6 +221,11 @@ export function EmailTestPage() {
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             {language === 'en' ? 'Email system ready' : '郵件系統就緒'}
           </div>
+        </div>
+
+        {/* ✅ 邮件诊断工具 */}
+        <div className="mt-8">
+          <EmailDiagnosticTool />
         </div>
       </div>
     </div>
