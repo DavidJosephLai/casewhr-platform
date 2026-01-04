@@ -7,13 +7,13 @@ import { Hero } from './components/Hero';
 import { DevModeLogin } from './components/DevModeLogin';
 import { NetworkErrorNotice } from './components/NetworkErrorNotice';
 import { SEO, getPageSEO } from './components/SEO';
-import { Toaster, toast } from 'sonner@2.0.3';
+import { Toaster, toast } from 'sonner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 
-// 🔥 Version marker to force cache invalidation - v2.0.86
-// 🐛 Fix: Correct import path for LanguageProvider (from ./lib/ not ./contexts/)
-console.log('🚀 [App v2.0.86] FIX: Corrected LanguageProvider import path');
+// 🔥 Version marker to force cache invalidation - v2.0.87
+// 🐛 Fix: Remove version from sonner import for production build compatibility
+console.log('🚀 [App v2.0.87] FIX: Removed version from sonner import');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
@@ -230,7 +230,7 @@ function AppContent() {
     
     // 檢查是否是 OAuth 回調
     if (urlPath.includes('/auth/callback')) {
-      console.log('�� [App] OAuth callback detected');
+      console.log(' [App] OAuth callback detected');
       setView('auth-callback');
       return;
     }
