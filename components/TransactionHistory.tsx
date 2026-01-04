@@ -47,8 +47,8 @@ export const TransactionHistory = memo(function TransactionHistory() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // 每頁顯示 10 筆交易
   
-  // 數據庫存儲貨幣 (統一為 TWD)
-  const storedCurrency: Currency = 'TWD';
+  // 🔧 修復：數據庫存儲貨幣應該統一為 USD
+  const storedCurrency: Currency = 'USD';
   // 根據語言選擇顯示貨幣
   const displayCurrency: Currency = language === 'zh' ? 'TWD' : 'USD';
   

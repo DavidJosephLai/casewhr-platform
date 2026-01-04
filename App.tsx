@@ -12,8 +12,8 @@ import { toast, Toaster } from 'sonner';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { DevModeLogin } from './components/DevModeLogin';
 
-// 🔥 Version marker to force cache invalidation - v2.0.47
-console.log('🚀 [App v2.0.47] Fixed invoice status badge crash by adding safe fallback for undefined status');
+// 🔥 Version marker to force cache invalidation - v2.0.48
+console.log('🚀 [App v2.0.48] Fixed transaction currency display - database stores USD not TWD');
 
 // Lazy load components
 const CoreValues = lazy(() => import('./components/CoreValues'));
