@@ -33,8 +33,8 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
 
-  // 根據語言選擇顯示貨幣
-  const displayCurrency: Currency = (language === 'zh' ? 'TWD' : 'USD') as Currency; // ✅ 明确类型
+  // ✅ 修复：根据语言选择显示货币（支持 zh-TW 和 zh-CN）
+  const displayCurrency: Currency = (language === 'en' ? 'USD' : 'TWD') as Currency;
 
   const MINIMUM_WITHDRAWAL = 50; // $50 minimum (USD)
   const WITHDRAWAL_FEE_RATE = 0.02; // 2% fee
