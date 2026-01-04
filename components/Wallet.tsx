@@ -325,7 +325,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       return;
     }
 
-    // 檢查最低儲值金��� 300 NTD
+    // 檢查最低儲值金 300 NTD
     const twdAmount = selectedCurrency === 'TWD'
       ? amount
       : convertCurrency(amount, selectedCurrency, 'TWD');
@@ -485,7 +485,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
             toast.dismiss(); // Dismiss loading toast
             toast.success(
               language === 'en' 
-                ? `��� Payment successful! $${data.amount.toLocaleString()} added to your wallet.` 
+                ? ` Payment successful! $${data.amount.toLocaleString()} added to your wallet.` 
                 : `🎉 付款成功！已將 $${data.amount.toLocaleString()} 加入您的錢包。`,
               { duration: 5000 }
             );
@@ -722,7 +722,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
 
     setLoading(true);
     try {
-      // ���️ 重要：后端需要 USD，所以要转回 USD
+      // ️ 重要：后端需要 USD，所以要转回 USD
       const usdAmount = selectedCurrency === 'USD'
         ? amount
         : convertCurrency(amount, selectedCurrency, 'USD');
@@ -953,27 +953,6 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
 
       {/* 🔧 平台收入修復工具（僅平台擁有者可見） */}
       {isPlatformOwner && <PlatformRevenueFixTool />}
-
-      {/* 💡 平台擁有者提示（非平台擁有者時顯示） */}
-      {!isPlatformOwner && user?.email && (
-        <Card className="border-2 border-yellow-300 bg-gradient-to-br from-yellow-50 to-white mb-6">
-          <CardContent className="pt-6">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-yellow-900 mb-1">
-                  {language === 'en' ? 'Platform Owner Tools' : '平台擁有者工具'}
-                </p>
-                <p className="text-sm text-yellow-800">
-                  {language === 'en' 
-                    ? `You are logged in as: ${user.email}. Platform revenue tools are only available for platform owner (davidlai234@hotmail.com).`
-                    : `您目前登入為：${user.email}。平台收入工具僅限平台擁有者 (davidlai234@hotmail.com) 使用。`}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Wallet Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
