@@ -16474,6 +16474,180 @@ app.get("/make-server-215f78a5/emails/stats", async (c) => {
   }
 });
 
+// ===========================
+// 🤖 AI SEO 報告雲端儲存 API
+// ===========================
+
+// 💾 儲存 AI SEO 報告到雲端
+app.post("/make-server-215f78a5/ai/save-report", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized - Please log in' }, 401);
+    }
+
+    const { reportData } = await c.req.json();
+    
+    if (!reportData) {
+      return c.json({ error: 'Missing reportData' }, 400);
+    }
+
+    // 生成報告 ID
+    const reportId = `ai_seo_${user.id}_${Date.now()}`;
+    
+    // 構建報告物件
+    const report = {
+      id: reportId,
+      userId: user.id,
+      title: reportData.title || '',
+      description: reportData.description || '',
+      keywords: reportData.keywords || '',
+      pageType: reportData.pageType || 'home',
+      analysis: reportData.analysis || null,
+      generatedData: reportData.generatedData || null,
+      createdAt: new Date().toISOString(),
+    };
+
+    // 儲存到 KV Store
+    await kv.set(reportId, report);
+    
+    // 更新用戶的報告列表
+    const userReportsKey = `ai_seo_reports_${user.id}`;
+    const existingReports = await kv.get(userReportsKey) || [];
+    const updatedReports = [reportId, ...existingReports].slice(0, 50); // 最多保存 50 個報告
+    await kv.set(userReportsKey, updatedReports);
+
+    console.log('✅ AI SEO report saved:', reportId);
+
+    return c.json({ 
+      success: true, 
+      reportId,
+      message: 'Report saved successfully'
+    });
+  } catch (error: any) {
+    console.error('❌ Error saving AI SEO report:', error);
+    return c.json({ error: error.message || 'Failed to save report' }, 500);
+  }
+});
+
+// 📋 獲取用戶的 AI SEO 報告列表
+app.get("/make-server-215f78a5/ai/reports", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized - Please log in' }, 401);
+    }
+
+    const userReportsKey = `ai_seo_reports_${user.id}`;
+    const reportIds = await kv.get(userReportsKey) || [];
+    
+    // 獲取所有報告的摘要信息
+    const reports = [];
+    for (const reportId of reportIds) {
+      const report = await kv.get(reportId);
+      if (report) {
+        // 只返回摘要信息，不包含完整的分析數據
+        reports.push({
+          id: report.id,
+          title: report.title,
+          pageType: report.pageType,
+          createdAt: report.createdAt,
+          hasAnalysis: !!report.analysis,
+          hasGeneratedData: !!report.generatedData,
+        });
+      }
+    }
+
+    return c.json({ 
+      success: true,
+      reports,
+      total: reports.length
+    });
+  } catch (error: any) {
+    console.error('❌ Error fetching AI SEO reports:', error);
+    return c.json({ error: error.message || 'Failed to fetch reports' }, 500);
+  }
+});
+
+// 📄 獲取單個 AI SEO 報告的完整數據
+app.get("/make-server-215f78a5/ai/reports/:reportId", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized - Please log in' }, 401);
+    }
+
+    const reportId = c.req.param('reportId');
+    const report = await kv.get(reportId);
+
+    if (!report) {
+      return c.json({ error: 'Report not found' }, 404);
+    }
+
+    // 驗證報告所有權
+    if (report.userId !== user.id) {
+      return c.json({ error: 'Forbidden - You do not own this report' }, 403);
+    }
+
+    return c.json({ 
+      success: true,
+      report
+    });
+  } catch (error: any) {
+    console.error('❌ Error fetching AI SEO report:', error);
+    return c.json({ error: error.message || 'Failed to fetch report' }, 500);
+  }
+});
+
+// 🗑️ 刪除 AI SEO 報告
+app.delete("/make-server-215f78a5/ai/reports/:reportId", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized - Please log in' }, 401);
+    }
+
+    const reportId = c.req.param('reportId');
+    const report = await kv.get(reportId);
+
+    if (!report) {
+      return c.json({ error: 'Report not found' }, 404);
+    }
+
+    // 驗證報告所有權
+    if (report.userId !== user.id) {
+      return c.json({ error: 'Forbidden - You do not own this report' }, 403);
+    }
+
+    // 從 KV Store 刪除報告
+    await kv.del(reportId);
+
+    // 從用戶報告列表中移除
+    const userReportsKey = `ai_seo_reports_${user.id}`;
+    const reportIds = await kv.get(userReportsKey) || [];
+    const updatedReports = reportIds.filter((id: string) => id !== reportId);
+    await kv.set(userReportsKey, updatedReports);
+
+    console.log('✅ AI SEO report deleted:', reportId);
+
+    return c.json({ 
+      success: true,
+      message: 'Report deleted successfully'
+    });
+  } catch (error: any) {
+    console.error('❌ Error deleting AI SEO report:', error);
+    return c.json({ error: error.message || 'Failed to delete report' }, 500);
+  }
+});
+
 // Validate critical environment variables before starting server
 const validateEnvironment = () => {
   const required = {
