@@ -106,47 +106,47 @@ export function ApiDocumentation({ language = 'en', apiKey, baseUrl }: ApiDocume
       rateLimitText: 'Enterprise users have a rate limit of 100 requests per minute. Rate limit headers are included in all responses.'
     },
     zh: {
-      title: 'API 文檔',
-      subtitle: 'Case Where 企業版 API 完整參考',
-      backToDashboard: '返回儀表板',
-      quickStart: '快速開始',
-      authentication: '認證',
+      title: 'API 文档',
+      subtitle: 'Case Where 企业版 API 完整参考',
+      backToDashboard: '返回仪表板',
+      quickStart: '快速开始',
+      authentication: '认证',
       rateLimit: '速率限制',
-      endpoints: 'API 端點',
-      tryIt: '試試看',
-      testing: '測試中...',
+      endpoints: 'API 端点',
+      tryIt: '试一试',
+      testing: '测试中...',
       method: '方法',
-      path: '路徑',
-      auth: '認證方式',
-      parameters: '參數',
-      requestBody: '請求內容',
-      response: '響應',
-      example: '範例',
-      codeExample: '代碼示例',
-      testEndpoint: '測試端點',
-      result: '結果',
-      copy: '複製',
-      copied: '已複製！',
+      path: '路径',
+      auth: '认证方式',
+      parameters: '参数',
+      requestBody: '请求内容',
+      response: '响应',
+      example: '示例',
+      codeExample: '代码示例',
+      testEndpoint: '测试端点',
+      result: '结果',
+      copy: '复制',
+      copied: '已复制！',
       required: '必填',
-      optional: '選填',
-      name: '名稱',
-      type: '類型',
-      description: '說明',
+      optional: '选填',
+      name: '名称',
+      type: '类型',
+      description: '说明',
       categories: {
-        public: '公開 API',
-        keys: 'API 金鑰',
-        support: '支援',
-        team: '團隊管理',
-        manager: '客戶經理',
-        branding: '品牌設置'
+        public: '公开 API',
+        keys: 'API 密钥',
+        support: '支持',
+        team: '团队管理',
+        manager: '客户经理',
+        branding: '品牌设置'
       },
       authTypes: {
-        'api-key': 'API 金鑰',
+        'api-key': 'API 密钥',
         'bearer': 'Bearer Token'
       },
-      quickStartText: '幾分鐘內開始使用 Case Where API。所有企業版用戶都可以使用我們完整的 API。',
-      authText: '所有 API 請求都需要認證。公開端點使用 API 金鑰，管理端點使用 Bearer Token。',
-      rateLimitText: '企業版用戶的速率限制為每分鐘 100 次請求。所有響應都包含速率限制標頭。'
+      quickStartText: '几分钟内开始使用 Case Where API。所有企业版用户都可以使用我们的完整 API。',
+      authText: '所有 API 请求都需要认证。公开端点使用 API 密钥，管理端点使用 Bearer Token。',
+      rateLimitText: '企业版用户的速率限制为每分钟 100 次请求。所有响应都包含速率限制标头。'
     },
     'zh-TW': {
       title: 'API 文件',
@@ -168,7 +168,7 @@ export function ApiDocumentation({ language = 'en', apiKey, baseUrl }: ApiDocume
       codeExample: '代碼範例',
       testEndpoint: '測試端點',
       result: '結果',
-      copy: '複��',
+      copy: '複製',
       copied: '已複製！',
       required: '必填',
       optional: '選填',
@@ -238,6 +238,7 @@ export function ApiDocumentation({ language = 'en', apiKey, baseUrl }: ApiDocume
 
   const t = translations[language];
 
+  // 🔥 確保默認選中第一個端點，避免空白頁
   const endpoints: ApiEndpoint[] = [
     // Public API
     {
