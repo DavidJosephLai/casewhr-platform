@@ -1020,7 +1020,7 @@ export function registerECPayRoutes(app: any) {
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // Route: Get payment by order ID
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  app.get('/ecpay-payments/by-order/:orderId', async (c) => {
+  app.get('/make-server-215f78a5/ecpay-payments/by-order/:orderId', async (c) => {
     try {
       const orderId = c.req.param('orderId');
       
