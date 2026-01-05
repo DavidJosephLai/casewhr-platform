@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -438,6 +438,13 @@ export function ApiDocumentation({ language = 'en', apiKey, baseUrl }: ApiDocume
     acc[endpoint.category].push(endpoint);
     return acc;
   }, {} as { [key: string]: ApiEndpoint[] });
+
+  // 🔥 自動選擇第一個端點，避免空白頁
+  useEffect(() => {
+    if (!selectedEndpoint && endpoints.length > 0) {
+      setSelectedEndpoint(endpoints[0]);
+    }
+  }, []);
 
   return (
     <div className="space-y-6">
