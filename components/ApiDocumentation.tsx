@@ -1,765 +1,823 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useLanguage } from '../lib/LanguageContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { useView } from '../contexts/ViewContext';
-import { copyToClipboard } from '../utils/clipboard';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
 import { 
-  Book, 
   Code, 
-  Play,
-  Copy,
+  Book, 
+  Zap, 
+  Lock, 
+  Search, 
+  Copy, 
   Check,
+  ExternalLink,
   Terminal,
-  Zap,
-  Lock,
-  Clock,
-  AlertCircle,
-  ArrowLeft
+  FileJson,
+  Shield,
+  Globe,
+  Briefcase,
+  FileText,
+  DollarSign,
+  Mail,
+  Users,
+  Settings,
+  TrendingUp
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface ApiEndpoint {
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  path: string;
-  description: string;
-  auth: 'api-key' | 'bearer';
-  category: string;
-  parameters?: Array<{
-    name: string;
-    type: string;
-    required: boolean;
-    description: string;
-  }>;
-  requestBody?: {
-    [key: string]: {
-      type: string;
-      required: boolean;
-      description: string;
-    };
-  };
-  response: any;
-}
+export function ApiDocumentation() {
+  const { language } = useLanguage();
+  const [activeCategory, setActiveCategory] = useState('overview');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [copiedEndpoint, setCopiedEndpoint] = useState<string | null>(null);
 
-interface ApiDocumentationProps {
-  language?: 'en' | 'zh' | 'zh-TW' | 'zh-CN';
-  apiKey?: string;
-  baseUrl: string;
-}
-
-export function ApiDocumentation({ language = 'en', apiKey, baseUrl }: ApiDocumentationProps) {
-  const { setView } = useView();
-  const [selectedEndpoint, setSelectedEndpoint] = useState<ApiEndpoint | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState<'curl' | 'javascript' | 'python'>('curl');
-  const [testResult, setTestResult] = useState<any>(null);
-  const [testing, setTesting] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [testParams, setTestParams] = useState<{ [key: string]: any }>({});
+  const baseUrl = 'https://{projectId}.supabase.co/functions/v1/make-server-215f78a5';
 
   const translations = {
     en: {
       title: 'API Documentation',
-      subtitle: 'Complete reference for the Case Where Enterprise API',
-      backToDashboard: 'Back to Dashboard',
-      quickStart: 'Quick Start',
-      authentication: 'Authentication',
-      rateLimit: 'Rate Limiting',
-      endpoints: 'API Endpoints',
-      tryIt: 'Try It Out',
-      testing: 'Testing...',
-      method: 'Method',
-      path: 'Path',
-      auth: 'Authentication',
-      parameters: 'Parameters',
-      requestBody: 'Request Body',
-      response: 'Response',
-      example: 'Example',
-      codeExample: 'Code Example',
-      testEndpoint: 'Test Endpoint',
-      result: 'Result',
-      copy: 'Copy',
-      copied: 'Copied!',
-      required: 'Required',
-      optional: 'Optional',
-      name: 'Name',
-      type: 'Type',
-      description: 'Description',
+      subtitle: 'Complete reference for CaseWHR Platform API',
+      version: 'Version 2.0.5',
+      search: 'Search endpoints...',
       categories: {
-        public: 'Public API',
-        keys: 'API Keys',
+        overview: 'Overview',
+        authentication: 'Authentication',
+        projects: 'Projects',
+        proposals: 'Proposals',
+        payments: 'Payments',
+        invoices: 'Invoices & Receipts',
+        messaging: 'Messaging',
+        users: 'Users',
+        admin: 'Admin',
+        seo: 'SEO & Analytics',
+      },
+      overview: {
+        title: 'API Overview',
+        description: 'CaseWHR provides a RESTful API for managing freelance projects, proposals, payments, and more.',
+        baseUrl: 'Base URL',
+        authentication: 'Authentication',
+        authDescription: 'All API requests require authentication using a Bearer token obtained from Supabase Auth.',
+        rateLimit: 'Rate Limiting',
+        rateLimitDescription: 'API requests are limited to 100 requests per minute per user.',
         support: 'Support',
-        team: 'Team Management',
-        manager: 'Account Manager',
-        branding: 'Branding'
+        supportDescription: 'For API support, contact: api@casewhr.com',
       },
-      authTypes: {
-        'api-key': 'API Key',
-        'bearer': 'Bearer Token'
+      quickStart: {
+        title: 'Quick Start',
+        step1: '1. Sign up at casewhr.com',
+        step2: '2. Obtain your access token via Supabase Auth',
+        step3: '3. Make your first API call',
+        example: 'Example Request',
       },
-      quickStartText: 'Get started with the Case Where API in minutes. All Enterprise users have access to our comprehensive API.',
-      authText: 'All API requests require authentication. Use your API Key for public endpoints or Bearer Token for management endpoints.',
-      rateLimitText: 'Enterprise users have a rate limit of 100 requests per minute. Rate limit headers are included in all responses.'
-    },
-    zh: {
-      title: 'API 文档',
-      subtitle: 'Case Where 企业版 API 完整参考',
-      backToDashboard: '返回仪表板',
-      quickStart: '快速开始',
-      authentication: '认证',
-      rateLimit: '速率限制',
-      endpoints: 'API 端点',
-      tryIt: '试一试',
-      testing: '测试中...',
-      method: '方法',
-      path: '路径',
-      auth: '认证方式',
-      parameters: '参数',
-      requestBody: '请求内容',
-      response: '响应',
-      example: '示例',
-      codeExample: '代码示例',
-      testEndpoint: '测试端点',
-      result: '结果',
-      copy: '复制',
-      copied: '已复制！',
-      required: '必填',
-      optional: '选填',
-      name: '名称',
-      type: '类型',
-      description: '说明',
-      categories: {
-        public: '公开 API',
-        keys: 'API 密钥',
-        support: '支持',
-        team: '团队管理',
-        manager: '客户经理',
-        branding: '品牌设置'
+      responseFormats: {
+        title: 'Response Formats',
+        success: 'Success Response',
+        error: 'Error Response',
       },
-      authTypes: {
-        'api-key': 'API 密钥',
-        'bearer': 'Bearer Token'
+      currencies: {
+        title: 'Multi-Currency Support',
+        description: 'All amounts are stored in USD and automatically converted to TWD or CNY based on user preference.',
+        rates: 'Current Exchange Rates',
       },
-      quickStartText: '几分钟内开始使用 Case Where API。所有企业版用户都可以使用我们的完整 API。',
-      authText: '所有 API 请求都需要认证。公开端点使用 API 密钥，管理端点使用 Bearer Token。',
-      rateLimitText: '企业版用户的速率限制为每分钟 100 次请求。所有响应都包含速率限制标头。'
+      copied: 'Copied to clipboard',
+      copyCode: 'Copy code',
     },
     'zh-TW': {
-      title: 'API 文件',
-      subtitle: 'Case Where 企業版 API 完整參考',
-      backToDashboard: '返回儀表板',
-      quickStart: '快速開始',
-      authentication: '認證',
-      rateLimit: '速率限制',
-      endpoints: 'API 端點',
-      tryIt: '試試看',
-      testing: '測試中...',
-      method: '方法',
-      path: '路徑',
-      auth: '認證方式',
-      parameters: '參數',
-      requestBody: '請求內容',
-      response: '響應',
-      example: '範例',
-      codeExample: '代碼範例',
-      testEndpoint: '測試端點',
-      result: '結果',
-      copy: '複製',
-      copied: '已複製！',
-      required: '必填',
-      optional: '選填',
-      name: '名稱',
-      type: '類型',
-      description: '說明',
+      title: 'API 說明文檔',
+      subtitle: 'CaseWHR 平台 API 完整參考',
+      version: '版本 2.0.5',
+      search: '搜尋端點...',
       categories: {
-        public: '公開 API',
-        keys: 'API 金鑰',
-        support: '支援',
-        team: '團隊管理',
-        manager: '客戶經理',
-        branding: '品牌設置'
+        overview: '概覽',
+        authentication: '認證',
+        projects: '專案',
+        proposals: '提案',
+        payments: '付款',
+        invoices: '發票與收據',
+        messaging: '訊息',
+        users: '用戶',
+        admin: '管理員',
+        seo: 'SEO 與分析',
       },
-      authTypes: {
-        'api-key': 'API 金鑰',
-        'bearer': 'Bearer Token'
+      overview: {
+        title: 'API 概覽',
+        description: 'CaseWHR 提供 RESTful API 用於管理自由接案專案、提案、付款等功能。',
+        baseUrl: '基礎 URL',
+        authentication: '認證方式',
+        authDescription: '所有 API 請求需要使用從 Supabase Auth 獲取的 Bearer Token 進行認證。',
+        rateLimit: '速率限制',
+        rateLimitDescription: '每個用戶每分鐘最多可發送 100 個 API 請求。',
+        support: '技術支援',
+        supportDescription: 'API 技術支援請聯絡：api@casewhr.com',
       },
-      quickStartText: '幾分鐘內開始使用 Case Where API。所有企業版用戶都可以使用我們完整的 API。',
-      authText: '所有 API 請求都需要認證。公開端點使用 API 金鑰，管理端點使用 Bearer Token。',
-      rateLimitText: '企業版用戶的速率限制為每分鐘 100 次請求。所有響應都包含速率限制標頭。'
+      quickStart: {
+        title: '快速開始',
+        step1: '1. 在 casewhr.com 註冊',
+        step2: '2. 通過 Supabase Auth 獲取存取令牌',
+        step3: '3. 發送您的第一個 API 請求',
+        example: '範例請求',
+      },
+      responseFormats: {
+        title: '回應格式',
+        success: '成功回應',
+        error: '錯誤回應',
+      },
+      currencies: {
+        title: '多幣別支援',
+        description: '所有金額以美元（USD）儲存，並根據用戶偏好自動轉換為新台幣（TWD）或人民幣（CNY）。',
+        rates: '當前匯率',
+      },
+      copied: '已複製到剪貼簿',
+      copyCode: '複製程式碼',
     },
     'zh-CN': {
-      title: 'API 文档',
-      subtitle: 'Case Where 企业版 API 完整参考',
-      backToDashboard: '返回仪表板',
-      quickStart: '快速开始',
-      authentication: '认证',
-      rateLimit: '速率限制',
-      endpoints: 'API 端点',
-      tryIt: '试一试',
-      testing: '测试中...',
-      method: '方法',
-      path: '路径',
-      auth: '认证方式',
-      parameters: '参数',
-      requestBody: '请求内容',
-      response: '响应',
-      example: '示例',
-      codeExample: '代码示例',
-      testEndpoint: '测试端点',
-      result: '结果',
-      copy: '复制',
-      copied: '已复制！',
-      required: '必填',
-      optional: '选填',
-      name: '名称',
-      type: '类型',
-      description: '说明',
+      title: 'API 说明文档',
+      subtitle: 'CaseWHR 平台 API 完整参考',
+      version: '版本 2.0.5',
+      search: '搜寻端点...',
       categories: {
-        public: '公开 API',
-        keys: 'API 密钥',
-        support: '支持',
-        team: '团队管理',
-        manager: '客户经理',
-        branding: '品牌设置'
+        overview: '概览',
+        authentication: '认证',
+        projects: '项目',
+        proposals: '提案',
+        payments: '付款',
+        invoices: '发票与收据',
+        messaging: '消息',
+        users: '用户',
+        admin: '管理员',
+        seo: 'SEO 与分析',
       },
-      authTypes: {
-        'api-key': 'API 密钥',
-        'bearer': 'Bearer Token'
+      overview: {
+        title: 'API 概览',
+        description: 'CaseWHR 提供 RESTful API 用于管理自由接案项目、提案、付款等功能。',
+        baseUrl: '基础 URL',
+        authentication: '认证方式',
+        authDescription: '所有 API 请求需要使用从 Supabase Auth 获取的 Bearer Token 进行认证。',
+        rateLimit: '速率限制',
+        rateLimitDescription: '每个用户每分钟最多可发送 100 个 API 请求。',
+        support: '技术支持',
+        supportDescription: 'API 技术支持请联络：api@casewhr.com',
       },
-      quickStartText: '几分钟内开始使用 Case Where API。所有企业版用户都可以使用我们的完整 API。',
-      authText: '所有 API 请求都需要认证。公开端点使用 API 密钥，管理端点使用 Bearer Token。',
-      rateLimitText: '企业版用户的速率限制为每分钟 100 次请求。所有响应都包含速率限制标头。'
-    }
+      quickStart: {
+        title: '快速开始',
+        step1: '1. 在 casewhr.com 注册',
+        step2: '2. 通过 Supabase Auth 获取访问令牌',
+        step3: '3. 发送您的第一个 API 请求',
+        example: '范例请求',
+      },
+      responseFormats: {
+        title: '响应格式',
+        success: '成功响应',
+        error: '错误响应',
+      },
+      currencies: {
+        title: '多币别支持',
+        description: '所有金额以美元（USD）储存，并根据用户偏好自动转换为新台币（TWD）或人民币（CNY）。',
+        rates: '当前汇率',
+      },
+      copied: '已复制到剪贴板',
+      copyCode: '复制代码',
+    },
   };
 
-  const t = translations[language];
+  const t = translations[language as keyof typeof translations] || translations.en;
 
-  // 🔥 確保默認選中第一個端點，避免空白頁
-  const endpoints: ApiEndpoint[] = [
-    // Public API
-    {
-      method: 'GET',
-      path: '/api/v1/projects',
-      description: language === 'en' ? 'Get list of your projects' : '獲取項目列表',
-      auth: 'api-key',
-      category: 'public',
-      response: {
-        success: true,
-        data: [
-          {
-            id: 'proj-123',
-            title: 'Website Redesign',
-            budget: 5000,
-            status: 'open'
-          }
-        ],
-        meta: {
-          total: 1,
-          api_version: 'v1'
-        }
-      }
-    },
-    {
-      method: 'POST',
-      path: '/api/v1/projects',
-      description: language === 'en' ? 'Create a new project' : '創建新項目',
-      auth: 'api-key',
-      category: 'public',
-      requestBody: {
-        title: { type: 'string', required: true, description: 'Project title' },
-        description: { type: 'string', required: true, description: 'Project description' },
-        budget: { type: 'number', required: false, description: 'Project budget' },
-        deadline: { type: 'string', required: false, description: 'Deadline (ISO 8601)' },
-        skills: { type: 'array', required: false, description: 'Required skills' }
+  const apiEndpoints = {
+    projects: [
+      {
+        method: 'POST',
+        path: '/projects',
+        title: language === 'en' ? 'Create Project' : language === 'zh-CN' ? '创建项目' : '建立專案',
+        description: language === 'en' ? 'Create a new project' : language === 'zh-CN' ? '创建新项目' : '建立新專案',
+        auth: true,
+        body: {
+          title: 'string',
+          description: 'string',
+          budget: 'number',
+          currency: 'USD | TWD | CNY',
+          deadline: 'string (ISO 8601)',
+        },
       },
-      response: {
-        success: true,
-        data: {
-          id: 'proj-uuid',
-          title: 'Website Redesign',
-          status: 'open',
-          created_at: '2025-12-13T10:00:00Z'
-        }
-      }
-    },
-    {
-      method: 'GET',
-      path: '/api/v1/wallet',
-      description: language === 'en' ? 'Get wallet balance' : '查詢錢包餘額',
-      auth: 'api-key',
-      category: 'public',
-      response: {
-        success: true,
-        data: {
-          balance: 1500.50,
-          locked: 200.00,
-          currency: 'USD'
-        }
-      }
-    },
-    {
-      method: 'GET',
-      path: '/api/v1/proposals',
-      description: language === 'en' ? 'Get list of proposals' : '獲取提案列表',
-      auth: 'api-key',
-      category: 'public',
-      parameters: [
-        { name: 'project_id', type: 'string', required: false, description: 'Filter by project ID' },
-        { name: 'status', type: 'string', required: false, description: 'Filter by status' }
-      ],
-      response: {
-        success: true,
-        data: [
-          {
-            id: 'prop-123',
-            project_id: 'proj-123',
-            proposed_amount: 4500,
-            status: 'pending'
-          }
-        ]
-      }
-    },
-    {
-      method: 'POST',
-      path: '/api/v1/proposals',
-      description: language === 'en' ? 'Submit a new proposal' : '提交新提案',
-      auth: 'api-key',
-      category: 'public',
-      requestBody: {
-        project_id: { type: 'string', required: true, description: 'Project ID' },
-        cover_letter: { type: 'string', required: true, description: 'Cover letter' },
-        proposed_amount: { type: 'number', required: true, description: 'Proposed amount' },
-        delivery_time: { type: 'string', required: false, description: 'Delivery time' }
+      {
+        method: 'GET',
+        path: '/projects',
+        title: language === 'en' ? 'List Projects' : language === 'zh-CN' ? '列出项目' : '列出專案',
+        description: language === 'en' ? 'Get all projects with optional filters' : language === 'zh-CN' ? '获取所有项目（可选过滤）' : '取得所有專案（可選篩選）',
+        auth: true,
+        params: {
+          status: 'open | in_progress | completed',
+          client_id: 'string',
+          page: 'number',
+        },
       },
-      response: {
-        success: true,
-        data: {
-          id: 'prop-uuid',
-          status: 'pending',
-          created_at: '2025-12-13T10:00:00Z'
-        }
-      }
-    }
-  ];
-
-  const generateCodeExample = (endpoint: ApiEndpoint) => {
-    const { method, path, requestBody } = endpoint;
-    const fullUrl = `${baseUrl}${path}`;
-
-    if (selectedLanguage === 'curl') {
-      let curl = `curl -X ${method} ${fullUrl} \\\n`;
-      curl += `  -H "X-API-Key: ${apiKey || 'your-api-key'}"`;
-      
-      if (requestBody) {
-        curl += ` \\\n  -H "Content-Type: application/json" \\\n`;
-        const example: any = {};
-        Object.entries(requestBody).forEach(([key, value]) => {
-          if (value.type === 'string') example[key] = 'example';
-          if (value.type === 'number') example[key] = 100;
-          if (value.type === 'array') example[key] = ['example'];
-        });
-        curl += `  -d '${JSON.stringify(example, null, 2)}'`;
-      }
-      
-      return curl;
-    }
-
-    if (selectedLanguage === 'javascript') {
-      let js = `const response = await fetch('${fullUrl}', {\n`;
-      js += `  method: '${method}',\n`;
-      js += `  headers: {\n`;
-      js += `    'X-API-Key': '${apiKey || 'your-api-key'}'`;
-      
-      if (requestBody) {
-        js += `,\n    'Content-Type': 'application/json'\n  },\n`;
-        const example: any = {};
-        Object.entries(requestBody).forEach(([key, value]) => {
-          if (value.type === 'string') example[key] = 'example';
-          if (value.type === 'number') example[key] = 100;
-          if (value.type === 'array') example[key] = ['example'];
-        });
-        js += `  body: JSON.stringify(${JSON.stringify(example, null, 4)})\n`;
-      } else {
-        js += `\n  }\n`;
-      }
-      
-      js += `});\n\nconst data = await response.json();\nconsole.log(data);`;
-      return js;
-    }
-
-    if (selectedLanguage === 'python') {
-      let py = `import requests\n\n`;
-      py += `response = requests.${method.toLowerCase()}(\n`;
-      py += `    '${fullUrl}',\n`;
-      py += `    headers={'X-API-Key': '${apiKey || 'your-api-key'}'}`;
-      
-      if (requestBody) {
-        const example: any = {};
-        Object.entries(requestBody).forEach(([key, value]) => {
-          if (value.type === 'string') example[key] = 'example';
-          if (value.type === 'number') example[key] = 100;
-          if (value.type === 'array') example[key] = ['example'];
-        });
-        py += `,\n    json=${JSON.stringify(example, null, 4).replace(/"/g, "'")}`;
-      }
-      
-      py += `\n)\n\ndata = response.json()\nprint(data)`;
-      return py;
-    }
-
-    return '';
+      {
+        method: 'GET',
+        path: '/projects/:id',
+        title: language === 'en' ? 'Get Project' : language === 'zh-CN' ? '获取项目' : '取得專案',
+        description: language === 'en' ? 'Get project details by ID' : language === 'zh-CN' ? '通过 ID 获取项目详情' : '透過 ID 取得專案詳情',
+        auth: true,
+      },
+      {
+        method: 'PUT',
+        path: '/projects/:id',
+        title: language === 'en' ? 'Update Project' : language === 'zh-CN' ? '更新项目' : '更新專案',
+        description: language === 'en' ? 'Update project information' : language === 'zh-CN' ? '更新项目信息' : '更新專案資訊',
+        auth: true,
+      },
+      {
+        method: 'DELETE',
+        path: '/projects/:id',
+        title: language === 'en' ? 'Delete Project' : language === 'zh-CN' ? '删除项目' : '刪除專案',
+        description: language === 'en' ? 'Delete a project' : language === 'zh-CN' ? '删除项目' : '刪除專案',
+        auth: true,
+      },
+    ],
+    proposals: [
+      {
+        method: 'POST',
+        path: '/proposals',
+        title: language === 'en' ? 'Submit Proposal' : language === 'zh-CN' ? '提交提案' : '提交提案',
+        description: language === 'en' ? 'Submit a proposal for a project' : language === 'zh-CN' ? '为项目提交提案' : '為專案提交提案',
+        auth: true,
+        body: {
+          project_id: 'string',
+          cover_letter: 'string',
+          proposed_budget: 'number',
+          estimated_duration: 'number',
+        },
+      },
+      {
+        method: 'GET',
+        path: '/proposals/project/:projectId',
+        title: language === 'en' ? 'Get Project Proposals' : language === 'zh-CN' ? '获取项目提案' : '取得專案提案',
+        description: language === 'en' ? 'Get all proposals for a project' : language === 'zh-CN' ? '获取项目的所有提案' : '取得專案的所有提案',
+        auth: true,
+      },
+      {
+        method: 'GET',
+        path: '/proposals/user/:userId',
+        title: language === 'en' ? 'Get User Proposals' : language === 'zh-CN' ? '获取用户提案' : '取得用戶提案',
+        description: language === 'en' ? 'Get all proposals by a user' : language === 'zh-CN' ? '获取用户的所有提案' : '取得用戶的所有提案',
+        auth: true,
+      },
+      {
+        method: 'POST',
+        path: '/proposals/:id/accept',
+        title: language === 'en' ? 'Accept Proposal' : language === 'zh-CN' ? '接受提案' : '接受提案',
+        description: language === 'en' ? 'Accept a proposal' : language === 'zh-CN' ? '接受提案' : '接受提案',
+        auth: true,
+      },
+      {
+        method: 'POST',
+        path: '/proposals/:id/reject',
+        title: language === 'en' ? 'Reject Proposal' : language === 'zh-CN' ? '拒绝提案' : '拒絕提案',
+        description: language === 'en' ? 'Reject a proposal' : language === 'zh-CN' ? '拒绝提案' : '拒絕提案',
+        auth: true,
+      },
+    ],
+    payments: [
+      {
+        method: 'POST',
+        path: '/paypal/create-order',
+        title: language === 'en' ? 'Create PayPal Order' : language === 'zh-CN' ? '创建 PayPal 订单' : '建立 PayPal 訂單',
+        description: language === 'en' ? 'Create a PayPal payment order' : language === 'zh-CN' ? '创建 PayPal 付款订单' : '建立 PayPal 付款訂單',
+        auth: true,
+        body: {
+          amount: 'number',
+          currency: 'USD | TWD | CNY',
+        },
+      },
+      {
+        method: 'POST',
+        path: '/paypal/capture-payment',
+        title: language === 'en' ? 'Capture PayPal Payment' : language === 'zh-CN' ? '捕获 PayPal 付款' : '捕獲 PayPal 付款',
+        description: language === 'en' ? 'Capture a PayPal payment' : language === 'zh-CN' ? '捕获 PayPal 付款' : '捕獲 PayPal 付款',
+        auth: true,
+        body: {
+          orderId: 'string',
+        },
+      },
+      {
+        method: 'POST',
+        path: '/ecpay/create-payment',
+        title: language === 'en' ? 'Create ECPay Order' : language === 'zh-CN' ? '创建绿界订单' : '建立綠界訂單',
+        description: language === 'en' ? 'Create an ECPay payment order' : language === 'zh-CN' ? '创建绿界付款订单' : '建立綠界付款訂單',
+        auth: true,
+        body: {
+          amount: 'number',
+          payment_method: 'Credit | ATM | CVS',
+        },
+      },
+      {
+        method: 'GET',
+        path: '/wallet/balance',
+        title: language === 'en' ? 'Get Wallet Balance' : language === 'zh-CN' ? '获取钱包余额' : '取得錢包餘額',
+        description: language === 'en' ? 'Get user wallet balance' : language === 'zh-CN' ? '获取用户钱包余额' : '取得用戶錢包餘額',
+        auth: true,
+      },
+    ],
+    invoices: [
+      {
+        method: 'GET',
+        path: '/unified-invoices',
+        title: language === 'en' ? 'List Invoices & Receipts' : language === 'zh-CN' ? '列出发票与收据' : '列出發票與收據',
+        description: language === 'en' ? 'Get all invoices and receipts' : language === 'zh-CN' ? '获取所有发票和收据' : '取得所有發票和收據',
+        auth: true,
+      },
+      {
+        method: 'GET',
+        path: '/unified-invoices/stats',
+        title: language === 'en' ? 'Invoice Statistics' : language === 'zh-CN' ? '发票统计' : '發票統計',
+        description: language === 'en' ? 'Get invoice statistics' : language === 'zh-CN' ? '获取发票统计数据' : '取得發票統計資料',
+        auth: true,
+      },
+      {
+        method: 'GET',
+        path: '/unified-invoices/:id/download',
+        title: language === 'en' ? 'Download Invoice' : language === 'zh-CN' ? '下载发票' : '下載發票',
+        description: language === 'en' ? 'Download invoice as PDF' : language === 'zh-CN' ? '下载发票 PDF' : '下載發票 PDF',
+        auth: true,
+      },
+    ],
+    users: [
+      {
+        method: 'POST',
+        path: '/signup',
+        title: language === 'en' ? 'Sign Up' : language === 'zh-CN' ? '注册' : '註冊',
+        description: language === 'en' ? 'Create a new user account' : language === 'zh-CN' ? '创建新用户账户' : '建立新用戶帳戶',
+        auth: false,
+        body: {
+          email: 'string',
+          password: 'string',
+          name: 'string',
+          account_type: 'client | freelancer | both',
+        },
+      },
+      {
+        method: 'GET',
+        path: '/profile/:userId',
+        title: language === 'en' ? 'Get User Profile' : language === 'zh-CN' ? '获取用户资料' : '取得用戶資料',
+        description: language === 'en' ? 'Get user profile information' : language === 'zh-CN' ? '获取用户资料信息' : '取得用戶資料資訊',
+        auth: true,
+      },
+      {
+        method: 'POST',
+        path: '/password-reset/send-otp',
+        title: language === 'en' ? 'Send Password Reset OTP' : language === 'zh-CN' ? '发送重设密码 OTP' : '發送重設密碼 OTP',
+        description: language === 'en' ? 'Send OTP for password reset' : language === 'zh-CN' ? '发送重设密码的 OTP' : '發送重設密碼的 OTP',
+        auth: false,
+        body: {
+          email: 'string',
+          language: 'en | zh-TW | zh-CN',
+        },
+      },
+    ],
+    seo: [
+      {
+        method: 'GET',
+        path: '/sitemap.xml',
+        title: language === 'en' ? 'Get Sitemap' : language === 'zh-CN' ? '获取站点地图' : '取得網站地圖',
+        description: language === 'en' ? 'Get XML sitemap for SEO' : language === 'zh-CN' ? '获取 SEO 的 XML 站点地图' : '取得 SEO 的 XML 網站地圖',
+        auth: false,
+      },
+      {
+        method: 'GET',
+        path: '/robots.txt',
+        title: language === 'en' ? 'Get Robots.txt' : language === 'zh-CN' ? '获取 Robots.txt' : '取得 Robots.txt',
+        description: language === 'en' ? 'Get robots.txt file' : language === 'zh-CN' ? '获取 robots.txt 文件' : '取得 robots.txt 檔案',
+        auth: false,
+      },
+      {
+        method: 'POST',
+        path: '/ai-seo/generate-report',
+        title: language === 'en' ? 'Generate SEO Report' : language === 'zh-CN' ? '生成 SEO 报告' : '生成 SEO 報告',
+        description: language === 'en' ? 'Generate AI-powered SEO analysis' : language === 'zh-CN' ? '生成 AI 驱动的 SEO 分析' : '生成 AI 驅動的 SEO 分析',
+        auth: true,
+        body: {
+          url: 'string',
+        },
+      },
+    ],
   };
 
-  const handleCopy = (text: string) => {
-    copyToClipboard(text);
-    setCopied(true);
+  const copyToClipboard = (text: string, endpoint: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedEndpoint(endpoint);
     toast.success(t.copied);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopiedEndpoint(null), 2000);
   };
 
-  const getMethodColor = (method: string) => {
-    switch (method) {
-      case 'GET': return 'bg-blue-100 text-blue-800';
-      case 'POST': return 'bg-green-100 text-green-800';
-      case 'PUT': return 'bg-yellow-100 text-yellow-800';
-      case 'DELETE': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const renderMethodBadge = (method: string) => {
+    const colors = {
+      GET: 'bg-blue-100 text-blue-800 border-blue-200',
+      POST: 'bg-green-100 text-green-800 border-green-200',
+      PUT: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      DELETE: 'bg-red-100 text-red-800 border-red-200',
+    };
+
+    return (
+      <Badge className={colors[method as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>
+        {method}
+      </Badge>
+    );
   };
 
-  const groupedEndpoints = endpoints.reduce((acc, endpoint) => {
-    if (!acc[endpoint.category]) {
-      acc[endpoint.category] = [];
-    }
-    acc[endpoint.category].push(endpoint);
-    return acc;
-  }, {} as { [key: string]: ApiEndpoint[] });
-
-  // 🔥 自動選擇第一個端點，避免空白頁
-  useEffect(() => {
-    if (!selectedEndpoint && endpoints.length > 0) {
-      setSelectedEndpoint(endpoints[0]);
-    }
-  }, []);
-
-  return (
-    <div className="space-y-6">
-      {/* Back Button */}
-      <Button 
-        variant="outline" 
-        onClick={() => setView('dashboard')}
-        className="flex items-center gap-2"
-      >
-        <ArrowLeft className="size-4" />
-        {t.backToDashboard}
-      </Button>
-
-      {/* Header */}
-      <Card className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 border-2 border-indigo-200">
+  const renderEndpointCard = (endpoint: any) => {
+    const fullUrl = `${baseUrl}${endpoint.path}`;
+    
+    return (
+      <Card key={endpoint.path} className="mb-4 hover:shadow-md transition-shadow">
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <Book className="size-6 text-indigo-600" />
-            </div>
-            <div>
-              <CardTitle className="text-2xl">{t.title}</CardTitle>
-              <CardDescription className="mt-1">{t.subtitle}</CardDescription>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                {renderMethodBadge(endpoint.method)}
+                {endpoint.auth && (
+                  <Badge variant="outline" className="border-purple-300 text-purple-700">
+                    <Lock className="h-3 w-3 mr-1" />
+                    {language === 'en' ? 'Auth Required' : language === 'zh-CN' ? '需要认证' : '需要認證'}
+                  </Badge>
+                )}
+              </div>
+              <CardTitle className="text-lg">{endpoint.title}</CardTitle>
+              <CardDescription className="mt-1">{endpoint.description}</CardDescription>
             </div>
           </div>
         </CardHeader>
-      </Card>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Endpoint URL */}
+            <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-gray-500 uppercase tracking-wide">
+                  {language === 'en' ? 'Endpoint' : language === 'zh-CN' ? '端点' : '端點'}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyToClipboard(fullUrl, endpoint.path)}
+                  className="h-6 px-2"
+                >
+                  {copiedEndpoint === endpoint.path ? (
+                    <Check className="h-3 w-3 text-green-600" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                </Button>
+              </div>
+              <code className="text-sm text-gray-800 break-all">
+                {endpoint.method} {fullUrl}
+              </code>
+            </div>
 
-      {/* Quick Start Cards */}
-      <div className="grid md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Zap className="size-5 text-green-600" />
-              <h4 className="font-semibold">{t.quickStart}</h4>
-            </div>
-            <p className="text-sm text-gray-600">{t.quickStartText}</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Lock className="size-5 text-blue-600" />
-              <h4 className="font-semibold">{t.authentication}</h4>
-            </div>
-            <p className="text-sm text-gray-600">{t.authText}</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="size-5 text-purple-600" />
-              <h4 className="font-semibold">{t.rateLimit}</h4>
-            </div>
-            <p className="text-sm text-gray-600">{t.rateLimitText}</p>
-          </CardContent>
-        </Card>
+            {/* Request Body */}
+            {endpoint.body && (
+              <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                <div className="text-xs text-blue-700 uppercase tracking-wide mb-2">
+                  {language === 'en' ? 'Request Body' : language === 'zh-CN' ? '请求主体' : '請求主體'}
+                </div>
+                <pre className="text-xs text-blue-900 overflow-x-auto">
+                  {JSON.stringify(endpoint.body, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            {/* Query Parameters */}
+            {endpoint.params && (
+              <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                <div className="text-xs text-purple-700 uppercase tracking-wide mb-2">
+                  {language === 'en' ? 'Query Parameters' : language === 'zh-CN' ? '查询参数' : '查詢參數'}
+                </div>
+                <pre className="text-xs text-purple-900 overflow-x-auto">
+                  {JSON.stringify(endpoint.params, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600">
+            <Book className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-gray-900">{t.title}</h1>
+            <p className="text-gray-600">{t.subtitle}</p>
+          </div>
+        </div>
+        <Badge variant="outline" className="border-blue-300 text-blue-700">
+          {t.version}
+        </Badge>
+      </div>
+
+      {/* Search */}
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder={t.search}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Endpoints List */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="text-lg">{t.endpoints}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {Object.entries(groupedEndpoints).map(([category, categoryEndpoints]) => (
-              <div key={category}>
-                <h4 className="font-semibold text-sm text-gray-700 mb-2">
-                  {t.categories[category as keyof typeof t.categories]}
-                </h4>
-                <div className="space-y-1">
-                  {categoryEndpoints.map((endpoint, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedEndpoint(endpoint)}
-                      className={`w-full text-left p-2 rounded text-sm transition-colors ${
-                        selectedEndpoint === endpoint
-                          ? 'bg-indigo-100 border border-indigo-300'
-                          : 'hover:bg-gray-100'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Badge className={getMethodColor(endpoint.method)}>
-                          {endpoint.method}
-                        </Badge>
-                        <span className="text-xs font-mono truncate">
-                          {endpoint.path}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+      <Tabs value={activeCategory} onValueChange={setActiveCategory}>
+        <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 lg:grid-cols-9 bg-blue-50 mb-6">
+          <TabsTrigger value="overview">
+            <Zap className="h-4 w-4 mr-1" />
+            {t.categories.overview}
+          </TabsTrigger>
+          <TabsTrigger value="authentication">
+            <Lock className="h-4 w-4 mr-1" />
+            {t.categories.authentication}
+          </TabsTrigger>
+          <TabsTrigger value="projects">
+            <Briefcase className="h-4 w-4 mr-1" />
+            {t.categories.projects}
+          </TabsTrigger>
+          <TabsTrigger value="proposals">
+            <FileText className="h-4 w-4 mr-1" />
+            {t.categories.proposals}
+          </TabsTrigger>
+          <TabsTrigger value="payments">
+            <DollarSign className="h-4 w-4 mr-1" />
+            {t.categories.payments}
+          </TabsTrigger>
+          <TabsTrigger value="invoices">
+            <FileJson className="h-4 w-4 mr-1" />
+            {t.categories.invoices}
+          </TabsTrigger>
+          <TabsTrigger value="users">
+            <Users className="h-4 w-4 mr-1" />
+            {t.categories.users}
+          </TabsTrigger>
+          <TabsTrigger value="seo">
+            <TrendingUp className="h-4 w-4 mr-1" />
+            {t.categories.seo}
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Endpoint Details */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">
-              {selectedEndpoint ? (
-                <div className="flex items-center gap-2">
-                  <Badge className={getMethodColor(selectedEndpoint.method)}>
-                    {selectedEndpoint.method}
-                  </Badge>
-                  <span className="font-mono text-base">{selectedEndpoint.path}</span>
-                </div>
-              ) : (
-                language === 'en' ? 'Select an endpoint' : '選擇一個端點'
-              )}
-            </CardTitle>
-            {selectedEndpoint && (
-              <CardDescription>{selectedEndpoint.description}</CardDescription>
-            )}
-          </CardHeader>
-          <CardContent>
-            {selectedEndpoint ? (
-              <Tabs defaultValue="overview" className="space-y-4">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="overview">
-                    {language === 'en' ? 'Overview' : '概覽'}
-                  </TabsTrigger>
-                  <TabsTrigger value="code">{t.codeExample}</TabsTrigger>
-                  <TabsTrigger value="try">{t.tryIt}</TabsTrigger>
-                </TabsList>
+        {/* Overview Tab */}
+        <TabsContent value="overview">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5" />
+                  {t.overview.title}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-gray-600">{t.overview.description}</p>
 
-                {/* Overview Tab */}
-                <TabsContent value="overview" className="space-y-4">
-                  {/* Authentication */}
-                  <div>
-                    <h4 className="font-semibold mb-2 flex items-center gap-2">
-                      <Lock className="size-4" />
-                      {t.auth}
-                    </h4>
-                    <Badge variant="outline">
-                      {t.authTypes[selectedEndpoint.auth]}
-                    </Badge>
-                  </div>
-
-                  {/* Parameters */}
-                  {selectedEndpoint.parameters && selectedEndpoint.parameters.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold mb-2">{t.parameters}</h4>
-                      <div className="border rounded overflow-hidden">
-                        <table className="w-full text-sm">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="text-left p-2">{t.name}</th>
-                              <th className="text-left p-2">{t.type}</th>
-                              <th className="text-left p-2">{t.description}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {selectedEndpoint.parameters.map((param, i) => (
-                              <tr key={i} className="border-t">
-                                <td className="p-2 font-mono">
-                                  {param.name}
-                                  {param.required && (
-                                    <Badge className="ml-1 text-xs bg-red-100 text-red-800">
-                                      {t.required}
-                                    </Badge>
-                                  )}
-                                </td>
-                                <td className="p-2 text-gray-600">{param.type}</td>
-                                <td className="p-2 text-gray-600">{param.description}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Request Body */}
-                  {selectedEndpoint.requestBody && (
-                    <div>
-                      <h4 className="font-semibold mb-2">{t.requestBody}</h4>
-                      <div className="border rounded overflow-hidden">
-                        <table className="w-full text-sm">
-                          <thead className="bg-gray-50">
-                            <tr>
-                              <th className="text-left p-2">{t.name}</th>
-                              <th className="text-left p-2">{t.type}</th>
-                              <th className="text-left p-2">{t.description}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {Object.entries(selectedEndpoint.requestBody).map(([key, value], i) => (
-                              <tr key={i} className="border-t">
-                                <td className="p-2 font-mono">
-                                  {key}
-                                  {value.required && (
-                                    <Badge className="ml-1 text-xs bg-red-100 text-red-800">
-                                      {t.required}
-                                    </Badge>
-                                  )}
-                                </td>
-                                <td className="p-2 text-gray-600">{value.type}</td>
-                                <td className="p-2 text-gray-600">{value.description}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Response */}
-                  <div>
-                    <h4 className="font-semibold mb-2">{t.response}</h4>
-                    <pre className="bg-gray-900 text-gray-100 p-4 rounded text-xs overflow-x-auto">
-                      {JSON.stringify(selectedEndpoint.response, null, 2)}
-                    </pre>
-                  </div>
-                </TabsContent>
-
-                {/* Code Example Tab */}
-                <TabsContent value="code" className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <Select value={selectedLanguage} onValueChange={(v: any) => setSelectedLanguage(v)}>
-                      <SelectTrigger className="w-40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="curl">cURL</SelectItem>
-                        <SelectItem value="javascript">JavaScript</SelectItem>
-                        <SelectItem value="python">Python</SelectItem>
-                      </SelectContent>
-                    </Select>
+                {/* Base URL */}
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold text-gray-900">{t.overview.baseUrl}</span>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      onClick={() => handleCopy(generateCodeExample(selectedEndpoint))}
+                      onClick={() => copyToClipboard(baseUrl, 'baseUrl')}
                     >
-                      {copied ? (
-                        <>
-                          <Check className="size-4 mr-2" />
-                          {t.copied}
-                        </>
+                      {copiedEndpoint === 'baseUrl' ? (
+                        <Check className="h-4 w-4 text-green-600" />
                       ) : (
-                        <>
-                          <Copy className="size-4 mr-2" />
-                          {t.copy}
-                        </>
+                        <Copy className="h-4 w-4" />
                       )}
                     </Button>
                   </div>
-                  <pre className="bg-gray-900 text-gray-100 p-4 rounded text-xs overflow-x-auto">
-                    {generateCodeExample(selectedEndpoint)}
-                  </pre>
-                </TabsContent>
+                  <code className="text-sm text-blue-600">{baseUrl}</code>
+                </div>
 
-                {/* Try It Tab */}
-                <TabsContent value="try" className="space-y-4">
-                  {!apiKey ? (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded p-4 flex items-start gap-2">
-                      <AlertCircle className="size-5 text-yellow-600 shrink-0 mt-0.5" />
-                      <p className="text-sm text-yellow-800">
-                        {language === 'en' 
-                          ? 'You need to create an API Key first to test endpoints.'
-                          : '您需要先創建 API 金鑰才能測試端點。'}
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="text-sm text-gray-600">
-                        {language === 'en'
-                          ? 'Test this endpoint with your API key. Results will appear below.'
-                          : '使用您的 API 金鑰測試此端點。結果將顯示在下方。'}
+                {/* Authentication */}
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-purple-600" />
+                    {t.overview.authentication}
+                  </h3>
+                  <p className="text-gray-600 mb-3">{t.overview.authDescription}</p>
+                  <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                    <code className="text-sm text-purple-900">
+                      Authorization: Bearer {'<your_access_token>'}
+                    </code>
+                  </div>
+                </div>
+
+                {/* Quick Start */}
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-3">{t.quickStart.title}</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-sm font-semibold flex-shrink-0 mt-0.5">
+                        1
                       </div>
-                      
-                      <Button
-                        onClick={() => {/* TODO: Implement test */}}
-                        disabled={testing}
-                        className="w-full"
-                      >
-                        {testing ? (
-                          <>
-                            <span className="animate-spin mr-2">⏳</span>
-                            {t.testing}
-                          </>
-                        ) : (
-                          <>
-                            <Play className="size-4 mr-2" />
-                            {t.testEndpoint}
-                          </>
-                        )}
-                      </Button>
+                      <p className="text-gray-600">{t.quickStart.step1}</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-sm font-semibold flex-shrink-0 mt-0.5">
+                        2
+                      </div>
+                      <p className="text-gray-600">{t.quickStart.step2}</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-sm font-semibold flex-shrink-0 mt-0.5">
+                        3
+                      </div>
+                      <p className="text-gray-600">{t.quickStart.step3}</p>
+                    </div>
+                  </div>
+                </div>
 
-                      {testResult && (
-                        <div>
-                          <h4 className="font-semibold mb-2">{t.result}</h4>
-                          <pre className="bg-gray-900 text-gray-100 p-4 rounded text-xs overflow-x-auto">
-                            {JSON.stringify(testResult, null, 2)}
-                          </pre>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </TabsContent>
-              </Tabs>
-            ) : (
-              <div className="text-center py-12 text-gray-500">
-                <Terminal className="size-12 mx-auto mb-4 text-gray-400" />
-                <p>{language === 'en' ? 'Select an endpoint to view details' : '選擇一個端點查看詳情'}</p>
+                {/* Example Request */}
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">{t.quickStart.example}</h3>
+                  <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                    <pre className="text-sm text-green-400">
+{`curl -X GET "${baseUrl}/projects" \\
+  -H "Authorization: Bearer <your_access_token>" \\
+  -H "Content-Type: application/json"`}
+                    </pre>
+                  </div>
+                </div>
+
+                {/* Multi-Currency */}
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-green-600" />
+                    {t.currencies.title}
+                  </h3>
+                  <p className="text-gray-600 mb-3">{t.currencies.description}</p>
+                  <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                    <div className="text-xs text-green-700 uppercase tracking-wide mb-2">
+                      {t.currencies.rates}
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600">USD → TWD:</span>
+                        <span className="ml-2 font-semibold text-green-900">31.5</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">USD → CNY:</span>
+                        <span className="ml-2 font-semibold text-green-900">7.2</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">TWD → CNY:</span>
+                        <span className="ml-2 font-semibold text-green-900">0.23</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Response Formats */}
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-3">{t.responseFormats.title}</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="text-sm text-green-700 mb-1">{t.responseFormats.success}</div>
+                      <div className="bg-gray-900 rounded-lg p-3 overflow-x-auto">
+                        <pre className="text-xs text-green-400">
+{`{
+  "success": true,
+  "data": { ... },
+  "message": "Operation successful"
+}`}
+                        </pre>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-red-700 mb-1">{t.responseFormats.error}</div>
+                      <div className="bg-gray-900 rounded-lg p-3 overflow-x-auto">
+                        <pre className="text-xs text-red-400">
+{`{
+  "success": false,
+  "error": "Error message",
+  "code": "ERROR_CODE"
+}`}
+                        </pre>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Authentication Tab */}
+        <TabsContent value="authentication">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5" />
+                {t.categories.authentication}
+              </CardTitle>
+              <CardDescription>
+                {t.overview.authDescription}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                  <h4 className="font-semibold text-purple-900 mb-2">
+                    {language === 'en' ? 'Authentication Header' : language === 'zh-CN' ? '认证标头' : '認證標頭'}
+                  </h4>
+                  <code className="text-sm text-purple-800">
+                    Authorization: Bearer {'<access_token>'}
+                  </code>
+                </div>
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h4 className="font-semibold text-blue-900 mb-2">
+                    {language === 'en' ? 'Obtain Access Token' : language === 'zh-CN' ? '获取访问令牌' : '取得存取令牌'}
+                  </h4>
+                  <p className="text-sm text-blue-800">
+                    {language === 'en' 
+                      ? 'Use Supabase Auth to sign in and obtain your access token.' 
+                      : language === 'zh-CN'
+                      ? '使用 Supabase Auth 登录并获取访问令牌。'
+                      : '使用 Supabase Auth 登入並取得存取令牌。'}
+                  </p>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Projects Tab */}
+        <TabsContent value="projects">
+          <div className="space-y-4">
+            {apiEndpoints.projects.map(renderEndpointCard)}
+          </div>
+        </TabsContent>
+
+        {/* Proposals Tab */}
+        <TabsContent value="proposals">
+          <div className="space-y-4">
+            {apiEndpoints.proposals.map(renderEndpointCard)}
+          </div>
+        </TabsContent>
+
+        {/* Payments Tab */}
+        <TabsContent value="payments">
+          <div className="space-y-4">
+            {apiEndpoints.payments.map(renderEndpointCard)}
+          </div>
+        </TabsContent>
+
+        {/* Invoices Tab */}
+        <TabsContent value="invoices">
+          <div className="space-y-4">
+            {apiEndpoints.invoices.map(renderEndpointCard)}
+          </div>
+        </TabsContent>
+
+        {/* Users Tab */}
+        <TabsContent value="users">
+          <div className="space-y-4">
+            {apiEndpoints.users.map(renderEndpointCard)}
+          </div>
+        </TabsContent>
+
+        {/* SEO Tab */}
+        <TabsContent value="seo">
+          <div className="space-y-4">
+            {apiEndpoints.seo.map(renderEndpointCard)}
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Footer */}
+      <Card className="mt-8 border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
+        <CardContent className="p-6">
+          <div className="flex items-start gap-3">
+            <Mail className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-blue-900 mb-1">{t.overview.support}</h4>
+              <p className="text-sm text-blue-700">{t.overview.supportDescription}</p>
+              <Button
+                variant="link"
+                className="text-blue-600 hover:text-blue-800 p-0 h-auto mt-2"
+                onClick={() => window.location.href = 'mailto:api@casewhr.com'}
+              >
+                api@casewhr.com
+                <ExternalLink className="h-3 w-3 ml-1" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

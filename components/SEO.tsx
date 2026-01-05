@@ -393,6 +393,23 @@ export function getPageSEO(page: string, language: string): SEOProps {
         keywords: '条款, 服务, 条件, 协议',
       },
     },
+    'api-documentation': {
+      en: {
+        title: 'API Documentation',
+        description: 'Complete API reference for CaseWHR Platform. RESTful API for projects, proposals, payments, invoices, and more. Multi-currency support with ECPay and PayPal integration.',
+        keywords: 'API documentation, REST API, API reference, developer docs, API integration, CaseWHR API, freelancing API, payment API, invoice API',
+      },
+      'zh-TW': {
+        title: 'API 說明文檔',
+        description: 'CaseWHR 平台完整 API 參考文檔。提供專案、提案、付款、發票等 RESTful API。支援多幣別計價，整合 ECPay 和 PayPal。',
+        keywords: 'API 文檔, REST API, API 參考, 開發者文檔, API 整合, CaseWHR API, 接案 API, 付款 API, 發票 API',
+      },
+      'zh-CN': {
+        title: 'API 说明文档',
+        description: 'CaseWHR 平台完整 API 参考文档。提供项目、提案、付款、发票等 RESTful API。支持多币别计价，整合 ECPay 和 PayPal。',
+        keywords: 'API 文档, REST API, API 参考, 开发者文档, API 整合, CaseWHR API, 接案 API, 付款 API, 发票 API',
+      },
+    },
   };
 
   const lang = language === 'zh' ? 'zh-TW' : language;
