@@ -5,6 +5,15 @@ import { Loader2, Target } from "lucide-react";
 import { MilestoneBuilder, type Milestone } from "./MilestoneBuilder";
 import { CurrencySelector } from "./CurrencySelector";
 import { type Currency, getDefaultCurrency, getCurrencyInfo } from "../lib/currency";
+import { useLanguage } from "../lib/LanguageContext";
+import { getTranslation } from "../lib/translations";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
+import { Label } from "./ui/label";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import { Switch } from "./ui/switch";
+import { Button } from "./ui/button";
 
 interface Project {
   id: string;

@@ -20,6 +20,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { getTranslation } from "../lib/translations";
 import { formatCurrency, formatCurrencyRange, Currency, getDefaultCurrency, convertCurrency } from "../lib/currency";
+import { ProposalForm } from "./ProposalForm";
 
 interface Project {
   id: string;
@@ -61,6 +62,7 @@ export function ProjectDetailDialog({
   const navigate = useNavigate();
   const t = getTranslation(language as any).projects;
   const [isContactingClient, setIsContactingClient] = useState(false);
+  const [proposalDialogOpen, setProposalDialogOpen] = useState(false); // ✅ 新增提案對話框狀態
 
   if (!project) return null;
 
@@ -349,7 +351,7 @@ export function ProjectDetailDialog({
                           : (language === 'en' ? 'Contact Client' : '聯繫案主')
                         }
                       </Button>
-                      <Button onClick={() => alert(language === 'en' ? 'Proposal feature coming soon!' : '提案功能即將推出！')}>
+                      <Button onClick={() => setProposalDialogOpen(true)}>
                         {t.detail.applyButton}
                       </Button>
                     </>
@@ -364,6 +366,19 @@ export function ProjectDetailDialog({
           </div>
         </div>
       </DialogContent>
+      
+      {/* ✅ 提案表單對話框 */}
+      {user && project && (
+        <ProposalForm
+          open={proposalDialogOpen}
+          onOpenChange={setProposalDialogOpen}
+          project={project}
+          onSubmitted={() => {
+            setProposalDialogOpen(false);
+            // 可選：刷新項目數據
+          }}
+        />
+      )}
     </Dialog>
   );
 }
