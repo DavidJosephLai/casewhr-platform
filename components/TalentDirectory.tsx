@@ -41,6 +41,8 @@ interface Profile {
   created_at: string;
   avatar_url?: string;
   subscription_plan?: 'free' | 'pro' | 'enterprise';
+  category?: string; // ✅ 新增：主要專業類別
+  categories?: string[]; // ✅ 新增：多個專業類別
 }
 
 export function TalentDirectory() {
@@ -261,6 +263,36 @@ export function TalentDirectory() {
     // Category filter
     if (selectedCategory !== "all") {
       filtered = filtered.filter(talent => {
+        // ✅ 優先檢查 Profile 中的 category 或 categories 欄位
+        if (talent.category) {
+          const talentCategory = talent.category.toLowerCase();
+          const selectedCat = selectedCategory.toLowerCase();
+          
+          // 直接匹配 category value (如 "development", "design")
+          if (talentCategory === selectedCat) {
+            console.log('✅ [TalentDirectory] Talent matched by profile category:', {
+              talentName: talent.full_name,
+              category: talent.category
+            });
+            return true;
+          }
+        }
+        
+        // ✅ 檢查多個類別
+        if (talent.categories && Array.isArray(talent.categories)) {
+          const selectedCat = selectedCategory.toLowerCase();
+          const hasMatch = talent.categories.some(cat => cat.toLowerCase() === selectedCat);
+          
+          if (hasMatch) {
+            console.log('✅ [TalentDirectory] Talent matched by profile categories:', {
+              talentName: talent.full_name,
+              categories: talent.categories
+            });
+            return true;
+          }
+        }
+        
+        // ✅ 如果沒有 category 欄位，則使用關鍵詞匹配（向下兼容）
         const skillsStr = Array.isArray(talent.skills) 
           ? talent.skills.join(',') 
           : (talent.skills || '');

@@ -16,6 +16,7 @@ import { ReviewList } from "./rating/ReviewList";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { EmailDeliveryHelp } from "./EmailDeliveryHelp";
 import { getTranslation } from "../lib/translations";
+import { CategorySelector } from "./CategorySelector"; // ✅ 新增
 
 interface UserProfileProps {
   open: boolean;
@@ -34,6 +35,8 @@ interface ProfileData {
   website: string;
   avatar_url?: string;
   language?: 'en' | 'zh' | 'zh-TW' | 'zh-CN';
+  category?: string; // ✅ 新增：主要專業類別
+  categories?: string[]; // ✅ 新增：多個專業類別
 }
 
 export function UserProfile({ open, onOpenChange }: UserProfileProps) {
@@ -52,7 +55,9 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
     skills: "",
     website: "",
     avatar_url: "",
-    language: 'en'
+    language: 'en',
+    category: undefined as string | undefined, // ✅ 新增
+    categories: [] as string[], // ✅ 新增
   });
   const [uploading, setUploading] = useState(false);
 
@@ -295,7 +300,9 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
             skills: Array.isArray(profile.skills) ? profile.skills.join(', ') : (profile.skills || ''),
             website: profile.website || '',
             avatar_url: profile.avatar_url || '',
-            language: profile.language || 'en' // ✅ 語言偏好
+            language: profile.language || 'en', // ✅ 語言偏好
+            category: profile.category || undefined, // ✅ 專業類別
+            categories: profile.categories || [], // ✅ 多個專業類別
           });
           
           console.log('✅ [UserProfile] Profile data set in component state');
@@ -439,6 +446,10 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
         website: updatedProfile.website,
         avatar_url: updatedProfile.avatar_url,
         language: updatedProfile.language,
+        category: profileData.categories && profileData.categories.length > 0 
+          ? profileData.categories[0] 
+          : undefined, // ✅ 主要類別（第一個選擇的類別）
+        categories: profileData.categories || [], // ✅ 所有選擇的類別
         updated_at: new Date().toISOString(),
       };
 
@@ -873,6 +884,18 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
                   }
                 />
               </div>
+
+              {/* ✅ 專業類別選擇器 - 只對 Freelancer 顯示 */}
+              {profileData.is_freelancer && (
+                <CategorySelector
+                  value={profileData.categories || []}
+                  onChange={(categories) => 
+                    setProfileData({ ...profileData, categories: categories as string[] })
+                  }
+                  multiple={true}
+                  className="mt-2"
+                />
+              )}
 
               {profileData.skills && (
                 <div className="space-y-2">
