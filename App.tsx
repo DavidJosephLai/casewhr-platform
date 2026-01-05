@@ -627,7 +627,7 @@ function AppContent() {
           </Suspense>
         </div>
       ) : view === 'ai-seo' ? (
-        <div className="pt-20">
+        <div className="pt-32">
           <SEO title="AI SEO Manager" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
             <AISEOManager />
