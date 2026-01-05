@@ -103,39 +103,30 @@ export function Header() {
       console.log(`🔍 [Header] Looking for element #${id}:`, element);
       
       if (element) {
-        // 使用 requestAnimationFrame 確保渲染完成
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            // 直接使用 scrollIntoView，讓瀏覽器自動處理偏移
-            element.scrollIntoView({ 
-              behavior: 'smooth', 
-              block: 'start',
-              inline: 'nearest'
-            });
-            
-            // 滾動後再調整一點偏移量（考慮固定 header）
-            setTimeout(() => {
-              const headerHeight = 80;
-              const currentScroll = window.pageYOffset;
-              window.scrollTo({
-                top: currentScroll - headerHeight,
-                behavior: 'smooth'
-              });
-              console.log(`✅ [Header] Scrolled to section: ${id}, final position: ${currentScroll - headerHeight}`);
-            }, 100);
-          });
+        // 計算元素位置並扣除 header 高度
+        const headerHeight = 80;
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const targetPosition = elementPosition - headerHeight;
+        
+        console.log(`📍 [Header] Element position: ${elementPosition}, target: ${targetPosition}`);
+        
+        // 一次性滾動到目標位置
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
         });
         
+        console.log(`✅ [Header] Scrolled to section: ${id}`);
         return true;
       }
       console.log(`⏳ [Header] Element #${id} not found, retrying...`);
       return false;
     };
     
-    // 如果已經在首頁，立即嘗試滾動
+    // 如果已經在首頁，稍微延遲後滾動
     if (!isChangingView) {
-      console.log(`⏰ [Header] Already on home page, scrolling immediately`);
-      setTimeout(() => scrollToElement(), 100);
+      console.log(`⏰ [Header] Already on home page, scrolling in 50ms`);
+      setTimeout(() => scrollToElement(), 50);
       return;
     }
     
