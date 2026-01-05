@@ -157,7 +157,7 @@ function AppContent() {
       console.log('🧭 [App] Navigation event received:', targetView);
       
       if (targetView === 'wallet') {
-        // 切換到儀表板的錢包標籤
+        // 切換到儀表板���錢包標籤
         setView('dashboard');
         setDashboardTab('wallet');
         console.log('✅ [App] Navigated to wallet tab');
@@ -321,9 +321,9 @@ function AppContent() {
               
               toast.success(
                 language === 'en'
-                  ? `🎉 Payment successful! $${data.amount?.toLocaleString() || '?'} added to your wallet.`
-                  : `🎉 付款成功！已將 $${data.amount?.toLocaleString() || '?'} 加入您的錢包。`,
-                { duration: 5000 }
+                  ? `🎉 Payment successful! $${data.amount?.toLocaleString() || '?'} added to your wallet.\n\n📄 E-invoice will be issued within 24 hours.\n🔍 Check at: Ministry of Finance E-Invoice Platform\nhttps://www.einvoice.nat.gov.tw/`
+                  : `🎉 付款成功！已將 $${data.amount?.toLocaleString() || '?'} 加入您的錢包。\n\n📄 電子發票將於 24 小時內開立\n🔍 查詢請至：財政部電子發票整合服務平台\nhttps://www.einvoice.nat.gov.tw/`,
+                { duration: 8000 }
               );
               
               // 清除 URL 參數

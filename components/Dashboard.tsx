@@ -3,7 +3,7 @@ import { PostProjectDialog } from './PostProjectDialog';
 import { ExchangeRateIndicator } from './ExchangeRateIndicator';
 import { SLAMonitoring } from './SLAMonitoring';
 import { ContractManager } from './ContractManager';
-import { EnhancedInvoiceManager } from './EnhancedInvoiceManager';
+import { UnifiedInvoiceManager } from './UnifiedInvoiceManager';
 import { QuickSubscriptionCheck } from './QuickSubscriptionCheck';
 import { BrandingSettings } from './BrandingSettings';
 import { BrandPreview } from './BrandPreview';
@@ -615,13 +615,13 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
           <WithdrawalRequest />
           <WithdrawalHistory />
           <ContractManager language={language} />
-          <EnhancedInvoiceManager />
+          <UnifiedInvoiceManager />
           <TransactionHistory />
           <BankAccountManager />
         </TabsContent>
 
         <TabsContent value="invoices" className="space-y-6">
-          <InvoiceManager userId={user?.id} accessToken={accessToken || ''} isAdmin={false} />
+          <UnifiedInvoiceManager />
         </TabsContent>
 
         <TabsContent value="messages" className="space-y-6">
