@@ -95,19 +95,34 @@ export function Header() {
     const scrollToElement = () => {
       const element = document.getElementById(id);
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // 獲取元素位置��減去 header 高度（約 80px）
+        const headerOffset = 100;
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
         return true;
       }
       return false;
     };
     
-    // 先嘗試立即滾動
+    // 多次重試，確保滾動成功
     setTimeout(() => {
       if (!scrollToElement()) {
-        // 如果失敗，再等待更長時間重試
-        setTimeout(scrollToElement, 300);
+        setTimeout(() => {
+          if (!scrollToElement()) {
+            setTimeout(() => {
+              if (!scrollToElement()) {
+                setTimeout(scrollToElement, 500);
+              }
+            }, 300);
+          }
+        }, 200);
       }
-    }, 100);
+    }, 150);
   };
 
   const scrollToTop = () => {
