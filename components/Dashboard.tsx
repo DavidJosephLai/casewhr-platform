@@ -45,6 +45,7 @@ import { InvoiceList } from './InvoiceList';
 import { InvoiceManager } from './InvoiceManager';
 import { TransactionHistory } from './TransactionHistory';
 import { BankAccountManager } from './BankAccountManager';
+import { KYCVerification } from './KYCVerification';
 import { MessageList } from './MessageList';
 import { PasswordManagement } from './PasswordManagement';
 import { RoleSwitcher } from './RoleSwitcher';
@@ -612,6 +613,7 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
           <ExchangeRateIndicator />
           <QuickSubscriptionCheck />
           <Wallet />
+          <KYCVerification />
           <WithdrawalRequest />
           <WithdrawalHistory />
           <ContractManager language={language} />

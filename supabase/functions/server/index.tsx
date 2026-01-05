@@ -302,6 +302,29 @@ async function initializeStorage() {
       console.log('✅ Avatars bucket exists');
       STORAGE_AVAILABLE = true;
     }
+    
+    // Create KYC documents bucket
+    const KYC_BUCKET = 'make-215f78a5-kyc-documents';
+    const kycExists = buckets?.some(bucket => bucket.name === KYC_BUCKET);
+    
+    if (!kycExists) {
+      console.log('📦 Creating KYC documents bucket...');
+      const { error } = await supabase.storage.createBucket(KYC_BUCKET, {
+        public: false, // Private bucket for sensitive documents
+        fileSizeLimit: 5242880, // 5MB limit
+      });
+      if (error) {
+        if (error.statusCode === '409' || error.message?.includes('already exists')) {
+          console.log('✅ KYC documents bucket already exists (expected on restart)');
+        } else {
+          console.log('⚠️  Could not create KYC documents bucket:', error.message);
+        }
+      } else {
+        console.log('✅ KYC documents bucket created successfully');
+      }
+    } else {
+      console.log('✅ KYC documents bucket exists');
+    }
   } catch (error: any) {
     console.log('ℹ️  Storage initialization completed with limitations.');
     STORAGE_AVAILABLE = false;
@@ -18590,6 +18613,270 @@ app.post('/make-server-215f78a5/deliverables/check-expiring-files', async (c) =>
   }
 });
 console.log('✅ [SERVER] Deliverable expiry checker API registered');
+
+// ============= KYC VERIFICATION ROUTES =============
+
+// Get KYC data for a user
+app.get("/make-server-215f78a5/kyc/:userId", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const userId = c.req.param('userId');
+    
+    // Only allow users to view their own KYC or admins to view any
+    const isAdmin = await isAdminByEmail(user.email || '');
+    if (userId !== user.id && !isAdmin) {
+      return c.json({ error: 'Forbidden' }, 403);
+    }
+
+    const kycKey = `kyc_${userId}`;
+    const kyc = await kv.get(kycKey);
+
+    return c.json({ kyc: kyc || { user_id: userId, status: 'not_started' } });
+  } catch (error) {
+    console.error('Error fetching KYC:', error);
+    return c.json({ error: 'Failed to fetch KYC data' }, 500);
+  }
+});
+
+// Submit KYC verification
+app.post("/make-server-215f78a5/kyc/submit", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const body = await c.req.json();
+    const {
+      full_name,
+      id_type,
+      id_number,
+      id_front_url,
+      id_back_url,
+      selfie_url,
+      phone_number,
+      address,
+      city,
+      postal_code,
+      country,
+      date_of_birth,
+    } = body;
+
+    // Validation
+    if (!full_name || !id_type || !id_number || !id_front_url || !id_back_url || !selfie_url) {
+      return c.json({ error: 'Missing required fields' }, 400);
+    }
+
+    const kycKey = `kyc_${user.id}`;
+    const now = new Date().toISOString();
+    
+    const kyc = {
+      user_id: user.id,
+      user_email: user.email,
+      status: 'pending',
+      full_name,
+      id_type,
+      id_number,
+      id_front_url,
+      id_back_url,
+      selfie_url,
+      phone_number,
+      address,
+      city,
+      postal_code,
+      country,
+      date_of_birth,
+      submitted_at: now,
+      created_at: now,
+      updated_at: now,
+    };
+
+    await kv.set(kycKey, kyc);
+
+    console.log(`✅ KYC submitted for user ${user.id}`);
+
+    return c.json({ success: true, kyc });
+  } catch (error) {
+    console.error('Error submitting KYC:', error);
+    return c.json({ error: 'Failed to submit KYC' }, 500);
+  }
+});
+
+// Admin: Get all KYC submissions
+app.get("/make-server-215f78a5/admin/kyc/all", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    // Check admin permissions
+    const isAdmin = await isAdminByEmail(user.email || '');
+    if (!isAdmin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+
+    const allKYC = await kv.getByPrefix('kyc_');
+    const kycList = (allKYC || [])
+      .filter((k: any) => k && k.status !== 'not_started')
+      .sort((a: any, b: any) => {
+        // Sort by status priority (pending first) then by date
+        if (a.status === 'pending' && b.status !== 'pending') return -1;
+        if (a.status !== 'pending' && b.status === 'pending') return 1;
+        return new Date(b.submitted_at || b.created_at).getTime() - new Date(a.submitted_at || a.created_at).getTime();
+      });
+
+    console.log(`✅ Retrieved ${kycList.length} KYC submissions for admin`);
+
+    return c.json({ kyc_list: kycList });
+  } catch (error) {
+    console.error('Error fetching KYC list:', error);
+    return c.json({ error: 'Failed to fetch KYC list' }, 500);
+  }
+});
+
+// Admin: Approve KYC
+app.post("/make-server-215f78a5/admin/kyc/:userId/approve", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    // Check admin permissions
+    const isAdmin = await isAdminByEmail(user.email || '');
+    if (!isAdmin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+
+    const userId = c.req.param('userId');
+    const kycKey = `kyc_${userId}`;
+    const kyc = await kv.get(kycKey);
+
+    if (!kyc) {
+      return c.json({ error: 'KYC not found' }, 404);
+    }
+
+    if (kyc.status !== 'pending') {
+      return c.json({ error: 'KYC is not pending approval' }, 400);
+    }
+
+    kyc.status = 'approved';
+    kyc.verified_at = new Date().toISOString();
+    kyc.updated_at = new Date().toISOString();
+    kyc.rejection_reason = undefined;
+
+    await kv.set(kycKey, kyc);
+
+    // Update user profile to mark as KYC verified
+    const profileKey = `profile_${userId}`;
+    const profile = await kv.get(profileKey);
+    if (profile) {
+      profile.kyc_verified = true;
+      profile.kyc_verified_at = kyc.verified_at;
+      await kv.set(profileKey, profile);
+    }
+
+    console.log(`✅ KYC approved for user ${userId}`);
+
+    return c.json({ success: true, kyc });
+  } catch (error) {
+    console.error('Error approving KYC:', error);
+    return c.json({ error: 'Failed to approve KYC' }, 500);
+  }
+});
+
+// Admin: Reject KYC
+app.post("/make-server-215f78a5/admin/kyc/:userId/reject", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    // Check admin permissions
+    const isAdmin = await isAdminByEmail(user.email || '');
+    if (!isAdmin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+
+    const userId = c.req.param('userId');
+    const body = await c.req.json();
+    const { reason } = body;
+
+    if (!reason || !reason.trim()) {
+      return c.json({ error: 'Rejection reason is required' }, 400);
+    }
+
+    const kycKey = `kyc_${userId}`;
+    const kyc = await kv.get(kycKey);
+
+    if (!kyc) {
+      return c.json({ error: 'KYC not found' }, 404);
+    }
+
+    if (kyc.status !== 'pending') {
+      return c.json({ error: 'KYC is not pending approval' }, 400);
+    }
+
+    kyc.status = 'rejected';
+    kyc.rejection_reason = reason;
+    kyc.updated_at = new Date().toISOString();
+
+    await kv.set(kycKey, kyc);
+
+    // Update user profile
+    const profileKey = `profile_${userId}`;
+    const profile = await kv.get(profileKey);
+    if (profile) {
+      profile.kyc_verified = false;
+      await kv.set(profileKey, profile);
+    }
+
+    console.log(`❌ KYC rejected for user ${userId}: ${reason}`);
+
+    return c.json({ success: true, kyc });
+  } catch (error) {
+    console.error('Error rejecting KYC:', error);
+    return c.json({ error: 'Failed to reject KYC' }, 500);
+  }
+});
+
+console.log('✅ [SERVER] KYC verification routes registered');
 
 console.log('🎉 [SERVER] All routes registered, starting server...');
 

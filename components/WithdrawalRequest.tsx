@@ -34,6 +34,8 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [showAddBankDialog, setShowAddBankDialog] = useState(false); // ✅ 添加银行对话框状态
+  const [kycStatus, setKycStatus] = useState<'not_started' | 'pending' | 'approved' | 'rejected'>('not_started');
+  const [kycLoading, setKycLoading] = useState(true);
 
   // ✅ 修复：根据语言选择显示货币（支持 zh-TW 和 zh-CN）
   const displayCurrency: Currency = (language === 'en' ? 'USD' : 'TWD') as Currency;
@@ -167,6 +169,36 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
       loadData();
     }
   }, [user?.id, accessToken, loadData]);
+
+  // Load KYC status
+  useEffect(() => {
+    const fetchKYCStatus = async () => {
+      if (!user?.id || !accessToken) return;
+
+      setKycLoading(true);
+      try {
+        const response = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/kyc/${user.id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setKycStatus(data.kyc?.status || 'not_started');
+        }
+      } catch (error) {
+        console.error('Error fetching KYC status:', error);
+      } finally {
+        setKycLoading(false);
+      }
+    };
+
+    fetchKYCStatus();
+  }, [user?.id, accessToken]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -322,6 +354,48 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* KYC Warning */}
+          {!kycLoading && kycStatus !== 'approved' && (
+            <Alert className="border-orange-600 bg-orange-50">
+              <AlertCircle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-900">
+                {kycStatus === 'not_started' && (
+                  <div>
+                    {language === 'en' ? (
+                      <>🔐 <strong>Identity Verification Required:</strong> You must complete KYC verification before withdrawing funds. Please verify your identity in the KYC section above.</>
+                    ) : language === 'zh-CN' ? (
+                      <>🔐 <strong>需要身份驗證：</strong>您必須完成 KYC 驗證才能提現。請在上方的 KYC 區塊完成驗證。</>
+                    ) : (
+                      <>🔐 <strong>需要身份验证：</strong>您必须完成 KYC 验证才能提现。请在上方的 KYC 区块完成验证。</>
+                    )}
+                  </div>
+                )}
+                {kycStatus === 'pending' && (
+                  <div>
+                    {language === 'en' ? (
+                      <>⏳ <strong>KYC Under Review:</strong> Your identity verification is being reviewed. You can withdraw once approved (1-3 business days).</>
+                    ) : language === 'zh-CN' ? (
+                      <>⏳ <strong>KYC 審核中：</strong>您的身份驗證正在審核中。批准後即可提現（1-3 個工作日）。</>
+                    ) : (
+                      <>⏳ <strong>KYC 审核中：</strong>您的身份验证正在审核中。批准后即可提现（1-3 个工作日）。</>
+                    )}
+                  </div>
+                )}
+                {kycStatus === 'rejected' && (
+                  <div>
+                    {language === 'en' ? (
+                      <>❌ <strong>KYC Rejected:</strong> Your identity verification was rejected. Please review the reason and resubmit in the KYC section above.</>
+                    ) : language === 'zh-CN' ? (
+                      <>❌ <strong>KYC 已拒絕：</strong>您的身份驗證被拒絕。請查看原因並在上方的 KYC 區塊重新提交。</>
+                    ) : (
+                      <>❌ <strong>KYC 已拒绝：</strong>您的身份验证被拒绝。请查看原因并在上方的 KYC 区块重新提交。</>
+                    )}
+                  </div>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Available Balance */}
           <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
             <div className="flex items-center justify-between">
@@ -433,6 +507,7 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
             className="w-full"
             disabled={
               loading || 
+              kycStatus !== 'approved' || // ✅ KYC must be approved
               methods.length === 0 || 
               !amount || 
               parseFloat(amount) < minimumWithdrawalInDisplayCurrency || // ✅ 使用当地货币最小值

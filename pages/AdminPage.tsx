@@ -6,6 +6,7 @@ import { AdminDashboard } from '../components/admin/AdminDashboard';
 import { AdminUsers } from '../components/admin/AdminUsers';
 import { AdminProjects } from '../components/admin/AdminProjects';
 import { AdminWithdrawals } from '../components/admin/AdminWithdrawals';
+import { AdminKYCVerification } from '../components/admin/AdminKYCVerification';
 import { AdminTransactions } from '../components/admin/AdminTransactions';
 import { AdminBankAccounts } from '../components/admin/AdminBankAccounts';
 import { AdminEmailSender } from '../components/admin/AdminEmailSender';
@@ -56,6 +57,7 @@ export default function AdminPage() {
         users: 'Users',
         projects: 'Projects',
         withdrawals: 'Withdrawals',
+        kyc: 'KYC Verification',
         transactions: 'Transactions',
         revenue: 'Platform Revenue',
         memberships: 'Memberships',
@@ -86,6 +88,7 @@ export default function AdminPage() {
         users: '用戶管理',
         projects: '項目管理',
         withdrawals: '提現管理',
+        kyc: 'KYC 身份驗證',
         transactions: '交易記錄',
         revenue: '平台收入',
         memberships: '會員管理',
@@ -117,6 +120,7 @@ export default function AdminPage() {
         users: '用户管理',
         projects: '项目管理',
         withdrawals: '提现管理',
+        kyc: 'KYC 身份验证',
         transactions: '交易记录',
         revenue: '平台收入',
         memberships: '会员管理',
@@ -363,6 +367,11 @@ export default function AdminPage() {
                 {t.tabs.withdrawals}
               </TabsTrigger>
             )}
+            {canViewTab('kyc') && (
+              <TabsTrigger key="kyc" value="kyc" className="text-xs sm:text-sm">
+                {t.tabs.kyc}
+              </TabsTrigger>
+            )}
             {canViewTab('transactions') && (
               <TabsTrigger key="transactions" value="transactions" className="text-xs sm:text-sm">
                 {t.tabs.transactions}
@@ -429,6 +438,10 @@ export default function AdminPage() {
 
             <TabsContent value="withdrawals" className="mt-0">
               <AdminWithdrawals adminLevel={adminLevel} />
+            </TabsContent>
+
+            <TabsContent value="kyc" className="mt-0">
+              <AdminKYCVerification />
             </TabsContent>
 
             <TabsContent value="transactions" className="mt-0">
