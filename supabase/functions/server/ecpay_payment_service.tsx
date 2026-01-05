@@ -117,7 +117,11 @@ export interface ECPayPayment {
 
 // Helper: Generate unique payment ID
 function generatePaymentId(): string {
-  return `ecpay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // ⚠️ ECPay MerchantTradeNo 限制：最多 20 字元
+  // 格式：EC + 時間戳（後10位）+ 隨機6碼 = 18 字元
+  const timestamp = Date.now().toString().slice(-10); // 取後 10 位時間戳
+  const random = Math.random().toString(36).substring(2, 8); // 6 位隨機碼
+  return `EC${timestamp}${random}`; // 2 + 10 + 6 = 18 字元（安全範圍內）
 }
 
 // Helper: Get user from access token
@@ -604,7 +608,7 @@ function generateAutoSubmitForm(action: string, params: Record<string, any>): st
 export function registerECPayRoutes(app: any) {
   console.log('[ECPay] Registering ECPay payment routes...');
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ━━━━���━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 🔧 ECPay Configuration Check Endpoint
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   app.get('/make-server-215f78a5/ecpay/config-check', async (c: Context) => {
