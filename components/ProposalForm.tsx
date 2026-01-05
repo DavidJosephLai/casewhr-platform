@@ -299,11 +299,11 @@ export function ProposalForm({ project, open, onOpenChange, onSubmitted }: Propo
           </div>
 
           {/* Milestone Toggle */}
-          <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center gap-3">
-              <Target className="h-5 w-5 text-blue-600" />
-              <div>
-                <Label htmlFor="use_milestones" className="cursor-pointer">
+          <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200 gap-4">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Target className="h-5 w-5 text-blue-600 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <Label htmlFor="use_milestones" className="cursor-pointer block">
                   {language === 'en' 
                     ? 'Use Milestone-Based Payment' 
                     : language === 'zh-CN'
@@ -319,11 +319,13 @@ export function ProposalForm({ project, open, onOpenChange, onSubmitted }: Propo
                 </p>
               </div>
             </div>
-            <Switch
-              id="use_milestones"
-              checked={useMilestones}
-              onCheckedChange={setUseMilestones}
-            />
+            <div className="flex-shrink-0">
+              <Switch
+                id="use_milestones"
+                checked={useMilestones}
+                onCheckedChange={setUseMilestones}
+              />
+            </div>
           </div>
 
           {/* Milestones - Structured or Simple */}
