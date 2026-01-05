@@ -70,24 +70,13 @@ const TermsOfServicePage = lazy(() => import('./components/TermsOfServicePage'))
 const ApiDocumentation = lazy(() => import('./components/ApiDocumentation').then(module => ({ default: module.ApiDocumentation })));
 const SLADocumentation = lazy(() => import('./components/SLADocumentation').then(module => ({ default: module.SLADocumentation })));
 
-// Loading fallback components
+// Loading fallback components - 🚀 優化：移除刺眼的藍色載入器
 function LoadingFallback() {
-  return (
-    <div className="flex items-center justify-center py-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-    </div>
-  );
+  return null; // 靜默載入，不顯示任何內容
 }
 
 function PageLoadingFallback() {
-  return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading...</p>
-      </div>
-    </div>
-  );
+  return null; // 靜默載入，不顯示任何內容
 }
 
 function AppContent() {

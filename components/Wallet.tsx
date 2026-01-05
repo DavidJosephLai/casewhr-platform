@@ -974,13 +974,48 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
     });
   };
 
+  // 🚀 優化：使用骨架屏代替藍屏載入器
+  const SkeletonCard = () => (
+    <Card className="animate-pulse">
+      <CardHeader>
+        <div className="h-6 w-32 bg-gray-200 rounded"></div>
+      </CardHeader>
+      <CardContent>
+        <div className="h-10 w-40 bg-gray-200 rounded mb-4"></div>
+        <div className="flex gap-2">
+          <div className="h-9 flex-1 bg-gray-200 rounded"></div>
+          <div className="h-9 flex-1 bg-gray-200 rounded"></div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   if (loadingWallet) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
-        <p className="text-gray-600">
-          {language === 'en' ? 'Loading wallet...' : '載入錢包中...'}
-        </p>
+      <div className="space-y-6">
+        {/* 三幣別匯率指示器 */}
+        <ExchangeRateIndicator />
+        
+        {/* 骨架屏：3 張卡片 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+        
+        {/* 交易記錄骨架屏 */}
+        <Card className="animate-pulse">
+          <CardHeader>
+            <div className="h-6 w-40 bg-gray-200 rounded"></div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
