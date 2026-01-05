@@ -608,7 +608,7 @@ function generateAutoSubmitForm(action: string, params: Record<string, any>): st
 export function registerECPayRoutes(app: any) {
   console.log('[ECPay] Registering ECPay payment routes...');
 
-  // ━━━━���━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // 🔧 ECPay Configuration Check Endpoint
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   app.get('/make-server-215f78a5/ecpay/config-check', async (c: Context) => {
@@ -667,8 +667,11 @@ export function registerECPayRoutes(app: any) {
         return c.json({ error: 'Minimum amount is NT$300' }, 400);
       }
 
-      // 生成訂單編號
-      const merchantTradeNo = `CW${Date.now()}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+      // 生成訂單編號（⚠️ ECPay MerchantTradeNo 限制：最多 20 字元）
+      // 格式：CW + 時間戳後10位 + 隨機6碼 = 18 字元
+      const timestamp = Date.now().toString().slice(-10);
+      const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const merchantTradeNo = `CW${timestamp}${randomCode}`;
       const tradeDate = new Date().toISOString().replace(/[-:]/g, '').substr(0, 14);
 
       // 建立付款記錄（pending 狀態）
@@ -724,6 +727,18 @@ export function registerECPayRoutes(app: any) {
         amount: amountTWD,
         user: user.email,
         paymentId: paymentResult.payment?.id,
+      });
+      
+      // 🔍 詳細日誌：查看所有參數和 CheckMacValue
+      console.log('[ECPay] 📋 Full params sent to ECPay:', {
+        MerchantID: params.MerchantID,
+        MerchantTradeNo: params.MerchantTradeNo,
+        MerchantTradeNoLength: params.MerchantTradeNo.length,
+        TotalAmount: params.TotalAmount,
+        TradeDesc: params.TradeDesc,
+        ItemName: params.ItemName,
+        CheckMacValue: params.CheckMacValue?.substring(0, 20) + '...',
+        allParamsCount: Object.keys(params).length,
       });
 
       // 返回表單資料（前端需要用 POST 提交）
