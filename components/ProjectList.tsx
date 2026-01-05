@@ -9,7 +9,6 @@ import { useLanguage } from "../lib/LanguageContext";
 import { getTranslation } from "../lib/translations";
 import { projectId, publicAnonKey } from "../utils/supabase/info";
 import { ProjectDialog } from "./ProjectDialog";
-import { ProposalDialog } from "./ProposalDialog";
 import { ProjectPostingDialog } from "./ProjectPostingDialog";
 import { formatCurrency, getDefaultCurrency } from "../lib/currency";
 import { projectApi } from "../lib/api";
