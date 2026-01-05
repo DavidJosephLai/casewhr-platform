@@ -67,7 +67,7 @@ const DisclaimerPage = lazy(() => import('./components/DisclaimerPage'));
 const AboutPage = lazy(() => import('./components/AboutPage'));
 const CaseStudies = lazy(() => import('./components/CaseStudies'));
 const TermsOfServicePage = lazy(() => import('./components/TermsOfServicePage'));
-const ApiDocumentation = lazy(() => import('./components/ApiDocumentation'));
+const ApiDocumentation = lazy(() => import('./components/ApiDocumentation').then(module => ({ default: module.ApiDocumentation })));
 const SLADocumentation = lazy(() => import('./components/SLADocumentation').then(module => ({ default: module.SLADocumentation })));
 
 // Loading fallback components
@@ -610,7 +610,7 @@ function AppContent() {
           </Suspense>
         </div>
       ) : view === 'api-documentation' ? (
-        <div className="pt-20">
+        <div className="pt-20 px-4 pb-8 max-w-7xl mx-auto">
           <SEO title="API Documentation" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
             <ApiDocumentation 
