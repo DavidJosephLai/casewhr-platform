@@ -50,47 +50,57 @@ async function generateCheckMacValue(params: Record<string, any>): Promise<strin
     throw new Error('ECPay Hash Key or IV not configured');
   }
   
-  // Remove CheckMacValue if exists
+  // Step 1: Remove CheckMacValue if exists
   const cleanParams = { ...params };
   delete cleanParams.CheckMacValue;
   
-  // Sort parameters alphabetically
+  // Step 2: Sort parameters alphabetically (case-sensitive)
   const sortedKeys = Object.keys(cleanParams).sort();
-  const sortedParams = sortedKeys.map(key => `${key}=${cleanParams[key]}`).join('&');
   
-  // Add hash key and IV
-  const rawString = `HashKey=${hashKey}&${sortedParams}&HashIV=${hashIV}`;
+  // Step 3: Build parameter string
+  const paramString = sortedKeys
+    .map(key => `${key}=${cleanParams[key]}`)
+    .join('&');
   
-  // URL encode and apply ECPay specific rules
-  const encodedString = rawString
-    .split('')
-    .map(char => {
-      const code = char.charCodeAt(0);
-      // Keep alphanumeric and specific characters
-      if ((code >= 48 && code <= 57) ||   // 0-9
-          (code >= 65 && code <= 90) ||   // A-Z
-          (code >= 97 && code <= 122) ||  // a-z
-          char === '-' || char === '_' || char === '.' ||
-          char === '!' || char === '*' || char === '(' || char === ')') {
-        return char;
-      }
-      // Encode others
-      return encodeURIComponent(char);
-    })
-    .join('')
-    .replace(/%20/g, '+');  // Space to +
+  // Step 4: Add HashKey and HashIV
+  const rawString = `HashKey=${hashKey}&${paramString}&HashIV=${hashIV}`;
   
-  // Convert to lowercase
+  console.log('[ECPay] 🔐 CheckMacValue generation:', {
+    paramCount: sortedKeys.length,
+    rawStringLength: rawString.length,
+    rawStringSample: rawString.substring(0, 100) + '...',
+  });
+  
+  // Step 5: URL Encode (ECPay specific rules)
+  // 使用標準 encodeURIComponent，但保留某些字元不編碼
+  const encodedString = encodeURIComponent(rawString)
+    .replace(/%2d/gi, '-')   // 不編碼 -
+    .replace(/%5f/gi, '_')   // 不編碼 _
+    .replace(/%2e/gi, '.')   // 不編碼 .
+    .replace(/%21/gi, '!')   // 不編碼 !
+    .replace(/%2a/gi, '*')   // 不編碼 *
+    .replace(/%28/gi, '(')   // 不編碼 (
+    .replace(/%29/gi, ')')   // 不編碼 )
+    .replace(/%20/g, '+');   // 空格轉為 +
+  
+  // Step 6: Convert to lowercase
   const lowerString = encodedString.toLowerCase();
   
-  // SHA256 hash
+  console.log('[ECPay] 🔐 Encoded string (first 100 chars):', lowerString.substring(0, 100));
+  
+  // Step 7: SHA256 hash
   const encoder = new TextEncoder();
   const data = encoder.encode(lowerString);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   
-  return hashHex.toUpperCase();
+  // Step 8: Convert to uppercase
+  const checkMacValue = hashHex.toUpperCase();
+  
+  console.log('[ECPay] 🔐 Generated CheckMacValue:', checkMacValue.substring(0, 20) + '...');
+  
+  return checkMacValue;
 }
 
 // ECPay Payment interface
@@ -546,7 +556,7 @@ export async function deletePayment(paymentId: string): Promise<{ success: boole
   }
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━���━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Helper: Generate auto-submit HTML form
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function generateAutoSubmitForm(action: string, params: Record<string, any>): string {
