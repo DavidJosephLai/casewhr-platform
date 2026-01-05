@@ -291,7 +291,21 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
     } catch (error: any) {
       console.error('[Wallet] Error loading wallet data:', error.message);
       
-      toast.error(language === 'en' ? 'Failed to load wallet data' : '載入錢包據失敗');
+      // 🔧 添加更詳細的錯誤日誌
+      console.error('[Wallet] Error details:', {
+        message: error.message,
+        stack: error.stack,
+        userId: user.id,
+        hasToken: !!accessToken,
+      });
+      
+      toast.error(
+        language === 'en' 
+          ? 'Failed to load wallet data' 
+          : language === 'zh-CN'
+          ? '載入錢包數據失敗'
+          : '載入錢包數據失敗'
+      );
       
       // Set default values on persistent error
       setWallet({
