@@ -4502,7 +4502,7 @@ app.get("/make-server-215f78a5/profiles/freelancers", async (c) => {
   }
 });
 
-// Upload profile avatar
+// Upload profile avatar (Supabase Storage)
 app.post("/make-server-215f78a5/profile/:userId/avatar", async (c) => {
   try {
     const userId = c.req.param('userId');
@@ -4518,20 +4518,15 @@ app.post("/make-server-215f78a5/profile/:userId/avatar", async (c) => {
       return c.json({ error: 'Unauthorized' }, 403);
     }
     
-    const body = await c.req.parseBody();
-    const file = body['avatar'];
+    // Get avatar URL from request body (already uploaded to Supabase Storage by frontend)
+    const body = await c.req.json();
+    const avatarUrl = body.avatar_url;
     
-    if (!file || typeof file === 'string') {
-      return c.json({ error: 'No file uploaded' }, 400);
+    if (!avatarUrl) {
+      return c.json({ error: 'No avatar URL provided' }, 400);
     }
     
-    // For now, we'll store the avatar as base64 in the profile
-    // In a full implementation with storage, you would upload to Supabase Storage
-    const buffer = await file.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
-    const avatarDataUrl = `data:${file.type};base64,${base64}`;
-    
-    // Update profile with avatar - using underscore format (統一格式)
+    // Update profile with avatar URL - using underscore format (統一格式)
     const profileKey = `profile_${userId}`;
     const profile = await kv.get(profileKey);
     
@@ -4539,19 +4534,28 @@ app.post("/make-server-215f78a5/profile/:userId/avatar", async (c) => {
       return c.json({ error: 'Profile not found' }, 404);
     }
     
-    profile.avatar_url = avatarDataUrl;
+    profile.avatar_url = avatarUrl;
     profile.updated_at = new Date().toISOString();
     
     await kv.set(profileKey, profile);
     
+    // Also update in old format for backwards compatibility
+    const profileKeyColon = `profile:${userId}`;
+    const oldProfile = await kv.get(profileKeyColon);
+    if (oldProfile) {
+      oldProfile.avatar_url = avatarUrl;
+      oldProfile.updated_at = new Date().toISOString();
+      await kv.set(profileKeyColon, oldProfile);
+    }
+    
     return c.json({ 
       success: true, 
-      avatar_url: avatarDataUrl,
-      message: 'Avatar uploaded successfully'
+      avatar_url: avatarUrl,
+      message: 'Avatar updated successfully'
     });
   } catch (error) {
-    console.error('Error uploading avatar:', error);
-    return c.json({ error: 'Failed to upload avatar' }, 500);
+    console.error('Error updating avatar:', error);
+    return c.json({ error: 'Failed to update avatar' }, 500);
   }
 });
 

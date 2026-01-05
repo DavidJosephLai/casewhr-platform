@@ -534,12 +534,14 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
-    // Check file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
+    // Check file size (max 5MB for Supabase Storage)
+    if (file.size > 5 * 1024 * 1024) {
       toast.error(
         language === 'en'
-          ? 'File size must be less than 2MB'
-          : '檔案大小必須小於 2MB'
+          ? 'File size must be less than 5MB'
+          : language === 'zh-CN'
+          ? '文件大小必须小于 5MB'
+          : '檔案大小必須小於 5MB'
       );
       return;
     }
@@ -549,6 +551,8 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
       toast.error(
         language === 'en'
           ? 'Please upload an image file'
+          : language === 'zh-CN'
+          ? '请上传图片文件'
           : '請上傳圖片檔案'
       );
       return;
@@ -558,23 +562,42 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
     try {
       const { projectId, publicAnonKey } = await import('../utils/supabase/info.tsx');
       
-      // Create form data
-      const formData = new FormData();
-      formData.append('avatar', file);
+      // Upload directly to Supabase Storage
+      const bucketName = 'make-215f78a5-avatars';
+      const fileName = `${user.id}/${Date.now()}-${file.name}`;
+      
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
 
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(fileName);
+
+      // Update profile with new avatar URL via backend
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/profile/${user.id}/avatar`,
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
+            'Authorization': `Bearer ${accessToken || publicAnonKey}`,
+            'Content-Type': 'application/json',
           },
-          body: formData,
+          body: JSON.stringify({ avatar_url: publicUrl }),
         }
       );
 
       if (!response.ok) {
-        throw new Error('Failed to upload avatar');
+        throw new Error('Failed to update profile with avatar URL');
       }
 
       const data = await response.json();
@@ -588,6 +611,8 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
       toast.success(
         language === 'en'
           ? 'Avatar uploaded successfully!'
+          : language === 'zh-CN'
+          ? '头像上传成功！'
           : '頭像上傳成功！'
       );
     } catch (error: any) {
@@ -595,6 +620,8 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
       toast.error(
         language === 'en'
           ? `Failed to upload avatar: ${error.message}`
+          : language === 'zh-CN'
+          ? `上传头像失败：${error.message}`
           : `上傳頭像失敗：${error.message}`
       );
     } finally {
@@ -658,10 +685,14 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
                 </div>
                 <div className="text-center">
                   <p className="text-sm">
-                    {language === 'en' ? 'Profile Photo' : '個人頭像'}
+                    {language === 'en' ? 'Profile Photo' : language === 'zh-CN' ? '个人头像' : '個人頭像'}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {language === 'en' ? 'Click camera to upload (Max 2MB)' : '點擊相機上傳（最大 2MB）'}
+                    {language === 'en' 
+                      ? 'Click camera to upload (Max 5MB)' 
+                      : language === 'zh-CN'
+                      ? '点击相机上传（最大 5MB）'
+                      : '點擊相機上傳（最大 5MB）'}
                   </p>
                 </div>
               </div>
