@@ -16,8 +16,8 @@ import { AdminRevenue } from '../components/admin/AdminRevenue';
 import { InvoiceManager } from '../components/InvoiceManager';
 import { TestClientCleaner } from '../components/TestClientCleaner';
 // ❌ 已移除 QuickDepositHelper - 不再為 davidjosephilai1@outlook.com 提供儲值功能
-import { UserCreationHelper } from '../components/UserCreationHelper';
-import { EnterpriseTestHelper } from '../components/EnterpriseTestHelper';
+// ❌ 已移除 UserCreationHelper - 不再需要用戶檢查工具
+// ❌ 已移除 EnterpriseTestHelper - 不再需要 Enterprise 升級測試工具
 import { SitemapGenerator } from '../components/SitemapGenerator';
 import { SitemapURLChecker } from '../components/SitemapURLChecker';
 import { SEODiagnostic } from '../components/SEODiagnostic';
@@ -413,8 +413,8 @@ export default function AdminPage() {
             <TabsContent value="users" className="mt-0">
               <div className="space-y-6">
                 {/* ❌ 已移除 QuickDepositHelper - 不再為 davidjosephilai1@outlook.com 提供儲值功能 */}
-                <UserCreationHelper />
-                <EnterpriseTestHelper />
+                {/* ❌ 已移除 UserCreationHelper - 不再需要用戶檢查工具 */}
+                {/* ❌ 已移除 EnterpriseTestHelper - 不再需要 Enterprise 升級測試工具 */}
                 <AdminUsers adminLevel={adminLevel} />
               </div>
             </TabsContent>
