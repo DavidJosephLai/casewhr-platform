@@ -54,8 +54,13 @@ async function generateCheckMacValue(params: Record<string, any>): Promise<strin
   const cleanParams = { ...params };
   delete cleanParams.CheckMacValue;
   
-  // Step 2: Sort parameters alphabetically (case-sensitive)
-  const sortedKeys = Object.keys(cleanParams).sort();
+  // Step 2: Sort parameters alphabetically (case-sensitive, A-Z then a-z)
+  const sortedKeys = Object.keys(cleanParams).sort((a, b) => {
+    // ECPay 使用 ASCII 排序
+    if (a < b) return -1;
+    if (a > b) return 1;
+    return 0;
+  });
   
   // Step 3: Build parameter string
   const paramString = sortedKeys
@@ -68,12 +73,16 @@ async function generateCheckMacValue(params: Record<string, any>): Promise<strin
   console.log('[ECPay] 🔐 CheckMacValue generation:', {
     paramCount: sortedKeys.length,
     rawStringLength: rawString.length,
-    rawStringSample: rawString.substring(0, 100) + '...',
+    rawStringSample: rawString.substring(0, 150) + '...',
+    fullRawString: rawString, // 🆕 完整顯示原始字串，便於調試
   });
   
-  // Step 5: URL Encode (ECPay specific rules)
-  // 使用標準 encodeURIComponent，但保留某些字元不編碼
-  const encodedString = encodeURIComponent(rawString)
+  // Step 5: URL Encode (ECPay 特殊規則)
+  // 使用標準 encodeURIComponent
+  let encodedString = encodeURIComponent(rawString);
+  
+  // ECPay 不編碼以下字元：- _ . ! * ( )
+  encodedString = encodedString
     .replace(/%2d/gi, '-')   // 不編碼 -
     .replace(/%5f/gi, '_')   // 不編碼 _
     .replace(/%2e/gi, '.')   // 不編碼 .
@@ -86,7 +95,8 @@ async function generateCheckMacValue(params: Record<string, any>): Promise<strin
   // Step 6: Convert to lowercase
   const lowerString = encodedString.toLowerCase();
   
-  console.log('[ECPay] 🔐 Encoded string (first 100 chars):', lowerString.substring(0, 100));
+  console.log('[ECPay] 🔐 Encoded string (first 150 chars):', lowerString.substring(0, 150));
+  console.log('[ECPay] 🔐 Full encoded string:', lowerString); // 🆕 完整顯示編碼後字串
   
   // Step 7: SHA256 hash
   const encoder = new TextEncoder();
@@ -98,7 +108,7 @@ async function generateCheckMacValue(params: Record<string, any>): Promise<strin
   // Step 8: Convert to uppercase
   const checkMacValue = hashHex.toUpperCase();
   
-  console.log('[ECPay] 🔐 Generated CheckMacValue:', checkMacValue.substring(0, 20) + '...');
+  console.log('[ECPay] 🔐 Generated CheckMacValue:', checkMacValue);
   
   return checkMacValue;
 }
@@ -556,7 +566,7 @@ export async function deletePayment(paymentId: string): Promise<{ success: boole
   }
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━���━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Helper: Generate auto-submit HTML form
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function generateAutoSubmitForm(action: string, params: Record<string, any>): string {
@@ -727,7 +737,7 @@ export function registerECPayRoutes(app: any) {
         PaymentType: 'aio',
         TotalAmount: amountTWD,
         TradeDesc: payment_type === 'subscription' ? 'Subscription Payment' : 'Wallet Deposit',
-        ItemName: payment_type === 'subscription' ? `${plan} Plan` : `Wallet Deposit NT$${amountTWD}`,
+        ItemName: payment_type === 'subscription' ? `${plan} Plan` : `Wallet Deposit TWD ${amountTWD}`, // 🔧 移除 $ 符號
         ReturnURL: returnURL, // ECPay 後台通知 URL
         ClientBackURL: clientBackURL, // 用戶支付後跳轉 URL
         ChoosePayment: 'Credit', // 信用卡
