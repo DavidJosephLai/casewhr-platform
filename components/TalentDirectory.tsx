@@ -139,8 +139,11 @@ export function TalentDirectory() {
       console.log('🔍 [TalentDirectory] 事件來源: filterTalentsByCategory');
       console.log('📍 [TalentDirectory] 當前位置: TalentDirectory 組件');
       
-      // 設置分類篩選為 "Development & IT"
-      setSelectedCategory('development & it');
+      // ✅ 使用接收到的 category value 設置分類篩選
+      if (category) {
+        console.log('✅ [TalentDirectory] 套用分類篩選:', category);
+        setSelectedCategory(category);
+      }
       
       // ✅ 使用技能來進一步篩選
       // 如果有提供技能，設置技能篩選
@@ -156,7 +159,7 @@ export function TalentDirectory() {
       setFiltersExpanded(true);
       setTalentsExpanded(true);
       
-      console.log('✅ [TalentDirectory] 已套用分類篩選（模糊匹配模式）');
+      console.log('✅ [TalentDirectory] 已套用分類篩選');
       console.log('✅ [TalentDirectory] 不會導航到項目頁面！');
       
       // ✅ 確保滾動到人才區域

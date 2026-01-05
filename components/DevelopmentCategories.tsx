@@ -165,7 +165,7 @@ export function DevelopmentCategories() {
     // 觸發人才分類篩選事件
     window.dispatchEvent(new CustomEvent('filterTalentsByCategory', {
       detail: {
-        category: 'Development & IT', // 主分類
+        category: 'development', // ✅ 使用 category value 而不是 title
         subcategory: categoryTitle,   // 子分類
         skills: skills                 // 相關技能
       }
