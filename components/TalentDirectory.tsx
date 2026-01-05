@@ -50,7 +50,7 @@ export function TalentDirectory() {
 
   const [talents, setTalents] = useState<Profile[]>([]);
   const [filteredTalents, setFilteredTalents] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
