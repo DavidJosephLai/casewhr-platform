@@ -324,6 +324,12 @@ export async function createPayment(data: {
     // Save to KV store
     await kv.set(`ecpay_payment:${payment.id}`, payment);
     
+    // 🆕 同時用 merchantTradeNo 作為 key，方便前端查詢
+    if (data.ecpay_transaction_id) {
+      await kv.set(`ecpay_payment:${data.ecpay_transaction_id}`, payment);
+      console.log('[ECPay] Payment also saved with merchantTradeNo:', data.ecpay_transaction_id);
+    }
+    
     // Save to user's payment list
     const userPayments = await kv.get(`ecpay_payments:user:${user.id}`) || [];
     userPayments.push(payment.id);
