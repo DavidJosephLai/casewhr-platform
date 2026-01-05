@@ -276,8 +276,17 @@ export function ProjectDialog({ project, open, onOpenChange, onUpdate }: Project
           }
         }}
         onSubmitted={() => {
+          console.log('✅ [ProjectDialog] Proposal submitted successfully');
           setShowProposalForm(false);
-          onOpenChange(false);
+          // ✅ 不要關閉 ProjectDialog，只關閉提案表單
+          // onOpenChange(false); // ❌ 移除這行
+          toast.success(
+            language === 'en'
+              ? 'Proposal submitted successfully! You can view it in your Dashboard.'
+              : language === 'zh-CN'
+              ? '提案提交成功！您可以在儀表板中查看。'
+              : '提案提交成功！您可以在儀表板中查看。'
+          );
           if (onUpdate) onUpdate();
         }}
       />
@@ -522,7 +531,7 @@ export function ProjectDialog({ project, open, onOpenChange, onUpdate }: Project
                                   setShowProposalListDialog(true);
                                 }}
                               >
-                                {language === 'en' ? 'View Proposal Details' : '���看提案詳情'}
+                                {language === 'en' ? 'View Proposal Details' : '看提案詳情'}
                               </Button>
                             )}
                             

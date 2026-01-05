@@ -427,9 +427,10 @@ export function ProjectsMarketplace() {
           open={proposalDialogOpen}
           onOpenChange={setProposalDialogOpen}
           project={selectedProject}
-          onSuccess={() => {
+          onSubmitted={() => {
             setProposalDialogOpen(false);
-            toast.success(language === 'en' ? 'Proposal submitted!' : '提案已提交！');
+            loadProjects(); // 重新載入項目列表
+            toast.success(language === 'en' ? 'Proposal submitted successfully!' : '提案已成功提交！');
           }}
         />
       )}
