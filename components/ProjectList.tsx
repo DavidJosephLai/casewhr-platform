@@ -1,19 +1,19 @@
-import { useState, useEffect, useCallback, memo } from "react"; // ✅ Added memo
-import { toast } from "sonner";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
-import { Loader2, Briefcase, DollarSign, Calendar, MessageSquare, Trash2, Banknote, CheckCircle } from "lucide-react";
+import { useState, useEffect, useCallback, memo } from "react"; // ✅ 添加 React imports
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../lib/LanguageContext";
 import { getTranslation } from "../lib/translations";
 import { projectId, publicAnonKey } from "../utils/supabase/info";
 import { ProjectDialog } from "./ProjectDialog";
-//import { ProposalDialog } from "./ProposalDialog";
+import { ProposalListDialog } from "./ProposalListDialog"; // ✅ 使用 ProposalListDialog（正確的提案列表組件）
 import { ProjectPostingDialog } from "./ProjectPostingDialog";
 import { formatCurrency, getDefaultCurrency } from "../lib/currency";
 import { projectApi } from "../lib/api";
 import { Pagination } from "./Pagination";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { Loader2, Briefcase, Calendar, DollarSign, MessageSquare, Trash2, Banknote, CheckCircle } from "lucide-react";
+import { toast } from "sonner";
 
 interface Project {
   id: string;
@@ -52,7 +52,7 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
   const t = getTranslation(language as any).projects;
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showLoader, setShowLoader] = useState(false); // 延遲顯示載入器
+  // const [showLoader, setShowLoader] = useState(false); // ✅ 不再需要 showLoader，避免畫面閃爍
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [postDialogOpen, setPostDialogOpen] = useState(false);
@@ -245,17 +245,6 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
-        <p className="text-gray-600">
-          {language === 'en' ? 'Loading projects...' : '載入項目中...'}
-        </p>
-      </div>
-    );
-  }
-
   if (projects.length === 0) {
     return (
       <div className="text-center py-20">
@@ -275,6 +264,8 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
 
   return (
     <>
+      {/* ✅ 不再顯示 loading 覆蓋層，避免畫面閃爍 */}
+
       {/* Results count */}
       <div className="mb-4 text-sm text-gray-600">
         {language === 'en' 
@@ -498,7 +489,7 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
       />
 
       {/* Proposal List Dialog */}
-      <ProposalDialog
+      <ProposalListDialog
         project={selectedProject}
         open={proposalDialogOpen}
         onOpenChange={setProposalDialogOpen}
