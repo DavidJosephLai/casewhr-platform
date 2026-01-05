@@ -88,10 +88,14 @@ export function Header() {
 
   const scrollToSection = (id: string) => {
     console.log(`🎯 [Header] scrollToSection called with id: ${id}`);
+    console.log(`🎯 [Header] Current view: ${view}`);
     
     // 切換到首頁並滾動到指定區域
+    const isChangingView = view !== 'home';
     setView('home');
     setManualOverride(true);
+    
+    console.log(`🎯 [Header] View changed to home, isChangingView: ${isChangingView}`);
     
     // 使用更長的延遲並重試機制確保元素已渲染
     const scrollToElement = () => {
@@ -99,33 +103,41 @@ export function Header() {
       console.log(`🔍 [Header] Looking for element #${id}:`, element);
       
       if (element) {
-        // 直接使用 scrollIntoView，讓瀏覽器自動處理偏移
-        element.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'start',
-          inline: 'nearest'
+        // 使用 requestAnimationFrame 確保渲染完成
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            // 直接使用 scrollIntoView，讓瀏覽器自動處理偏移
+            element.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'start',
+              inline: 'nearest'
+            });
+            
+            // 滾動後再調整一點偏移量（考慮固定 header）
+            setTimeout(() => {
+              const headerHeight = 80;
+              const currentScroll = window.pageYOffset;
+              window.scrollTo({
+                top: currentScroll - headerHeight,
+                behavior: 'smooth'
+              });
+              console.log(`✅ [Header] Scrolled to section: ${id}, final position: ${currentScroll - headerHeight}`);
+            }, 100);
+          });
         });
         
-        // 滾動後再調整一點偏移量（考慮固定 header）
-        setTimeout(() => {
-          const headerHeight = 80; // Fixed header 高度
-          const currentScroll = window.pageYOffset;
-          window.scrollTo({
-            top: currentScroll - headerHeight,
-            behavior: 'smooth'
-          });
-        }, 100);
-        
-        console.log(`✅ [Header] Scrolled to section: ${id}`);
         return true;
       }
       console.log(`⏳ [Header] Element #${id} not found, retrying...`);
       return false;
     };
     
-    // 從 dashboard 切換到 home 需要更長的初始延遲
-    // 多次重試，間隔時間逐漸增加
-    const delays = [300, 400, 500, 600, 800, 1000];
+    // 如果是從其他頁面切換過來，需要更長的初始延遲
+    const initialDelay = isChangingView ? 800 : 300;
+    const delays = isChangingView ? [800, 600, 500, 400] : [300, 400, 500, 600];
+    
+    console.log(`⏰ [Header] Initial delay: ${initialDelay}ms`);
+    
     let currentDelay = 0;
     
     const tryScroll = (index: number) => {
@@ -135,6 +147,8 @@ export function Header() {
       }
       
       currentDelay += delays[index];
+      console.log(`⏰ [Header] Attempting scroll in ${currentDelay}ms (attempt ${index + 1}/${delays.length})`);
+      
       setTimeout(() => {
         if (!scrollToElement()) {
           tryScroll(index + 1);
