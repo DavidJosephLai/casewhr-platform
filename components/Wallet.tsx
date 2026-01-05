@@ -291,7 +291,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
     } catch (error: any) {
       console.error('[Wallet] Error loading wallet data:', error.message);
       
-      toast.error(language === 'en' ? 'Failed to load wallet data' : '載入錢包��據失敗');
+      toast.error(language === 'en' ? 'Failed to load wallet data' : '載入錢包據失敗');
       
       // Set default values on persistent error
       setWallet({
@@ -451,6 +451,76 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
         }, 2000);
         
         // Clean up URL
+        window.history.replaceState({}, '', window.location.pathname);
+        return;
+      }
+
+      // 🔧 修復：當用戶從 ECPay 返回時，查詢後端驗證付款狀態
+      if (provider === 'ecpay' && orderId) {
+        console.log('🔍 [ECPay] Return from ECPay detected, checking payment status:', { orderId });
+        
+        try {
+          // 查詢付款狀態
+          const response = await fetch(
+            `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay-payments/by-order/${orderId}`,
+            {
+              headers: getHeaders(),
+            }
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            const paymentData = data.payment;
+            
+            console.log('📊 [ECPay] Payment status:', paymentData.status);
+            
+            if (paymentData.status === 'confirmed') {
+              // 付款已確認，顯示成功訊息
+              toast.success(
+                language === 'en' 
+                  ? '🎉 ECPay payment successful! Your wallet has been updated.\n\n📄 E-invoice will be issued within 24 hours.\n🔍 Check at: Ministry of Finance E-Invoice Platform\nhttps://www.einvoice.nat.gov.tw/' 
+                  : '🎉 綠界付款成功！您的錢包餘額已更新。\n\n📄 電子發票將於 24 小時內開立\n🔍 查詢請至：財政部電子發票整合服務平台\nhttps://www.einvoice.nat.gov.tw/',
+                { duration: 8000 }
+              );
+              
+              // 重新加載錢包數據
+              loadWalletData();
+            } else if (paymentData.status === 'pending') {
+              // 付款待處理
+              toast.info(
+                language === 'en' 
+                  ? '⏳ Payment is being processed. Please wait a moment...' 
+                  : '⏳ 付款處理中，請稍候...',
+                { duration: 5000 }
+              );
+              
+              // 2秒後重新檢查
+              setTimeout(() => {
+                loadWalletData();
+              }, 2000);
+            } else if (paymentData.status === 'rejected') {
+              // 付款失敗
+              toast.error(
+                language === 'en' 
+                  ? '❌ Payment failed. Please try again or contact support.' 
+                  : '❌ 付款失敗，請重試或聯繫客服。',
+                { duration: 5000 }
+              );
+            }
+          } else {
+            console.warn('⚠️ [ECPay] Payment not found, might still be processing');
+            toast.info(
+              language === 'en' 
+                ? '⏳ Checking payment status...' 
+                : '⏳ 正在確認付款狀態...',
+              { duration: 3000 }
+            );
+          }
+        } catch (error) {
+          console.error('❌ [ECPay] Error checking payment status:', error);
+        }
+        
+        // 清理 URL
         window.history.replaceState({}, '', window.location.pathname);
         return;
       }
