@@ -157,7 +157,7 @@ function AppContent() {
       console.log('🧭 [App] Navigation event received:', targetView);
       
       if (targetView === 'wallet') {
-        // 切換到儀表板���錢包標籤
+        // 切換到儀表板錢包標籤
         setView('dashboard');
         setDashboardTab('wallet');
         console.log('✅ [App] Navigated to wallet tab');
@@ -610,13 +610,10 @@ function AppContent() {
           </Suspense>
         </div>
       ) : view === 'api-documentation' ? (
-        <div className="pt-20 px-4 pb-8 max-w-7xl mx-auto">
-          <SEO title="API Documentation" description="" keywords="" noindex />
+        <div className="pt-20">
+          <SEO {...getPageSEO('api-documentation', language)} />
           <Suspense fallback={<PageLoadingFallback />}>
-            <ApiDocumentation 
-              language={language}
-              baseUrl={`https://${projectId}.supabase.co/functions/v1/make-server-215f78a5`}
-            />
+            <ApiDocumentation />
           </Suspense>
         </div>
       ) : view === 'sla-documentation' ? (
@@ -649,8 +646,8 @@ function AppContent() {
           <Services />
           <MilestoneFeature />
           <Process />
-          <DevelopmentCategories />
           <TalentDirectory />
+          <DevelopmentCategories />
           <WhoCanTakeOver />
           <Categories />
           <BrowseProjects />
