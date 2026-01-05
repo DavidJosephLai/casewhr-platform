@@ -196,18 +196,18 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
       }
     },
     'zh-TW': {
-      title: '企業版功能',
+      title: '企業級功能',
       subtitle: '企業版會員專屬功能',
       upgradeRequired: '企業版專屬',
       upgrade: '升級至企業版',
       features: {
         chat: {
           title: '企業即時聊天',
-          description: '與���戶經理和團隊成員即時溝通'
+          description: '個人24小時即時客服'
         },
         team: {
           title: '團隊管理',
-          description: '添加團隊成員並管理權限'
+          description: '為您團隊成員添加協作權限'
         },
         contracts: {
           title: '合約管理',
@@ -218,8 +218,8 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
           description: '與現有系統整合'
         },
         branding: {
-          title: '自訂品牌',
-          description: '個人化工作空間外觀'
+          title: '企業品牌客製',
+          description: '自定義企業商標並與合作夥伴共享'
         },
         analytics: {
           title: '高級分析',
@@ -228,18 +228,18 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
       }
     },
     'zh-CN': {
-      title: '企业版功能',
+      title: '企业级功能',
       subtitle: '企业版会员专属功能',
       upgradeRequired: '企业版专属',
       upgrade: '升级至企业版',
       features: {
         chat: {
           title: '企业即时聊天',
-          description: '与客户经理和团队成员即时沟通'
+          description: '个人24小时即时客服'
         },
         team: {
           title: '团队管理',
-          description: '添加团队成员并管理权限'
+          description: '为您团队成员添加协作权限'
         },
         contracts: {
           title: '合约管理',
@@ -250,8 +250,8 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
           description: '与现有系统集成'
         },
         branding: {
-          title: '自定义品牌',
-          description: '个性化工作空间外观'
+          title: '企业品牌定制',
+          description: '自定义企业商标并与合作伙伴共享'
         },
         analytics: {
           title: '高级分析',
