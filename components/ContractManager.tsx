@@ -146,7 +146,7 @@ export function ContractManager({ language = 'en' }: ContractManagerProps) {
         signed: '已簽署',
         completed: '已完成'
       },
-      noContracts: '尚無合約。創建您的第一份合約！',
+      noContracts: '尚無合約。創建您的第一份合���！',
       createSuccess: '合約創建成功！',
       sendSuccess: '合約已發送給客戶！',
       deleteSuccess: '合約刪除成功',
@@ -486,7 +486,7 @@ Powered by CaseWHR - Professional Freelancing Platform`,
 所有通知應發送至雙方提供的電子郵件地址，並在電子郵件確認後視為已送達。
 
 19. 可分割性
-如任何條款被認定無效，其餘條款應繼續完全有效。
+如任何��款被認定無效，其餘條款應繼續完全有效。
 
 ═══════════════════════════════════════════════════════
 
@@ -562,7 +562,7 @@ Powered by CaseWHR - Professional Freelancing Platform`,
 收到全额付款后，交付成果中的所有知识产权应转让给客户。服务提供商保留以下权利：
 • 将项目纳入作品集和营销材料
 • 将项目用作案例研究（需客户书面许可）
-• 保留项目中使用的任何预先存在的知识产权
+• 保留项目中使用的任何预先存在知识产权
 
 8. 保密条款
 双方同意：
@@ -833,7 +833,7 @@ _______________________
 - 最终交付和批准时支付 30%
 
 知识产权：
-全额付款后，所有权利转让给客户。自由职业者保留将作品样本��于作品集的权利。
+全额付款后，所有权利转让给客户。自由职业者保留将作品样本用於作品集的权利。
 
 终止条款：
 任何一方可提前 7 天书面通知终止合约。
@@ -881,17 +881,18 @@ _______________________
   const fetchData = async () => {
     setLoading(true);
     try {
-      // ��� 開發模式支援
+      // 🔥 始終使用本地三語模板（不依賴後端）
+      const localTemplates = getContractTemplates();
+      setTemplates(localTemplates);
+      
+      // 🎁 開發模式支援
       const devModeActive = localStorage.getItem('dev_mode_active') === 'true';
       if (devModeActive) {
-        // 使用三語模板
-        const mockTemplates = getContractTemplates();
-
         // 模擬合約數據 - 使用對應語言的完整內容
         const lang = language === 'zh' ? 'zh-TW' : language;
         
         // 獲取服務協議模板內容
-        const serviceTemplate = mockTemplates.find(t => t.id === '1');
+        const serviceTemplate = localTemplates.find(t => t.id === '1');
         let serviceContent = serviceTemplate?.content || '';
         serviceContent = serviceContent
           .replace(/{{client_name}}/g, 'ABC Corporation')
@@ -906,7 +907,7 @@ _______________________
           .replace(/{{final}}/g, '4,500');
 
         // 獲取NDA模板內容
-        const ndaTemplate = mockTemplates.find(t => t.id === '2');
+        const ndaTemplate = localTemplates.find(t => t.id === '2');
         let ndaContent = ndaTemplate?.content || '';
         ndaContent = ndaContent
           .replace(/{{client_name}}/g, 'Tech Startup Inc')
@@ -915,7 +916,7 @@ _______________________
           .replace(/{{date}}/g, new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toLocaleDateString());
 
         // 獲取自由職業合約模板內容
-        const freelanceTemplate = mockTemplates.find(t => t.id === '3');
+        const freelanceTemplate = localTemplates.find(t => t.id === '3');
         let freelanceContent = freelanceTemplate?.content || '';
         freelanceContent = freelanceContent
           .replace(/{{client_name}}/g, 'Design Studio')
@@ -948,7 +949,7 @@ _______________________
             id: '1',
             title: contractTitles.contract1[lang],
             template_id: '1',
-            template_name: mockTemplates[0].name,
+            template_name: localTemplates[0].name,
             client_name: 'ABC Corporation',
             client_email: 'contact@abc-corp.com',
             project_name: 'E-commerce Website',
@@ -963,7 +964,7 @@ _______________________
             id: '2',
             title: contractTitles.contract2[lang],
             template_id: '2',
-            template_name: mockTemplates[1].name,
+            template_name: localTemplates[1].name,
             client_name: 'Tech Startup Inc',
             client_email: 'ceo@techstartup.com',
             project_name: 'iOS Mobile Application',
@@ -979,7 +980,7 @@ _______________________
             id: '3',
             title: contractTitles.contract3[lang],
             template_id: '3',
-            template_name: mockTemplates[2].name,
+            template_name: localTemplates[2].name,
             client_name: 'Design Studio',
             client_email: 'hello@designstudio.com',
             project_name: 'Brand Identity Package',
@@ -991,13 +992,12 @@ _______________________
           }
         ];
 
-        setTemplates(mockTemplates);
         setContracts(mockContracts);
         setLoading(false);
         return;
       }
 
-      // 從���端獲取真實數據
+      // 從後端獲取真實合約數據（模板已在上面設置）
       const isDev = accessToken?.startsWith('dev-user-');
       const headers: Record<string, string> = {
         'Authorization': `Bearer ${isDev ? publicAnonKey : accessToken}`,
@@ -1006,15 +1006,10 @@ _______________________
         headers['X-Dev-Token'] = accessToken;
       }
 
-      const [templatesResponse, contractsResponse] = await Promise.all([
-        fetch(`https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/contracts/templates`, { headers }),
-        fetch(`https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/contracts`, { headers })
-      ]);
-
-      if (templatesResponse.ok) {
-        const data = await templatesResponse.json();
-        setTemplates(data.templates || []);
-      }
+      const contractsResponse = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/contracts`, 
+        { headers }
+      );
 
       if (contractsResponse.ok) {
         const data = await contractsResponse.json();
@@ -1022,6 +1017,9 @@ _______________________
       }
     } catch (error) {
       console.error('Failed to fetch contracts:', error);
+      // 即使出錯也確保模板可用
+      const localTemplates = getContractTemplates();
+      setTemplates(localTemplates);
     } finally {
       setLoading(false);
     }
