@@ -189,6 +189,10 @@ export function ECPayManualConfirm() {
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">✅ 已確認</Badge>;
       case 'rejected':
         return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300">❌ 已拒絕</Badge>;
+      case 'expired':
+        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-300">⏰ 已過期</Badge>;
+      case 'cancelled':
+        return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300">🚫 已取消</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -310,25 +314,39 @@ export function ECPayManualConfirm() {
                         </div>
                         
                         {payment.status === 'pending' && (
-                          <Button
-                            onClick={() => handleConfirmPayment(payment.id)}
-                            disabled={loading}
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            {loading ? (
-                              <Loader2 className="h-4 w-4 animate-spin mr-1" />
-                            ) : (
-                              <CheckCircle2 className="h-4 w-4 mr-1" />
-                            )}
-                            {language === 'en' ? 'Confirm' : '確認入帳'}
-                          </Button>
+                          <div className="flex flex-col gap-2">
+                            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
+                              ⏳ {language === 'en' ? 'Pending Payment' : '待 ECPay 確認'}
+                            </Badge>
+                            <Button
+                              onClick={() => {
+                                // 🔒 安全修復：移除用戶自行確認功能，改為提示聯繫客服
+                                toast.info(
+                                  language === 'en'
+                                    ? '📧 If you have completed payment but balance not updated, please contact support:\nsupport@casewhr.com\n\nProvide your Order ID: ' + payment.ecpay_transaction_id
+                                    : '📧 如果您已完成付款但餘額未更新，請聯繫客服：\nsupport@casewhr.com\n\n請提供訂單編號：' + payment.ecpay_transaction_id,
+                                  { duration: 10000 }
+                                );
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              💬 {language === 'en' ? 'Contact Support' : '聯繫客服'}
+                            </Button>
+                          </div>
                         )}
                         
                         {payment.status === 'confirmed' && (
                           <Badge variant="outline" className="bg-green-50 text-green-700">
                             <CheckCircle2 className="h-3 w-3 mr-1" />
                             {language === 'en' ? 'Completed' : '已完成'}
+                          </Badge>
+                        )}
+                        
+                        {payment.status === 'expired' && (
+                          <Badge variant="outline" className="bg-gray-50 text-gray-700">
+                            ⏰ {language === 'en' ? 'Expired (30 min)' : '已過期 (30分鐘)'}
                           </Badge>
                         )}
                       </div>
@@ -353,10 +371,22 @@ export function ECPayManualConfirm() {
           </p>
           <ol className="text-xs text-blue-800 space-y-1 list-decimal list-inside">
             <li>{language === 'en' ? 'Complete payment via ECPay' : '透過綠界完成付款'}</li>
-            <li>{language === 'en' ? 'Click "Load My Payments" to view pending payments' : '點擊「載入我的付款記錄」查看待確認付款'}</li>
-            <li>{language === 'en' ? 'Click "Confirm" to update your wallet balance' : '點擊「確認入帳」手動更新錢包餘額'}</li>
-            <li>{language === 'en' ? 'Balance will be updated immediately' : '餘額將立即更新'}</li>
+            <li>{language === 'en' ? 'Click \"Load My Payments\" to view payment status' : '點擊「載入我的付款記錄」查看付款狀態'}</li>
+            <li>{language === 'en' ? 'Wallet will be updated automatically after ECPay confirms payment' : '綠界確認付款後，錢包將自動更新'}</li>
+            <li>{language === 'en' ? 'If balance not updated after 10 minutes, contact support' : '如 10 分鐘後餘額仍未更新，請聯繫客服'}</li>
           </ol>
+        </div>
+        
+        {/* 🔒 安全警告 */}
+        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 space-y-2">
+          <p className="text-xs font-semibold text-red-900">
+            🔒 {language === 'en' ? 'Security Notice:' : '安全提示：'}
+          </p>
+          <p className="text-xs text-red-800">
+            {language === 'en'
+              ? '⚠️ We have removed the \"Manual Confirm\" button to prevent unauthorized balance additions. Wallet balance will only be updated after ECPay confirms your payment. If you encounter any issues, please contact support with your Order ID.'
+              : '⚠️ 為了防止未授權的餘額增加，我們已移除「手動確認」按鈕。錢包餘額只會在綠界確認付款後自動更新。如遇問題，請攜帶訂單編號聯繫客服。'}
+          </p>
         </div>
       </CardContent>
     </Card>

@@ -41,6 +41,47 @@ console.log('[ECPay] Configuration loaded:', {
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Helper: .NET-compatible URL Encode (HttpUtility.UrlEncode)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function dotNetUrlEncode(str: string): string {
+  // .NET HttpUtility.UrlEncode 規則：
+  // - 不編碼：A-Z a-z 0-9 - _ . ! * ( )
+  // - 空格編碼為 +
+  // - 其他字元編碼為 %XX（十六進制大寫）
+  
+  let encoded = '';
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    const code = char.charCodeAt(0);
+    
+    // 不需要編碼的字元
+    if (
+      (code >= 48 && code <= 57) ||   // 0-9
+      (code >= 65 && code <= 90) ||   // A-Z
+      (code >= 97 && code <= 122) ||  // a-z
+      char === '-' || char === '_' || char === '.' || 
+      char === '!' || char === '*' || char === '(' || char === ')'
+    ) {
+      encoded += char;
+    } 
+    // 空格編碼為 +
+    else if (char === ' ') {
+      encoded += '+';
+    } 
+    // 其他字元編碼為 %XX
+    else {
+      // 對於多字節字元（如中文），需要使用 UTF-8 編碼
+      const bytes = new TextEncoder().encode(char);
+      for (const byte of bytes) {
+        encoded += '%' + byte.toString(16).toUpperCase().padStart(2, '0');
+      }
+    }
+  }
+  
+  return encoded;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Helper: Generate ECPay CheckMacValue
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 async function generateCheckMacValue(params: Record<string, any>): Promise<string> {
@@ -69,50 +110,22 @@ async function generateCheckMacValue(params: Record<string, any>): Promise<strin
     paramCount: sortedKeys.length,
     paramKeys: sortedKeys,
     rawStringLength: rawString.length,
-    rawString: rawString, // 🆕 完整顯示原始字串
+    rawStringSample: rawString.substring(0, 200) + '...', // 顯示前 200 字元
   });
   
-  // Step 5: URL Encode (使用 .NET HttpUtility.UrlEncode 相容規則)
-  // 🔧 重要：ECPay 使用 .NET 的 UrlEncode，不是標準的 encodeURIComponent
-  // .NET UrlEncode 特點：
-  // - 空格編碼為 +（不是 %20）
-  // - 不編碼：A-Z a-z 0-9 - _ . ~
-  // - 其他字元都編碼為 %XX
-  
-  let encodedString = '';
-  for (let i = 0; i < rawString.length; i++) {
-    const char = rawString[i];
-    const code = char.charCodeAt(0);
-    
-    // 不編碼的字元：A-Z, a-z, 0-9, -, _, ., ~, *, (, )
-    if (
-      (code >= 48 && code <= 57) ||  // 0-9
-      (code >= 65 && code <= 90) ||  // A-Z
-      (code >= 97 && code <= 122) || // a-z
-      char === '-' || char === '_' || char === '.' || char === '~' ||
-      char === '*' || char === '(' || char === ')'
-    ) {
-      encodedString += char;
-    } else if (char === ' ') {
-      // 空格編碼為 +
-      encodedString += '+';
-    } else {
-      // 其他字元編碼為 %XX
-      const hex = code.toString(16).toUpperCase().padStart(2, '0');
-      encodedString += '%' + hex;
-    }
-  }
+  // Step 5: URL Encode (使用 .NET 相容的編碼)
+  const encodedString = dotNetUrlEncode(rawString);
   
   console.log('[ECPay] 🔐 CheckMacValue Step 2 - URL Encoded:', {
     encodedLength: encodedString.length,
-    encodedString: encodedString, // 🆕 完整顯示編碼後字串
+    encodedSample: encodedString.substring(0, 200) + '...', // 顯示前 200 字元
   });
   
   // Step 6: Convert to lowercase
   const lowerString = encodedString.toLowerCase();
   
   console.log('[ECPay] 🔐 CheckMacValue Step 3 - Lowercase:', {
-    lowerString: lowerString.substring(0, 200) + '...', // 顯示前 200 字元
+    lowerSample: lowerString.substring(0, 200) + '...', // 顯示前 200 字元
   });
   
   // Step 7: SHA256 hash
@@ -742,7 +755,8 @@ export function registerECPayRoutes(app: any) {
       // 🔧 修復：使用正確的 Supabase 生產環境 URL
       const supabaseUrl = Deno.env.get('SUPABASE_URL') || 'https://bihplitfentxioxyjalb.supabase.co';
       const returnURL = `${supabaseUrl}/functions/v1/make-server-215f78a5/ecpay/callback`;
-      const clientBackURL = `${c.req.header('origin') || 'https://casewhr.com'}/wallet?payment=success&provider=ecpay&orderId=${merchantTradeNo}`;
+      // 🔧 修復：ClientBackURL 不包含 payment=success，避免誤判
+      const clientBackURL = `${c.req.header('origin') || 'https://casewhr.com'}/wallet?provider=ecpay&orderId=${merchantTradeNo}`;
 
       console.log('[ECPay] Callback URLs configured:', {
         returnURL,
@@ -1003,32 +1017,41 @@ export function registerECPayRoutes(app: any) {
     }
   });
 
-  // Get payment by order ID
-  app.get('/make-server-215f78a5/ecpay-payments/by-order/:orderId', async (c: Context) => {
-    const accessToken = c.req.header('X-Dev-Token') || c.req.header('Authorization')?.split(' ')[1];
-    const { user, error } = await getUserFromToken(accessToken);
-
-    if (!user || error) {
-      return c.json({ error: 'Unauthorized' }, 401);
-    }
-
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // Route: Get payment by order ID
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  app.get('/ecpay-payments/by-order/:orderId', async (c) => {
     try {
       const orderId = c.req.param('orderId');
       
-      // Search for payment with this ECPay transaction ID
-      const allPayments = await kv.getByPrefix('ecpay_payment:');
-      const payment = allPayments.find(p => 
-        p && p.ecpay_transaction_id === orderId && p.user_id === user.id
-      );
-
+      // Get payment from KV store
+      const payment = await kv.get(`ecpay_payment:${orderId}`);
+      
       if (!payment) {
         return c.json({ error: 'Payment not found' }, 404);
       }
 
+      // 🆕 檢查訂單是否過期（30 分鐘）
+      const createdAt = new Date(payment.created_at);
+      const now = new Date();
+      const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+      
+      // 如果訂單超過 30 分鐘且狀態仍為 pending，標記為過期
+      if (diffMinutes > 30 && payment.status === 'pending') {
+        payment.status = 'expired';
+        payment.updated_at = now.toISOString();
+        payment.expire_reason = 'Payment timeout (30 minutes)';
+        
+        // 更新到 KV store
+        await kv.set(`ecpay_payment:${orderId}`, payment);
+        
+        console.log(`⏰ [ECPay] Payment expired: ${orderId} (${diffMinutes.toFixed(1)} minutes old)`);
+      }
+      
       return c.json({ payment });
-    } catch (error) {
-      console.error('[ECPay API] Error getting payment by order ID:', error);
-      return c.json({ error: 'Failed to get payment' }, 500);
+    } catch (error: any) {
+      console.error('[ECPay] Error getting payment:', error);
+      return c.json({ error: error.message }, 500);
     }
   });
 
