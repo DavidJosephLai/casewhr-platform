@@ -337,7 +337,13 @@ export function BrandingSettings({ language = 'en' }: BrandingSettingsProps) {
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    console.log('📤 [BrandingSettings] File upload triggered!', { file: file?.name, size: file?.size });
+    console.log('📤 [BrandingSettings] File upload triggered!', { 
+      file: file?.name, 
+      size: file?.size,
+      type: file?.type,
+      accessToken: accessToken?.substring(0, 20) + '...',
+      user: user?.id
+    });
     
     if (!file) {
       console.log('⚠️ [BrandingSettings] No file selected');
@@ -366,24 +372,36 @@ export function BrandingSettings({ language = 'en' }: BrandingSettingsProps) {
       const formDataObj = new FormData();
       formDataObj.append('file', file);
 
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/branding/logo`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-          body: formDataObj,
-        }
-      );
+      const uploadUrl = `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/branding/logo`;
+      console.log('📤 [BrandingSettings] Upload URL:', uploadUrl);
+      console.log('📤 [BrandingSettings] Authorization:', `Bearer ${accessToken?.substring(0, 20)}...`);
+
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: formDataObj,
+      });
+
+      console.log('📤 [BrandingSettings] Response status:', response.status);
+      console.log('📤 [BrandingSettings] Response headers:', Object.fromEntries(response.headers.entries()));
+
+      const responseText = await response.text();
+      console.log('📤 [BrandingSettings] Response body:', responseText);
 
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch {
+          errorData = { error: responseText };
+        }
         console.error('❌ [BrandingSettings] Upload failed:', errorData);
         throw new Error(errorData.error || 'Upload failed');
       }
 
-      const data = await response.json();
+      const data = JSON.parse(responseText);
       console.log('✅ [BrandingSettings] Upload successful:', data);
       
       // Update branding state immediately
@@ -435,7 +453,7 @@ export function BrandingSettings({ language = 'en' }: BrandingSettingsProps) {
 
   const handleSave = async () => {
     if (!formData.company_name.trim()) {
-      toast.error(language === 'en' ? 'Company name is required' : '公司名稱為必填');
+      toast.error(language === 'en' ? 'Company name is required' : '���司名稱為必填');
       return;
     }
 
