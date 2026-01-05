@@ -67,7 +67,8 @@ function WalletComponent({ refreshKey }: WalletProps) {
   const { user, accessToken } = useAuth();
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(false);
+  // 🚀 優化：移除全局 loading，改用樂觀更新
+  const [loadingWallet, setLoadingWallet] = useState(true); // 只在初始載入時顯示
   const [showDepositDialog, setShowDepositDialog] = useState(false);
   const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
   const [depositAmount, setDepositAmount] = useState('');
@@ -181,7 +182,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
   const loadWalletData = async () => {
     if (!user?.id || !accessToken) return;
 
-    setLoading(true);
+    setLoadingWallet(true);
     try {
       // 🔥 優先檢查開發模式的錢包信息
       const devModeActive = localStorage.getItem('dev_mode_active') === 'true';
@@ -202,7 +203,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
               updated_at: new Date().toISOString(),
             });
             setTransactions([]);
-            setLoading(false);
+            setLoadingWallet(false);
             return;
           } catch (err) {
             console.error('Failed to parse dev mode wallet:', err);
@@ -319,7 +320,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       });
       setTransactions([]);
     } finally {
-      setLoading(false);
+      setLoadingWallet(false);
     }
   };
 
@@ -383,7 +384,11 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       return;
     }
 
-    setLoading(true);
+    // 🚀 優化：使用 toast 提示，不阻塞 UI
+    const loadingToast = toast.loading(
+      language === 'en' ? 'Creating PayPal order...' : '創建 PayPal 訂單中...'
+    );
+    
     try {
       // Create PayPal Order (always use USD)
       const response = await fetch(
@@ -403,17 +408,21 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
         
         // Check if PayPal is configured
         if (data.configured === false) {
+          toast.dismiss(loadingToast);
           toast.error(
             language === 'en' 
               ? '💳 PayPal payment is not available. Please contact support.' 
               : '💳 PayPal 支付不可用。聯繫客服。'
           );
-          setLoading(false);
           return;
         }
         
         // Redirect to PayPal Checkout
         if (data.approvalUrl) {
+          toast.dismiss(loadingToast);
+          toast.success(
+            language === 'en' ? '🔄 Redirecting to PayPal...' : '🔄 正在跳轉到 PayPal...'
+          );
           window.location.href = data.approvalUrl;
         } else {
           throw new Error('No checkout URL returned');
@@ -424,8 +433,8 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       }
     } catch (error: any) {
       console.error('Error creating checkout:', error);
+      toast.dismiss(loadingToast);
       toast.error(error.message || (language === 'en' ? 'Failed to start payment' : '無法啟動付款'));
-      setLoading(false);
     }
   };
 
@@ -661,7 +670,10 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       return;
     }
 
-    setLoading(true);
+    // 🚀 優化：使用 toast 提示，不阻塞 UI
+    const loadingToast = toast.loading(
+      language === 'en' ? 'Creating ECPay order...' : '創建綠界訂單中...'
+    );
     try {
       console.log('💳 [ECPay] Creating order:', { amount: twdAmount });
       
@@ -730,6 +742,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       }
     } catch (error: any) {
       console.error('❌ [ECPay] Error:', error);
+      toast.dismiss(loadingToast);
       toast.error(
         language === 'en'
           ? 'Failed to start ECPay payment'
@@ -737,8 +750,6 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
           ? '无法启动绿界付款'
           : '無法啟動綠界付款'
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -806,7 +817,10 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       return;
     }
 
-    setLoading(true);
+    // 🚀 優化：使用 toast 提示，不阻塞 UI
+    const loadingToast = toast.loading(
+      language === 'en' ? 'Processing withdrawal...' : '處理提現中...'
+    );
     try {
       // ️ 重要：后端需要 USD，所以要转回 USD
       const usdAmount = selectedCurrency === 'USD'
@@ -825,24 +839,28 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       if (response.ok) {
         const data = await response.json();
         setWallet(data.wallet);
+        toast.dismiss(loadingToast);
         toast.success(language === 'en' ? `Withdrawn ${formatCurrency(amount, selectedCurrency)}` : `已提領 ${formatCurrency(amount, selectedCurrency)}`);
         setWithdrawAmount("");
         setShowWithdrawDialog(false);
         loadWalletData(); // 重新加载以更新交易记录
       } else {
         const error = await response.json();
+        toast.dismiss(loadingToast);
         toast.error(error.error || (language === 'en' ? 'Failed to withdraw' : '提領失敗'));
       }
     } catch (error) {
       console.error('Error processing withdrawal:', error);
+      toast.dismiss(loadingToast);
       toast.error(language === 'en' ? 'Failed to withdraw' : '提領失敗');
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleMigrateWallet = async () => {
-    setLoading(true);
+    // 🚀 優化：使用 toast 提示，不阻塞 UI
+    const loadingToast = toast.loading(
+      language === 'en' ? 'Migrating wallet...' : '遷移錢包中...'
+    );
     try {
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/wallet/migrate`,
@@ -855,17 +873,18 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       if (response.ok) {
         const data = await response.json();
         console.log('🔧 Migration result:', data);
+        toast.dismiss(loadingToast);
         toast.success(language === 'en' ? 'Wallet migrated successfully!' : '錢包遷移成功！');
         loadWalletData(); // 重新加载钱包数据
       } else {
         const error = await response.json();
+        toast.dismiss(loadingToast);
         toast.error(error.error || (language === 'en' ? 'Failed to migrate' : '遷移失敗'));
       }
     } catch (error) {
       console.error('Error migrating wallet:', error);
+      toast.dismiss(loadingToast);
       toast.error(language === 'en' ? 'Failed to migrate' : '遷移失敗');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -877,7 +896,11 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       return;
     }
 
-    setLoading(true);
+    // 🚀 優化：使用 toast 提示，不阻塞 UI
+    const loadingToast = toast.loading(
+      language === 'en' ? 'Adding test funds...' : '添加測試餘額中...'
+    );
+    
     try {
       // 直接創建測試錢包
       const testWallet = {
@@ -899,6 +922,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       );
 
       if (response.ok || response.status === 404) {
+        toast.dismiss(loadingToast);
         toast.success(
           language === 'en'
             ? '🎁 Added NT$1,000,000 test funds!'
@@ -910,13 +934,12 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       }
     } catch (error) {
       console.error('Error adding test funds:', error);
+      toast.dismiss(loadingToast);
       toast.error(
         language === 'en'
           ? 'Failed to add test funds'
           : '添加測試餘額失敗'
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -951,7 +974,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
     });
   };
 
-  if (loading) {
+  if (loadingWallet) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
@@ -1080,7 +1103,6 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
                 size="sm"
                 variant="outline"
                 onClick={handleAddTestFunds}
-                disabled={loading}
                 className="w-full mt-2 border-2 border-dashed border-green-500 text-green-700 hover:bg-green-50"
               >
                 🎁 {language === 'en' ? 'Add Test Funds (NT$1M)' : '添加測試餘額 (NT$100萬)'}
@@ -1329,8 +1351,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
                 <>
                   {/* 台灣用戶：綠界優先 */}
                   <Button 
-                    onClick={handleECPayDeposit} 
-                    disabled={loading}
+                    onClick={handleECPayDeposit}
                     className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                   >
                     <ShoppingCart className="h-4 w-4 mr-2" />
@@ -1339,10 +1360,10 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
                   </Button>
                   <Button 
                     onClick={handleDeposit} 
-                    disabled={loading}
+                    disabled={loadingWallet}
                     className="flex-1 bg-[#0070ba] hover:bg-[#003087] text-white"
                   >
-                    {loading ? (
+                    {loadingWallet ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <CreditCard className="h-4 w-4 mr-2" />
@@ -1355,10 +1376,10 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
                   {/* 英文用戶：PayPal 優先 */}
                   <Button 
                     onClick={handleDeposit} 
-                    disabled={loading}
+                    disabled={loadingWallet}
                     className="flex-1 bg-[#0070ba] hover:bg-[#003087] text-white"
                   >
-                    {loading ? (
+                    {loadingWallet ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <CreditCard className="h-4 w-4 mr-2" />
@@ -1367,7 +1388,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
                   </Button>
                   <Button 
                     onClick={handleECPayDeposit} 
-                    disabled={loading}
+                    disabled={loadingWallet}
                     variant="outline"
                     className="flex-1 bg-white hover:bg-gray-50 border-2 border-green-500"
                   >
@@ -1432,8 +1453,8 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
             <Button variant="outline" onClick={() => setShowWithdrawDialog(false)}>
               {language === 'en' ? 'Cancel' : '取消'}
             </Button>
-            <Button onClick={handleWithdraw} disabled={loading}>
-              {loading ? (
+            <Button onClick={handleWithdraw} disabled={loadingWallet}>
+              {loadingWallet ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : null}
               {language === 'en' ? 'Withdraw' : '提現'}

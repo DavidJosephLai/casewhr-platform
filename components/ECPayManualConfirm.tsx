@@ -25,10 +25,11 @@ interface ECPayPayment {
 export function ECPayManualConfirm() {
   const { language } = useLanguage();
   const { user, accessToken } = useAuth();
-  const [loading, setLoading] = useState(false);
   const [orderId, setOrderId] = useState('');
   const [payments, setPayments] = useState<ECPayPayment[]>([]);
   const [showPayments, setShowPayments] = useState(false);
+  // 🚀 優化：移除全局 loading，改用局部狀態
+  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
 
   const getHeaders = () => {
     const isDevMode = accessToken?.startsWith('dev-user-');
@@ -47,7 +48,7 @@ export function ECPayManualConfirm() {
       return;
     }
 
-    setLoading(true);
+    setLoadingStates(prev => ({ ...prev, 'loadMyPendingPayments': true }));
     try {
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay-payments?status=pending&userEmail=${user.email}`,
@@ -76,7 +77,7 @@ export function ECPayManualConfirm() {
       console.error('Error loading payments:', error);
       toast.error('載入付款記錄失敗');
     } finally {
-      setLoading(false);
+      setLoadingStates(prev => ({ ...prev, 'loadMyPendingPayments': false }));
     }
   };
 
@@ -87,7 +88,7 @@ export function ECPayManualConfirm() {
       return;
     }
 
-    setLoading(true);
+    setLoadingStates(prev => ({ ...prev, [paymentId]: true }));
     try {
       console.log('💰 [Manual Confirm] Starting payment confirmation:', { paymentId, userId: user?.id });
       
@@ -137,7 +138,7 @@ export function ECPayManualConfirm() {
       console.error('💰 [Manual Confirm] Exception:', error);
       toast.error('確認付款失敗');
     } finally {
-      setLoading(false);
+      setLoadingStates(prev => ({ ...prev, [paymentId]: false }));
     }
   };
 
@@ -152,7 +153,7 @@ export function ECPayManualConfirm() {
       return;
     }
 
-    setLoading(true);
+    setLoadingStates(prev => ({ ...prev, 'handleQueryByOrderId': true }));
     try {
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay-payments/by-order/${orderId}`,
@@ -177,7 +178,7 @@ export function ECPayManualConfirm() {
       console.error('Error querying payment:', error);
       toast.error('查詢訂單失敗');
     } finally {
-      setLoading(false);
+      setLoadingStates(prev => ({ ...prev, 'handleQueryByOrderId': false }));
     }
   };
 
@@ -219,10 +220,10 @@ export function ECPayManualConfirm() {
           </Label>
           <Button
             onClick={loadMyPendingPayments}
-            disabled={loading}
+            disabled={loadingStates['loadMyPendingPayments']}
             className="w-full bg-purple-600 hover:bg-purple-700"
           >
-            {loading ? (
+            {loadingStates['loadMyPendingPayments'] ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : (
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -257,11 +258,11 @@ export function ECPayManualConfirm() {
             />
             <Button
               onClick={handleQueryByOrderId}
-              disabled={loading || !orderId.trim()}
+              disabled={loadingStates['handleQueryByOrderId'] || !orderId.trim()}
               variant="outline"
               className="border-purple-300"
             >
-              {loading ? (
+              {loadingStates['handleQueryByOrderId'] ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <>{language === 'en' ? 'Query' : '查詢'}</>
