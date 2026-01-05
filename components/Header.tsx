@@ -87,6 +87,8 @@ export function Header() {
   }, []);
 
   const scrollToSection = (id: string) => {
+    console.log(`🎯 [Header] scrollToSection called with id: ${id}`);
+    
     // 切換到首頁並滾動到指定區域
     setView('home');
     setManualOverride(true);
@@ -94,16 +96,26 @@ export function Header() {
     // 使用更長的延遲並重試機制確保元素已渲染
     const scrollToElement = () => {
       const element = document.getElementById(id);
+      console.log(`🔍 [Header] Looking for element #${id}:`, element);
+      
       if (element) {
-        // 獲取元素位置��減去 header 高度（約 80px）
-        const headerOffset = 100;
-        const elementPosition = element.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-        
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth'
+        // 直接使用 scrollIntoView，讓瀏覽器自動處理偏移
+        element.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start',
+          inline: 'nearest'
         });
+        
+        // 滾動後再調整一點偏移量（考慮固定 header）
+        setTimeout(() => {
+          const headerHeight = 80; // Fixed header 高度
+          const currentScroll = window.pageYOffset;
+          window.scrollTo({
+            top: currentScroll - headerHeight,
+            behavior: 'smooth'
+          });
+        }, 100);
+        
         console.log(`✅ [Header] Scrolled to section: ${id}`);
         return true;
       }
