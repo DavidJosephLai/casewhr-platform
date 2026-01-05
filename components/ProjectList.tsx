@@ -52,6 +52,7 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
   const t = getTranslation(language as any).projects;
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showLoader, setShowLoader] = useState(false); // 延遲顯示載入器
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [postDialogOpen, setPostDialogOpen] = useState(false);

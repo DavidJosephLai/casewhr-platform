@@ -51,6 +51,7 @@ export function TalentDirectory() {
   const [talents, setTalents] = useState<Profile[]>([]);
   const [filteredTalents, setFilteredTalents] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showLoader, setShowLoader] = useState(false); // 延遲顯示載入器
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
@@ -87,6 +88,12 @@ export function TalentDirectory() {
   const loadTalents = useCallback(async () => {
     setLoading(true);
     setTableNotFound(false);
+    
+    // 延遲顯示載入器 - 只有在載入時間超過 300ms 時才顯示
+    const loaderTimeout = setTimeout(() => {
+      if (loading) setShowLoader(true);
+    }, 300);
+    
     try {
       const response = await fetchWithRetry(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/profiles/freelancers`,
@@ -112,7 +119,9 @@ export function TalentDirectory() {
       setTalents([]);
       setFilteredTalents([]);
     } finally {
+      clearTimeout(loaderTimeout);
       setLoading(false);
+      setShowLoader(false);
     }
   }, []);
 
@@ -619,7 +628,7 @@ export function TalentDirectory() {
         </div>
 
         {/* Talents Grid */}
-        {loading ? (
+        {showLoader ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
             <p className="text-gray-600">
