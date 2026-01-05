@@ -672,7 +672,16 @@ export function registerECPayRoutes(app: any) {
       const timestamp = Date.now().toString().slice(-10);
       const randomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       const merchantTradeNo = `CW${timestamp}${randomCode}`;
-      const tradeDate = new Date().toISOString().replace(/[-:]/g, '').substr(0, 14);
+      
+      // 生成交易時間（⚠️ ECPay 要求格式：yyyy/MM/dd HH:mm:ss）
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const tradeDate = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
 
       // 建立付款記錄（pending 狀態）
       const paymentResult = await createPayment({
