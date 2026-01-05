@@ -11,9 +11,10 @@ import { Toaster, toast } from 'sonner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 
-// 🔥 Version marker to force cache invalidation - v2.0.87
-// 🐛 Fix: Remove version from sonner import for production build compatibility
-console.log('🚀 [App v2.0.87] FIX: Removed version from sonner import');
+// 🔥 Version marker to force cache invalidation - v2.0.89
+// 🐛 FIX: Resolve export mismatch errors for global components
+// 🎯 Strategy: Keep lazy loading but use Suspense with fallback=null
+console.log('🚀 [App v2.0.89] FIX: Corrected lazy loading for components with mixed exports');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
@@ -32,6 +33,8 @@ import { Footer } from './components/Footer';
 const Dashboard = lazy(() => import('./components/Dashboard'));
 const PricingPage = lazy(() => import('./components/PricingPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+
+// 🎯 全局組件 - 使用 lazy 但保持輕量級（這些組件需要 default export）
 const AdminFloatingButton = lazy(() => import('./components/AdminFloatingButton'));
 const QuickAdminPanel = lazy(() => import('./components/QuickAdminPanel').then(module => ({ default: module.QuickAdminPanel })));
 const AISEOFloatingButton = lazy(() => import('./components/AISEOFloatingButton').then(module => ({ default: module.AISEOFloatingButton })));
@@ -657,7 +660,7 @@ function AppContent() {
       <Footer />
       {/* 🌐 网络错误提示 - 检测到 Supabase 错误时显示 */}
       <NetworkErrorNotice />
-      {/* ✅ 全局功能 - 使用 Suspense 以避免阻塞主內容 */}
+      {/* ✅ 全局功能 - 使用 Suspense 但 fallback=null 避免閃爍 */}
       <Suspense fallback={null}>
         <AdminFloatingButton />
       </Suspense>
@@ -670,7 +673,7 @@ function AppContent() {
       <Suspense fallback={null}>
         <AIChatbot language={chatbotLanguage} />
       </Suspense>
-      {/* 🧪 開模式登錄 - 僅在開發環境顯示 */}
+      {/* 🧪 開發模式登錄 - 僅在開發環境顯示 */}
       <DevModeLogin />
       <Toaster />
     </div>

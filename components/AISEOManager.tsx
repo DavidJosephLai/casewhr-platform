@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, Search, TrendingUp, AlertCircle, CheckCircle, Info, Loader2, Copy, Download, Cloud, CloudOff, History, Upload } from 'lucide-react';
+import { Sparkles, Search, TrendingUp, AlertCircle, CheckCircle, Info, Loader2, 拷貝, Download, Cloud, CloudOff, History, Upload } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import {
   generateAISEOContent,
