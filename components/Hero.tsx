@@ -105,7 +105,7 @@ export function Hero() {
 
   return (
     <>
-      <div className="relative h-screen">
+      <div className="relative h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900">
         <ImageWithFallback
           src="https://images.unsplash.com/photo-1758518730384-be3d205838e8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMGhhbmRzaGFrZSUyMG1lZXRpbmd8ZW58MXx8fHwxNzY0NDkwMDAyfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
           alt="Business handshake"
