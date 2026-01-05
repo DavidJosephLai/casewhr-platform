@@ -539,7 +539,7 @@ export function TalentDirectory() {
                 <SelectContent>
                   <SelectItem key="all" value="all">{t.filters.allCategories}</SelectItem>
                   {categories.map((category, index) => (
-                    <SelectItem key={index} value={category.title.toLowerCase()}>
+                    <SelectItem key={index} value={category.value}>
                       {category.title}
                     </SelectItem>
                   ))}
