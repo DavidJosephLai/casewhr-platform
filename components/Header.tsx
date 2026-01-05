@@ -97,7 +97,7 @@ export function Header() {
     
     console.log(`🎯 [Header] View changed to home, isChangingView: ${isChangingView}`);
     
-    // 使用更長的延遲並重試機制確保元素已渲染
+    // 滾動到指定元素
     const scrollToElement = () => {
       const element = document.getElementById(id);
       console.log(`🔍 [Header] Looking for element #${id}:`, element);
@@ -132,28 +132,29 @@ export function Header() {
       return false;
     };
     
-    // 如果是從其他頁面切換過來，需要更長的初始延遲
-    const initialDelay = isChangingView ? 800 : 300;
-    const delays = isChangingView ? [800, 600, 500, 400] : [300, 400, 500, 600];
+    // 如果已經在首頁，立即嘗試滾動
+    if (!isChangingView) {
+      console.log(`⏰ [Header] Already on home page, scrolling immediately`);
+      setTimeout(() => scrollToElement(), 100);
+      return;
+    }
     
-    console.log(`⏰ [Header] Initial delay: ${initialDelay}ms`);
+    // 如果是從其他頁面切換過來，使用重試機制
+    console.log(`⏰ [Header] Switching from ${view} to home, using retry mechanism`);
+    const delays = [500, 400, 300, 200]; // 每次重試的間隔時間
     
-    let currentDelay = 0;
-    
-    const tryScroll = (index: number) => {
-      if (index >= delays.length) {
+    const tryScroll = (attempt: number) => {
+      if (attempt >= delays.length) {
         console.warn(`❌ [Header] Failed to scroll to #${id} after ${delays.length} attempts`);
         return;
       }
       
-      currentDelay += delays[index];
-      console.log(`⏰ [Header] Attempting scroll in ${currentDelay}ms (attempt ${index + 1}/${delays.length})`);
-      
       setTimeout(() => {
+        console.log(`⏰ [Header] Scroll attempt ${attempt + 1}/${delays.length}`);
         if (!scrollToElement()) {
-          tryScroll(index + 1);
+          tryScroll(attempt + 1);
         }
-      }, currentDelay);
+      }, delays[attempt]);
     };
     
     tryScroll(0);
