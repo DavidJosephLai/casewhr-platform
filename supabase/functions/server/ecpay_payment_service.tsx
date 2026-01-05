@@ -54,15 +54,10 @@ async function generateCheckMacValue(params: Record<string, any>): Promise<strin
   const cleanParams = { ...params };
   delete cleanParams.CheckMacValue;
   
-  // Step 2: Sort parameters alphabetically (case-sensitive, A-Z then a-z)
-  const sortedKeys = Object.keys(cleanParams).sort((a, b) => {
-    // ECPay 使用 ASCII 排序
-    if (a < b) return -1;
-    if (a > b) return 1;
-    return 0;
-  });
+  // Step 2: Sort parameters alphabetically (按照 A-Z ASCII 排序)
+  const sortedKeys = Object.keys(cleanParams).sort();
   
-  // Step 3: Build parameter string
+  // Step 3: Build parameter string (key=value&key=value)
   const paramString = sortedKeys
     .map(key => `${key}=${cleanParams[key]}`)
     .join('&');
@@ -70,33 +65,55 @@ async function generateCheckMacValue(params: Record<string, any>): Promise<strin
   // Step 4: Add HashKey and HashIV
   const rawString = `HashKey=${hashKey}&${paramString}&HashIV=${hashIV}`;
   
-  console.log('[ECPay] 🔐 CheckMacValue generation:', {
+  console.log('[ECPay] 🔐 CheckMacValue Step 1 - Raw String:', {
     paramCount: sortedKeys.length,
+    paramKeys: sortedKeys,
     rawStringLength: rawString.length,
-    rawStringSample: rawString.substring(0, 150) + '...',
-    fullRawString: rawString, // 🆕 完整顯示原始字串，便於調試
+    rawString: rawString, // 🆕 完整顯示原始字串
   });
   
-  // Step 5: URL Encode (ECPay 特殊規則)
-  // 使用標準 encodeURIComponent
-  let encodedString = encodeURIComponent(rawString);
+  // Step 5: URL Encode (使用 .NET HttpUtility.UrlEncode 相容規則)
+  // 🔧 重要：ECPay 使用 .NET 的 UrlEncode，不是標準的 encodeURIComponent
+  // .NET UrlEncode 特點：
+  // - 空格編碼為 +（不是 %20）
+  // - 不編碼：A-Z a-z 0-9 - _ . ~
+  // - 其他字元都編碼為 %XX
   
-  // ECPay 不編碼以下字元：- _ . ! * ( )
-  encodedString = encodedString
-    .replace(/%2d/gi, '-')   // 不編碼 -
-    .replace(/%5f/gi, '_')   // 不編碼 _
-    .replace(/%2e/gi, '.')   // 不編碼 .
-    .replace(/%21/gi, '!')   // 不編碼 !
-    .replace(/%2a/gi, '*')   // 不編碼 *
-    .replace(/%28/gi, '(')   // 不編碼 (
-    .replace(/%29/gi, ')')   // 不編碼 )
-    .replace(/%20/g, '+');   // 空格轉為 +
+  let encodedString = '';
+  for (let i = 0; i < rawString.length; i++) {
+    const char = rawString[i];
+    const code = char.charCodeAt(0);
+    
+    // 不編碼的字元：A-Z, a-z, 0-9, -, _, ., ~, *, (, )
+    if (
+      (code >= 48 && code <= 57) ||  // 0-9
+      (code >= 65 && code <= 90) ||  // A-Z
+      (code >= 97 && code <= 122) || // a-z
+      char === '-' || char === '_' || char === '.' || char === '~' ||
+      char === '*' || char === '(' || char === ')'
+    ) {
+      encodedString += char;
+    } else if (char === ' ') {
+      // 空格編碼為 +
+      encodedString += '+';
+    } else {
+      // 其他字元編碼為 %XX
+      const hex = code.toString(16).toUpperCase().padStart(2, '0');
+      encodedString += '%' + hex;
+    }
+  }
+  
+  console.log('[ECPay] 🔐 CheckMacValue Step 2 - URL Encoded:', {
+    encodedLength: encodedString.length,
+    encodedString: encodedString, // 🆕 完整顯示編碼後字串
+  });
   
   // Step 6: Convert to lowercase
   const lowerString = encodedString.toLowerCase();
   
-  console.log('[ECPay] 🔐 Encoded string (first 150 chars):', lowerString.substring(0, 150));
-  console.log('[ECPay] 🔐 Full encoded string:', lowerString); // 🆕 完整顯示編碼後字串
+  console.log('[ECPay] 🔐 CheckMacValue Step 3 - Lowercase:', {
+    lowerString: lowerString.substring(0, 200) + '...', // 顯示前 200 字元
+  });
   
   // Step 7: SHA256 hash
   const encoder = new TextEncoder();
@@ -108,7 +125,10 @@ async function generateCheckMacValue(params: Record<string, any>): Promise<strin
   // Step 8: Convert to uppercase
   const checkMacValue = hashHex.toUpperCase();
   
-  console.log('[ECPay] 🔐 Generated CheckMacValue:', checkMacValue);
+  console.log('[ECPay] 🔐 CheckMacValue Step 4 - Final Result:', {
+    checkMacValue: checkMacValue,
+    checkMacLength: checkMacValue.length,
+  });
   
   return checkMacValue;
 }
