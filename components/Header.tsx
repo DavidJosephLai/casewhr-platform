@@ -104,25 +104,33 @@ export function Header() {
           top: offsetPosition,
           behavior: 'smooth'
         });
+        console.log(`✅ [Header] Scrolled to section: ${id}`);
         return true;
       }
+      console.log(`⏳ [Header] Element #${id} not found, retrying...`);
       return false;
     };
     
-    // 多次重試，確保滾動成功
-    setTimeout(() => {
-      if (!scrollToElement()) {
-        setTimeout(() => {
-          if (!scrollToElement()) {
-            setTimeout(() => {
-              if (!scrollToElement()) {
-                setTimeout(scrollToElement, 500);
-              }
-            }, 300);
-          }
-        }, 200);
+    // 從 dashboard 切換到 home 需要更長的初始延遲
+    // 多次重試，間隔時間逐漸增加
+    const delays = [300, 400, 500, 600, 800, 1000];
+    let currentDelay = 0;
+    
+    const tryScroll = (index: number) => {
+      if (index >= delays.length) {
+        console.warn(`❌ [Header] Failed to scroll to #${id} after ${delays.length} attempts`);
+        return;
       }
-    }, 150);
+      
+      currentDelay += delays[index];
+      setTimeout(() => {
+        if (!scrollToElement()) {
+          tryScroll(index + 1);
+        }
+      }, currentDelay);
+    };
+    
+    tryScroll(0);
   };
 
   const scrollToTop = () => {
