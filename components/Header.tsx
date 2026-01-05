@@ -108,7 +108,7 @@ export function Header() {
         const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
         const targetPosition = elementPosition - headerHeight;
         
-        console.log(`📍 [Header] Element position: ${elementPosition}, target: ${targetPosition}`);
+        console.log(`📍 [Header] Element position: ${elementPosition}, target: ${targetPosition}, current scroll: ${window.pageYOffset}`);
         
         // 一次性滾動到目標位置
         window.scrollTo({
@@ -123,32 +123,43 @@ export function Header() {
       return false;
     };
     
-    // 如果已經在首頁，稍微延遲後滾動
+    // 如果已經在首頁，立即滾動
     if (!isChangingView) {
-      console.log(`⏰ [Header] Already on home page, scrolling in 50ms`);
+      console.log(`⏰ [Header] Already on home page, scrolling immediately`);
       setTimeout(() => scrollToElement(), 50);
       return;
     }
     
-    // 如果是從其他頁面切換過來，使用重試機制
-    console.log(`⏰ [Header] Switching from ${view} to home, using retry mechanism`);
-    const delays = [500, 400, 300, 200]; // 每次重試的間隔時間
+    // 如果是從其他頁面切換過來，使用更長的初始延遲和重試機制
+    console.log(`⏰ [Header] Switching from ${view} to home, using extended retry mechanism`);
     
-    const tryScroll = (attempt: number) => {
-      if (attempt >= delays.length) {
-        console.warn(`❌ [Header] Failed to scroll to #${id} after ${delays.length} attempts`);
-        return;
+    // 第一次嘗試：等待 1000ms（確保頁面完全渲染）
+    // 後續重試：每次間隔 300ms
+    setTimeout(() => {
+      console.log(`⏰ [Header] First scroll attempt after 1000ms`);
+      if (!scrollToElement()) {
+        // 如果第一次失敗，繼續重試
+        const retryDelays = [300, 300, 300, 300];
+        let attemptCount = 1;
+        
+        const retry = (index: number) => {
+          if (index >= retryDelays.length) {
+            console.warn(`❌ [Header] Failed to scroll to #${id} after ${attemptCount + 1} attempts`);
+            return;
+          }
+          
+          setTimeout(() => {
+            attemptCount++;
+            console.log(`⏰ [Header] Retry attempt ${attemptCount}`);
+            if (!scrollToElement()) {
+              retry(index + 1);
+            }
+          }, retryDelays[index]);
+        };
+        
+        retry(0);
       }
-      
-      setTimeout(() => {
-        console.log(`⏰ [Header] Scroll attempt ${attempt + 1}/${delays.length}`);
-        if (!scrollToElement()) {
-          tryScroll(attempt + 1);
-        }
-      }, delays[attempt]);
-    };
-    
-    tryScroll(0);
+    }, 1000);
   };
 
   const scrollToTop = () => {
