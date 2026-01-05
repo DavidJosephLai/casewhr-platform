@@ -254,10 +254,12 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
         20000 // timeout - increased to 20 seconds
       );
 
+      let transactionsData: any = null; // 🔧 初始化變量
+      
       if (transactionsResponse.ok) {
-        const transactionsData = await parseJsonResponse(transactionsResponse);
-        console.log('[Wallet] Transactions loaded:', (transactionsData as any).transactions?.length || 0);
-        setTransactions((transactionsData as any).transactions || []);
+        transactionsData = await parseJsonResponse(transactionsResponse);
+        console.log('[Wallet] Transactions loaded:', transactionsData.transactions?.length || 0);
+        setTransactions(transactionsData.transactions || []);
       } else {
         console.error('[Wallet] Error loading transactions:', transactionsResponse.status);
         setTransactions([]);
@@ -266,7 +268,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       // ⭐ 加載平台收入統計（僅平台擁有者）
       if (isPlatformOwner) {
         try {
-          const revenueTransactions = (transactionsData as any).transactions?.filter(
+          const revenueTransactions = transactionsData?.transactions?.filter(
             (t: Transaction) => t.type === 'subscription_revenue'
           ) || [];
           
@@ -289,7 +291,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
     } catch (error: any) {
       console.error('[Wallet] Error loading wallet data:', error.message);
       
-      toast.error(language === 'en' ? 'Failed to load wallet data' : '載入錢包數據失敗');
+      toast.error(language === 'en' ? 'Failed to load wallet data' : '載入錢包��據失敗');
       
       // Set default values on persistent error
       setWallet({
@@ -437,9 +439,9 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
         // Show success message
         toast.success(
           language === 'en' 
-            ? '🎉 ECPay payment successful! Your wallet will be updated shortly.' 
-            : '🎉 綠界付款成功！您的錢包餘額即將更新。',
-          { duration: 5000 }
+            ? '🎉 ECPay payment successful! Your wallet will be updated shortly.\n\n📄 E-invoice will be issued within 24 hours.\n🔍 Check at: Ministry of Finance E-Invoice Platform\nhttps://www.einvoice.nat.gov.tw/' 
+            : '🎉 綠界付款成功！您的錢包餘額即將更新。\n\n📄 電子發票將於 24 小時內開立\n🔍 查詢請至：財政部電子發票整合服務平台\nhttps://www.einvoice.nat.gov.tw/',
+          { duration: 8000 }
         );
         
         // Reload wallet data after a short delay to allow backend processing
@@ -485,9 +487,9 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
             toast.dismiss(); // Dismiss loading toast
             toast.success(
               language === 'en' 
-                ? ` Payment successful! $${data.amount.toLocaleString()} added to your wallet.` 
-                : `🎉 付款成功！已將 $${data.amount.toLocaleString()} 加入您的錢包。`,
-              { duration: 5000 }
+                ? `🎉 Payment successful! $${data.amount.toLocaleString()} added to your wallet.\n\n📄 E-invoice will be issued within 24 hours.\n🔍 Check at: Ministry of Finance E-Invoice Platform\nhttps://www.einvoice.nat.gov.tw/` 
+                : `🎉 付款成功！已將 $${data.amount.toLocaleString()} 加入您的錢包。\n\n📄 電子發票將於 24 小時內開立\n🔍 查詢請至：財政部電子發票整合服務平台\nhttps://www.einvoice.nat.gov.tw/`,
+              { duration: 8000 }
             );
             
             // Reload wallet data
