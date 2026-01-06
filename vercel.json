@@ -31,6 +31,32 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "casewhere.com.tw"
+        }
+      ],
+      "destination": "https://casewhr.com/:path*",
+      "permanent": true,
+      "statusCode": 301
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.casewhere.com.tw"
+        }
+      ],
+      "destination": "https://casewhr.com/:path*",
+      "permanent": true,
+      "statusCode": 301
+    }
+  ],
   "rewrites": [
     {
       "source": "/robots.txt",
