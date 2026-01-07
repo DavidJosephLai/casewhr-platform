@@ -556,7 +556,7 @@ export async function rejectPayment(paymentId: string): Promise<{ success: boole
 
     // Update payment status
     payment.status = 'rejected';
-    await kv.set(`ecpay_payment:${payment.id}`, payment);
+    await kv.set(`ecpay_payment:${paymentId}`, payment);
 
     // Update status lists
     const pendingPayments = await kv.get('ecpay_payments:status:pending') || [];
@@ -830,6 +830,10 @@ export function registerECPayRoutes(app: any) {
   // 🆕 ECPay Callback - 接收付款通知
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   app.post('/make-server-215f78a5/ecpay/callback', async (c: Context) => {
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('🔔 [ECPay] Callback received at:', new Date().toISOString());
+    console.log('═══════════════════════════════════════════════════════');
+    
     try {
       const formData = await c.req.formData();
       const params: Record<string, any> = {};
@@ -839,32 +843,51 @@ export function registerECPayRoutes(app: any) {
         params[key] = value;
       }
 
-      console.log('[ECPay] Callback received:', {
+      console.log('[ECPay] Callback full data:', JSON.stringify(params, null, 2));
+      console.log('[ECPay] Callback summary:', {
         merchantTradeNo: params.MerchantTradeNo,
         tradeNo: params.TradeNo,
         rtnCode: params.RtnCode,
+        rtnMsg: params.RtnMsg,
         amount: params.TradeAmt,
+        paymentDate: params.PaymentDate,
+        customField1: params.CustomField1, // userId
+        customField2: params.CustomField2, // paymentId
       });
 
       // 驗證 CheckMacValue
       const receivedCheckMac = params.CheckMacValue;
       const calculatedCheckMac = await generateCheckMacValue(params);
 
+      console.log('[ECPay] CheckMacValue verification:', {
+        received: receivedCheckMac,
+        calculated: calculatedCheckMac,
+        match: receivedCheckMac === calculatedCheckMac
+      });
+
       if (receivedCheckMac !== calculatedCheckMac) {
-        console.error('[ECPay] CheckMacValue verification failed');
+        console.error('❌ [ECPay] CheckMacValue verification FAILED');
+        console.error('[ECPay] This usually means Hash Key/IV is incorrect');
         return c.text('0|CheckMacValue error');
       }
 
+      console.log('✅ [ECPay] CheckMacValue verified successfully');
+
       // 檢查付款狀態
       if (params.RtnCode !== '1') {
-        console.error('[ECPay] Payment failed:', params.RtnMsg);
+        console.error('[ECPay] Payment failed:', {
+          rtnCode: params.RtnCode,
+          rtnMsg: params.RtnMsg
+        });
         
         // 更新付款記錄為失敗
         const paymentId = params.CustomField2;
         if (paymentId) {
+          console.log('[ECPay] Updating payment status to rejected:', paymentId);
           const payment = await getPaymentById(paymentId);
           if (payment) {
             await rejectPayment(paymentId);
+            console.log('✅ [ECPay] Payment rejected successfully');
           }
         }
         
@@ -876,30 +899,43 @@ export function registerECPayRoutes(app: any) {
       const paymentId = params.CustomField2;
       const merchantTradeNo = params.MerchantTradeNo;
 
-      console.log('[ECPay] Payment successful:', {
+      console.log('💰 [ECPay] Payment successful! Processing...', {
         userId,
         paymentId,
         merchantTradeNo,
         amount: params.TradeAmt,
       });
 
-      // 確認款
+      // 確認付款
       if (paymentId) {
+        console.log('[ECPay] Calling confirmPayment for:', paymentId);
+        
         const result = await confirmPayment(paymentId, 'ECPay Auto Confirm');
         
         if (result.success) {
-          console.log('[ECPay] Payment confirmed and wallet updated:', paymentId);
+          console.log('✅ [ECPay] Payment confirmed and wallet updated successfully!');
+          console.log('[ECPay] Confirmation result:', result);
         } else {
-          console.error('[ECPay] Failed to confirm payment:', result.error);
+          console.error('❌ [ECPay] Failed to confirm payment!');
+          console.error('[ECPay] Error details:', result.error);
+          console.error('[ECPay] This is the critical error - wallet was NOT updated');
         }
       } else {
-        console.warn('[ECPay] No payment ID found in callback');
+        console.warn('⚠️ [ECPay] No payment ID found in callback (CustomField2 is missing)');
+        console.warn('[ECPay] Cannot update wallet without payment ID');
       }
+
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('🔔 [ECPay] Callback processing completed');
+      console.log('═══════════════════════════════════════════════════════');
 
       // 返回成功給 ECPay
       return c.text('1|OK');
     } catch (error: any) {
-      console.error('[ECPay] Callback error:', error);
+      console.error('═══════════════════════════════════════════════════════');
+      console.error('❌ [ECPay] Callback error:', error);
+      console.error('[ECPay] Error stack:', error.stack);
+      console.error('═══════════════════════════════════════════════════════');
       return c.text('0|Exception: ' + error.message);
     }
   });
@@ -1276,6 +1312,42 @@ export function registerECPayRoutes(app: any) {
     } catch (error) {
       console.error('[ECPay API] Error deleting payment:', error);
       return c.json({ error: 'Failed to delete payment' }, 500);
+    }
+  });
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🆕 Test CheckMacValue Generation
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  app.get('/make-server-215f78a5/ecpay/test-checkmac', async (c: Context) => {
+    try {
+      // Test data
+      const testParams = {
+        MerchantID: ECPAY_CONFIG.merchantId,
+        MerchantTradeNo: 'TEST' + Date.now(),
+        MerchantTradeDate: '2025/01/07 12:00:00',
+        PaymentType: 'aio',
+        TotalAmount: 1000,
+        TradeDesc: 'Test',
+        ItemName: 'Test Item',
+        ReturnURL: 'https://example.com/callback',
+        ChoosePayment: 'Credit',
+        EncryptType: 1,
+      };
+
+      const checkMacValue = await generateCheckMacValue(testParams);
+
+      return c.json({
+        success: true,
+        testParams,
+        checkMacValue,
+        hashKeyConfigured: !!ECPAY_CONFIG.hashKey,
+        hashIVConfigured: !!ECPAY_CONFIG.hashIV,
+      });
+    } catch (error: any) {
+      return c.json({
+        success: false,
+        error: error.message,
+      }, 500);
     }
   });
 
