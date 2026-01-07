@@ -1119,11 +1119,21 @@ export function registerECPayRoutes(app: any) {
         return c.json({ error: 'Forbidden' }, 403);
       }
 
+      console.log('[ECPay] User self-confirming payment:', {
+        paymentId,
+        userId: user.id,
+        email: user.email,
+        amount: payment.amount_usd
+      });
+
       const result = await confirmPayment(paymentId, `User self-confirm: ${user.email}`);
 
       if (!result.success) {
+        console.error('[ECPay] Self-confirm failed:', result.error);
         return c.json({ error: result.error }, 400);
       }
+
+      console.log('[ECPay] Self-confirm successful:', paymentId);
 
       return c.json({ 
         success: true,
