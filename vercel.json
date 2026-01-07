@@ -41,8 +41,7 @@
         }
       ],
       "destination": "https://casewhr.com/:path*",
-      "permanent": true,
-      "statusCode": 301
+      "permanent": true
     },
     {
       "source": "/:path*",
@@ -53,8 +52,7 @@
         }
       ],
       "destination": "https://casewhr.com/:path*",
-      "permanent": true,
-      "statusCode": 301
+      "permanent": true
     }
   ],
   "rewrites": [
