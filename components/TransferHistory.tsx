@@ -194,12 +194,18 @@ export function TransferHistory() {
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="sent" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="sent">
+          <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
+            <TabsTrigger 
+              value="sent"
+              className="cursor-pointer data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all hover:bg-gray-50"
+            >
               <ArrowUpRight className="h-4 w-4 mr-2" />
               {text.sent} ({history.sent.length})
             </TabsTrigger>
-            <TabsTrigger value="received">
+            <TabsTrigger 
+              value="received"
+              className="cursor-pointer data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all hover:bg-gray-50"
+            >
               <ArrowDownLeft className="h-4 w-4 mr-2" />
               {text.received} ({history.received.length})
             </TabsTrigger>
