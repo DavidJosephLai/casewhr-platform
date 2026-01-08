@@ -137,15 +137,14 @@ export const handleECPayCallback = async ({
                 // 繼續檢查
                 setTimeout(checkPaymentStatus, 3000);
               } else {
-                // ⏰ 超時
-                toast.warning(
-                  language === 'en' 
-                    ? '⏰ Payment verification timeout. Please refresh the page in a moment.' 
-                    : language === 'zh-CN'
-                    ? '⏰ 付款确认超时，请稍后刷新页面。'
-                    : '⏰ 付款確認超時，請稍後刷新頁面。',
-                  { duration: 5000 }
-                );
+                // ⏰ 超時 - 提供手動確認選項
+                const timeoutMessage = language === 'en' 
+                  ? `⏰ Payment verification timeout.\n\n💡 Your payment may still be processing.\n\n✅ Solution:\n1. Scroll down to find "💰 Manual Payment Confirmation" section\n2. Click "Load My Payments" to check status\n3. If payment shows as pending, wait 5 minutes and try again\n\nOrder ID: ${orderId}` 
+                  : language === 'zh-CN'
+                  ? `⏰ 付款確認超時。\n\n💡 您的付款可能仍在處理中。\n\n✅ 解決方法：\n1. 向下滾動找到「💰 手動確認付款」區塊\n2. 點擊「載入我的付款記錄」檢查狀態\n3. 如果顯示待確認，請等待 5 分鐘後再試\n\n訂單編號：${orderId}`
+                  : `⏰ 付款確認超時。\n\n💡 您的付款可能仍在處理中。\n\n✅ 解決方法：\n1. 向下滾動找到「💰 手動確認付款」區塊\n2. 點擊「載入我的付款記錄」檢查狀態\n3. 如果顯示待確認，請等待 5 分鐘後再試\n\n訂單編號：${orderId}`;
+                
+                toast.warning(timeoutMessage, { duration: 15000 });
                 
                 // 最後再試一次載入錢包
                 await loadWalletData();

@@ -253,7 +253,7 @@ export function ECPayManualConfirm() {
           <div className="flex gap-2">
             <Input
               id="orderId"
-              placeholder={language === 'en' ? 'Enter ECPay order ID (e.g., CW1234567890ABC)' : '輸入綠界訂單編號（例如：CW1234567890ABC）'}
+              placeholder={language === 'en' ? 'Enter ECPay order ID (e.g., CW1234567890ABC)' : '輸入綠��訂單編號（例如：CW1234567890ABC）'}
               value={orderId}
               onChange={(e) => setOrderId(e.target.value)}
               className="flex-1"
@@ -322,20 +322,18 @@ export function ECPayManualConfirm() {
                               ⏳ {language === 'en' ? 'Pending Payment' : '待 ECPay 確認'}
                             </Badge>
                             <Button
-                              onClick={() => {
-                                // 🔒 安全修復：移除用戶自行確認功能，改為提示聯繫客服
-                                toast.info(
-                                  language === 'en'
-                                    ? '📧 If you have completed payment but balance not updated, please contact support:\nsupport@casewhr.com\n\nProvide your Order ID: ' + payment.ecpay_transaction_id
-                                    : '📧 如果您已完成付款但餘額未更新，請聯繫客服：\nsupport@casewhr.com\n\n請提供訂單編號：' + payment.ecpay_transaction_id,
-                                  { duration: 10000 }
-                                );
-                              }}
+                              onClick={() => handleConfirmPayment(payment.id)}
+                              disabled={loadingStates[payment.id]}
                               size="sm"
-                              variant="outline"
-                              className="text-xs"
+                              variant="default"
+                              className="bg-green-600 hover:bg-green-700 text-xs"
                             >
-                              💬 {language === 'en' ? 'Contact Support' : '聯繫客服'}
+                              {loadingStates[payment.id] ? (
+                                <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                              ) : (
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                              )}
+                              {language === 'en' ? 'Confirm Payment' : '確認付款'}
                             </Button>
                           </div>
                         )}
