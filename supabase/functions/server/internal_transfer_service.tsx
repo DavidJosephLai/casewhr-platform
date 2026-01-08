@@ -287,6 +287,15 @@ export async function executeInternalTransfer(
 }> {
   try {
     console.log(`💸 [Transfer] Starting transfer from ${senderId} to ${recipientEmail}, amount: $${amount}`);
+    // 🔍 診斷：顯示完整的發送方資訊
+    console.log(`🔍 [Transfer DEBUG] Sender ID: ${senderId}`);
+    console.log(`🔍 [Transfer DEBUG] Wallet Key: wallet:${senderId}`);
+    const debugWallet = await kv.get(`wallet:${senderId}`);
+    console.log(`🔍 [Transfer DEBUG] Wallet Data:`, JSON.stringify(debugWallet, null, 2));
+    
+    // 嘗試查找發送方的 profile
+    const debugProfile = await kv.get(`profile:${senderId}`);
+    console.log(`🔍 [Transfer DEBUG] Sender Profile:`, JSON.stringify(debugProfile, null, 2));
 
     // 1. 驗證轉帳密碼
     const pinValid = await verifyTransferPin(senderId, pin);
