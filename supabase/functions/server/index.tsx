@@ -664,11 +664,24 @@ app.get("/make-server-215f78a5/auth/line", async (c) => {
 // 🟢 LINE OAuth: 處理回調
 app.get("/make-server-215f78a5/auth/line/callback", async (c) => {
   try {
+    console.log('🟢 [LINE OAuth] Callback endpoint hit');
+    console.log('🟢 [LINE OAuth] Environment check:', {
+      hasChannelId: !!Deno.env.get('LINE_CHANNEL_ID'),
+      hasChannelSecret: !!Deno.env.get('LINE_CHANNEL_SECRET'),
+      hasCallbackUrl: !!Deno.env.get('LINE_CALLBACK_URL'),
+    });
+    
     const code = c.req.query('code');
     const state = c.req.query('state');
     const errorParam = c.req.query('error');
     
     console.log('🟢 [LINE OAuth] Callback received', { hasCode: !!code, hasState: !!state, error: errorParam });
+    
+    // 檢查環境變數
+    if (!Deno.env.get('LINE_CHANNEL_ID') || !Deno.env.get('LINE_CHANNEL_SECRET')) {
+      console.error('❌ [LINE OAuth] LINE credentials not configured!');
+      return c.redirect(`https://casewhr.com?error=line_not_configured&message=${encodeURIComponent('LINE Channel ID or Secret not configured. Please set environment variables in Supabase Dashboard.')}`);
+    }
     
     // 檢查是否有錯誤
     if (errorParam) {
