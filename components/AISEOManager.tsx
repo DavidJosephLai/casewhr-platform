@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Sparkles, Search, TrendingUp, AlertCircle, CheckCircle, Info, Loader2, 拷貝, Download, Cloud, CloudOff, History, Upload } from 'lucide-react';
+import { Sparkles, Search, TrendingUp, AlertCircle, CheckCircle, Info, Loader2, Copy, Download, Cloud, CloudOff, History, Upload } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import {
   generateAISEOContent,
@@ -8,7 +8,7 @@ import {
   calculateKeywordDensity,
   type SEOGenerationRequest,
 } from '../lib/aiSeoService';
-import { toast } from 'sonner'; // ✅ 移除版本号
+import { toast } from 'sonner';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { useAuth } from '../contexts/AuthContext';
 import { JSONFileUploader } from './JSONFileUploader';

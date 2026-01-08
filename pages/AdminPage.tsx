@@ -22,6 +22,7 @@ import { TestClientCleaner } from '../components/TestClientCleaner';
 import { SitemapGenerator } from '../components/SitemapGenerator';
 import { SitemapURLChecker } from '../components/SitemapURLChecker';
 import { SEODiagnostic } from '../components/SEODiagnostic';
+import { AdminAISEO } from '../components/admin/AdminAISEO';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Shield, Crown, UserCog, Eye, LogOut, Loader2 } from 'lucide-react';
@@ -68,7 +69,7 @@ export default function AdminPage() {
         messages: 'Messages',
         administrators: 'Administrators',
         paymentManager: 'Payment Manager',
-        seoTools: 'SEO Tools',
+        seoTools: 'AI SEO',
         sitemap: 'Sitemap',
       },
     },
@@ -100,7 +101,7 @@ export default function AdminPage() {
         messages: '消息監控',
         administrators: '管理員',
         paymentManager: '付款管理',
-        seoTools: 'SEO 工具',
+        seoTools: 'AI SEO',
         sitemap: 'Sitemap 生成',
       },
     },
@@ -132,7 +133,7 @@ export default function AdminPage() {
         messages: '消息监控',
         administrators: '管理员',
         paymentManager: '付款管理',
-        seoTools: 'SEO 工具',
+        seoTools: 'AI SEO',
         sitemap: 'Sitemap 生成',
       },
     }
@@ -480,7 +481,7 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="seoTools" className="mt-0">
-              <SEODiagnostic />
+              <AdminAISEO />
             </TabsContent>
 
             <TabsContent value="sitemap" className="mt-0">
