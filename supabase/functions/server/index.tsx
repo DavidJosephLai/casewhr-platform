@@ -697,14 +697,14 @@ app.get("/make-server-215f78a5/auth/line/callback", async (c) => {
     // 驗證必要參數
     if (!code || !state) {
       console.error('❌ [LINE OAuth] Missing code or state');
-      return c.json({ error: 'Missing code or state parameter' }, 400);
+      return c.redirect(`https://casewhr.com?error=line_auth_failed&message=${encodeURIComponent('Missing code or state parameter. Please try again.')}`);
     }
     
     // 驗證 state（CSRF 保護）
     const savedState = await kv.get(`line_oauth_state:${state}`);
     if (!savedState) {
       console.error('❌ [LINE OAuth] Invalid or expired state');
-      return c.json({ error: 'Invalid or expired state' }, 400);
+      return c.redirect(`https://casewhr.com?error=line_auth_failed&message=${encodeURIComponent('Invalid or expired state. Please try logging in again.')}`);
     }
     
     // 刪除已使用的 state
