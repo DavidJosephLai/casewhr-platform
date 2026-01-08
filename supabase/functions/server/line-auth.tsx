@@ -48,11 +48,25 @@ export async function exchangeCodeForToken(code: string): Promise<{
   id_token?: string;
   expires_in: number;
 }> {
-  if (!LINE_CHANNEL_ID || !LINE_CHANNEL_SECRET || !LINE_CALLBACK_URL) {
-    throw new Error('LINE OAuth not configured');
-  }
-
   console.log('🟢 [LINE Auth] Exchanging code for token...');
+  console.log('🔍 [LINE Auth] Environment variables check:', {
+    hasChannelId: !!LINE_CHANNEL_ID,
+    hasChannelSecret: !!LINE_CHANNEL_SECRET,
+    hasCallbackUrl: !!LINE_CALLBACK_URL,
+    channelId: LINE_CHANNEL_ID ? `${LINE_CHANNEL_ID.substring(0, 5)}...` : 'NOT SET',
+    callbackUrl: LINE_CALLBACK_URL || 'NOT SET',
+  });
+
+  if (!LINE_CHANNEL_ID || !LINE_CHANNEL_SECRET || !LINE_CALLBACK_URL) {
+    const missing = [];
+    if (!LINE_CHANNEL_ID) missing.push('LINE_CHANNEL_ID');
+    if (!LINE_CHANNEL_SECRET) missing.push('LINE_CHANNEL_SECRET');
+    if (!LINE_CALLBACK_URL) missing.push('LINE_CALLBACK_URL');
+    
+    const errorMsg = `LINE OAuth not configured. Missing environment variables: ${missing.join(', ')}. Please set these in Supabase Dashboard > Settings > Edge Functions > Secrets, then redeploy the Edge Function.`;
+    console.error('❌ [LINE Auth] Configuration error:', errorMsg);
+    throw new Error(errorMsg);
+  }
 
   const params = new URLSearchParams({
     grant_type: 'authorization_code',
