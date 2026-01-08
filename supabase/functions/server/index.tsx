@@ -33,6 +33,7 @@ import aiChatbotService from "./ai_chatbot_service.tsx";
 import { fixPlatformRevenue } from "./fix_platform_revenue.tsx";
 import aiSeoRoutes from "./ai-seo.ts";
 import { handleSitemapRequest, handleRobotsRequest, handleSEOHealthCheck } from "./sitemap_service.tsx";
+import * as lineAuth from "./line-auth.tsx";
 
 console.log('🚀 [SERVER STARTUP] Edge Function v2.0.5 - Subscription Notifications - Starting...');
 
@@ -635,6 +636,81 @@ app.get("/make-server-215f78a5/ping", (c) => {
   console.log('🏓 [SERVER] Ping endpoint hit');
   return c.json({ status: "pong", timestamp: new Date().toISOString() });
 });
+
+// 🟢 LINE OAuth: 生成授權 URL
+app.get("/make-server-215f78a5/auth/line", async (c) => {
+  try {
+    console.log('🟢 [LINE OAuth] Generating auth URL...');
+    
+    // 生成隨機 state 用於 CSRF 保護
+    const state = crypto.randomUUID();
+    
+    // 將 state 存儲到 KV（5分鐘過期）
+    await kv.set(`line_oauth_state:${state}`, {
+      created_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+    });
+    
+    const authUrl = lineAuth.generateLineAuthUrl(state);
+    
+    console.log('✅ [LINE OAuth] Auth URL generated');
+    return c.json({ authUrl, state });
+  } catch (error: any) {
+    console.error('❌ [LINE OAuth] Error generating auth URL:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 🟢 LINE OAuth: 處理回調
+app.get("/make-server-215f78a5/auth/line/callback", async (c) => {
+  try {
+    const code = c.req.query('code');
+    const state = c.req.query('state');
+    const errorParam = c.req.query('error');
+    
+    console.log('🟢 [LINE OAuth] Callback received', { hasCode: !!code, hasState: !!state, error: errorParam });
+    
+    // 檢查是否有錯誤
+    if (errorParam) {
+      console.error('❌ [LINE OAuth] Authorization failed:', errorParam);
+      return c.redirect(`https://casewhr.com?error=line_auth_failed&message=${errorParam}`);
+    }
+    
+    // 驗證必要參數
+    if (!code || !state) {
+      console.error('❌ [LINE OAuth] Missing code or state');
+      return c.json({ error: 'Missing code or state parameter' }, 400);
+    }
+    
+    // 驗證 state（CSRF 保護）
+    const savedState = await kv.get(`line_oauth_state:${state}`);
+    if (!savedState) {
+      console.error('❌ [LINE OAuth] Invalid or expired state');
+      return c.json({ error: 'Invalid or expired state' }, 400);
+    }
+    
+    // 刪除已使用的 state
+    await kv.del(`line_oauth_state:${state}`);
+    
+    // 執行 LINE 登入流程
+    const { user, session, accessToken } = await lineAuth.handleLineCallback(code);
+    
+    console.log('✅ [LINE OAuth] Login successful:', user.email);
+    
+    // 重定向回前端並帶上 session token
+    const redirectUrl = new URL('https://casewhr.com');
+    redirectUrl.searchParams.set('view', 'dashboard');
+    redirectUrl.searchParams.set('auth', 'line');
+    redirectUrl.searchParams.set('token', session.access_token || accessToken);
+    
+    return c.redirect(redirectUrl.toString());
+  } catch (error: any) {
+    console.error('❌ [LINE OAuth] Callback error:', error);
+    return c.redirect(`https://casewhr.com?error=line_login_failed&message=${encodeURIComponent(error.message)}`);
+  }
+});
+
+console.log('✅ [SERVER] LINE OAuth routes registered');
 
 // 🗺️ SEO: Sitemap.xml endpoint
 app.get("/make-server-215f78a5/sitemap.xml", (c) => {

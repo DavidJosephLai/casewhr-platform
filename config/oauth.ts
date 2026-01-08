@@ -78,6 +78,12 @@ export const oauthConfig = {
   // ✅ Facebook login enabled! Make sure configuration is complete
   // 📖 配置指南: 請按照以下步驟在 Supabase 和 Facebook 配置 OAuth
   enableFacebookAuth: true, // ✅ 已啟用 Facebook OAuth！請完成 Facebook App 和 Supabase 配置
+  
+  // 啟用/禁用 LINE 登入 / Enable/Disable LINE Login
+  // 🟢 LINE 登入 (台灣、日本、東南亞地區流行)
+  // 🟢 LINE login (Popular in Taiwan, Japan, and Southeast Asia)
+  // 📖 配置指南: https://supabase.com/docs/guides/auth/social-login/auth-line
+  enableLineAuth: true, // 🟢 LINE OAuth - 適合台灣市場
 };
 
 /**
@@ -87,5 +93,6 @@ export const oauthConfig = {
 export const isSocialLoginEnabled = () => {
   return oauthConfig.enableGoogleAuth || 
          oauthConfig.enableGithubAuth || 
-         oauthConfig.enableFacebookAuth;
+         oauthConfig.enableFacebookAuth ||
+         oauthConfig.enableLineAuth;
 };

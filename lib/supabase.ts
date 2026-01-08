@@ -261,6 +261,46 @@ export const auth = {
     return data;
   },
 
+  // 🟢 使用 LINE 登入
+  async signInWithLine() {
+    if (!isSupabaseConfigured) {
+      throw new Error('Supabase is not configured. Please set up your Supabase credentials.');
+    }
+    
+    try {
+      console.log('🟢 [LINE Auth] Initiating LINE login...');
+      
+      // 呼叫後端 API 獲取 LINE 授權 URL
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/make-server-215f78a5/auth/line`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${supabaseAnonKey}`,
+          },
+        }
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to get LINE auth URL');
+      }
+      
+      const data = await response.json();
+      
+      if (!data.authUrl) {
+        throw new Error('No auth URL returned from server');
+      }
+      
+      console.log('✅ [LINE Auth] Redirecting to LINE...');
+      
+      // 重定向到 LINE 授權頁面
+      window.location.href = data.authUrl;
+    } catch (error: any) {
+      console.error('❌ [LINE Auth] Error:', error);
+      throw error;
+    }
+  },
+
   // 獲取當前用
   async getCurrentUser() {
     if (!isSupabaseConfigured) {

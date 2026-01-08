@@ -35,6 +35,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signInWithGithub: () => Promise<void>;
   signInWithFacebook: () => Promise<void>;
+  signInWithLine: () => Promise<void>; // 🟢 新增 LINE 登入
   refreshProfile: () => Promise<void>;
   refreshSession: () => Promise<string | null>; // 🔧 新增刷新 session
   isSpecialUser: boolean; // 🔧 新增：判斷是否為特殊用戶
@@ -315,6 +316,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await auth.signInWithFacebook();
   }, []);
 
+  const handleSignInWithLine = useCallback(async () => {
+    await auth.signInWithLine();
+  }, []);
+
   const handleRefreshProfile = useCallback(async () => {
     if (user) {
       loadProfile(user.id);
@@ -389,10 +394,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signInWithGoogle: handleSignInWithGoogle,
     signInWithGithub: handleSignInWithGithub,
     signInWithFacebook: handleSignInWithFacebook,
+    signInWithLine: handleSignInWithLine, // 🟢 新增 LINE 登入
     refreshProfile: handleRefreshProfile,
     refreshSession: handleRefreshSession, // 🔧 新增：刷新 session
     isSpecialUser, // 🔧 新增：判斷是否為特殊用戶
-  }), [user, profile, accessToken, loading, handleSignUp, handleSignIn, handleSignOut, handleSignInWithGoogle, handleSignInWithGithub, handleSignInWithFacebook, handleRefreshProfile, handleRefreshSession, isSpecialUser]);
+  }), [user, profile, accessToken, loading, handleSignUp, handleSignIn, handleSignOut, handleSignInWithGoogle, handleSignInWithGithub, handleSignInWithFacebook, handleSignInWithLine, handleRefreshProfile, handleRefreshSession, isSpecialUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
