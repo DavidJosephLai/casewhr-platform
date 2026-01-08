@@ -294,19 +294,43 @@ export async function executeInternalTransfer(
       return { success: false, error: 'Invalid transfer PIN' };
     }
 
-    // 2. 查找收款人
-    const { data: recipientData, error: recipientError } = await supabase
-      .from('profiles')
-      .select('id, email, name')
-      .eq('email', recipientEmail)
-      .single();
+    // 2. 查找收款人（支持 KV store 和 Supabase profiles）
+    let recipientData = null;
+    let recipientId = null;
+    
+    // 2a. 首先從 KV store 查找所有用戶
+    const allProfileKeys = await kv.getByPrefix('profile:');
+    console.log(`🔍 [Transfer] Searching for recipient: ${recipientEmail}`);
+    console.log(`📦 [Transfer] Found ${allProfileKeys.length} profiles in KV store`);
+    
+    // 查找匹配的郵箱（不區分大小寫）
+    const matchedProfile = allProfileKeys.find(profile => 
+      profile.email && profile.email.toLowerCase() === recipientEmail.toLowerCase()
+    );
+    
+    if (matchedProfile) {
+      recipientId = matchedProfile.user_id || matchedProfile.id;
+      recipientData = matchedProfile;
+      console.log(`✅ [Transfer] Found recipient in KV store: ${recipientId}`);
+    } else {
+      // 2b. 如果 KV store 沒找到，嘗試查詢 Supabase profiles 表
+      const { data: supabaseRecipient, error: recipientError } = await supabase
+        .from('profiles')
+        .select('id, email, name')
+        .ilike('email', recipientEmail) // 不區分大小寫
+        .single();
 
-    if (recipientError || !recipientData) {
+      if (supabaseRecipient && !recipientError) {
+        recipientId = supabaseRecipient.id;
+        recipientData = supabaseRecipient;
+        console.log(`✅ [Transfer] Found recipient in Supabase: ${recipientId}`);
+      }
+    }
+
+    if (!recipientId || !recipientData) {
       console.log(`❌ [Transfer] Recipient not found: ${recipientEmail}`);
       return { success: false, error: 'Recipient not found' };
     }
-
-    const recipientId = recipientData.id;
 
     // 3. 防止自己轉給自己
     if (recipientId === senderId) {
