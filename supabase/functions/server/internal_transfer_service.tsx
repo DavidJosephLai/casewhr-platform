@@ -31,16 +31,16 @@ const supabase = createClient(
  */
 const TRANSFER_LIMITS = {
   free: {
-    daily: 100,      // $100/天
-    perTransaction: 50  // $50/次
+    daily: 500,      // $500/天
+    perTransaction: 200  // $200/次
   },
   professional: {
-    daily: 1000,     // $1000/天
-    perTransaction: 500  // $500/次
+    daily: 5000,     // $5000/天
+    perTransaction: 3000  // $3000/次 ✅ 提高到 3000 USD
   },
   enterprise: {
-    daily: 10000,    // $10000/天
-    perTransaction: 5000  // $5000/次
+    daily: 50000,    // $50000/天
+    perTransaction: 10000  // $10000/次
   }
 };
 
