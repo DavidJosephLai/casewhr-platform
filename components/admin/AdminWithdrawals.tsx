@@ -208,9 +208,13 @@ export function AdminWithdrawals() {
         if (data.withdrawals && data.withdrawals.length > 0) {
           console.log('📝 [AdminWithdrawals] Latest withdrawal:', {
             id: data.withdrawals[0].id,
+            user_id: data.withdrawals[0].user_id,
+            user_email: data.withdrawals[0].user_email,
             amount: data.withdrawals[0].amount,
             status: data.withdrawals[0].status,
-            created_at: data.withdrawals[0].created_at
+            created_at: data.withdrawals[0].created_at,
+            created_at_date: new Date(data.withdrawals[0].created_at),
+            created_at_formatted: new Date(data.withdrawals[0].created_at).toLocaleDateString(),
           });
         }
         

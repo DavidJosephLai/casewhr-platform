@@ -12790,8 +12790,54 @@ app.get("/make-server-215f78a5/admin/withdrawals/all", async (c) => {
     
     console.log(`📊 [Admin/Withdrawals] Total after deduplication: ${allWithdrawals.length}`);
     
+    // Enrich withdrawals with user email and bank info
+    const enrichedWithdrawals = await Promise.all(
+      allWithdrawals.map(async (withdrawal: any) => {
+        try {
+          // Get user profile to fetch email
+          const profileKey = `profile_${withdrawal.user_id}`;
+          const profile = await kv.get(profileKey);
+          
+          // Get bank account info if method_id exists
+          let bank_info = null;
+          if (withdrawal.method_id) {
+            const method = await kv.get(withdrawal.method_id);
+            if (method && method.type === 'bank') {
+              bank_info = {
+                bank_name: method.bank_name,
+                account_holder_name: method.account_holder_name,
+                masked_account_number: method.account_number 
+                  ? `****${method.account_number.slice(-4)}` 
+                  : undefined,
+                masked_iban: method.iban 
+                  ? `****${method.iban.slice(-4)}` 
+                  : undefined,
+                swift_code: method.swift_code,
+                routing_number: method.routing_number,
+                country: method.country,
+                currency: method.currency,
+              };
+            }
+          }
+          
+          return {
+            ...withdrawal,
+            user_email: profile?.email || null,
+            bank_info,
+          };
+        } catch (err) {
+          console.error(`❌ Error enriching withdrawal ${withdrawal.id}:`, err);
+          return {
+            ...withdrawal,
+            user_email: null,
+            bank_info: null,
+          };
+        }
+      })
+    );
+    
     // Sort by created_at (newest first)
-    const sortedWithdrawals = allWithdrawals.sort((a: any, b: any) => {
+    const sortedWithdrawals = enrichedWithdrawals.sort((a: any, b: any) => {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
@@ -12799,6 +12845,8 @@ app.get("/make-server-215f78a5/admin/withdrawals/all", async (c) => {
     if (sortedWithdrawals.length > 0) {
       console.log(`📝 [Admin/Withdrawals] Latest withdrawal:`, {
         id: sortedWithdrawals[0].id,
+        user_id: sortedWithdrawals[0].user_id,
+        user_email: sortedWithdrawals[0].user_email,
         amount: sortedWithdrawals[0].amount,
         status: sortedWithdrawals[0].status,
         created_at: sortedWithdrawals[0].created_at
@@ -12835,6 +12883,10 @@ app.get("/make-server-215f78a5/admin/withdrawals", async (c) => {
     // Get all withdrawals - support both colon and underscore formats
     const allWithdrawalsColon = await kv.getByPrefix('withdrawal:') || [];
     const allWithdrawalsUnderscore = await kv.getByPrefix('withdrawal_') || [];
+    
+    console.log(`📊 [Admin/Withdrawals-Alias] Found ${allWithdrawalsColon.length} with 'withdrawal:' prefix`);
+    console.log(`📊 [Admin/Withdrawals-Alias] Found ${allWithdrawalsUnderscore.length} with 'withdrawal_' prefix`);
+    
     const combinedWithdrawals = [...allWithdrawalsColon, ...allWithdrawalsUnderscore];
     
     // Deduplicate by id
@@ -12845,10 +12897,70 @@ app.get("/make-server-215f78a5/admin/withdrawals", async (c) => {
       return true;
     });
     
+    console.log(`📊 [Admin/Withdrawals-Alias] Total after deduplication: ${allWithdrawals.length}`);
+    
+    // Enrich withdrawals with user email and bank info
+    const enrichedWithdrawals = await Promise.all(
+      allWithdrawals.map(async (withdrawal: any) => {
+        try {
+          // Get user profile to fetch email
+          const profileKey = `profile_${withdrawal.user_id}`;
+          const profile = await kv.get(profileKey);
+          
+          // Get bank account info if method_id exists
+          let bank_info = null;
+          if (withdrawal.method_id) {
+            const method = await kv.get(withdrawal.method_id);
+            if (method && method.type === 'bank') {
+              bank_info = {
+                bank_name: method.bank_name,
+                account_holder_name: method.account_holder_name,
+                masked_account_number: method.account_number 
+                  ? `****${method.account_number.slice(-4)}` 
+                  : undefined,
+                masked_iban: method.iban 
+                  ? `****${method.iban.slice(-4)}` 
+                  : undefined,
+                swift_code: method.swift_code,
+                routing_number: method.routing_number,
+                country: method.country,
+                currency: method.currency,
+              };
+            }
+          }
+          
+          return {
+            ...withdrawal,
+            user_email: profile?.email || null,
+            bank_info,
+          };
+        } catch (err) {
+          console.error(`❌ Error enriching withdrawal ${withdrawal.id}:`, err);
+          return {
+            ...withdrawal,
+            user_email: null,
+            bank_info: null,
+          };
+        }
+      })
+    );
+    
     // Sort by created_at (newest first)
-    const sortedWithdrawals = allWithdrawals.sort((a: any, b: any) => {
+    const sortedWithdrawals = enrichedWithdrawals.sort((a: any, b: any) => {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
+
+    console.log(`✅ [Admin/Withdrawals-Alias] Returning ${sortedWithdrawals.length} withdrawals`);
+    if (sortedWithdrawals.length > 0) {
+      console.log(`📝 [Admin/Withdrawals-Alias] Latest withdrawal:`, {
+        id: sortedWithdrawals[0].id,
+        user_id: sortedWithdrawals[0].user_id,
+        user_email: sortedWithdrawals[0].user_email,
+        amount: sortedWithdrawals[0].amount,
+        status: sortedWithdrawals[0].status,
+        created_at: sortedWithdrawals[0].created_at
+      });
+    }
 
     return c.json({ withdrawals: sortedWithdrawals });
   } catch (error) {
@@ -16586,7 +16698,7 @@ app.post("/make-server-215f78a5/emails/bulk-monthly-reports", async (c) => {
   }
 });
 
-// 📜 獲取用戶郵件歷史
+// ���� 獲取用戶郵件歷史
 app.get("/make-server-215f78a5/emails/history/:userId", async (c) => {
   try {
     const accessToken = c.req.header('Authorization')?.split(' ')[1];
