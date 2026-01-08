@@ -18865,7 +18865,9 @@ app.post("/make-server-215f78a5/kyc/submit", async (c) => {
 
     // 📧 發送郵件通知給所有超級管理員
     try {
-      const adminEmails = SUPER_ADMINS; // ['davidlai234@hotmail.com', 'admin@casewhr.com']
+      // 獲取超級管理員郵箱列表
+      const SUPER_ADMINS = ['davidlai234@hotmail.com', 'admin@casewhr.com'];
+      const adminEmails = SUPER_ADMINS;
       
       const idTypeLabels: Record<string, string> = {
         'national_id': 'National ID / 身份證',
