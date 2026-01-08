@@ -1145,6 +1145,141 @@ export function registerECPayRoutes(app: any) {
     }
   });
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━���━━━━━━━━━━
+  // 🚀 Query ECPay order status (for testing environment auto-confirmation)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  app.post('/make-server-215f78a5/ecpay/query-order', async (c: Context) => {
+    try {
+      const body = await c.req.json();
+      const { merchantTradeNo } = body;
+
+      if (!merchantTradeNo) {
+        return c.json({ error: 'Missing merchantTradeNo' }, 400);
+      }
+
+      console.log(`🔍 [ECPay Query] Querying order status: ${merchantTradeNo}`);
+
+      // 準備查詢參數
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const timeStamp = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+
+      const queryParams: Record<string, any> = {
+        MerchantID: ECPAY_CONFIG.merchantId,
+        MerchantTradeNo: merchantTradeNo,
+        TimeStamp: timeStamp,
+      };
+
+      // 生成 CheckMacValue
+      const checkMacValue = await generateCheckMacValue(queryParams);
+      queryParams.CheckMacValue = checkMacValue;
+
+      console.log('[ECPay Query] Query params:', {
+        MerchantID: queryParams.MerchantID,
+        MerchantTradeNo: queryParams.MerchantTradeNo,
+        TimeStamp: queryParams.TimeStamp,
+        CheckMacValue: queryParams.CheckMacValue?.substring(0, 20) + '...',
+      });
+
+      // 發送查詢請求到 ECPay
+      const formBody = Object.keys(queryParams)
+        .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(queryParams[key])}`)
+        .join('&');
+
+      const response = await fetch(ECPAY_CONFIG.queryUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formBody,
+      });
+
+      const responseText = await response.text();
+      console.log('[ECPay Query] Response:', responseText);
+
+      // 解析 ECPay 回應（格式：TradeNo=xxx&MerchantTradeNo=xxx&TradeAmt=xxx&...）
+      const responseParams: Record<string, string> = {};
+      responseText.split('&').forEach(pair => {
+        const [key, value] = pair.split('=');
+        if (key && value) {
+          responseParams[key] = decodeURIComponent(value);
+        }
+      });
+
+      console.log('[ECPay Query] Parsed response:', {
+        TradeStatus: responseParams.TradeStatus,
+        TradeAmt: responseParams.TradeAmt,
+        PaymentDate: responseParams.PaymentDate,
+      });
+
+      // 檢查付款狀態
+      if (responseParams.TradeStatus === '1') {
+        // 付款成功！查找對應的 payment 記錄並自動確認
+        console.log('✅ [ECPay Query] Payment confirmed by ECPay!');
+
+        const payment = await kv.get(`ecpay_payment:${merchantTradeNo}`);
+        
+        if (payment && payment.status === 'pending') {
+          console.log('[ECPay Query] Auto-confirming payment:', payment.id);
+          
+          const confirmResult = await confirmPayment(
+            payment.id,
+            'ECPay Query API Auto Confirm'
+          );
+
+          if (confirmResult.success) {
+            console.log('✅ [ECPay Query] Payment auto-confirmed successfully!');
+            return c.json({
+              success: true,
+              status: 'confirmed',
+              payment: await getPaymentById(payment.id),
+            });
+          } else {
+            console.error('❌ [ECPay Query] Failed to auto-confirm payment:', confirmResult.error);
+            return c.json({
+              success: false,
+              status: 'error',
+              error: confirmResult.error,
+            }, 500);
+          }
+        } else if (payment && payment.status === 'confirmed') {
+          console.log('[ECPay Query] Payment already confirmed');
+          return c.json({
+            success: true,
+            status: 'already_confirmed',
+            payment,
+          });
+        } else {
+          console.warn('[ECPay Query] Payment record not found');
+          return c.json({
+            success: false,
+            status: 'not_found',
+            error: 'Payment record not found',
+          }, 404);
+        }
+      } else {
+        // 付款仍在處理中或失敗
+        console.log(`⏳ [ECPay Query] Payment status: ${responseParams.TradeStatus}`);
+        return c.json({
+          success: true,
+          status: 'pending',
+          tradeStatus: responseParams.TradeStatus,
+        });
+      }
+    } catch (error: any) {
+      console.error('❌ [ECPay Query] Error:', error);
+      return c.json({
+        success: false,
+        error: error.message,
+      }, 500);
+    }
+  });
+
   // Get all payments (Admin only)
   app.get('/make-server-215f78a5/admin/ecpay-payments', async (c: Context) => {
     // 🧪 支持 dev mode: 優先檢查 X-Dev-Token

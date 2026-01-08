@@ -84,58 +84,74 @@ export const handleECPayCallback = async ({
           { duration: 5000 }
         );
         
-        // 🔄 每 3 秒檢查一次，最多檢查 10 次（30 秒）
-        let checkCount = 0;
-        const maxChecks = 10;
-        
-        const checkPaymentStatus = async () => {
-          checkCount++;
-          
+        // 🔄 開始輪詢檢查付款狀態
+        toast.info(
+          language === 'en'
+            ? '⏳ Verifying payment with ECPay...'
+            : '⏳ 正在向綠界確認付款狀態...'
+        );
+
+        let attempts = 0;
+        const maxAttempts = 10; // 最多輪詢 10 次（30 秒）
+        const pollInterval = 3000; // 每 3 秒查詢一次
+
+        const pollPaymentStatus = async () => {
+          attempts++;
+          console.log(`💫 [ECPay Polling] Attempt ${attempts}/${maxAttempts} - Querying order status...`);
+
           try {
-            const checkResponse = await fetch(
-              `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay-payments/by-order/${orderId}`,
+            // 🚀 直接向 ECPay 查詢訂單狀態
+            const queryResponse = await fetch(
+              `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay/query-order`,
               {
+                method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${authToken}`,
+                  'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({
+                  merchantTradeNo: orderId,
+                }),
               }
             );
-            
-            if (checkResponse.ok) {
-              const checkData = await checkResponse.json();
-              const checkPaymentData = checkData.payment;
+
+            const queryData = await queryResponse.json();
+            console.log(`💫 [ECPay Polling] Query API response:`, queryData);
+
+            if (queryData.success && queryData.status === 'confirmed') {
+              // ✅ 付款已確認！
+              console.log('✅ [ECPay Polling] Payment confirmed by ECPay!');
               
-              console.log(`🔍 [ECPay] Payment check ${checkCount}/${maxChecks}:`, checkPaymentData?.status);
+              toast.success(
+                language === 'en'
+                  ? `✅ Payment confirmed! $${queryData.payment?.amount_usd} USD added to wallet`
+                  : `✅ 付款已確認！已將 $${queryData.payment?.amount_usd} USD 加入錢包`,
+                { duration: 5000 }
+              );
+
+              // 刷新錢包數據
+              await loadWalletData();
+              return; // 停止輪詢
+            } else if (queryData.success && queryData.status === 'already_confirmed') {
+              // ✅ 付款已經確認過了
+              console.log('✅ [ECPay Polling] Payment already confirmed');
               
-              if (checkPaymentData?.status === 'confirmed') {
-                // ✅ 付款確認成功
-                toast.success(
-                  language === 'en' 
-                    ? '🎉 綠界付款成功！您的錢包餘額已更新。' 
-                    : language === 'zh-CN'
-                    ? '🎉 绿界付款成功！您的钱包余额已更新。'
-                    : '🎉 綠界付款成功！您的錢包餘額已更新。',
-                  { duration: 5000 }
-                );
-                
-                await loadWalletData();
-                return; // 停止檢查
-                
-              } else if (checkPaymentData?.status === 'rejected') {
-                // ❌ 付款失敗
-                toast.error(
-                  language === 'en' 
-                    ? '❌ Payment failed. Please try again or contact support.' 
-                    : language === 'zh-CN'
-                    ? '❌ 付款失败，请重试或联系客服。'
-                    : '❌ 付款失敗，請重試或聯繫客服。',
-                  { duration: 5000 }
-                );
-                return; // 停止檢查
-                
-              } else if (checkCount < maxChecks) {
-                // 繼續檢查
-                setTimeout(checkPaymentStatus, 3000);
+              toast.success(
+                language === 'en'
+                  ? '✅ Payment already confirmed!'
+                  : '✅ 付款已經確認！',
+                { duration: 3000 }
+              );
+
+              await loadWalletData();
+              return; // 停止輪詢
+            } else if (queryData.success && queryData.status === 'pending') {
+              // ⏳ 仍在處理中
+              console.log(`⏳ [ECPay Polling] Still pending (TradeStatus: ${queryData.tradeStatus})`);
+
+              if (attempts < maxAttempts) {
+                // 繼續輪詢
+                setTimeout(pollPaymentStatus, pollInterval);
               } else {
                 // ⏰ 超時 - 提供手動確認選項
                 const timeoutMessage = language === 'en' 
@@ -149,19 +165,38 @@ export const handleECPayCallback = async ({
                 // 最後再試一次載入錢包
                 await loadWalletData();
               }
+            } else {
+              // ❌ 錯誤
+              console.error('❌ [ECPay Polling] Query failed:', queryData);
+              
+              if (attempts < maxAttempts) {
+                setTimeout(pollPaymentStatus, pollInterval);
+              } else {
+                toast.error(
+                  language === 'en'
+                    ? '❌ Failed to verify payment. Please contact support.'
+                    : '❌ 付款確認失敗，請聯繫客服。'
+                );
+              }
             }
           } catch (error) {
-            console.error(`❌ [ECPay] Error checking payment status (attempt ${checkCount}):`, error);
+            console.error('❌ [ECPay Polling] Error:', error);
             
-            // 如果是最後一次檢查，還是嘗試載入錢包
-            if (checkCount >= maxChecks) {
-              await loadWalletData();
+            if (attempts < maxAttempts) {
+              // 發生錯誤，繼續嘗試
+              setTimeout(pollPaymentStatus, pollInterval);
+            } else {
+              toast.error(
+                language === 'en'
+                  ? '❌ Network error. Please refresh and check your wallet.'
+                  : '❌ 網絡錯誤，請刷新頁面檢查錢包。'
+              );
             }
           }
         };
-        
-        // 3 秒後開始第一次檢查
-        setTimeout(checkPaymentStatus, 3000);
+
+        // 開始輪詢
+        pollPaymentStatus();
         
       } else if (paymentData?.status === 'rejected') {
         // ❌ 付款失敗
