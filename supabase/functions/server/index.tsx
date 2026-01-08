@@ -18803,33 +18803,45 @@ app.get("/make-server-215f78a5/kyc/:userId", async (c) => {
 // Upload KYC document (new endpoint for file uploads)
 app.post("/make-server-215f78a5/kyc/upload", async (c) => {
   try {
+    console.log('📤 [KYC Upload] Request received');
+    
     const accessToken = c.req.header('Authorization')?.split(' ')[1];
     
     if (!accessToken) {
+      console.log('❌ [KYC Upload] No access token');
       return c.json({ error: 'Authorization required' }, 401);
     }
 
     const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
     if (authError || !user?.id) {
+      console.log('❌ [KYC Upload] Auth error:', authError);
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
+    console.log('✅ [KYC Upload] User authenticated:', user.id);
+
     // Parse form data
+    console.log('📥 [KYC Upload] Parsing form data...');
     const formData = await c.req.formData();
     const file = formData.get('file') as File;
     const type = formData.get('type') as string;
 
+    console.log('📥 [KYC Upload] File:', file ? file.name : 'null', 'Type:', type);
+
     if (!file || !type) {
+      console.log('❌ [KYC Upload] Missing file or type');
       return c.json({ error: 'File and type are required' }, 400);
     }
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
+      console.log('❌ [KYC Upload] File too large:', file.size);
       return c.json({ error: 'File size must be less than 5MB' }, 400);
     }
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
+      console.log('❌ [KYC Upload] Invalid file type:', file.type);
       return c.json({ error: 'Only image files are allowed' }, 400);
     }
 
@@ -18837,9 +18849,13 @@ app.post("/make-server-215f78a5/kyc/upload", async (c) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${user.id}/${type}_${Date.now()}.${fileExt}`;
 
+    console.log('📤 [KYC Upload] Uploading to:', fileName);
+
     // Convert File to ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = new Uint8Array(arrayBuffer);
+
+    console.log('📤 [KYC Upload] Buffer size:', buffer.length);
 
     // Upload using service role key
     const { data, error } = await supabase.storage
@@ -18851,9 +18867,11 @@ app.post("/make-server-215f78a5/kyc/upload", async (c) => {
       });
 
     if (error) {
-      console.error('❌ [KYC Upload] Error:', error);
+      console.error('❌ [KYC Upload] Storage error:', error);
       return c.json({ error: 'Failed to upload file: ' + error.message }, 500);
     }
+
+    console.log('✅ [KYC Upload] File uploaded to storage');
 
     // Get signed URL
     const { data: signedUrlData } = await supabase.storage
@@ -18861,14 +18879,16 @@ app.post("/make-server-215f78a5/kyc/upload", async (c) => {
       .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year
 
     if (!signedUrlData?.signedUrl) {
+      console.log('❌ [KYC Upload] Failed to get signed URL');
       return c.json({ error: 'Failed to get signed URL' }, 500);
     }
 
-    console.log('✅ [KYC Upload] File uploaded:', fileName);
+    console.log('✅ [KYC Upload] File uploaded successfully:', fileName);
     return c.json({ url: signedUrlData.signedUrl });
   } catch (error) {
-    console.error('❌ [KYC Upload] Error:', error);
-    return c.json({ error: 'Failed to upload file' }, 500);
+    console.error('❌ [KYC Upload] Unexpected error:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return c.json({ error: 'Failed to upload file: ' + errorMessage }, 500);
   }
 });
 
