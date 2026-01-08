@@ -14,6 +14,7 @@ import { DiagnosticQuickGuide } from "./DiagnosticQuickGuide";
 import { ECPayManualConfirm } from "./ECPayManualConfirm";
 import { ECPayCallbackDiagnostic } from "./ECPayCallbackDiagnostic";
 import { PlatformRevenueFixTool } from "./PlatformRevenueFixTool";
+import { handleECPayCallback } from "./WalletECPayCallbackFix"; // 🔧 ECPay 回調修復
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -480,8 +481,16 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
 
       // 🔧 修復：當用戶從 ECPay 返回時，查詢後端驗證付款狀態
       if (provider === 'ecpay' && orderId) {
-        console.log('🔍 [ECPay] Return from ECPay detected, checking payment status:', { orderId });
+        await handleECPayCallback({
+          orderId,
+          language,
+          projectId,
+          publicAnonKey,
+          loadWalletData,
+          toast,
+        });
         
+        /*
         try {
           // 查詢付款狀態
           const response = await fetch(
@@ -544,6 +553,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
         } catch (error) {
           console.error('❌ [ECPay] Error checking payment status:', error);
         }
+        */
         
         // 清理 URL
         window.history.replaceState({}, '', window.location.pathname);
