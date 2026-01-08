@@ -187,6 +187,23 @@ export async function capturePayment(orderId: string): Promise<{ success: boolea
     throw new Error('PayPal is not configured');
   }
 
+  // 🔒 CRITICAL FIX: Check if order already processed (prevent duplicate charges)
+  const existingOrder = await kv.get(`paypal_order:${orderId}`);
+  if (existingOrder?.status === 'COMPLETED') {
+    console.log('⚠️ [PayPal] Order already processed, returning cached result:', {
+      orderId,
+      userId: existingOrder.userId,
+      amount: existingOrder.amount,
+      capturedAt: existingOrder.capturedAt,
+    });
+    
+    return {
+      success: true,
+      userId: existingOrder.userId,
+      amount: existingOrder.amount,
+    };
+  }
+
   const accessToken = await getAccessToken();
 
   const response = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders/${orderId}/capture`, {
@@ -285,18 +302,30 @@ export async function capturePayment(orderId: string): Promise<{ success: boolea
     depositAmount: amount,
   });
 
-  // Record transaction
+  // 🔧 CRITICAL FIX: Use consistent transaction key format (transaction_ not transaction:)
   const transactionId = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  await kv.set(`transaction:${transactionId}`, {
+  const transactionKey = `transaction_${transactionId}`; // ✅ Fixed: Consistent with ECPay format
+  
+  const transaction = {
     id: transactionId,
-    userId,
+    user_id: userId, // ✅ Fixed: Use user_id not userId for consistency
     type: 'deposit',
     amount,
     currency: 'USD',
     provider: 'paypal',
-    paypalOrderId: orderId,
+    paypal_order_id: orderId, // ✅ Fixed: Use snake_case for consistency
     status: 'completed',
-    createdAt: new Date().toISOString(),
+    description: `PayPal 充值 - $${amount} USD`, // ✅ Added: Description for transaction history
+    created_at: new Date().toISOString(), // ✅ Fixed: Use snake_case
+  };
+  
+  await kv.set(transactionKey, transaction);
+
+  console.log('📝 [PayPal] Transaction recorded:', {
+    transactionId,
+    transactionKey,
+    amount,
+    currency: 'USD',
   });
 
   // Update order status

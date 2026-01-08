@@ -30,6 +30,7 @@ import { milestoneRoutes } from "./milestone_service.tsx";
 import * as aiSeoService from "./ai_seo_service.tsx";
 import aiChatbotService from "./ai_chatbot_service.tsx";
 import { fixPlatformRevenue } from "./fix_platform_revenue.tsx";
+import { fixPayPalTransactionKeys, verifyPayPalTransactions } from "./fix_paypal_transactions.tsx";
 import aiSeoRoutes from "./ai-seo.ts";
 import { handleSitemapRequest, handleRobotsRequest, handleSEOHealthCheck } from "./sitemap_service.tsx";
 import * as lineAuth from "./line-auth.tsx";
@@ -18637,6 +18638,38 @@ console.log('✅ [SERVER] Team member check API registered');
 // 🔧 平台收入修復端點
 app.post('/make-server-215f78a5/admin/fix-platform-revenue', fixPlatformRevenue);
 console.log('✅ [SERVER] Platform revenue fix API registered');
+
+// 🔧 PayPal 交易記錄格式修復端點
+app.post('/make-server-215f78a5/admin/fix-paypal-transactions', async (c) => {
+  try {
+    const result = await fixPayPalTransactionKeys();
+    return c.json(result);
+  } catch (error) {
+    console.error('❌ [PayPal Fix] Error:', error);
+    return c.json({ 
+      success: false, 
+      error: String(error),
+      migrated: 0,
+      errors: [String(error)]
+    }, 500);
+  }
+});
+
+app.get('/make-server-215f78a5/admin/verify-paypal-transactions', async (c) => {
+  try {
+    const result = await verifyPayPalTransactions();
+    return c.json(result);
+  } catch (error) {
+    console.error('❌ [PayPal Verify] Error:', error);
+    return c.json({ 
+      totalTransactions: 0,
+      correctFormat: 0,
+      oldFormat: 0,
+      issues: [String(error)]
+    }, 500);
+  }
+});
+console.log('✅ [SERVER] PayPal transaction fix APIs registered');
 
 // 📁 新增：檢查並發送即將過期的文件提醒（Cron Job）
 app.post('/make-server-215f78a5/deliverables/check-expiring-files', async (c) => {

@@ -14,6 +14,7 @@ import { DiagnosticQuickGuide } from "./DiagnosticQuickGuide";
 import { ECPayManualConfirm } from "./ECPayManualConfirm";
 import { ECPayCallbackDiagnostic } from "./ECPayCallbackDiagnostic";
 import { PlatformRevenueFixTool } from "./PlatformRevenueFixTool";
+import { PayPalTransactionFixTool } from "./PayPalTransactionFixTool";
 import { handleECPayCallback } from "./WalletECPayCallbackFix"; // 🔧 ECPay 回調修復
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -1110,6 +1111,9 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
 
       {/* 🔧 平台收入修復工具（僅平台擁有者可見） */}
       {isPlatformOwner && <PlatformRevenueFixTool />}
+
+      {/* 🔧 PayPal 交易記錄格式修復工具（僅平台擁有者可見） */}
+      {isPlatformOwner && <PayPalTransactionFixTool />}
 
       {/* Wallet Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
