@@ -1,3 +1,26 @@
+import { useState, useEffect } from 'react';
+import { useLanguage } from '../../lib/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
+import { Alert, AlertDescription } from '../ui/alert';
+import { 
+  ArrowUpCircle, 
+  Clock, 
+  CheckCircle, 
+  XCircle, 
+  RefreshCw, 
+  Loader2, 
+  Search,
+  User,
+  DollarSign,
+  Calendar
+} from 'lucide-react';
 import { projectId } from "../../utils/supabase/info";
 import { toast } from "sonner";
 
@@ -187,6 +210,8 @@ export function WithdrawalManagement() {
 
     setLoading(true);
     try {
+      console.log('🔍 [Admin/WithdrawalManagement] Fetching withdrawals...');
+      
       // Get all withdrawals (admin endpoint)
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/admin/withdrawals/all`,
@@ -197,8 +222,20 @@ export function WithdrawalManagement() {
         }
       );
 
+      console.log('📡 [Admin/WithdrawalManagement] Response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('📊 [Admin/WithdrawalManagement] Received withdrawals:', data.withdrawals?.length || 0);
+        
+        if (data.withdrawals && data.withdrawals.length > 0) {
+          console.log('📝 [Admin/WithdrawalManagement] Latest withdrawal:', {
+            id: data.withdrawals[0].id,
+            amount: data.withdrawals[0].amount,
+            status: data.withdrawals[0].status,
+            created_at: data.withdrawals[0].created_at
+          });
+        }
         
         // Enrich with user info
         const enriched = await Promise.all(
@@ -228,12 +265,15 @@ export function WithdrawalManagement() {
           })
         );
 
+        console.log('✅ [Admin/WithdrawalManagement] Setting withdrawals:', enriched.length);
         setWithdrawals(enriched);
       } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ [Admin/WithdrawalManagement] Error response:', response.status, errorData);
         throw new Error('Failed to load withdrawals');
       }
     } catch (error) {
-      console.error('Error loading withdrawals:', error);
+      console.error('❌ [Admin/WithdrawalManagement] Error loading withdrawals:', error);
       toast.error(t.error.load);
     } finally {
       setLoading(false);

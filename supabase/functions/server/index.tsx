@@ -12769,9 +12769,15 @@ app.get("/make-server-215f78a5/admin/withdrawals/all", async (c) => {
       return c.json({ error: 'Admin access required' }, 403);
     }
 
+    console.log('🔍 [Admin/Withdrawals] Fetching all withdrawals...');
+
     // Get all withdrawals - support both colon and underscore formats
     const allWithdrawalsColon = await kv.getByPrefix('withdrawal:') || [];
     const allWithdrawalsUnderscore = await kv.getByPrefix('withdrawal_') || [];
+    
+    console.log(`📊 [Admin/Withdrawals] Found ${allWithdrawalsColon.length} with 'withdrawal:' prefix`);
+    console.log(`📊 [Admin/Withdrawals] Found ${allWithdrawalsUnderscore.length} with 'withdrawal_' prefix`);
+    
     const combinedWithdrawals = [...allWithdrawalsColon, ...allWithdrawalsUnderscore];
     
     // Deduplicate by id
@@ -12782,10 +12788,22 @@ app.get("/make-server-215f78a5/admin/withdrawals/all", async (c) => {
       return true;
     });
     
+    console.log(`📊 [Admin/Withdrawals] Total after deduplication: ${allWithdrawals.length}`);
+    
     // Sort by created_at (newest first)
     const sortedWithdrawals = allWithdrawals.sort((a: any, b: any) => {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
+
+    console.log(`✅ [Admin/Withdrawals] Returning ${sortedWithdrawals.length} withdrawals`);
+    if (sortedWithdrawals.length > 0) {
+      console.log(`📝 [Admin/Withdrawals] Latest withdrawal:`, {
+        id: sortedWithdrawals[0].id,
+        amount: sortedWithdrawals[0].amount,
+        status: sortedWithdrawals[0].status,
+        created_at: sortedWithdrawals[0].created_at
+      });
+    }
 
     return c.json({ withdrawals: sortedWithdrawals });
   } catch (error) {
