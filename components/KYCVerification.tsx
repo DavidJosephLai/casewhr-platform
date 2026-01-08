@@ -421,6 +421,10 @@ export function KYCVerification() {
       if (response.ok) {
         toast.success(t.success);
         fetchKYCData();
+        
+        // 🔔 觸發事件通知 Header 刷新 KYC 數量
+        window.dispatchEvent(new Event('kyc-submitted'));
+        console.log('🔔 [KYC] Dispatched kyc-submitted event');
       } else {
         const error = await response.json();
         throw new Error(error.error || 'Failed to submit');

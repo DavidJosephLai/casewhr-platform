@@ -18863,6 +18863,130 @@ app.post("/make-server-215f78a5/kyc/submit", async (c) => {
 
     console.log(`✅ KYC submitted for user ${user.id}`);
 
+    // 📧 發送郵件通知給所有超級管理員
+    try {
+      const adminEmails = SUPER_ADMINS; // ['davidlai234@hotmail.com', 'admin@casewhr.com']
+      
+      const idTypeLabels: Record<string, string> = {
+        'national_id': 'National ID / 身份證',
+        'passport': 'Passport / 護照',
+        'driver_license': 'Driver License / 駕照'
+      };
+      
+      // 發送給每個超級管理員
+      for (const adminEmail of adminEmails) {
+        const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+    .alert { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
+    .info-box { background: white; padding: 20px; border-radius: 8px; margin: 15px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+    .info-row:last-child { border-bottom: none; }
+    .label { font-weight: bold; color: #6b7280; }
+    .value { color: #111827; }
+    .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: bold; }
+    .footer { text-align: center; color: #6b7280; padding: 20px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔐 New KYC Verification Submitted</h1>
+      <h2>新的 KYC 身份驗證申請</h2>
+    </div>
+    
+    <div class="content">
+      <div class="alert">
+        <strong>⚠️ Action Required / 需要審核</strong><br>
+        A new KYC verification has been submitted and requires your review.<br>
+        新的 KYC 身份驗證已提交，需要您的審核。
+      </div>
+      
+      <div class="info-box">
+        <h3>📋 Applicant Information / 申請人資訊</h3>
+        <div class="info-row">
+          <span class="label">User Email / 用戶郵箱:</span>
+          <span class="value">${user.email}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Full Name / 真實姓名:</span>
+          <span class="value">${full_name}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">ID Type / 證件類型:</span>
+          <span class="value">${idTypeLabels[id_type] || id_type}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">ID Number / 證件號碼:</span>
+          <span class="value">${id_number}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Country / 國家:</span>
+          <span class="value">${country}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Submitted At / 提交時間:</span>
+          <span class="value">${new Date(now).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}</span>
+        </div>
+      </div>
+      
+      <div style="text-align: center;">
+        <a href="https://casewhr.com" class="button">
+          🔍 Review in Admin Dashboard<br>
+          在管理後台審核
+        </a>
+      </div>
+      
+      <div class="info-box">
+        <h3>📝 Next Steps / 下一步操作</h3>
+        <ol>
+          <li>Log in to admin dashboard / 登入管理後台</li>
+          <li>Navigate to "KYC Verification Management" / 前往「KYC 驗證管理」</li>
+          <li>Review the submitted documents / 審核提交的證件文件</li>
+          <li>Approve or Reject the application / 批准或拒絕申請</li>
+        </ol>
+      </div>
+      
+      <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
+        💡 <strong>Tip:</strong> The application will appear at the top of your "Pending" list.<br>
+        💡 <strong>提示：</strong>此申請會顯示在「待審核」列表的最上方。
+      </p>
+    </div>
+    
+    <div class="footer">
+      <p>
+        This is an automated notification from Case Where Platform.<br>
+        這是來自 Case Where 平台的自動通知。
+      </p>
+      <p>© 2025 Case Where. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+        `;
+
+        await emailService.sendEmail({
+          to: adminEmail,
+          subject: `🔐 New KYC Submitted - ${full_name} (${user.email})`,
+          html: emailHtml,
+          emailType: 'admin-notification',
+          language: 'zh'
+        });
+        
+        console.log(`📧 KYC notification email sent to admin: ${adminEmail}`);
+      }
+    } catch (emailError) {
+      console.error('❌ Failed to send admin notification email:', emailError);
+      // 不影響 KYC 提交成功，只記錄錯誤
+    }
+
     return c.json({ success: true, kyc });
   } catch (error) {
     console.error('Error submitting KYC:', error);
@@ -18906,6 +19030,40 @@ app.get("/make-server-215f78a5/admin/kyc/all", async (c) => {
   } catch (error) {
     console.error('Error fetching KYC list:', error);
     return c.json({ error: 'Failed to fetch KYC list' }, 500);
+  }
+});
+
+// Admin: Get pending KYC count (for notification badge)
+app.get("/make-server-215f78a5/admin/kyc/pending-count", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    // Check admin permissions
+    const isAdmin = await isAdminByEmail(user.email || '');
+    if (!isAdmin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+
+    const allKYC = await kv.getByPrefix('kyc_');
+    const pendingCount = (allKYC || [])
+      .filter((k: any) => k && k.status === 'pending')
+      .length;
+
+    console.log(`✅ Pending KYC count: ${pendingCount}`);
+
+    return c.json({ pending_count: pendingCount });
+  } catch (error) {
+    console.error('Error fetching pending KYC count:', error);
+    return c.json({ error: 'Failed to fetch pending KYC count' }, 500);
   }
 });
 

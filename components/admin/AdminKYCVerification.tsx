@@ -269,6 +269,10 @@ export function AdminKYCVerification() {
         toast.success(t.approveSuccess);
         fetchKYCList();
         setShowDetailsDialog(false);
+        
+        // 🔔 觸發事件通知 Header 刷新 KYC 數量
+        window.dispatchEvent(new Event('kyc-approved'));
+        console.log('🔔 [AdminKYC] Dispatched kyc-approved event');
       } else {
         throw new Error('Failed to approve KYC');
       }
@@ -307,6 +311,10 @@ export function AdminKYCVerification() {
         setRejectionReason('');
         setSelectedKYC(null);
         fetchKYCList();
+        
+        // 🔔 觸發事件通知 Header 刷新 KYC 數量
+        window.dispatchEvent(new Event('kyc-rejected'));
+        console.log('🔔 [AdminKYC] Dispatched kyc-rejected event');
       } else {
         throw new Error('Failed to reject KYC');
       }

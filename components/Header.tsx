@@ -13,6 +13,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useView } from "../contexts/ViewContext";
 import { useSubscription } from "../hooks/useSubscription";
 import { isAnyAdmin, getAdminLevel, AdminLevel } from "../config/admin";
+import { projectId } from "../utils/supabase/info";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +26,7 @@ import {
 export function Header() {
   const { language, setLanguage } = useLanguage();
   const t = getTranslation(language);
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, accessToken } = useAuth();
   const { view, setView, manualOverride, setManualOverride } = useView();
 
   const [loginOpen, setLoginOpen] = useState(false);
@@ -33,6 +34,7 @@ export function Header() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
   const [initialConversationId, setInitialConversationId] = useState<string | undefined>(undefined);
+  const [pendingKYCCount, setPendingKYCCount] = useState(0); // 🔔 待審核 KYC 數量
 
   // 監聽自定義事件來打開對話框
   useEffect(() => {
@@ -235,6 +237,54 @@ export function Header() {
     }
   }, [user?.email, isAdmin, adminLevel, profile]);
 
+  // 🔔 獲取待審核 KYC 數量（僅管理員）
+  useEffect(() => {
+    const fetchPendingKYCCount = async () => {
+      if (!isAdmin || !user?.id || !accessToken) return;
+
+      try {
+        const response = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/admin/kyc/pending-count`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setPendingKYCCount(data.pending_count || 0);
+          console.log('🔔 [Header] Pending KYC count:', data.pending_count);
+        }
+      } catch (error) {
+        console.error('❌ [Header] Error fetching pending KYC count:', error);
+      }
+    };
+
+    fetchPendingKYCCount();
+    
+    // 每 30 秒刷新一次
+    const interval = setInterval(fetchPendingKYCCount, 30000);
+    
+    // 監聽 KYC 提交和審核事件
+    const handleKYCEvent = () => {
+      console.log('🔔 [Header] KYC event received, refreshing count...');
+      fetchPendingKYCCount();
+    };
+    
+    window.addEventListener('kyc-submitted', handleKYCEvent);
+    window.addEventListener('kyc-approved', handleKYCEvent);
+    window.addEventListener('kyc-rejected', handleKYCEvent);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('kyc-submitted', handleKYCEvent);
+      window.removeEventListener('kyc-approved', handleKYCEvent);
+      window.removeEventListener('kyc-rejected', handleKYCEvent);
+    };
+  }, [isAdmin, user?.id, accessToken]);
+
   // 根據管理員級別設置盾牌按鈕顏色
   const getAdminButtonStyle = () => {
     if (adminLevel === 'SUPER_ADMIN') {
@@ -418,17 +468,22 @@ export function Header() {
                       <span>{language === 'en' ? 'Upgrade' : '升級'}</span>
                     </Button>
                   )}
-                  {/* 🛡️ 管理員按鈕 - 僅管理員可見 */}
+                  {/* 🛡️ 管理員按鈕 - 僅管理員可見，含待審核 KYC 徽章 */}
                   {isAdmin && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={handleShowAdmin}
-                      className={adminButtonStyle.className}
+                      className={`${adminButtonStyle.className} relative`}
                       title={language === 'en' ? 'Admin Dashboard' : '管理員後台'}
                     >
                       <Shield className="h-4 w-4" />
                       <span className="hidden lg:inline">{adminButtonStyle.label}</span>
+                      {pendingKYCCount > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white shadow-lg ring-2 ring-white">
+                          {pendingKYCCount > 9 ? '9+' : pendingKYCCount}
+                        </span>
+                      )}
                     </Button>
                   )}
                   
