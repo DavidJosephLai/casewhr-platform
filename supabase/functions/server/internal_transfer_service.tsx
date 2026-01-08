@@ -429,13 +429,17 @@ export async function executeInternalTransfer(
 
     // 8d. 記錄到發送方的轉帳歷史
     const senderTransfers = await kv.get(`transfers_sent:${senderId}`) || [];
+    console.log(`📊 [Transfer] Current sender transfers count: ${Array.isArray(senderTransfers) ? senderTransfers.length : 'not an array'}`);
     senderTransfers.unshift(transferRecord);
     await kv.set(`transfers_sent:${senderId}`, senderTransfers.slice(0, 100)); // 保留最近 100 筆
+    console.log(`✅ [Transfer] Saved to transfers_sent:${senderId}, count: ${senderTransfers.slice(0, 100).length}`);
 
     // 8e. 記錄到接收方的轉帳歷史
     const recipientTransfers = await kv.get(`transfers_received:${recipientId}`) || [];
+    console.log(`📊 [Transfer] Current recipient transfers count: ${Array.isArray(recipientTransfers) ? recipientTransfers.length : 'not an array'}`);
     recipientTransfers.unshift(transferRecord);
     await kv.set(`transfers_received:${recipientId}`, recipientTransfers.slice(0, 100));
+    console.log(`✅ [Transfer] Saved to transfers_received:${recipientId}, count: ${recipientTransfers.slice(0, 100).length}`);
 
     console.log(`✅ [Transfer] Transaction recorded: ${transferId}`);
 

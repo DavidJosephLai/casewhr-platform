@@ -489,6 +489,34 @@ console.log('✅ [SERVER] International payout APIs registered');
 registerInternalTransferRoutes(app);
 console.log('✅ [SERVER] Internal transfer APIs registered');
 
+// 🐛 診斷路由：查看 KV Store 中的轉帳記錄
+app.get('/make-server-215f78a5/debug/transfer-records/:userId', async (c) => {
+  try {
+    const userId = c.req.param('userId');
+    
+    const [sent, received] = await Promise.all([
+      kv.get(`transfers_sent:${userId}`),
+      kv.get(`transfers_received:${userId}`)
+    ]);
+    
+    return c.json({
+      userId,
+      sent: sent || [],
+      received: received || [],
+      sentCount: Array.isArray(sent) ? sent.length : 0,
+      receivedCount: Array.isArray(received) ? received.length : 0,
+      sentType: typeof sent,
+      receivedType: typeof received,
+      sentIsArray: Array.isArray(sent),
+      receivedIsArray: Array.isArray(received),
+      sentRaw: JSON.stringify(sent).substring(0, 300),
+      receivedRaw: JSON.stringify(received).substring(0, 300)
+    });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
 // Register Milestone Management APIs
 app.route('/make-server-215f78a5', milestoneRoutes);
 console.log('✅ [SERVER] Milestone management APIs registered');

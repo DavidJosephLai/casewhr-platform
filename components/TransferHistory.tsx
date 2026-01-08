@@ -33,131 +33,95 @@ interface TransferRecord {
   completed_at: string;
 }
 
-interface TransferHistory {
-  sent: TransferRecord[];
-  received: TransferRecord[];
-}
-
 export function TransferHistory() {
   const { user, accessToken } = useAuth();
   const { language, currency } = useLanguage();
   
-  const [history, setHistory] = useState<TransferHistory>({ sent: [], received: [] });
   const [loading, setLoading] = useState(true);
+  const [history, setHistory] = useState<{
+    sent: TransferRecord[];
+    received: TransferRecord[];
+  }>({ sent: [], received: [] });
 
-  const t = {
+  const text = {
     en: {
       title: 'Transfer History',
-      description: 'View your transfer transactions',
-      sent: 'Sent',
+      description: 'View your transfer history',
       received: 'Received',
-      to: 'To:',
+      sent: 'Sent',
+      noReceived: 'No received transfers yet',
+      noSent: 'No sent transfers yet',
       from: 'From:',
+      to: 'To:',
       amount: 'Amount',
       fee: 'Fee',
       total: 'Total',
-      note: 'Note',
-      date: 'Date',
-      noSent: 'No sent transfers yet',
-      noReceived: 'No received transfers yet',
       transferId: 'Transfer ID'
     },
-    'zh-CN': {
-      title: '转账记录',
-      description: '查看您的转账交易',
-      sent: '已发送',
-      received: '已接收',
-      to: '收款人：',
-      from: '发送人：',
-      amount: '金额',
-      fee: '手续费',
-      total: '总计',
-      note: '备注',
-      date: '日期',
-      noSent: '暂无发送记录',
-      noReceived: '暂无接收记录',
-      transferId: '转账 ID'
-    },
     'zh-TW': {
-      title: '轉帳記錄',
-      description: '查看您的轉帳交易',
-      sent: '已發送',
-      received: '已接收',
-      to: '收款人：',
-      from: '發送人：',
+      title: '轉帳歷史',
+      description: '查看您的轉帳記錄',
+      received: '收款記錄',
+      sent: '付款記錄',
+      noReceived: '暫無收款記錄',
+      noSent: '暫無付款記錄',
+      from: '來自:',
+      to: '收款人:',
       amount: '金額',
       fee: '手續費',
       total: '總計',
-      note: '備註',
-      date: '日期',
-      noSent: '暫無發送記錄',
-      noReceived: '暫無接收記錄',
       transferId: '轉帳 ID'
+    },
+    'zh-CN': {
+      title: '转账历史',
+      description: '查看您的转账记录',
+      received: '收款记录',
+      sent: '付款记录',
+      noReceived: '暂无收款记录',
+      noSent: '暂无付款记录',
+      from: '来自:',
+      to: '收款人:',
+      amount: '金额',
+      fee: '手续费',
+      total: '总计',
+      transferId: '转账 ID'
     }
-  };
-
-  const text = t[language] || t.en;
+  }[language] || text.en;
 
   useEffect(() => {
-    fetchHistory();
-    
-    // 監聽錢包更新事件
-    const handleWalletUpdate = () => {
-      fetchHistory();
-    };
-    
-    window.addEventListener('wallet-updated', handleWalletUpdate);
-    
-    return () => {
-      window.removeEventListener('wallet-updated', handleWalletUpdate);
-    };
-  }, [user, accessToken]);
+    fetchTransferHistory();
+  }, [accessToken]);
 
-  const fetchHistory = async () => {
-    if (!user || !accessToken) return;
-
-    setLoading(true);
+  const fetchTransferHistory = async () => {
+    if (!accessToken) {
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/wallet/transfer/history`,
         {
           headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
         }
       );
 
-      console.log('📊 [TransferHistory] Response status:', response.status); // 🔍 調試日誌
-
       if (response.ok) {
         const data = await response.json();
-        console.log('📊 [TransferHistory] Received data:', data); // 🔍 調試日誌
-        console.log('📊 [TransferHistory] Sent count:', data?.sent?.length || 0); // 🔍 調試日誌
-        console.log('📊 [TransferHistory] Received count:', data?.received?.length || 0); // 🔍 調試日誌
-        console.log('📊 [TransferHistory] Sent is Array?', Array.isArray(data?.sent)); // 🔍 新增
-        console.log('📊 [TransferHistory] Received is Array?', Array.isArray(data?.received)); // 🔍 新增
-        console.log('📊 [TransferHistory] Full sent data:', JSON.stringify(data?.sent).substring(0, 500)); // 🔍 新增
-        console.log('📊 [TransferHistory] Full received data:', JSON.stringify(data?.received).substring(0, 500)); // 🔍 新增
         
-        // ✅ 確保數據結構正確
-        const newHistory = {
-          sent: Array.isArray(data?.sent) ? data.sent : [],
-          received: Array.isArray(data?.received) ? data.received : []
-        };
-        
-        console.log('📊 [TransferHistory] Setting history state:', newHistory); // 🔍 新增
-        setHistory(newHistory);
-        
-        console.log('📊 [TransferHistory] State updated. Sent:', newHistory.sent.length, 'Received:', newHistory.received.length); // 🔍 新增
+        setHistory({
+          sent: Array.isArray(data.sent) ? data.sent : [],
+          received: Array.isArray(data.received) ? data.received : []
+        });
       } else {
-        // 如果 API 失敗，設置空數組
         console.error('Failed to fetch transfer history:', response.status);
         setHistory({ sent: [], received: [] });
       }
     } catch (error) {
       console.error('Error fetching transfer history:', error);
-      // 發生錯誤時也設置空數組
       setHistory({ sent: [], received: [] });
     } finally {
       setLoading(false);
@@ -200,62 +164,17 @@ export function TransferHistory() {
         <CardDescription>{text.description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="received" className="w-full">
+        <Tabs defaultValue="sent" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="received">
-              <ArrowDownLeft className="h-4 w-4 mr-2" />
-              {text.received} ({history?.received?.length || 0})
-            </TabsTrigger>
             <TabsTrigger value="sent">
               <ArrowUpRight className="h-4 w-4 mr-2" />
-              {text.sent} ({history?.sent?.length || 0})
+              {text.sent} ({history.sent.length})
+            </TabsTrigger>
+            <TabsTrigger value="received">
+              <ArrowDownLeft className="h-4 w-4 mr-2" />
+              {text.received} ({history.received.length})
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="received" className="space-y-4 mt-4">
-            {history.received.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <ArrowDownLeft className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                <p>{text.noReceived}</p>
-              </div>
-            ) : (
-              history.received.map((transfer) => (
-                <div
-                  key={transfer.id}
-                  className="p-4 border rounded-lg bg-green-50 border-green-200 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2">
-                      <ArrowDownLeft className="h-5 w-5 text-green-600" />
-                      <div>
-                        <div className="font-medium text-green-900">{text.from} {transfer.from_user_id.substring(0, 8)}...</div>
-                        <div className="text-xs text-gray-600 flex items-center gap-1 mt-1">
-                          <Calendar className="h-3 w-3" />
-                          {formatDate(transfer.created_at)}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xl font-bold text-green-600">
-                        +{formatCurrency(convertCurrency(transfer.amount, 'USD', currency), currency)}
-                      </div>
-                      <Badge variant="outline" className="mt-1 text-xs bg-green-100 text-green-700 border-green-300">
-                        {transfer.status}
-                      </Badge>
-                    </div>
-                  </div>
-                  {transfer.note && (
-                    <div className="mt-2 text-sm text-gray-700 bg-white p-2 rounded border border-green-200">
-                      💬 {transfer.note}
-                    </div>
-                  )}
-                  <div className="mt-2 text-xs text-gray-500">
-                    {text.transferId}: {transfer.id.substring(0, 16)}...
-                  </div>
-                </div>
-              ))
-            )}
-          </TabsContent>
 
           <TabsContent value="sent" className="space-y-4 mt-4">
             {history.sent.length === 0 ? (
@@ -273,7 +192,9 @@ export function TransferHistory() {
                     <div className="flex items-center gap-2">
                       <ArrowUpRight className="h-5 w-5 text-orange-600" />
                       <div>
-                        <div className="font-medium text-orange-900">{text.to} {transfer.to_user_id.substring(0, 8)}...</div>
+                        <div className="font-medium text-orange-900">
+                          {text.to} {transfer.to_user_id.substring(0, 8)}...
+                        </div>
                         <div className="text-xs text-gray-600 flex items-center gap-1 mt-1">
                           <Calendar className="h-3 w-3" />
                           {formatDate(transfer.created_at)}
@@ -311,6 +232,53 @@ export function TransferHistory() {
                   </div>
                   {transfer.note && (
                     <div className="mt-2 text-sm text-gray-700 bg-white p-2 rounded border border-orange-200">
+                      💬 {transfer.note}
+                    </div>
+                  )}
+                  <div className="mt-2 text-xs text-gray-500">
+                    {text.transferId}: {transfer.id.substring(0, 16)}...
+                  </div>
+                </div>
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="received" className="space-y-4 mt-4">
+            {history.received.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <ArrowDownLeft className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                <p>{text.noReceived}</p>
+              </div>
+            ) : (
+              history.received.map((transfer) => (
+                <div
+                  key={transfer.id}
+                  className="p-4 border rounded-lg bg-green-50 border-green-200 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                      <ArrowDownLeft className="h-5 w-5 text-green-600" />
+                      <div>
+                        <div className="font-medium text-green-900">
+                          {text.from} {transfer.from_user_id.substring(0, 8)}...
+                        </div>
+                        <div className="text-xs text-gray-600 flex items-center gap-1 mt-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(transfer.created_at)}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xl font-bold text-green-600">
+                        +{formatCurrency(convertCurrency(transfer.amount, 'USD', currency), currency)}
+                      </div>
+                      <Badge variant="outline" className="mt-1 text-xs bg-green-100 text-green-700 border-green-300">
+                        {transfer.status}
+                      </Badge>
+                    </div>
+                  </div>
+                  {transfer.note && (
+                    <div className="mt-2 text-sm text-gray-700 bg-white p-2 rounded border border-green-200">
                       💬 {transfer.note}
                     </div>
                   )}
