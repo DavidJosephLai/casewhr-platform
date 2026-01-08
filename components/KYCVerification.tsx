@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../lib/LanguageContext';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { projectId } from '../utils/supabase/info';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -30,7 +30,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select';
-import { createClient } from '@supabase/supabase-js';
 
 interface KYCData {
   user_id: string;
@@ -328,46 +327,31 @@ export function KYCVerification() {
   };
 
   const uploadFile = async (file: File, type: string): Promise<string> => {
-    if (!user?.id) throw new Error('User not authenticated');
+    if (!user?.id || !accessToken) throw new Error('User not authenticated');
 
-    // 使用 accessToken 而非 publicAnonKey，因為 bucket 是私有的
-    const supabase = createClient(
-      `https://${projectId}.supabase.co`,
-      publicAnonKey,
+    // 使用後端 API 上傳，而不是前端直接上傳
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+
+    const response = await fetch(
+      `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/kyc/upload`,
       {
-        global: {
-          headers: {
-            Authorization: `Bearer ${accessToken}`
-          }
-        }
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: formData,
       }
     );
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}/${type}_${Date.now()}.${fileExt}`;
-
-    const { data, error } = await supabase.storage
-      .from('make-215f78a5-kyc-documents')
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false,
-      });
-
-    if (error) {
-      console.error('Upload error:', error);
-      throw error;
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to upload file');
     }
 
-    // Get signed URL
-    const { data: signedUrlData } = await supabase.storage
-      .from('make-215f78a5-kyc-documents')
-      .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year
-
-    if (!signedUrlData?.signedUrl) {
-      throw new Error('Failed to get signed URL');
-    }
-
-    return signedUrlData.signedUrl;
+    const data = await response.json();
+    return data.url;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

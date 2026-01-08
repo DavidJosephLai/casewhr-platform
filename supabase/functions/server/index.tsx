@@ -18800,6 +18800,78 @@ app.get("/make-server-215f78a5/kyc/:userId", async (c) => {
   }
 });
 
+// Upload KYC document (new endpoint for file uploads)
+app.post("/make-server-215f78a5/kyc/upload", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    // Parse form data
+    const formData = await c.req.formData();
+    const file = formData.get('file') as File;
+    const type = formData.get('type') as string;
+
+    if (!file || !type) {
+      return c.json({ error: 'File and type are required' }, 400);
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return c.json({ error: 'File size must be less than 5MB' }, 400);
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      return c.json({ error: 'Only image files are allowed' }, 400);
+    }
+
+    const KYC_BUCKET = 'make-215f78a5-kyc-documents';
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}/${type}_${Date.now()}.${fileExt}`;
+
+    // Convert File to ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = new Uint8Array(arrayBuffer);
+
+    // Upload using service role key
+    const { data, error } = await supabase.storage
+      .from(KYC_BUCKET)
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (error) {
+      console.error('❌ [KYC Upload] Error:', error);
+      return c.json({ error: 'Failed to upload file: ' + error.message }, 500);
+    }
+
+    // Get signed URL
+    const { data: signedUrlData } = await supabase.storage
+      .from(KYC_BUCKET)
+      .createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year
+
+    if (!signedUrlData?.signedUrl) {
+      return c.json({ error: 'Failed to get signed URL' }, 500);
+    }
+
+    console.log('✅ [KYC Upload] File uploaded:', fileName);
+    return c.json({ url: signedUrlData.signedUrl });
+  } catch (error) {
+    console.error('❌ [KYC Upload] Error:', error);
+    return c.json({ error: 'Failed to upload file' }, 500);
+  }
+});
+
 // Submit KYC verification
 app.post("/make-server-215f78a5/kyc/submit", async (c) => {
   try {
