@@ -1,61 +1,7 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { 
-  Briefcase, 
-  PlusCircle, 
-  UserCircle, 
-  WalletIcon, 
-  MessageSquare,
-  Crown,
-  AlertCircle,
-  Loader2,
-  Shield,
-  FileText,
-  Info
-} from 'lucide-react';
-import { useLanguage } from '../lib/LanguageContext';
-import { useAuth } from '../contexts/AuthContext';
-import { useView } from '../contexts/ViewContext';
-import { translations, getTranslation } from '../lib/translations';
-import { fetchWithRetry, parseJsonResponse } from '../lib/apiErrorHandler';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
-
-// Dashboard components
-import { BrandPreview } from './BrandPreview';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { MembershipCard } from './MembershipCard';
-import { TeamInvitations } from './TeamInvitations';
-import { TeamManagement } from './TeamManagement';
-import { TransactionStats } from './TransactionStats';
-import { DiagnosticPanel } from './DiagnosticPanel';
-import { ProjectList } from './ProjectList';
-import { Wallet } from './Wallet';
-import { WithdrawalRequest } from './WithdrawalRequest';
-import { WithdrawalHistory } from './WithdrawalHistory';
-import { InvoiceList } from './InvoiceList';
-import { InvoiceManager } from './InvoiceManager';
-import { TransactionHistory } from './TransactionHistory';
-import { BankAccountManager } from './BankAccountManager';
-import { KYCVerification } from './KYCVerification';
-import { MessageList } from './MessageList';
-import { PasswordManagement } from './PasswordManagement';
-import { RoleSwitcher } from './RoleSwitcher';
-import { NotificationPreferences } from './NotificationPreferences';
-import { PaymentMethodsCard } from './PaymentMethodsCard';
-import { UsageLimitsCard } from './UsageLimitsCard';
-import { MyProposals } from './MyProposals';
-import { UserProfile } from './UserProfile';
-import { EnterpriseFeaturesPanel } from './EnterpriseFeaturesPanel';
-import { EnterpriseChat } from './EnterpriseChat';
-import { ExchangeRateIndicator } from './ExchangeRateIndicator';
-import { QuickSubscriptionCheck } from './QuickSubscriptionCheck';
-import { ContractManager } from './ContractManager';
-import { UnifiedInvoiceManager } from './UnifiedInvoiceManager';
-import { SLAMonitoring } from './SLAMonitoring';
 import { BrandingSettings } from './BrandingSettings';
 import { PostProjectDialog } from './PostProjectDialog';
+import { InternalTransfer } from './InternalTransfer';
+import { TransferHistory } from './TransferHistory';
 // ❌ 移除：管理員面板應該是全局浮動按鈕，不應該在 Dashboard 內部
 // import { AdminPanel } from './AdminPanel';
 import { isAdmin } from '../lib/adminConfig';
@@ -616,6 +562,8 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
           <KYCVerification />
           <WithdrawalRequest />
           <WithdrawalHistory />
+          <InternalTransfer />
+          <TransferHistory />
         </TabsContent>
 
         <TabsContent value="invoices" className="space-y-6">

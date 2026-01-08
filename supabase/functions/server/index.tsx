@@ -21,6 +21,7 @@ import { registerECPayRoutes } from "./ecpay_payment_service.tsx";
 import * as deliverableEmails from "./email_templates_deliverables.tsx";
 import { EXCHANGE_RATES, toUSD, getExchangeRates } from "./exchange_rates.tsx";
 import { registerInternationalPayoutRoutes } from "./international_payout_service.tsx";
+import { registerInternalTransferRoutes } from "./internal_transfer_service.tsx";
 import { registerSubscriptionNotificationRoutes, checkSubscriptionsAndNotify } from "./subscription_notification_service.tsx";
 import { sendTeamInvitationEmail } from "./email_team_invitation.tsx";
 import { sendPasswordResetOTP, verifyPasswordResetOTP } from "./password_reset_service.tsx";
@@ -483,6 +484,10 @@ console.log('✅ [SERVER] ECPay payment APIs registered');
 // Register International Payout APIs
 registerInternationalPayoutRoutes(app);
 console.log('✅ [SERVER] International payout APIs registered');
+
+// Register Internal Transfer APIs
+registerInternalTransferRoutes(app);
+console.log('✅ [SERVER] Internal transfer APIs registered');
 
 // Register Milestone Management APIs
 app.route('/make-server-215f78a5', milestoneRoutes);
@@ -11498,7 +11503,7 @@ app.post("/make-server-215f78a5/test-deposit-email", async (c) => {
       emailHtml = injectBranding(emailHtml, branding);
     }
     
-    console.log(`🧪 [TEST] Email template generated, length: ${emailHtml.length} chars`);
+    console.log(`��� [TEST] Email template generated, length: ${emailHtml.length} chars`);
 
     // Send email
     console.log(`🧪 [TEST] Sending email to ${recipientEmail}...`);
