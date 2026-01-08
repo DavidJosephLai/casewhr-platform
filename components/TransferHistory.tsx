@@ -135,12 +135,21 @@ export function TransferHistory() {
         console.log('📊 [TransferHistory] Received data:', data); // 🔍 調試日誌
         console.log('📊 [TransferHistory] Sent count:', data?.sent?.length || 0); // 🔍 調試日誌
         console.log('📊 [TransferHistory] Received count:', data?.received?.length || 0); // 🔍 調試日誌
+        console.log('📊 [TransferHistory] Sent is Array?', Array.isArray(data?.sent)); // 🔍 新增
+        console.log('📊 [TransferHistory] Received is Array?', Array.isArray(data?.received)); // 🔍 新增
+        console.log('📊 [TransferHistory] Full sent data:', JSON.stringify(data?.sent).substring(0, 500)); // 🔍 新增
+        console.log('📊 [TransferHistory] Full received data:', JSON.stringify(data?.received).substring(0, 500)); // 🔍 新增
         
         // ✅ 確保數據結構正確
-        setHistory({
+        const newHistory = {
           sent: Array.isArray(data?.sent) ? data.sent : [],
           received: Array.isArray(data?.received) ? data.received : []
-        });
+        };
+        
+        console.log('📊 [TransferHistory] Setting history state:', newHistory); // 🔍 新增
+        setHistory(newHistory);
+        
+        console.log('📊 [TransferHistory] State updated. Sent:', newHistory.sent.length, 'Received:', newHistory.received.length); // 🔍 新增
       } else {
         // 如果 API 失敗，設置空數組
         console.error('Failed to fetch transfer history:', response.status);
