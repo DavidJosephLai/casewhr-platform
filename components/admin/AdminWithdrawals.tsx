@@ -188,6 +188,8 @@ export function AdminWithdrawals() {
 
     setLoading(true);
     try {
+      console.log('🔍 [AdminWithdrawals] Fetching withdrawals...');
+      
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/admin/withdrawals`,
         {
@@ -197,12 +199,28 @@ export function AdminWithdrawals() {
         }
       );
 
+      console.log('📡 [AdminWithdrawals] Response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('📊 [AdminWithdrawals] Received withdrawals:', data.withdrawals?.length || 0);
+        
+        if (data.withdrawals && data.withdrawals.length > 0) {
+          console.log('📝 [AdminWithdrawals] Latest withdrawal:', {
+            id: data.withdrawals[0].id,
+            amount: data.withdrawals[0].amount,
+            status: data.withdrawals[0].status,
+            created_at: data.withdrawals[0].created_at
+          });
+        }
+        
         setWithdrawals(data.withdrawals || []);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ [AdminWithdrawals] Error response:', response.status, errorData);
       }
     } catch (error) {
-      console.error('Error fetching withdrawals:', error);
+      console.error('❌ [AdminWithdrawals] Error fetching withdrawals:', error);
     } finally {
       setLoading(false);
     }
