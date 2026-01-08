@@ -19,7 +19,7 @@ import { Hono } from "npm:hono";
 import * as kv from "./kv_store.tsx";
 import { createClient } from "npm:@supabase/supabase-js";
 import { toUSD, EXCHANGE_RATES } from "./exchange_rates.tsx";
-import * as smartEmailSender from "./smart_email_sender.tsx";
+import { sendEmail } from "./email_service.tsx";
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
@@ -214,52 +214,68 @@ async function sendTransferNotifications(
     const senderName = senderProfile?.name || 'Unknown User';
     const recipientEmail = recipientProfile?.email || 'unknown';
     const recipientName = recipientProfile?.name || 'Unknown User';
+    const senderLanguage = senderProfile?.preferred_language || 'en';
+    const recipientLanguage = recipientProfile?.preferred_language || 'en';
 
-    // 發送給發送方的確認郵件
-    await smartEmailSender.sendSmartEmail({
-      to: [senderEmail],
-      templateType: 'custom',
-      language: senderProfile?.preferred_language || 'en',
-      data: {
-        subject: '✅ Transfer Sent Successfully | 轉帳成功',
-        title: 'Transfer Confirmation',
-        content: `
-          <p>Your transfer has been completed successfully.</p>
-          <ul>
-            <li><strong>Recipient:</strong> ${recipientName} (${recipientEmail})</li>
-            <li><strong>Amount:</strong> $${amount.toFixed(2)} USD</li>
-            <li><strong>Fee:</strong> $${fee.toFixed(2)} USD</li>
-            <li><strong>Total Deducted:</strong> $${(amount + fee).toFixed(2)} USD</li>
-            <li><strong>Note:</strong> ${note || 'N/A'}</li>
-            <li><strong>Transfer ID:</strong> ${transferId}</li>
-          </ul>
-        `,
-        cta_text: 'View Transaction History',
-        cta_url: 'https://casewhr.com/dashboard?tab=wallet'
-      }
+    // 📧 發送給發送方的確認郵件
+    const senderSubject = senderLanguage === 'zh' 
+      ? '✅ 轉帳成功' 
+      : '✅ Transfer Sent Successfully';
+    
+    const senderHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #2563eb;">${senderLanguage === 'zh' ? '轉帳確認' : 'Transfer Confirmation'}</h2>
+        <p>${senderLanguage === 'zh' ? '您的轉帳已成功完成。' : 'Your transfer has been completed successfully.'}</p>
+        <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 5px 0;"><strong>${senderLanguage === 'zh' ? '收款人' : 'Recipient'}:</strong> ${recipientName} (${recipientEmail})</p>
+          <p style="margin: 5px 0;"><strong>${senderLanguage === 'zh' ? '金額' : 'Amount'}:</strong> $${amount.toFixed(2)} USD</p>
+          <p style="margin: 5px 0;"><strong>${senderLanguage === 'zh' ? '手續費' : 'Fee'}:</strong> $${fee.toFixed(2)} USD</p>
+          <p style="margin: 5px 0;"><strong>${senderLanguage === 'zh' ? '總扣款' : 'Total Deducted'}:</strong> $${(amount + fee).toFixed(2)} USD</p>
+          <p style="margin: 5px 0;"><strong>${senderLanguage === 'zh' ? '備註' : 'Note'}:</strong> ${note || 'N/A'}</p>
+          <p style="margin: 5px 0;"><strong>${senderLanguage === 'zh' ? '轉帳 ID' : 'Transfer ID'}:</strong> ${transferId}</p>
+        </div>
+        <a href="https://casewhr.com/dashboard?tab=wallet" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 10px;">
+          ${senderLanguage === 'zh' ? '查看交易記錄' : 'View Transaction History'}
+        </a>
+      </div>
+    `;
+
+    await sendEmail({
+      to: senderEmail,
+      subject: senderSubject,
+      html: senderHtml,
+      language: senderLanguage as 'en' | 'zh',
+      emailType: 'notification'
     });
 
-    // 發送給接收方的到帳通知
-    await smartEmailSender.sendSmartEmail({
-      to: [recipientEmail],
-      templateType: 'custom',
-      language: recipientProfile?.preferred_language || 'en',
-      data: {
-        subject: '💰 You Received a Transfer | 您收到一筆轉帳',
-        title: 'Transfer Received',
-        content: `
-          <p>You have received a transfer from ${senderName}.</p>
-          <ul>
-            <li><strong>From:</strong> ${senderName} (${senderEmail})</li>
-            <li><strong>Amount:</strong> $${amount.toFixed(2)} USD</li>
-            <li><strong>Note:</strong> ${note || 'N/A'}</li>
-            <li><strong>Transfer ID:</strong> ${transferId}</li>
-          </ul>
-          <p>The amount has been added to your wallet balance.</p>
-        `,
-        cta_text: 'View Your Wallet',
-        cta_url: 'https://casewhr.com/dashboard?tab=wallet'
-      }
+    // 📧 發送給接收方的到帳通知
+    const recipientSubject = recipientLanguage === 'zh' 
+      ? '💰 您收到一筆轉帳' 
+      : '💰 You Received a Transfer';
+    
+    const recipientHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #16a34a;">${recipientLanguage === 'zh' ? '收到轉帳' : 'Transfer Received'}</h2>
+        <p>${recipientLanguage === 'zh' ? `您收到了來自 ${senderName} 的轉帳。` : `You have received a transfer from ${senderName}.`}</p>
+        <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 5px 0;"><strong>${recipientLanguage === 'zh' ? '發送人' : 'From'}:</strong> ${senderName} (${senderEmail})</p>
+          <p style="margin: 5px 0;"><strong>${recipientLanguage === 'zh' ? '金額' : 'Amount'}:</strong> $${amount.toFixed(2)} USD</p>
+          <p style="margin: 5px 0;"><strong>${recipientLanguage === 'zh' ? '備註' : 'Note'}:</strong> ${note || 'N/A'}</p>
+          <p style="margin: 5px 0;"><strong>${recipientLanguage === 'zh' ? '轉帳 ID' : 'Transfer ID'}:</strong> ${transferId}</p>
+        </div>
+        <p>${recipientLanguage === 'zh' ? '金額已添加到您的錢包餘額中。' : 'The amount has been added to your wallet balance.'}</p>
+        <a href="https://casewhr.com/dashboard?tab=wallet" style="display: inline-block; background: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 10px;">
+          ${recipientLanguage === 'zh' ? '查看錢包' : 'View Your Wallet'}
+        </a>
+      </div>
+    `;
+
+    await sendEmail({
+      to: recipientEmail,
+      subject: recipientSubject,
+      html: recipientHtml,
+      language: recipientLanguage as 'en' | 'zh',
+      emailType: 'notification'
     });
 
     console.log(`📧 [Transfer] Notifications sent for transfer ${transferId}`);
@@ -289,8 +305,8 @@ export async function executeInternalTransfer(
     console.log(`💸 [Transfer] Starting transfer from ${senderId} to ${recipientEmail}, amount: $${amount}`);
     // 🔍 診斷：顯示完整的發送方資訊
     console.log(`🔍 [Transfer DEBUG] Sender ID: ${senderId}`);
-    console.log(`🔍 [Transfer DEBUG] Wallet Key: wallet:${senderId}`);
-    const debugWallet = await kv.get(`wallet:${senderId}`);
+    console.log(`🔍 [Transfer DEBUG] Wallet Key: wallet_${senderId}`);
+    const debugWallet = await kv.get(`wallet_${senderId}`);
     console.log(`🔍 [Transfer DEBUG] Wallet Data:`, JSON.stringify(debugWallet, null, 2));
     
     // 嘗試查找發送方的 profile
@@ -362,7 +378,7 @@ export async function executeInternalTransfer(
     });
 
     // 6. 檢查發送方餘額
-    const senderWallet = await kv.get(`wallet:${senderId}`);
+    const senderWallet = await kv.get(`wallet_${senderId}`);
     if (!senderWallet || senderWallet.available_balance < totalDeduction) {
       return { 
         success: false, 
@@ -384,7 +400,7 @@ export async function executeInternalTransfer(
     const timestamp = new Date().toISOString();
 
     // 8a. 扣除發送方餘額（金額 + 手續費）
-    await kv.set(`wallet:${senderId}`, {
+    await kv.set(`wallet_${senderId}`, {
       ...senderWallet,
       available_balance: senderWallet.available_balance - totalDeduction
     });
@@ -392,12 +408,12 @@ export async function executeInternalTransfer(
     console.log(`✅ [Transfer] Deducted $${totalDeduction} from sender ${senderId}`);
 
     // 8b. 增加接收方餘額（僅金額，不包含手續費）
-    const recipientWallet = await kv.get(`wallet:${recipientId}`) || {
+    const recipientWallet = await kv.get(`wallet_${recipientId}`) || {
       available_balance: 0,
       pending_withdrawal: 0
     };
 
-    await kv.set(`wallet:${recipientId}`, {
+    await kv.set(`wallet_${recipientId}`, {
       ...recipientWallet,
       available_balance: recipientWallet.available_balance + amount
     });
@@ -472,10 +488,17 @@ export async function getTransferHistory(userId: string): Promise<{
   received: any[];
 }> {
   try {
+    console.log(`📊 [Transfer History] Fetching history for user: ${userId}`);
+    
     const [sent, received] = await Promise.all([
       kv.get(`transfers_sent:${userId}`) || [],
       kv.get(`transfers_received:${userId}`) || []
     ]);
+
+    console.log(`📊 [Transfer History] Sent count: ${Array.isArray(sent) ? sent.length : 'Not an array'}`);
+    console.log(`📊 [Transfer History] Received count: ${Array.isArray(received) ? received.length : 'Not an array'}`);
+    console.log(`📊 [Transfer History] Sent data:`, JSON.stringify(sent).substring(0, 200));
+    console.log(`📊 [Transfer History] Received data:`, JSON.stringify(received).substring(0, 200));
 
     return { sent, received };
   } catch (error) {
