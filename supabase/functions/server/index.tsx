@@ -342,6 +342,9 @@ async function initializeStorage() {
 // Initialize storage on server start
 (async () => {
   try {
+    // Initialize KYC and other buckets
+    await initializeStorage();
+    
     // Only use fileService initialization to avoid conflicts
     const storageReady = await fileService.initializeBuckets();
     STORAGE_AVAILABLE = storageReady || false;

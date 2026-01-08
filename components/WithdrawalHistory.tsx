@@ -45,10 +45,10 @@ export const WithdrawalHistory = memo(function WithdrawalHistory() {
   const [totalPages, setTotalPages] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  // 數據庫存儲貨幣 (統一為 TWD)
-  const storedCurrency: Currency = 'TWD';
+  // 數據庫存儲貨幣 (統一為 USD)
+  const storedCurrency: Currency = 'USD';
   // 根據語言選擇顯示貨幣
-  const displayCurrency: Currency = language === 'zh' ? 'TWD' : 'USD';
+  const displayCurrency: Currency = language === 'zh' ? 'TWD' : language === 'zh-CN' ? 'CNY' : 'USD';
   
   // 轉換並格式化金額的輔助函數
   const displayAmount = (amount: number): string => {
@@ -76,6 +76,12 @@ export const WithdrawalHistory = memo(function WithdrawalHistory() {
         completed: 'Completed',
         rejected: 'Rejected',
       },
+      statusDescriptions: {
+        pending: 'Your request is being reviewed',
+        processing: 'Transfer is being processed',
+        completed: 'Transferred to your account',
+        rejected: 'Request was declined',
+      },
       refresh: 'Refresh',
     },
     'zh-TW': {
@@ -83,6 +89,8 @@ export const WithdrawalHistory = memo(function WithdrawalHistory() {
       description: '查看您的提現申請',
       noWithdrawals: '沒有提現記錄',
       amount: '金額',
+      fee: '手續費',
+      netAmount: '實際到帳',
       method: '提現方式',
       status: '狀態',
       date: '申請日期',
@@ -91,6 +99,12 @@ export const WithdrawalHistory = memo(function WithdrawalHistory() {
         approved: '已批准',
         completed: '已完成',
         rejected: '已拒絕',
+      },
+      statusDescriptions: {
+        pending: '您的申請正在審核中',
+        processing: '轉帳處理中',
+        completed: '已轉帳至您的帳戶',
+        rejected: '申請已被拒絕',
       },
       types: {
         bank: '銀行轉帳',
@@ -103,6 +117,8 @@ export const WithdrawalHistory = memo(function WithdrawalHistory() {
       description: '查看您的提现申请',
       noWithdrawals: '没有提现记录',
       amount: '金额',
+      fee: '手续费',
+      netAmount: '实际到账',
       method: '提现方式',
       status: '状态',
       date: '申请日期',
@@ -111,6 +127,12 @@ export const WithdrawalHistory = memo(function WithdrawalHistory() {
         approved: '已批准',
         completed: '已完成',
         rejected: '已拒绝',
+      },
+      statusDescriptions: {
+        pending: '您的申请正在审核中',
+        processing: '转账处理中',
+        completed: '已转账至您的账户',
+        rejected: '申请已被拒绝',
       },
       types: {
         bank: '银行转账',
@@ -274,6 +296,26 @@ export const WithdrawalHistory = memo(function WithdrawalHistory() {
                     <div className="text-sm text-gray-500 space-y-1">
                       <p>{formatDate(withdrawal.created_at)}</p>
                       <p className="text-xs">{withdrawal.method_details}</p>
+                      {withdrawal.status === 'completed' && (
+                        <p className="text-xs text-green-600 font-medium">
+                          ✓ {t.statusDescriptions.completed}
+                        </p>
+                      )}
+                      {withdrawal.status === 'pending' && (
+                        <p className="text-xs text-yellow-600">
+                          ⏳ {t.statusDescriptions.pending}
+                        </p>
+                      )}
+                      {withdrawal.status === 'processing' && (
+                        <p className="text-xs text-blue-600">
+                          ⚡ {t.statusDescriptions.processing}
+                        </p>
+                      )}
+                      {withdrawal.status === 'rejected' && (
+                        <p className="text-xs text-red-600">
+                          ✗ {t.statusDescriptions.rejected}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
