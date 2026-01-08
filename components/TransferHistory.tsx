@@ -90,6 +90,18 @@ export function TransferHistory() {
 
   useEffect(() => {
     fetchTransferHistory();
+    
+    // 🔄 監聽錢包更新事件，自動刷新轉帳歷史
+    const handleWalletUpdate = () => {
+      console.log('🔄 [TransferHistory] Wallet updated, refreshing transfer history...');
+      fetchTransferHistory();
+    };
+    
+    window.addEventListener('wallet-updated', handleWalletUpdate);
+    
+    return () => {
+      window.removeEventListener('wallet-updated', handleWalletUpdate);
+    };
   }, [accessToken]);
 
   const fetchTransferHistory = async () => {
@@ -129,14 +141,31 @@ export function TransferHistory() {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString(language === 'zh-CN' ? 'zh-CN' : language === 'zh-TW' ? 'zh-TW' : 'en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      // 🐛 修復：先檢查是否是有效的日期字符串
+      if (!dateString) {
+        return language === 'en' ? 'Invalid Date' : '無效日期';
+      }
+      
+      const date = new Date(dateString);
+      
+      // 檢查日期是否有效
+      if (isNaN(date.getTime())) {
+        console.warn('⚠️ [TransferHistory] Invalid date:', dateString);
+        return language === 'en' ? 'Invalid Date' : '無效日期';
+      }
+      
+      return date.toLocaleString(language === 'zh-CN' ? 'zh-CN' : language === 'zh-TW' ? 'zh-TW' : 'en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('❌ [TransferHistory] Error formatting date:', error);
+      return language === 'en' ? 'Invalid Date' : '無效日期';
+    }
   };
 
   if (loading) {

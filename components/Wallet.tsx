@@ -174,10 +174,17 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
       loadWalletData();
     };
 
+    const handleWalletUpdated = () => {
+      console.log('🔄 [Wallet] Received wallet-updated event, reloading data...');
+      loadWalletData();
+    };
+
     window.addEventListener('refreshWallet', handleRefreshWallet);
+    window.addEventListener('wallet-updated', handleWalletUpdated); // ✅ 添加新事件監聽
     
     return () => {
       window.removeEventListener('refreshWallet', handleRefreshWallet);
+      window.removeEventListener('wallet-updated', handleWalletUpdated);
     };
   }, [user?.id, accessToken]); // 依賴於 user 和 token
 

@@ -404,12 +404,23 @@ export async function executeInternalTransfer(
       pending_withdrawal: 0
     };
 
+    console.log(`📊 [Transfer] Recipient ${recipientId} wallet BEFORE:`, recipientWallet);
+
     await kv.set(`wallet_${recipientId}`, {
       ...recipientWallet,
-      available_balance: recipientWallet.available_balance + amount
+      available_balance: (recipientWallet.available_balance || 0) + amount
     });
 
+    // 🐛 診斷：立即驗證錢包是否更新成功
+    const updatedRecipientWallet = await kv.get(`wallet_${recipientId}`);
     console.log(`✅ [Transfer] Added $${amount} to recipient ${recipientId}`);
+    console.log(`📊 [Transfer] Recipient wallet AFTER:`, updatedRecipientWallet);
+    console.log(`💰 [Transfer] Recipient new balance should be: $${(recipientWallet.available_balance || 0) + amount}`);
+    
+    // 驗證餘額是否正確
+    if (updatedRecipientWallet && updatedRecipientWallet.available_balance !== (recipientWallet.available_balance || 0) + amount) {
+      console.error(`❌ [Transfer] WALLET UPDATE FAILED! Expected: $${(recipientWallet.available_balance || 0) + amount}, Got: $${updatedRecipientWallet.available_balance}`);
+    }
 
     // 8c. 記錄轉帳交易
     const transferRecord = {
@@ -665,4 +676,61 @@ export function registerInternalTransferRoutes(app: Hono) {
   });
 
   console.log('✅ [Transfer] Internal transfer routes registered');
+}
+
+// 🔍 診斷工具：通過郵箱查找用戶
+export async function findUserByEmail(email: string): Promise<any> {
+  try {
+    console.log(`🔍 [Find User] Searching for: ${email}`);
+    
+    // 1. KV Store 查找
+    const allProfileKeys = await kv.getByPrefix('profile:');
+    const matchedProfile = allProfileKeys.find(profile => 
+      profile.email && profile.email.toLowerCase() === email.toLowerCase()
+    );
+    
+    if (matchedProfile) {
+      const userId = matchedProfile.user_id || matchedProfile.id;
+      console.log(`✅ [Find User] Found in KV: ${userId}`, matchedProfile);
+      
+      // 檢查錢包
+      const wallet = await kv.get(`wallet_${userId}`);
+      console.log(`💰 [Find User] Wallet:`, wallet);
+      
+      return { 
+        found: true, 
+        source: 'kv',
+        userId, 
+        profile: matchedProfile,
+        wallet
+      };
+    }
+    
+    // 2. Supabase 查找
+    const { data: supabaseUser, error } = await supabase
+      .from('profiles')
+      .select('id, email, name')
+      .ilike('email', email)
+      .single();
+    
+    if (supabaseUser && !error) {
+      console.log(`✅ [Find User] Found in Supabase: ${supabaseUser.id}`, supabaseUser);
+      
+      const wallet = await kv.get(`wallet_${supabaseUser.id}`);
+      console.log(`💰 [Find User] Wallet:`, wallet);
+      
+      return { 
+        found: true, 
+        source: 'supabase',
+        userId: supabaseUser.id, 
+        profile: supabaseUser,
+        wallet
+      };
+    }
+    
+    return { found: false, email };
+  } catch (error: any) {
+    console.error('❌ [Find User] Error:', error);
+    return { found: false, error: error.message };
+  }
 }
