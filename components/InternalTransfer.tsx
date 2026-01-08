@@ -32,7 +32,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../lib/LanguageContext';
 import { projectId } from '../utils/supabase/info';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 import { formatCurrency, convertCurrency, type Currency } from '../lib/currency';
 
 interface TransferLimits {
