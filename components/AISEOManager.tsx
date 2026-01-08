@@ -19,7 +19,7 @@ interface AISEOManagerProps {
 
 export function AISEOManager({ onApplySEO }: AISEOManagerProps) {
   const { language } = useLanguage();
-  const { session } = useAuth();
+  const { user, accessToken } = useAuth(); // ✅ 修復：使用 user 和 accessToken 而不是 session
   
   // 表單狀態
   const [pageType, setPageType] = useState('home');
@@ -295,7 +295,11 @@ export function AISEOManager({ onApplySEO }: AISEOManagerProps) {
 
   // 儲存報告到雲端
   const handleSaveToCloud = async () => {
-    if (!session) {
+    // 調試：顯示當前 session 狀態
+    console.log('🔍 Current user:', user);
+    console.log('🔍 Access token:', accessToken ? '✅ Present' : '❌ Missing');
+    
+    if (!user || !accessToken) {
       toast.error(language === 'en' ? 'Please log in to save reports to the cloud' : '請登入以將報告儲存到雲端');
       return;
     }
@@ -315,7 +319,7 @@ export function AISEOManager({ onApplySEO }: AISEOManagerProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ reportData }),
       });
@@ -339,7 +343,7 @@ export function AISEOManager({ onApplySEO }: AISEOManagerProps) {
 
   // 讀取雲端報告
   const handleLoadReports = async () => {
-    if (!session) {
+    if (!user || !accessToken) {
       toast.error(language === 'en' ? 'Please log in to load reports from the cloud' : '請登入以從雲端載入報告');
       return;
     }
@@ -350,7 +354,7 @@ export function AISEOManager({ onApplySEO }: AISEOManagerProps) {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
         },
       });
 
@@ -372,14 +376,14 @@ export function AISEOManager({ onApplySEO }: AISEOManagerProps) {
 
   // 載入單個報告的完整數據
   const handleLoadReport = async (reportId: string) => {
-    if (!session) return;
+    if (!user || !accessToken) return;
 
     try {
       const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai/reports/${reportId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
         },
       });
 
@@ -408,14 +412,14 @@ export function AISEOManager({ onApplySEO }: AISEOManagerProps) {
 
   // 刪除報告
   const handleDeleteReport = async (reportId: string) => {
-    if (!session) return;
+    if (!user || !accessToken) return;
 
     try {
       const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai/reports/${reportId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
         },
       });
 
@@ -859,7 +863,7 @@ export function AISEOManager({ onApplySEO }: AISEOManagerProps) {
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg mb-4">📜 {t.historyTab}</h3>
 
-              {!session ? (
+              {!user ? (
                 <div className="text-center py-8 text-gray-500">
                   <Cloud className="w-12 h-12 mx-auto mb-3 opacity-50" />
                   <p>{language === 'en' ? 'Please log in to access cloud reports' : '請登入以訪問雲端報告'}</p>
