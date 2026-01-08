@@ -11,28 +11,10 @@
  * - 限額提示
  */
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Alert, AlertDescription } from './ui/alert';
-import { Badge } from './ui/badge';
-import { 
-  Send, 
-  User, 
-  DollarSign, 
-  AlertCircle, 
-  CheckCircle, 
-  Loader2,
-  Info,
-  Lock,
-  ArrowRight
-} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../lib/LanguageContext';
 import { projectId } from '../utils/supabase/info';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { formatCurrency, convertCurrency, type Currency } from '../lib/currency';
 
 interface TransferLimits {
