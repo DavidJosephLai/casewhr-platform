@@ -130,10 +130,20 @@ export function TransferHistory() {
 
       if (response.ok) {
         const data = await response.json();
-        setHistory(data);
+        // ✅ 確保數據結構正確
+        setHistory({
+          sent: Array.isArray(data?.sent) ? data.sent : [],
+          received: Array.isArray(data?.received) ? data.received : []
+        });
+      } else {
+        // 如果 API 失敗，設置空數組
+        console.error('Failed to fetch transfer history:', response.status);
+        setHistory({ sent: [], received: [] });
       }
     } catch (error) {
       console.error('Error fetching transfer history:', error);
+      // 發生錯誤時也設置空數組
+      setHistory({ sent: [], received: [] });
     } finally {
       setLoading(false);
     }
@@ -179,11 +189,11 @@ export function TransferHistory() {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="received">
               <ArrowDownLeft className="h-4 w-4 mr-2" />
-              {text.received} ({history.received.length})
+              {text.received} ({history?.received?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="sent">
               <ArrowUpRight className="h-4 w-4 mr-2" />
-              {text.sent} ({history.sent.length})
+              {text.sent} ({history?.sent?.length || 0})
             </TabsTrigger>
           </TabsList>
 
