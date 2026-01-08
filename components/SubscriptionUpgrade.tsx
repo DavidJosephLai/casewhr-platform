@@ -31,7 +31,6 @@ const upgradeTranslations = {
     creditCard: 'Credit Card',
     bank: 'Bank Transfer',
     paypal: 'PayPal',
-    linepay: 'LINE Pay',
     currentBalance: 'Current Balance',
     insufficientBalance: 'Insufficient balance',
     processing: 'Processing...',
@@ -71,7 +70,6 @@ const upgradeTranslations = {
     creditCard: '信用卡',
     bank: '銀行轉帳',
     paypal: 'PayPal',
-    linepay: 'LINE Pay',
     currentBalance: '目前餘額',
     insufficientBalance: '餘額不足',
     processing: '處理中...',
@@ -252,13 +250,6 @@ export function SubscriptionUpgrade({
     { 
       id: 'paypal', 
       name: t.paypal, 
-      icon: CreditCard, 
-      available: false,
-      note: t.externalNote
-    },
-    { 
-      id: 'linepay', 
-      name: t.linepay, 
       icon: CreditCard, 
       available: false,
       note: t.externalNote

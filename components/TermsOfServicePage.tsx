@@ -20,7 +20,7 @@ export function TermsOfServicePage() {
             "Case Where is a global freelancing platform that connects businesses with professional service providers.",
             "Our platform offers subscription-based services with three tiers: Basic (Free), Professional, and Enterprise.",
             "We provide tri-currency support (TWD/USD/CNY) with real-time exchange rate conversion.",
-            "Payment processing is facilitated through PayPal, ECPay (Taiwan), and LINE Pay (Taiwan)."
+            "Payment processing is facilitated through PayPal and ECPay (Taiwan)."
           ]
         },
         {
@@ -148,7 +148,7 @@ export function TermsOfServicePage() {
           title: "12. Third-Party Services",
           icon: AlertCircle,
           content: [
-            "Our platform integrates third-party payment processors (PayPal, ECPay, LINE Pay).",
+            "Our platform integrates third-party payment processors (PayPal, ECPay).",
             "Use of third-party services is subject to their respective terms and policies.",
             "We are not responsible for the actions or policies of third-party service providers.",
             "Exchange rate data is provided by third-party sources and may have delays or inaccuracies."
@@ -200,7 +200,7 @@ export function TermsOfServicePage() {
             "Case Where 是一個全球接案平台，連接企業與專業服務提供者。",
             "我們的平台提供三種訂閱服務：基本版（免費）、專業版和企業版。",
             "我們提供三幣計價支援（TWD/USD/CNY）與即時匯率轉換。",
-            "支付處理透過 PayPal、綠界科技（台灣）和 LINE Pay（台灣）進行。"
+            "支付處理透過 PayPal、綠界科技（台灣）進行。"
           ]
         },
         {
@@ -328,7 +328,7 @@ export function TermsOfServicePage() {
           title: "12. 第三方服務",
           icon: AlertCircle,
           content: [
-            "我們的平台整合了第三方支付處理商（PayPal、綠界科技、LINE Pay）。",
+            "我們的平台整合了第三方支付處理商（PayPal、綠界科技）。",
             "使用第三方服務受其各自條款和政策的約束。",
             "我們不對第三方服務提供商的行為或政策負責。",
             "匯率數據由第三方來源提供，可能存在延遲或不準確。"
@@ -380,7 +380,7 @@ export function TermsOfServicePage() {
             "Case Where 是一个全球接案平台，连接企业与专业服务提供者。",
             "我们的平台提供三种订阅服务：基本版（免费）、专业版和企业版。",
             "我们提供三币计价支持（TWD/USD/CNY）与实时汇率转换。",
-            "支付处理通过 PayPal、绿界科技（台湾）和 LINE Pay（台湾）进行。"
+            "支付处理通过 PayPal、绿界科技（台湾）进行。"
           ]
         },
         {
@@ -508,7 +508,7 @@ export function TermsOfServicePage() {
           title: "12. 第三方服务",
           icon: AlertCircle,
           content: [
-            "我们的平台整合了第三方支付处理商（PayPal、绿界科技、LINE Pay）。",
+            "我们的平台整合了第三方支付处理商（PayPal、绿界科技）。",
             "使用第三方服务受其各自条款和政策的约束。",
             "我们不对第三方服务提供商的行为或政策负责。",
             "汇率数据由第三方来源提供，可能存在延迟或不准确。"

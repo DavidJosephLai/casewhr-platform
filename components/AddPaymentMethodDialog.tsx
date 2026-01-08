@@ -20,7 +20,7 @@ export function AddPaymentMethodDialog({ open, onOpenChange, onSuccess }: AddPay
   const { language } = useLanguage();
   const { user, accessToken } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [paymentType, setPaymentType] = useState<'credit_card' | 'paypal' | 'line_pay'>('credit_card');
+  const [paymentType, setPaymentType] = useState<'credit_card' | 'paypal'>('credit_card');
   
   // Credit card fields
   const [cardNumber, setCardNumber] = useState('');
@@ -31,9 +31,6 @@ export function AddPaymentMethodDialog({ open, onOpenChange, onSuccess }: AddPay
   
   // PayPal fields
   const [paypalEmail, setPaypalEmail] = useState('');
-  
-  // LINE Pay fields
-  const [linePayId, setLinePayId] = useState('');
 
   const formatCardNumber = (value: string) => {
     const cleaned = value.replace(/\s/g, '');
@@ -109,18 +106,6 @@ export function AddPaymentMethodDialog({ open, onOpenChange, onSuccess }: AddPay
         }
         
         body.paypal_email = paypalEmail;
-      } else if (paymentType === 'line_pay') {
-        if (!linePayId) {
-          toast.error(
-            language === 'en' 
-              ? 'Please enter your LINE Pay ID' 
-              : '請輸入您的 LINE Pay ID'
-          );
-          setLoading(false);
-          return;
-        }
-        
-        body.line_pay_id = linePayId;
       }
 
       const response = await fetch(
@@ -149,7 +134,6 @@ export function AddPaymentMethodDialog({ open, onOpenChange, onSuccess }: AddPay
         setExpiryYear('');
         setCvv('');
         setPaypalEmail('');
-        setLinePayId('');
         
         onSuccess();
       } else {
@@ -189,7 +173,6 @@ export function AddPaymentMethodDialog({ open, onOpenChange, onSuccess }: AddPay
               {language === 'en' ? 'Card' : '信用卡'}
             </TabsTrigger>
             <TabsTrigger value="paypal">PayPal</TabsTrigger>
-            <TabsTrigger value="line_pay">LINE Pay</TabsTrigger>
           </TabsList>
 
           <form onSubmit={handleSubmit}>
@@ -297,32 +280,6 @@ export function AddPaymentMethodDialog({ open, onOpenChange, onSuccess }: AddPay
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {language === 'en' ? 'Connect PayPal' : '連接 PayPal'}
-              </Button>
-            </TabsContent>
-
-            <TabsContent value="line_pay" className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="line-pay-id">
-                  {language === 'en' ? 'LINE Pay ID' : 'LINE Pay ID'}
-                </Label>
-                <Input
-                  id="line-pay-id"
-                  placeholder="1234567890"
-                  value={linePayId}
-                  onChange={(e) => setLinePayId(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800">
-                {language === 'en' 
-                  ? 'You will be redirected to LINE Pay to authorize this payment method.' 
-                  : '您將被重定向到 LINE Pay 以授權此支付方式。'}
-              </div>
-
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {language === 'en' ? 'Connect LINE Pay' : '連接 LINE Pay'}
               </Button>
             </TabsContent>
           </form>

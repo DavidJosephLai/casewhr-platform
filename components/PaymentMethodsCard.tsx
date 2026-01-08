@@ -12,7 +12,7 @@ import { toast } from "sonner";
 interface PaymentMethod {
   id: string;
   user_id: string;
-  type: 'credit_card' | 'paypal' | 'line_pay';
+  type: 'credit_card' | 'paypal';
   is_default: boolean;
   created_at: string;
   updated_at: string;
@@ -27,10 +27,6 @@ interface PaymentMethod {
   // PayPal fields
   paypal_email?: string;
   masked_email?: string;
-  
-  // LINE Pay fields
-  line_pay_id?: string;
-  masked_line_pay_id?: string;
 }
 
 export function PaymentMethodsCard() {
@@ -259,18 +255,9 @@ export function PaymentMethodsCard() {
                               </Badge>
                             )}
                           </>
-                        ) : method.type === 'paypal' ? (
-                          <>
-                            <span className="font-medium">PayPal</span>
-                            {method.is_default && (
-                              <Badge variant="default" className="text-xs">
-                                {language === 'en' ? 'Default' : '默認'}
-                              </Badge>
-                            )}
-                          </>
                         ) : (
                           <>
-                            <span className="font-medium">LINE Pay</span>
+                            <span className="font-medium">PayPal</span>
                             {method.is_default && (
                               <Badge variant="default" className="text-xs">
                                 {language === 'en' ? 'Default' : '默認'}
@@ -286,13 +273,9 @@ export function PaymentMethodsCard() {
                           {' • '}
                           {language === 'en' ? 'Expires' : '到期'} {method.expiry_month}/{method.expiry_year}
                         </p>
-                      ) : method.type === 'paypal' ? (
-                        <p className="text-sm text-gray-600 mt-1">
-                          {method.masked_email}
-                        </p>
                       ) : (
                         <p className="text-sm text-gray-600 mt-1">
-                          ID: {method.masked_line_pay_id || '•••••'}
+                          {method.masked_email}
                         </p>
                       )}
                     </div>

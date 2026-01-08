@@ -1447,18 +1447,6 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
                 </>
               )}
             </div>
-            
-            {/* Row 3: LINE Pay (佔滿寬度) */}
-            <div className="w-full">
-              <Button 
-                variant="outline"
-                disabled
-                className="w-full bg-gray-50 border-2 border-dashed border-gray-300 cursor-not-allowed opacity-60"
-              >
-                <span className="text-gray-400">LINE Pay</span>
-                <span className="ml-2 text-xs text-gray-400">(即將推出)</span>
-              </Button>
-            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

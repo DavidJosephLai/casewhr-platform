@@ -21,7 +21,6 @@ import { registerECPayRoutes } from "./ecpay_payment_service.tsx";
 import * as deliverableEmails from "./email_templates_deliverables.tsx";
 import { EXCHANGE_RATES, toUSD, getExchangeRates } from "./exchange_rates.tsx";
 import { registerInternationalPayoutRoutes } from "./international_payout_service.tsx";
-import { registerLinePayRoutes } from "./linepay_service.tsx";
 import { registerSubscriptionNotificationRoutes, checkSubscriptionsAndNotify } from "./subscription_notification_service.tsx";
 import { sendTeamInvitationEmail } from "./email_team_invitation.tsx";
 import { sendPasswordResetOTP, verifyPasswordResetOTP } from "./password_reset_service.tsx";
@@ -544,10 +543,6 @@ console.log('✅ [SERVER] AI SEO APIs registered');
 // Register Invoice Management APIs
 app.route('/make-server-215f78a5', invoiceService.default);
 console.log('✅ [SERVER] Invoice management APIs registered');
-
-// Register LINE Pay APIs
-registerLinePayRoutes(app);
-console.log('✅ [SERVER] LINE Pay APIs registered');
 
 // Register Subscription Notification APIs
 registerSubscriptionNotificationRoutes(app);
@@ -5686,9 +5681,9 @@ app.post("/make-server-215f78a5/payment-methods", async (c) => {
     }
 
     const body = await c.req.json();
-    const { type, card_number, expiry_month, expiry_year, cvv, cardholder_name, paypal_email, line_pay_id } = body;
+    const { type, card_number, expiry_month, expiry_year, cvv, cardholder_name, paypal_email } = body;
 
-    if (!['credit_card', 'paypal', 'line_pay'].includes(type)) {
+    if (!['credit_card', 'paypal'].includes(type)) {
       return c.json({ error: 'Invalid payment method type' }, 400);
     }
 
@@ -5711,10 +5706,6 @@ app.post("/make-server-215f78a5/payment-methods", async (c) => {
       // Basic email validation
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paypal_email)) {
         return c.json({ error: 'Invalid email format' }, 400);
-      }
-    } else if (type === 'line_pay') {
-      if (!line_pay_id) {
-        return c.json({ error: 'LINE Pay ID is required' }, 400);
       }
     }
 
@@ -5766,17 +5757,6 @@ app.post("/make-server-215f78a5/payment-methods", async (c) => {
         ...paymentMethod,
         paypal_email: paypal_email,
         masked_email: maskedEmail,
-      };
-    } else if (type === 'line_pay') {
-      // Mask LINE Pay ID (show first 3 and last 3 digits)
-      const maskedId = line_pay_id.length > 6 
-        ? line_pay_id.substring(0, 3) + '***' + line_pay_id.substring(line_pay_id.length - 3)
-        : '***';
-      
-      paymentMethod = {
-        ...paymentMethod,
-        line_pay_id: line_pay_id,
-        masked_line_pay_id: maskedId,
       };
     }
 
