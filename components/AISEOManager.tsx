@@ -179,12 +179,19 @@ export function AISEOManager({ onApplySEO }: AISEOManagerProps) {
 
   const t = translations[language] || translations['zh-TW'];
 
-  // 自動分析當前內容
+  // 自動分析當前內容 - 使用防抖避免頻繁觸發
   useEffect(() => {
-    if (currentTitle || currentDescription || currentKeywords) {
-      const result = analyzeLocalSEO(currentTitle, currentDescription, currentKeywords);
-      setAnalysis(result);
-    }
+    // 添加 500ms 防抖，避免輸入時頁面跳動
+    const debounceTimer = setTimeout(() => {
+      if (currentTitle || currentDescription || currentKeywords) {
+        const keywordsArray = currentKeywords.split(',').map(k => k.trim()).filter(k => k);
+        const result = analyzeLocalSEO(currentTitle, currentDescription, keywordsArray);
+        setAnalysis(result);
+      }
+    }, 500);
+
+    // 清理計時器
+    return () => clearTimeout(debounceTimer);
   }, [currentTitle, currentDescription, currentKeywords]);
 
   // 處理 AI 生成
