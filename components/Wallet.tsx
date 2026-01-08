@@ -486,6 +486,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
           language,
           projectId,
           publicAnonKey,
+          accessToken, // 🔧 傳入用戶的 accessToken
           loadWalletData,
           toast,
         });

@@ -14,6 +14,7 @@ export const handleECPayCallback = async ({
   language,
   projectId,
   publicAnonKey,
+  accessToken, // 🔧 新增：使用用戶的 accessToken
   loadWalletData,
   toast,
 }: {
@@ -21,6 +22,7 @@ export const handleECPayCallback = async ({
   language: string;
   projectId: string;
   publicAnonKey: string;
+  accessToken: string | null; // 🔧 新增參數
   loadWalletData: () => Promise<void>;
   toast: any;
 }) => {
@@ -29,13 +31,17 @@ export const handleECPayCallback = async ({
   // 🚀 優化 1：先重新載入錢包數據（ECPay 回調可能已經完成）
   await loadWalletData();
   
+  // 🔧 決定使用哪個 token（優先使用 accessToken，回退到 publicAnonKey）
+  const authToken = accessToken || publicAnonKey;
+  console.log('🔑 [ECPay] Using auth token:', accessToken ? 'User accessToken' : 'Public anonKey');
+  
   try {
-    // 查詢付款狀態（使用 publicAnonKey，因為這是公開 API）
+    // 查詢付款狀態
     const response = await fetch(
       `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay-payments/by-order/${orderId}`,
       {
         headers: {
-          'Authorization': `Bearer ${publicAnonKey}`,
+          'Authorization': `Bearer ${authToken}`,
         },
       }
     );
@@ -90,7 +96,7 @@ export const handleECPayCallback = async ({
               `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay-payments/by-order/${orderId}`,
               {
                 headers: {
-                  'Authorization': `Bearer ${publicAnonKey}`,
+                  'Authorization': `Bearer ${authToken}`,
                 },
               }
             );
