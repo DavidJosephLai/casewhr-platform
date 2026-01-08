@@ -24,6 +24,8 @@ interface TransferRecord {
   id: string;
   from_user_id: string;
   to_user_id: string;
+  from_email?: string;  // 🔄 新增：發送者 email
+  to_email?: string;    // 🔄 新增：接收者 email
   amount: number;
   fee: number;
   total_deduction: number;
@@ -228,7 +230,7 @@ export function TransferHistory() {
                       <ArrowUpRight className="h-5 w-5 text-orange-600" />
                       <div>
                         <div className="font-medium text-orange-900">
-                          {text.to} {transfer.to_user_id.substring(0, 8)}...
+                          {text.to} {transfer.to_email || transfer.to_user_id.substring(0, 8) + '...'}
                         </div>
                         <div className="text-xs text-gray-600 flex items-center gap-1 mt-1">
                           <Calendar className="h-3 w-3" />
@@ -295,7 +297,7 @@ export function TransferHistory() {
                       <ArrowDownLeft className="h-5 w-5 text-green-600" />
                       <div>
                         <div className="font-medium text-green-900">
-                          {text.from} {transfer.from_user_id.substring(0, 8)}...
+                          {text.from} {transfer.from_email || transfer.from_user_id.substring(0, 8) + '...'}
                         </div>
                         <div className="text-xs text-gray-600 flex items-center gap-1 mt-1">
                           <Calendar className="h-3 w-3" />

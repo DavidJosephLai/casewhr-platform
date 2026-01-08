@@ -505,14 +505,35 @@ export async function getTransferHistory(userId: string): Promise<{
     const sentArray = Array.isArray(sent) ? sent : [];
     const receivedArray = Array.isArray(received) ? received : [];
 
-    console.log(`📊 [Transfer History] Sent count: ${sentArray.length}`);
-    console.log(`📊 [Transfer History] Received count: ${receivedArray.length}`);
-    console.log(`📊 [Transfer History] Sent data:`, JSON.stringify(sentArray).substring(0, 200));
-    console.log(`📊 [Transfer History] Received data:`, JSON.stringify(receivedArray).substring(0, 200));
+    // 🔄 為每筆轉帳添加對方的 email
+    const enrichedSent = await Promise.all(
+      sentArray.map(async (transfer) => {
+        const recipientProfile = await kv.get(`profile:${transfer.to_user_id}`);
+        return {
+          ...transfer,
+          to_email: recipientProfile?.email || 'Unknown'
+        };
+      })
+    );
+
+    const enrichedReceived = await Promise.all(
+      receivedArray.map(async (transfer) => {
+        const senderProfile = await kv.get(`profile:${transfer.from_user_id}`);
+        return {
+          ...transfer,
+          from_email: senderProfile?.email || 'Unknown'
+        };
+      })
+    );
+
+    console.log(`📊 [Transfer History] Sent count: ${enrichedSent.length}`);
+    console.log(`📊 [Transfer History] Received count: ${enrichedReceived.length}`);
+    console.log(`📊 [Transfer History] Sent data:`, JSON.stringify(enrichedSent).substring(0, 200));
+    console.log(`📊 [Transfer History] Received data:`, JSON.stringify(enrichedReceived).substring(0, 200));
 
     return { 
-      sent: sentArray, 
-      received: receivedArray 
+      sent: enrichedSent, 
+      received: enrichedReceived 
     };
   } catch (error) {
     console.error('❌ [Transfer] Error getting transfer history:', error);
