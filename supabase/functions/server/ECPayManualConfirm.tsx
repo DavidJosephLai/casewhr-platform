@@ -1,0 +1,393 @@
+import { useState } from 'react';
+import { useLanguage } from '../lib/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
+import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { toast } from 'sonner';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Badge } from './ui/badge';
+import { Loader2, CheckCircle2, XCircle, RefreshCw, DollarSign } from 'lucide-react';
+
+interface ECPayPayment {
+  id: string;
+  user_email: string;
+  payment_type: string;
+  amount_twd: number;
+  amount_usd: number;
+  status: string;
+  ecpay_transaction_id: string;
+  notes: string;
+  created_at: string;
+}
+
+export function ECPayManualConfirm() {
+  const { language } = useLanguage();
+  const { user, accessToken } = useAuth();
+  const [orderId, setOrderId] = useState('');
+  const [payments, setPayments] = useState<ECPayPayment[]>([]);
+  const [showPayments, setShowPayments] = useState(false);
+  // 🚀 優化：移除全局 loading，改用局部狀態
+  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
+
+  const getHeaders = () => {
+    const isDevMode = accessToken?.startsWith('dev-user-');
+    return isDevMode
+      ? { 
+          'X-Dev-Token': accessToken,
+          'Authorization': `Bearer ${publicAnonKey}`
+        }
+      : { 'Authorization': `Bearer ${accessToken}` };
+  };
+
+  // 獲取我的待確認付款
+  const loadMyPendingPayments = async () => {
+    if (!user?.id || !accessToken) {
+      toast.error('請先登入');
+      return;
+    }
+
+    setLoadingStates(prev => ({ ...prev, 'loadMyPendingPayments': true }));
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay-payments?status=pending&userEmail=${user.email}`,
+        {
+          headers: getHeaders(),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setPayments(data.payments || []);
+        setShowPayments(true);
+        
+        if (data.payments?.length === 0) {
+          toast.info(
+            language === 'en' 
+              ? 'No pending payments found' 
+              : '沒有找到待確認的付款記錄'
+          );
+        }
+      } else {
+        const error = await response.json();
+        toast.error(error.error || '載入失敗');
+      }
+    } catch (error) {
+      console.error('Error loading payments:', error);
+      toast.error('載入付款記錄失敗');
+    } finally {
+      setLoadingStates(prev => ({ ...prev, 'loadMyPendingPayments': false }));
+    }
+  };
+
+  // 手動確認付款
+  const handleConfirmPayment = async (paymentId: string) => {
+    if (!accessToken) {
+      toast.error('請先登入');
+      return;
+    }
+
+    setLoadingStates(prev => ({ ...prev, [paymentId]: true }));
+    try {
+      console.log('💰 [Manual Confirm] Starting payment confirmation:', { paymentId, userId: user?.id });
+      
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay-payments/${paymentId}/confirm`,
+        {
+          method: 'POST',
+          headers: {
+            ...getHeaders(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            notes: 'Manual confirmation by user',
+          }),
+        }
+      );
+
+      console.log('💰 [Manual Confirm] Response status:', response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('💰 [Manual Confirm] Response data:', data);
+        
+        toast.success(
+          language === 'en'
+            ? `✅ Payment confirmed! $${data.payment?.amount_usd} added to wallet`
+            : `✅ 付款已確認！已將 $${data.payment?.amount_usd} USD 加入錢包`
+        );
+        
+        // 刷新付款列表
+        await loadMyPendingPayments();
+        
+        console.log('💰 [Manual Confirm] Dispatching refreshWallet event...');
+        // 觸發錢包刷新
+        window.dispatchEvent(new CustomEvent('refreshWallet'));
+        
+        // 等待一下讓事件處理完成
+        setTimeout(() => {
+          console.log('💰 [Manual Confirm] Wallet should be refreshed now');
+        }, 1000);
+      } else {
+        const error = await response.json();
+        console.error('💰 [Manual Confirm] Error response:', error);
+        toast.error(error.error || '確認失敗');
+      }
+    } catch (error) {
+      console.error('💰 [Manual Confirm] Exception:', error);
+      toast.error('確認付款失敗');
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [paymentId]: false }));
+    }
+  };
+
+  // 根據訂單號查詢
+  const handleQueryByOrderId = async () => {
+    if (!orderId.trim()) {
+      toast.error(
+        language === 'en'
+          ? 'Please enter order ID'
+          : '請輸入訂單編號'
+      );
+      return;
+    }
+
+    setLoadingStates(prev => ({ ...prev, 'handleQueryByOrderId': true }));
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay-payments/by-order/${orderId}`
+        // 🔧 移除 headers - 這個 API 不需要認證
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.payment) {
+          setPayments([data.payment]);
+          setShowPayments(true);
+        } else {
+          toast.error('未找到訂單');
+        }
+      } else {
+        const error = await response.json();
+        toast.error(error.error || '查詢失敗');
+      }
+    } catch (error) {
+      console.error('Error querying payment:', error);
+      toast.error('查詢訂單失敗');
+    } finally {
+      setLoadingStates(prev => ({ ...prev, 'handleQueryByOrderId': false }));
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">⏳ 待確認</Badge>;
+      case 'confirmed':
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">✅ 已確認</Badge>;
+      case 'rejected':
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300">❌ 已拒絕</Badge>;
+      case 'expired':
+        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-300">⏰ 已過期</Badge>;
+      case 'cancelled':
+        return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-300">🚫 已取消</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  return (
+    <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-purple-900">
+          <DollarSign className="h-5 w-5" />
+          💰 {language === 'en' ? 'Manual Payment Confirmation' : '手動確認付款'}
+        </CardTitle>
+        <CardDescription>
+          {language === 'en'
+            ? 'If your wallet balance was not updated after payment, manually confirm it here'
+            : '如果付款後錢包餘額未更新，請在此手動確認'}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* 方案 1: 查看我的待確認付款 */}
+        <div className="space-y-2">
+          <Label className="text-sm font-semibold text-purple-900">
+            🔍 {language === 'en' ? 'Option 1: View My Pending Payments' : '方案 1：查看我的待確認付款'}
+          </Label>
+          <Button
+            onClick={loadMyPendingPayments}
+            disabled={loadingStates['loadMyPendingPayments']}
+            className="w-full bg-purple-600 hover:bg-purple-700"
+          >
+            {loadingStates['loadMyPendingPayments'] ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-2" />
+            )}
+            {language === 'en' ? 'Load My Payments' : '載入我的付款記錄'}
+          </Button>
+        </div>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-gradient-to-r from-purple-50 to-blue-50 px-2 text-gray-500">
+              {language === 'en' ? 'OR' : '或'}
+            </span>
+          </div>
+        </div>
+
+        {/* 方案 2: 輸入訂單編號查詢 */}
+        <div className="space-y-2">
+          <Label htmlFor="orderId" className="text-sm font-semibold text-purple-900">
+            🎫 {language === 'en' ? 'Option 2: Search by Order ID' : '方案 2：根據訂單編號查詢'}
+          </Label>
+          <div className="flex gap-2">
+            <Input
+              id="orderId"
+              placeholder={language === 'en' ? 'Enter ECPay order ID (e.g., CW1234567890ABC)' : '輸入綠界訂單編號（例如：CW1234567890ABC）'}
+              value={orderId}
+              onChange={(e) => setOrderId(e.target.value)}
+              className="flex-1"
+            />
+            <Button
+              onClick={handleQueryByOrderId}
+              disabled={loadingStates['handleQueryByOrderId'] || !orderId.trim()}
+              variant="outline"
+              className="border-purple-300"
+            >
+              {loadingStates['handleQueryByOrderId'] ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>{language === 'en' ? 'Query' : '查詢'}</>
+              )}
+            </Button>
+          </div>
+          <p className="text-xs text-gray-600">
+            💡 {language === 'en' 
+              ? 'You can find the order ID in the URL after payment (orderId=...)'
+              : '訂單編號可以在付款後的網址中找到（orderId=...）'}
+          </p>
+        </div>
+
+        {/* 付款列表 */}
+        {showPayments && (
+          <div className="mt-6 space-y-3">
+            <Label className="text-sm font-semibold text-purple-900">
+              📋 {language === 'en' ? 'Payment Records' : '付款記錄'}
+            </Label>
+            {payments.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <XCircle className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                <p>{language === 'en' ? 'No payment records found' : '未找到付款記錄'}</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {payments.map((payment) => (
+                  <Card key={payment.id} className="border-2">
+                    <CardContent className="pt-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {payment.ecpay_transaction_id}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            {new Date(payment.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        {getStatusBadge(payment.status)}
+                      </div>
+                      
+                      <div className="flex justify-between items-center bg-gray-50 rounded-lg p-3">
+                        <div>
+                          <p className="text-2xl font-bold text-purple-700">
+                            NT${payment.amount_twd.toLocaleString()}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            ≈ ${payment.amount_usd.toFixed(2)} USD
+                          </p>
+                        </div>
+                        
+                        {payment.status === 'pending' && (
+                          <div className="flex flex-col gap-2">
+                            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
+                              ⏳ {language === 'en' ? 'Pending Payment' : '待 ECPay 確認'}
+                            </Badge>
+                            <Button
+                              onClick={() => {
+                                // 🔒 安全修復：移除用戶自行確認功能，改為提示聯繫客服
+                                toast.info(
+                                  language === 'en'
+                                    ? '📧 If you have completed payment but balance not updated, please contact support:\nsupport@casewhr.com\n\nProvide your Order ID: ' + payment.ecpay_transaction_id
+                                    : '📧 如果您已完成付款但餘額未更新，請聯繫客服：\nsupport@casewhr.com\n\n請提供訂單編號：' + payment.ecpay_transaction_id,
+                                  { duration: 10000 }
+                                );
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              💬 {language === 'en' ? 'Contact Support' : '聯繫客服'}
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {payment.status === 'confirmed' && (
+                          <Badge variant="outline" className="bg-green-50 text-green-700">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            {language === 'en' ? 'Completed' : '已完成'}
+                          </Badge>
+                        )}
+                        
+                        {payment.status === 'expired' && (
+                          <Badge variant="outline" className="bg-gray-50 text-gray-700">
+                            ⏰ {language === 'en' ? 'Expired (30 min)' : '已過期 (30分鐘)'}
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {payment.notes && (
+                        <p className="text-xs text-gray-500 border-t pt-2">
+                          📝 {payment.notes}
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 說明 */}
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 space-y-2">
+          <p className="text-xs font-semibold text-blue-900">
+            ℹ️ {language === 'en' ? 'How it works:' : '使用說明：'}
+          </p>
+          <ol className="text-xs text-blue-800 space-y-1 list-decimal list-inside">
+            <li>{language === 'en' ? 'Complete payment via ECPay' : '透過綠界完成付款'}</li>
+            <li>{language === 'en' ? 'Click \"Load My Payments\" to view payment status' : '點擊「載入我的付款記錄」查看付款狀態'}</li>
+            <li>{language === 'en' ? 'Wallet will be updated automatically after ECPay confirms payment' : '綠界確認付款後，錢包將自動更新'}</li>
+            <li>{language === 'en' ? 'If balance not updated after 10 minutes, contact support' : '如 10 分鐘後餘額仍未更新，請聯繫客服'}</li>
+          </ol>
+        </div>
+        
+        {/* 🔒 安全警告 */}
+        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3 space-y-2">
+          <p className="text-xs font-semibold text-red-900">
+            🔒 {language === 'en' ? 'Security Notice:' : '安全提示：'}
+          </p>
+          <p className="text-xs text-red-800">
+            {language === 'en'
+              ? '⚠️ We have removed the \"Manual Confirm\" button to prevent unauthorized balance additions. Wallet balance will only be updated after ECPay confirms your payment. If you encounter any issues, please contact support with your Order ID.'
+              : '⚠️ 為了防止未授權的餘額增加，我們已移除「手動確認」按鈕。錢包餘額只會在綠界確認付款後自動更新。如遇問題，請攜帶訂單編號聯繫客服。'}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

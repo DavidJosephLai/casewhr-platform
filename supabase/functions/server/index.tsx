@@ -32,6 +32,7 @@ import * as aiSeoService from "./ai_seo_service.tsx";
 import aiChatbotService from "./ai_chatbot_service.tsx";
 import { fixPlatformRevenue } from "./fix_platform_revenue.tsx";
 import aiSeoRoutes from "./ai-seo.ts";
+import { handleSitemapRequest, handleRobotsRequest, handleSEOHealthCheck } from "./sitemap_service.tsx";
 
 console.log('🚀 [SERVER STARTUP] Edge Function v2.0.5 - Subscription Notifications - Starting...');
 
@@ -429,6 +430,44 @@ console.log('✅ [SERVER] Admin APIs registered');
 // Register ECPay payment management APIs
 registerECPayRoutes(app);
 console.log('✅ [SERVER] ECPay payment APIs registered');
+
+// 🔧 直接添加公開的 by-order 查詢路由（不需要認證）
+app.get('/make-server-215f78a5/ecpay-payments/by-order/:orderId', async (c) => {
+  try {
+    const orderId = c.req.param('orderId');
+    console.log(`🔍 [ECPay Public] Query payment by order: ${orderId}`);
+    
+    // Get payment from KV store
+    const payment = await kv.get(`ecpay_payment:${orderId}`);
+    
+    if (!payment) {
+      console.log(`❌ [ECPay Public] Payment not found: ${orderId}`);
+      return c.json({ error: 'Payment not found' }, 404);
+    }
+
+    // 檢查訂單是否過期（30 分鐘）
+    const createdAt = new Date(payment.created_at);
+    const now = new Date();
+    const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+    
+    // 如果訂單超過 30 分鐘且狀態仍為 pending，標記為過期
+    if (diffMinutes > 30 && payment.status === 'pending') {
+      payment.status = 'expired';
+      payment.updated_at = now.toISOString();
+      payment.expire_reason = 'Payment timeout (30 minutes)';
+      
+      await kv.set(`ecpay_payment:${orderId}`, payment);
+      console.log(`⏰ [ECPay Public] Payment expired: ${orderId} (${diffMinutes.toFixed(1)} minutes old)`);
+    }
+    
+    console.log(`✅ [ECPay Public] Payment found:`, { orderId, status: payment.status, amount: payment.amount_usd });
+    return c.json({ payment });
+  } catch (error: any) {
+    console.error('[ECPay Public] Error getting payment:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+console.log('✅ [SERVER] ECPay public query route registered');
 
 // Register International Payout APIs
 registerInternationalPayoutRoutes(app);
