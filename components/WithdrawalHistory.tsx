@@ -37,7 +37,7 @@ interface Withdrawal {
 }
 
 export const WithdrawalHistory = memo(function WithdrawalHistory() {
-  const { language } = useLanguage();
+  const { language, currency } = useLanguage();
   const { user, accessToken } = useAuth();
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,8 +47,8 @@ export const WithdrawalHistory = memo(function WithdrawalHistory() {
 
   // 數據庫存儲貨幣 (統一為 USD)
   const storedCurrency: Currency = 'USD';
-  // 根據語言選擇顯示貨幣
-  const displayCurrency: Currency = language === 'zh' ? 'TWD' : language === 'zh-CN' ? 'CNY' : 'USD';
+  // ✅ 使用 useLanguage 提供的 currency
+  const displayCurrency: Currency = currency;
   
   // 轉換並格式化金額的輔助函數
   const displayAmount = (amount: number): string => {

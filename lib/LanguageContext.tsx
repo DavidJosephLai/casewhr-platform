@@ -1,9 +1,12 @@
 import { createContext, useContext, useState, ReactNode, useMemo, useCallback, useEffect } from 'react';
 import { Language } from './translations';
+import { Currency, getDefaultCurrency } from './currency';
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
+  currency: Currency;
+  setCurrency: (curr: Currency) => void;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -56,10 +59,48 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Initialize with default currency or localStorage
+  const [currency, setCurrencyState] = useState<Currency>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('preferred-currency');
+      if (stored && (stored === 'TWD' || stored === 'USD' || stored === 'CNY')) {
+        console.log(`💱 [LanguageContext] Loaded stored currency: ${stored}`);
+        return stored as Currency;
+      }
+    }
+    // 根據語言自動設定貨幣
+    const browserLang = getBrowserLanguage();
+    const defaultCurr = getDefaultCurrency(browserLang);
+    console.log(`💱 [LanguageContext] Auto-detected currency: ${defaultCurr} (language: ${browserLang})`);
+    return defaultCurr;
+  });
+
+  const setCurrency = useCallback((curr: Currency) => {
+    setCurrencyState(curr);
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('preferred-currency', curr);
+    }
+  }, []);
+
+  // 當語言改變時，自動更新貨幣（如果用戶沒有手動設定過）
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const manuallySet = localStorage.getItem('currency-manually-set');
+      if (!manuallySet) {
+        const defaultCurr = getDefaultCurrency(language);
+        setCurrencyState(defaultCurr);
+        console.log(`💱 [LanguageContext] Auto-set currency to ${defaultCurr} for language ${language}`);
+      }
+    }
+  }, [language]);
+
   const value = useMemo(() => ({
     language,
-    setLanguage
-  }), [language, setLanguage]);
+    setLanguage,
+    currency,
+    setCurrency
+  }), [language, setLanguage, currency, setCurrency]);
 
   return (
     <LanguageContext.Provider value={value}>

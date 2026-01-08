@@ -34,7 +34,7 @@ interface Transaction {
 }
 
 export const TransactionHistory = memo(function TransactionHistory() {
-  const { language } = useLanguage();
+  const { language, currency } = useLanguage();
   const { user, accessToken } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
@@ -49,8 +49,8 @@ export const TransactionHistory = memo(function TransactionHistory() {
   
   // 🔧 修復：數據庫存儲貨幣應該統一為 USD
   const storedCurrency: Currency = 'USD';
-  // 根據語言選擇顯示貨幣
-  const displayCurrency: Currency = language === 'zh' ? 'TWD' : 'USD';
+  // ✅ 使用 useLanguage 提供的 currency
+  const displayCurrency: Currency = currency;
   
   // ✅ Memoize displayAmount function
   const displayAmount = useCallback((amount: number): string => {
