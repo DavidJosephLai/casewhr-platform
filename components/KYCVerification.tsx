@@ -153,7 +153,7 @@ export function KYCVerification() {
       idType: '證件類型',
       nationalId: '身份證',
       passport: '護照',
-      driverLicense: '駕照',
+      driverLicense: '��照',
       idNumber: '證件號碼',
       idNumberPlaceholder: '輸入證件號碼',
       phoneNumber: '手機號碼',
@@ -330,9 +330,17 @@ export function KYCVerification() {
   const uploadFile = async (file: File, type: string): Promise<string> => {
     if (!user?.id) throw new Error('User not authenticated');
 
+    // 使用 accessToken 而非 publicAnonKey，因為 bucket 是私有的
     const supabase = createClient(
       `https://${projectId}.supabase.co`,
-      publicAnonKey
+      publicAnonKey,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        }
+      }
     );
 
     const fileExt = file.name.split('.').pop();
