@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Shield, Database, Users, Settings } from 'lucide-react';
+import { Shield, Database, Users, Settings, Sparkles } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { DiagnosticPanel } from './DiagnosticPanel';
 import { AdminUserManagement } from './AdminUserManagement';
+import { AdminAISEO } from './admin/AdminAISEO';
 import { isAdmin as checkIsAdmin } from '../lib/adminConfig';
 
 export function AdminPanel() {
@@ -20,32 +21,35 @@ export function AdminPanel() {
       title: 'Admin Panel',
       description: 'System administration and management',
       notAdmin: 'You do not have administrator privileges',
+      adminBadge: 'Administrator',
       database: 'Database',
       diagnostics: 'Diagnostics',
       users: 'Users',
       settings: 'Settings',
-      adminBadge: 'Administrator',
+      aiSeo: 'AI SEO',
     },
     'zh-TW': {
-      title: '管理員面板',
-      description: '系統管理與設定',
+      title: '管理後台',
+      description: '系統管理與配置',
       notAdmin: '您沒有管理員權限',
-      database: '資料庫',
-      diagnostics: '診斷',
-      users: '用戶',
-      settings: '設定',
       adminBadge: '管理員',
+      database: '資料庫',
+      diagnostics: '診斷工具',
+      users: '用戶管理',
+      settings: '設定',
+      aiSeo: 'AI SEO',
     },
     'zh-CN': {
-      title: '管理员面板',
-      description: '系统管理与设定',
+      title: '管理后台',
+      description: '系统管理与配置',
       notAdmin: '您没有管理员权限',
-      database: '数据库',
-      diagnostics: '诊断',
-      users: '用户',
-      settings: '设定',
       adminBadge: '管理员',
-    }
+      database: '数据库',
+      diagnostics: '诊断工具',
+      users: '用户管理',
+      settings: '设置',
+      aiSeo: 'AI SEO',
+    },
   };
 
   const t = content[language as keyof typeof content] || content.en;
@@ -91,7 +95,7 @@ export function AdminPanel() {
 
       {/* Admin Tabs */}
       <Tabs defaultValue="database" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
           <TabsTrigger value="database" className="gap-2">
             <Database className="h-4 w-4" />
             {t.database}
@@ -103,6 +107,10 @@ export function AdminPanel() {
           <TabsTrigger value="users" className="gap-2">
             <Users className="h-4 w-4" />
             {t.users}
+          </TabsTrigger>
+          <TabsTrigger value="aiseo" className="gap-2">
+            <Sparkles className="h-4 w-4" />
+            {t.aiSeo}
           </TabsTrigger>
           <TabsTrigger value="settings" className="gap-2" disabled>
             <Settings className="h-4 w-4" />
@@ -127,6 +135,10 @@ export function AdminPanel() {
 
         <TabsContent value="users" className="space-y-6">
           <AdminUserManagement />
+        </TabsContent>
+
+        <TabsContent value="aiseo" className="space-y-6">
+          <AdminAISEO />
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">

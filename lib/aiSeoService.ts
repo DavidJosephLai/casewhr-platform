@@ -5,7 +5,7 @@
 
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 
-interface SEOGenerationRequest {
+export interface SEOGenerationRequest {
   pageType: string;
   language: 'en' | 'zh-TW' | 'zh-CN';
   keywords?: string[];
@@ -43,10 +43,10 @@ export async function generateAISEOContent(
   request: SEOGenerationRequest
 ): Promise<SEOGenerationResponse> {
   try {
-    console.log('🔵 [AI SEO Service] Calling:', `${API_BASE_URL}/ai/generate-seo`);
+    console.log('🔵 [AI SEO Service] Calling:', `${API_BASE_URL}/ai-seo/generate`);
     console.log('🔵 [AI SEO Service] Request:', request);
     
-    const response = await fetch(`${API_BASE_URL}/ai/generate-seo`, {
+    const response = await fetch(`${API_BASE_URL}/ai-seo/generate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -65,6 +65,20 @@ export async function generateAISEOContent(
 
     const result = await response.json();
     console.log('✅ [AI SEO Service] Success:', result);
+    
+    // 後端返回格式：{ success: true, data: { seoTitle, seoDescription, keywords, ... } }
+    // 需要轉換為前端期望的格式
+    if (result.success && result.data) {
+      return {
+        title: result.data.seoTitle || result.data.title || '',
+        description: result.data.seoDescription || result.data.description || '',
+        keywords: result.data.keywords || [],
+        suggestions: result.data.suggestions || [],
+        score: result.data.score || 0,
+      };
+    }
+    
+    // 如果已經是正確格式，直接返回
     return result;
   } catch (error) {
     console.error('❌ [AI SEO] Generation error:', error);
@@ -83,7 +97,7 @@ export async function analyzePageSEO(
   language: 'en' | 'zh-TW' | 'zh-CN'
 ): Promise<SEOAnalysisResult> {
   try {
-    const response = await fetch(`${API_BASE_URL}/ai/analyze-seo`, {
+    const response = await fetch(`${API_BASE_URL}/ai-seo/analyze`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -244,7 +258,7 @@ export async function generateKeywordSuggestions(
   language: 'en' | 'zh-TW' | 'zh-CN'
 ): Promise<string[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/ai/suggest-keywords`, {
+    const response = await fetch(`${API_BASE_URL}/ai-seo/keywords`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -322,7 +336,7 @@ export async function optimizeSEOContent(
   keywordDensity: Record<string, number>;
 }> {
   try {
-    const response = await fetch(`${API_BASE_URL}/ai/optimize-content`, {
+    const response = await fetch(`${API_BASE_URL}/ai-seo/optimize`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -367,3 +381,6 @@ export function calculateKeywordDensity(
 
   return density;
 }
+
+// Export type for use in other files
+export type { SEOGenerationRequest };
