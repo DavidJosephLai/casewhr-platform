@@ -34,13 +34,18 @@ import { fixPlatformRevenue } from "./fix_platform_revenue.tsx";
 import aiSeoRoutes from "./ai-seo.ts";
 import { handleSitemapRequest, handleRobotsRequest, handleSEOHealthCheck } from "./sitemap_service.tsx";
 import * as lineAuth from "./line-auth.tsx";
+import { logLineEnvStatus } from "./line_health_check.tsx";
 
-console.log('🚀 [SERVER STARTUP] Edge Function v2.0.5 - Subscription Notifications - Starting...');
+console.log('🚀 [SERVER STARTUP] Edge Function v2.0.6 - LINE Auth Integration - Starting...');
 
 // Log environment variable status (without exposing the actual keys)
 console.log('🔍 [ENV CHECK] STRIPE_SECRET_KEY:', Deno.env.get('STRIPE_SECRET_KEY') ? 
   `Configured (starts with: ${Deno.env.get('STRIPE_SECRET_KEY')?.substring(0, 15)}...)` : 
   'NOT CONFIGURED');
+
+// ✅ LINE OAuth 環境變數檢查
+// ✅ LINE OAuth 環境變數檢查
+logLineEnvStatus();
 
 const app = new Hono();
 
