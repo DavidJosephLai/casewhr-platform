@@ -33,7 +33,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../lib/LanguageContext';
 import { projectId } from '../utils/supabase/info';
 import { toast } from 'sonner';
-import { formatCurrency, convertCurrency, type Currency } from '../lib/currency';
+import { formatCurrency, convertCurrency } from '../lib/currency';
 
 interface TransferLimits {
   tier: string;
