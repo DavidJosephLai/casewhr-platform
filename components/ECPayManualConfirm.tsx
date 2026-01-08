@@ -158,7 +158,9 @@ export function ECPayManualConfirm() {
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay-payments/by-order/${orderId}`,
         {
-          headers: getHeaders(),
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`,
+          },
         }
       );
 

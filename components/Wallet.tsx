@@ -485,8 +485,12 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
         try {
           // 查詢付款狀態
           const response = await fetch(
-            `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay-payments/by-order/${orderId}`
-            // 🔧 移除 headers - 這個 API 不需要認證
+            `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay-payments/by-order/${orderId}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${publicAnonKey}`,
+              },
+            }
           );
 
           if (response.ok) {
