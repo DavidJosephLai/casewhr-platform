@@ -1,9 +1,7 @@
-import { BrandPreview } from './BrandPreview';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Alert, AlertDescription } from './ui/alert';
 import { 
   Briefcase, 
   PlusCircle, 
@@ -17,15 +15,16 @@ import {
   FileText,
   Info
 } from 'lucide-react';
-import { projectApi, proposalApi } from '../lib/api';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useView } from '../contexts/ViewContext';
 import { translations, getTranslation } from '../lib/translations';
 import { fetchWithRetry, parseJsonResponse } from '../lib/apiErrorHandler';
+import { projectId, publicAnonKey } from '../utils/supabase/info';
 
 // Dashboard components
+import { BrandPreview } from './BrandPreview';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { MembershipCard } from './MembershipCard';
 import { TeamInvitations } from './TeamInvitations';
 import { TeamManagement } from './TeamManagement';
@@ -50,6 +49,13 @@ import { MyProposals } from './MyProposals';
 import { UserProfile } from './UserProfile';
 import { EnterpriseFeaturesPanel } from './EnterpriseFeaturesPanel';
 import { EnterpriseChat } from './EnterpriseChat';
+import { ExchangeRateIndicator } from './ExchangeRateIndicator';
+import { QuickSubscriptionCheck } from './QuickSubscriptionCheck';
+import { ContractManager } from './ContractManager';
+import { UnifiedInvoiceManager } from './UnifiedInvoiceManager';
+import { SLAMonitoring } from './SLAMonitoring';
+import { BrandingSettings } from './BrandingSettings';
+import { PostProjectDialog } from './PostProjectDialog';
 // ❌ 移除：管理員面板應該是全局浮動按鈕，不應該在 Dashboard 內部
 // import { AdminPanel } from './AdminPanel';
 import { isAdmin } from '../lib/adminConfig';
@@ -396,7 +402,7 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
                     ? 'Open, in progress, pending review, or pending payment' 
                     : language === 'zh-CN' 
                     ? '等待接案、执行中、待审核或待拨款' 
-                    : '等待接案、執行��、待審核或待撥款'}
+                    : '等待接案、執行、待審核或待撥款'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -544,7 +550,7 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
                 <div className="bg-white rounded-lg p-4 border border-blue-200">
                   <div className="text-2xl font-bold text-blue-600 mb-1">99.9%</div>
                   <div className="text-sm text-gray-600">
-                    {language === 'en' ? 'Uptime Guarantee' : language === 'zh-CN' ? '��常运行时间保' : '正運行時間保證'}
+                    {language === 'en' ? 'Uptime Guarantee' : language === 'zh-CN' ? '常运行时间保' : '正運行時間保證'}
                   </div>
                 </div>
                 <div className="bg-white rounded-lg p-4 border border-blue-200">
@@ -606,45 +612,10 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
         <TabsContent value="wallet" className="space-y-6">
           <ExchangeRateIndicator />
           <QuickSubscriptionCheck />
-          
-          {/* ⚡ 新增：PayPal vs 銀行轉帳提示 */}
-          <Alert className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-300">
-            <Info className="h-5 w-5 text-blue-600" />
-            <AlertDescription className="text-sm space-y-2 text-gray-800">
-              <div className="font-semibold text-blue-900">
-                {language === 'en' ? '💡 Withdrawal Methods Available' : language === 'zh-CN' ? '💡 可用的提现方式' : '💡 可用的提現方式'}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-                <div className="bg-white p-3 rounded-lg border border-green-200">
-                  <div className="flex items-center gap-2 font-medium text-green-700 mb-1">
-                    <span>⚡</span>
-                    <span>{language === 'en' ? 'PayPal - Instant' : language === 'zh-CN' ? 'PayPal - 即时到账' : 'PayPal - 即時到帳'}</span>
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    {language === 'en' ? 'Receive funds in minutes' : language === 'zh-CN' ? '几分钟内到账' : '幾分鐘內到帳'}
-                  </div>
-                </div>
-                <div className="bg-white p-3 rounded-lg border border-orange-200">
-                  <div className="flex items-center gap-2 font-medium text-orange-700 mb-1">
-                    <span>🏦</span>
-                    <span>{language === 'en' ? 'Bank Transfer - Coming Soon' : language === 'zh-CN' ? '银行转账 - 即将推出' : '銀行轉帳 - 即將推出'}</span>
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    {language === 'en' ? 'Currently manual processing (3-5 days)' : language === 'zh-CN' ? '目前手动处理（3-5天）' : '目前手動處理（3-5天）'}
-                  </div>
-                </div>
-              </div>
-            </AlertDescription>
-          </Alert>
-          
           <Wallet />
           <KYCVerification />
           <WithdrawalRequest />
           <WithdrawalHistory />
-          <ContractManager language={language} />
-          <UnifiedInvoiceManager />
-          <TransactionHistory />
-          <BankAccountManager />
         </TabsContent>
 
         <TabsContent value="invoices" className="space-y-6">
