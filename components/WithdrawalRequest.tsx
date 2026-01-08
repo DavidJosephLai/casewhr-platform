@@ -75,6 +75,9 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
       paypal: 'PayPal',
       feeNote: `A ${(WITHDRAWAL_FEE_RATE * 100).toFixed(0)}% processing fee will be deducted from your withdrawal`,
       processingTime: 'Processing time: 3-5 business days',
+      paypalInstant: '⚡ PayPal: Instant withdrawal (few minutes)',
+      bankComingSoon: '🏦 Bank Transfer: Coming soon (currently manual processing)',
+      recommendPayPal: 'For instant withdrawals, we recommend using PayPal',
     },
     'zh-TW': {
       title: '申請提現',
@@ -93,6 +96,9 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
       enterAmount: '請輸入金額',
       minimumAmount: '最低提現金額',
       processingTime: '處理時間：3-5 個工作日',
+      paypalInstant: '⚡ PayPal：即時提現（幾分鐘內到帳）',
+      bankComingSoon: '🏦 銀行轉帳：即將推出（目前為手動處理）',
+      recommendPayPal: '建議使用 PayPal 進行即時提現',
     },
     'zh-CN': {
       title: '申请提现',
@@ -111,6 +117,9 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
       enterAmount: '请输入金额',
       minimumAmount: '最低提现金额',
       processingTime: '处理时间：3-5 个工作日',
+      paypalInstant: '⚡ PayPal：即时提现（几分钟内到账）',
+      bankComingSoon: '🏦 银行转账：即将推出（目前为手动处理）',
+      recommendPayPal: '建议使用 PayPal 进行即时提现',
     }
   }), [WITHDRAWAL_FEE_RATE]);
 
@@ -498,6 +507,16 @@ export const WithdrawalRequest = memo(function WithdrawalRequest() {
             <AlertDescription className="text-xs space-y-1">
               <p>{t.feeNote}</p>
               <p>{t.processingTime}</p>
+            </AlertDescription>
+          </Alert>
+
+          {/* PayPal vs Bank Info */}
+          <Alert className="bg-blue-50 border-blue-200">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-xs space-y-2">
+              <p className="font-semibold text-blue-900">{t.paypalInstant}</p>
+              <p className="text-orange-700">{t.bankComingSoon}</p>
+              <p className="text-blue-700">{t.recommendPayPal}</p>
             </AlertDescription>
           </Alert>
 

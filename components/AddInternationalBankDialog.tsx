@@ -151,6 +151,8 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
       swiftInfo: 'SWIFT/BIC code is required for international transfers',
       routingInfo: 'For US banks only',
       securityNote: '🔒 Your account details are encrypted and stored securely.',
+      bankTransferComingSoon: '⚠️ Bank transfer withdrawals are not yet available. Currently, only PayPal instant withdrawals are supported. Bank transfer functionality is coming soon!',
+      recommendPayPal: 'We recommend using PayPal for instant withdrawals.',
     },
     'zh-TW': {
       title: '添加國際銀行帳戶',
@@ -161,7 +163,7 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
       local: '本地帳戶',
       international: '國際帳戶（IBAN/SWIFT）',
       bankName: '銀行名稱',
-      selectBank: '選您的銀行',
+      selectBank: '選擇您的銀行',
       customBank: '其他銀行',
       accountNumber: '帳號',
       accountNumberPlaceholder: '輸入您的帳號',
@@ -185,6 +187,8 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
       swiftInfo: '國際轉帳需要 SWIFT/BIC 代碼',
       routingInfo: '僅適用於美國銀行',
       securityNote: '🔒 您的帳戶資訊已加密並安全存儲。',
+      bankTransferComingSoon: '⚠️ 銀行轉帳提現功能尚未開放。目前僅支援 PayPal 即時提現，銀行轉帳功能即將推出！',
+      recommendPayPal: '建議使用 PayPal 進行即時提現。',
     },
     'zh-CN': {
       title: '添加国际银行账户',
@@ -219,6 +223,8 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
       swiftInfo: '国际转账需要 SWIFT/BIC 代码',
       routingInfo: '仅适用于美国银行',
       securityNote: '🔒 您的账户资讯已加密并安全存储。',
+      bankTransferComingSoon: '⚠️ 银行转账提现功能尚未开放。目前仅支持 PayPal 即时提现，银行转账功能即将推出！',
+      recommendPayPal: '建议使用 PayPal 进行即时提现。',
     },
     // 向后兼容旧的 'zh' 代码
     zh: {
@@ -254,6 +260,8 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
       swiftInfo: '國際轉帳需要 SWIFT/BIC 代碼',
       routingInfo: '僅適用於美國銀行',
       securityNote: '🔒 您的帳戶資訊已加密並安全存儲。',
+      bankTransferComingSoon: '⚠️ 銀��轉帳提現功能尚未開放。目前僅支援 PayPal 即時提現，銀行轉帳功能即將推出！',
+      recommendPayPal: '建議使用 PayPal 進行即時提現。',
     }
   };
 
@@ -675,6 +683,22 @@ export function AddInternationalBankDialog({ open, onOpenChange, onSuccess }: Ad
             <Info className="h-4 w-4" />
             <AlertDescription className="text-xs">
               {t.securityNote}
+            </AlertDescription>
+          </Alert>
+
+          {/* Bank Transfer Coming Soon */}
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              {t.bankTransferComingSoon}
+            </AlertDescription>
+          </Alert>
+
+          {/* Recommend PayPal */}
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              {t.recommendPayPal}
             </AlertDescription>
           </Alert>
 

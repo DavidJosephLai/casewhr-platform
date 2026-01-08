@@ -85,6 +85,188 @@ async function getAccessToken(): Promise<string> {
   return data.access_token;
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 💸 PayPal Payouts API - Auto Withdrawal
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/**
+ * Create a payout to PayPal account
+ * @param paypalEmail - Recipient's PayPal email
+ * @param amount - Amount in USD
+ * @param note - Optional note for the recipient
+ * @param withdrawalId - Unique withdrawal request ID
+ * @returns Payout batch ID and status
+ */
+export async function createPayout(
+  paypalEmail: string,
+  amount: number,
+  note: string,
+  withdrawalId: string
+): Promise<{ 
+  success: boolean; 
+  payoutBatchId?: string; 
+  payoutItemId?: string;
+  status?: string;
+  error?: string;
+}> {
+  if (!isPayPalConfigured) {
+    return { success: false, error: 'PayPal is not configured' };
+  }
+
+  // Validate amount
+  if (amount < 1) {
+    return { success: false, error: 'Minimum payout amount is $1 USD' };
+  }
+
+  if (amount > 20000) {
+    return { success: false, error: 'Maximum single payout is $20,000 USD' };
+  }
+
+  try {
+    const accessToken = await getAccessToken();
+
+    // Generate unique sender batch ID (max 30 chars)
+    const senderBatchId = `WD_${withdrawalId}`.substring(0, 30);
+
+    const payoutData = {
+      sender_batch_header: {
+        sender_batch_id: senderBatchId,
+        email_subject: 'You have a payment from Case Where',
+        email_message: note || 'Thank you for using Case Where platform!',
+      },
+      items: [
+        {
+          recipient_type: 'EMAIL',
+          amount: {
+            value: amount.toFixed(2),
+            currency: 'USD',
+          },
+          note: note || 'Withdrawal from Case Where',
+          sender_item_id: withdrawalId,
+          receiver: paypalEmail,
+        },
+      ],
+    };
+
+    console.log('💸 [PayPal Payout] Creating payout:', {
+      email: paypalEmail,
+      amount: amount,
+      withdrawalId: withdrawalId,
+      senderBatchId: senderBatchId,
+    });
+
+    const response = await fetch(`${PAYPAL_API_BASE}/v1/payments/payouts`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payoutData),
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      console.error('❌ [PayPal Payout] Failed to create payout:', responseData);
+      return {
+        success: false,
+        error: responseData.message || `PayPal API error: ${response.status}`,
+      };
+    }
+
+    const payoutBatchId = responseData.batch_header?.payout_batch_id;
+    const batchStatus = responseData.batch_header?.batch_status;
+
+    console.log('✅ [PayPal Payout] Payout created:', {
+      payoutBatchId: payoutBatchId,
+      status: batchStatus,
+      withdrawalId: withdrawalId,
+    });
+
+    // Store payout info in KV
+    await kv.set(`paypal_payout:${withdrawalId}`, {
+      payoutBatchId: payoutBatchId,
+      payoutItemId: responseData.items?.[0]?.payout_item_id,
+      paypalEmail: paypalEmail,
+      amount: amount,
+      status: batchStatus,
+      withdrawalId: withdrawalId,
+      createdAt: new Date().toISOString(),
+    });
+
+    return {
+      success: true,
+      payoutBatchId: payoutBatchId,
+      payoutItemId: responseData.items?.[0]?.payout_item_id,
+      status: batchStatus,
+    };
+  } catch (error) {
+    console.error('❌ [PayPal Payout] Exception:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Check payout status
+ * @param payoutBatchId - PayPal payout batch ID
+ * @returns Payout status details
+ */
+export async function checkPayoutStatus(payoutBatchId: string): Promise<{
+  success: boolean;
+  status?: string;
+  items?: any[];
+  error?: string;
+}> {
+  if (!isPayPalConfigured) {
+    return { success: false, error: 'PayPal is not configured' };
+  }
+
+  try {
+    const accessToken = await getAccessToken();
+
+    const response = await fetch(
+      `${PAYPAL_API_BASE}/v1/payments/payouts/${payoutBatchId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('❌ [PayPal Payout] Failed to check status:', error);
+      return {
+        success: false,
+        error: error.message || 'Failed to check payout status',
+      };
+    }
+
+    const data = await response.json();
+
+    return {
+      success: true,
+      status: data.batch_header?.batch_status,
+      items: data.items,
+    };
+  } catch (error) {
+    console.error('❌ [PayPal Payout] Exception:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📦 Original Payment Functions
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 /**
  * Create PayPal Order
  */

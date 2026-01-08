@@ -12091,11 +12091,74 @@ app.post("/make-server-215f78a5/withdrawals/:id/approve", async (c) => {
       return c.json({ error: 'Withdrawal cannot be approved' }, 400);
     }
 
-    withdrawal.status = 'completed';
-    withdrawal.processed_at = new Date().toISOString();
-    withdrawal.updated_at = new Date().toISOString();
+    // 🎯 Check if it's a PayPal withdrawal - auto process
+    if (withdrawal.method_type === 'paypal') {
+      console.log(`💸 [Withdrawal Approve] PayPal withdrawal detected, initiating auto-payout...`);
+      
+      // Get PayPal method details
+      const method = await kv.get(withdrawal.method_id);
+      if (!method || !method.paypal_email) {
+        console.error('❌ [Withdrawal Approve] PayPal method not found or missing email');
+        return c.json({ error: 'PayPal account information not found' }, 400);
+      }
+
+      // Import PayPal service
+      const { createPayout } = await import('./paypal_service.tsx');
+      
+      // Create PayPal payout
+      const payoutResult = await createPayout(
+        method.paypal_email,
+        withdrawal.net_amount, // Use net amount (after fees)
+        `Withdrawal from Case Where - Request ${withdrawalId}`,
+        withdrawalId
+      );
+
+      if (payoutResult.success) {
+        console.log(`✅ [Withdrawal Approve] PayPal payout created:`, {
+          payoutBatchId: payoutResult.payoutBatchId,
+          amount: withdrawal.net_amount,
+          email: method.paypal_email,
+        });
+
+        // Update withdrawal with payout info
+        withdrawal.status = 'completed';
+        withdrawal.processed_at = new Date().toISOString();
+        withdrawal.updated_at = new Date().toISOString();
+        withdrawal.payout_batch_id = payoutResult.payoutBatchId;
+        withdrawal.payout_item_id = payoutResult.payoutItemId;
+        withdrawal.payout_status = payoutResult.status;
+        withdrawal.payout_method = 'paypal_auto';
+      } else {
+        console.error('❌ [Withdrawal Approve] PayPal payout failed:', payoutResult.error);
+        
+        // Mark as processing failed, admin needs to check
+        withdrawal.status = 'processing';
+        withdrawal.processed_at = new Date().toISOString();
+        withdrawal.updated_at = new Date().toISOString();
+        withdrawal.payout_error = payoutResult.error;
+        withdrawal.payout_method = 'paypal_auto_failed';
+        
+        await kv.set(withdrawalId, withdrawal);
+        
+        return c.json({ 
+          success: false, 
+          error: `PayPal payout failed: ${payoutResult.error}`,
+          withdrawal 
+        }, 500);
+      }
+    } else {
+      // Manual withdrawal (bank transfer) - just mark as completed
+      console.log(`🏦 [Withdrawal Approve] Manual withdrawal (${withdrawal.method_type}), marking as completed`);
+      
+      withdrawal.status = 'completed';
+      withdrawal.processed_at = new Date().toISOString();
+      withdrawal.updated_at = new Date().toISOString();
+      withdrawal.payout_method = 'manual';
+    }
+
     await kv.set(withdrawalId, withdrawal);
 
+    // Update wallet
     const walletKey = `wallet_${withdrawal.user_id}`;
     const wallet = await kv.get(walletKey);
     if (wallet) {
@@ -12104,6 +12167,7 @@ app.post("/make-server-215f78a5/withdrawals/:id/approve", async (c) => {
       await kv.set(walletKey, wallet);
     }
 
+    // Update transaction status
     const allTransactions = await kv.getByPrefix('transaction_') || [];
     const transaction = allTransactions.find((t: any) => t.reference_id === withdrawalId);
     if (transaction) {
@@ -12111,7 +12175,7 @@ app.post("/make-server-215f78a5/withdrawals/:id/approve", async (c) => {
       await kv.set(transaction.id, transaction);
     }
 
-    console.log(`✅ Withdrawal ${withdrawalId} approved`);
+    console.log(`✅ Withdrawal ${withdrawalId} approved and processed`);
 
     return c.json({ success: true, withdrawal });
   } catch (error) {
