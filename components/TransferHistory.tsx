@@ -128,8 +128,14 @@ export function TransferHistory() {
         }
       );
 
+      console.log('📊 [TransferHistory] Response status:', response.status); // 🔍 調試日誌
+
       if (response.ok) {
         const data = await response.json();
+        console.log('📊 [TransferHistory] Received data:', data); // 🔍 調試日誌
+        console.log('📊 [TransferHistory] Sent count:', data?.sent?.length || 0); // 🔍 調試日誌
+        console.log('📊 [TransferHistory] Received count:', data?.received?.length || 0); // 🔍 調試日誌
+        
         // ✅ 確保數據結構正確
         setHistory({
           sent: Array.isArray(data?.sent) ? data.sent : [],

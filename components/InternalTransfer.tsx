@@ -160,7 +160,7 @@ export function InternalTransfer() {
       transferring: '處理中...',
       fee: '手續費',
       total: '總扣款',
-      willReceive: '收款���將收到',
+      willReceive: '收款將收到',
       limits: '轉帳限額',
       dailyLimit: '每日限額',
       perTransactionLimit: '單筆限額',
@@ -347,8 +347,11 @@ export function InternalTransfer() {
 
       console.log('🔍 [Transfer] Response status:', response.status);
 
-      if (response.ok) {
-        const data = await response.json();
+      // ✅ 修復：先解析 JSON，檢查 success 字段
+      const data = await response.json();
+      console.log('🔍 [Transfer] Response data:', data);
+
+      if (response.ok || data.success) {  // ← 修復：也檢查 data.success
         console.log('✅ [Transfer] Success:', data);
         toast.success(
           <div>
@@ -383,16 +386,16 @@ export function InternalTransfer() {
         // 觸發錢包刷新事件
         window.dispatchEvent(new CustomEvent('wallet-updated'));
       } else {
-        const error = await response.json();
+        // ❌ 真正的錯誤
         console.error('❌ [Transfer] Error response:', {
           status: response.status,
-          error: error,
-          full_response: error
+          error: data,
+          full_response: data
         });
         toast.error(
           <div>
             <div className="font-bold">{text.errorTitle}</div>
-            <div className="text-sm mt-1">{error.error || 'Unknown error'}</div>
+            <div className="text-sm mt-1">{data.error || 'Unknown error'}</div>
           </div>
         );
       }

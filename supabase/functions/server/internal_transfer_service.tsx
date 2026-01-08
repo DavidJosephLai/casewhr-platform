@@ -303,15 +303,6 @@ export async function executeInternalTransfer(
 }> {
   try {
     console.log(`💸 [Transfer] Starting transfer from ${senderId} to ${recipientEmail}, amount: $${amount}`);
-    // 🔍 診斷：顯示完整的發送方資訊
-    console.log(`🔍 [Transfer DEBUG] Sender ID: ${senderId}`);
-    console.log(`🔍 [Transfer DEBUG] Wallet Key: wallet_${senderId}`);
-    const debugWallet = await kv.get(`wallet_${senderId}`);
-    console.log(`🔍 [Transfer DEBUG] Wallet Data:`, JSON.stringify(debugWallet, null, 2));
-    
-    // 嘗試查找發送方的 profile
-    const debugProfile = await kv.get(`profile:${senderId}`);
-    console.log(`🔍 [Transfer DEBUG] Sender Profile:`, JSON.stringify(debugProfile, null, 2));
 
     // 1. 驗證轉帳密碼
     const pinValid = await verifyTransferPin(senderId, pin);
@@ -491,16 +482,23 @@ export async function getTransferHistory(userId: string): Promise<{
     console.log(`📊 [Transfer History] Fetching history for user: ${userId}`);
     
     const [sent, received] = await Promise.all([
-      kv.get(`transfers_sent:${userId}`) || [],
-      kv.get(`transfers_received:${userId}`) || []
+      kv.get(`transfers_sent:${userId}`),
+      kv.get(`transfers_received:${userId}`)
     ]);
 
-    console.log(`📊 [Transfer History] Sent count: ${Array.isArray(sent) ? sent.length : 'Not an array'}`);
-    console.log(`📊 [Transfer History] Received count: ${Array.isArray(received) ? received.length : 'Not an array'}`);
-    console.log(`📊 [Transfer History] Sent data:`, JSON.stringify(sent).substring(0, 200));
-    console.log(`📊 [Transfer History] Received data:`, JSON.stringify(received).substring(0, 200));
+    // ✅ 確保返回數組，並安全處理 undefined
+    const sentArray = Array.isArray(sent) ? sent : [];
+    const receivedArray = Array.isArray(received) ? received : [];
 
-    return { sent, received };
+    console.log(`📊 [Transfer History] Sent count: ${sentArray.length}`);
+    console.log(`📊 [Transfer History] Received count: ${receivedArray.length}`);
+    console.log(`📊 [Transfer History] Sent data:`, JSON.stringify(sentArray).substring(0, 200));
+    console.log(`📊 [Transfer History] Received data:`, JSON.stringify(receivedArray).substring(0, 200));
+
+    return { 
+      sent: sentArray, 
+      received: receivedArray 
+    };
   } catch (error) {
     console.error('❌ [Transfer] Error getting transfer history:', error);
     return { sent: [], received: [] };
