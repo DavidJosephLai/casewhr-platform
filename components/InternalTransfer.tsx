@@ -49,11 +49,21 @@ interface TransferLimits {
   };
 }
 
+interface RecipientInfo {
+  found: boolean;
+  email: string;
+  name?: string;
+  userId?: string;
+  subscription?: string;
+}
+
 export function InternalTransfer() {
   const { user, accessToken } = useAuth();
   const { language, currency } = useLanguage();
   
   const [recipientEmail, setRecipientEmail] = useState('');
+  const [recipientInfo, setRecipientInfo] = useState<RecipientInfo | null>(null);
+  const [searchingRecipient, setSearchingRecipient] = useState(false);
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [pin, setPin] = useState('');
@@ -365,6 +375,7 @@ export function InternalTransfer() {
         
         // 清空表單
         setRecipientEmail('');
+        setRecipientInfo(null); // 🔄 清空收款人資訊
         setAmount('');
         setNote('');
         setPin('');
@@ -405,6 +416,58 @@ export function InternalTransfer() {
       setLoading(false);
     }
   };
+
+  // 搜尋收款人
+  const handleSearchRecipient = async () => {
+    if (!recipientEmail) {
+      toast.error(language === 'en' ? 'Please enter recipient email' : language === 'zh-CN' ? '请输入收款人邮箱' : '請輸入收款人郵箱');
+      return;
+    }
+
+    setSearchingRecipient(true);
+
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/wallet/transfer/search-recipient`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email: recipientEmail })
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setRecipientInfo(data);
+        toast.success(language === 'en' ? 'Recipient found!' : language === 'zh-CN' ? '找到收款人！' : '找到收款人！');
+      } else {
+        const error = await response.json();
+        setRecipientInfo(null);
+        toast.error(error.error || 'Recipient not found');
+      }
+    } catch (error: any) {
+      setRecipientInfo(null);
+      toast.error(error.message);
+    } finally {
+      setSearchingRecipient(false);
+    }
+  };
+
+  // 🔄 自動搜尋收款人（當 email 變化時）
+  useEffect(() => {
+    const delaySearch = setTimeout(() => {
+      if (recipientEmail && recipientEmail.includes('@')) {
+        handleSearchRecipient();
+      } else {
+        setRecipientInfo(null);
+      }
+    }, 800); // 800ms 防抖
+
+    return () => clearTimeout(delaySearch);
+  }, [recipientEmail]);
 
   if (!hasPin && !showSetPin) {
     return (
@@ -571,6 +634,34 @@ export function InternalTransfer() {
               onChange={(e) => setRecipientEmail(e.target.value)}
               placeholder={text.recipientPlaceholder}
             />
+            <Button
+              variant="link"
+              size="sm"
+              onClick={handleSearchRecipient}
+              className="text-xs"
+              disabled={searchingRecipient}
+            >
+              {searchingRecipient ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {language === 'en' ? 'Searching...' : '搜尋中...'}
+                </>
+              ) : (
+                language === 'en' ? 'Search' : '搜尋'
+              )}
+            </Button>
+            {recipientInfo && (
+              <div className="mt-2 p-3 bg-white rounded-lg border border-gray-200 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{language === 'en' ? 'Recipient:' : '收款人：'}</span>
+                  <span className="font-medium">{recipientInfo.name || recipientInfo.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">{language === 'en' ? 'Subscription:' : '訂閱：'}</span>
+                  <span className="font-medium">{recipientInfo.subscription || 'N/A'}</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 金額 */}

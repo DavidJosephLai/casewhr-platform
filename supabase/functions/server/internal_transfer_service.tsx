@@ -696,6 +696,50 @@ export function registerInternalTransferRoutes(app: Hono) {
     }
   });
 
+  // 🔍 搜尋收款人資訊
+  app.post('/make-server-215f78a5/wallet/transfer/search-recipient', async (c) => {
+    try {
+      const accessToken = c.req.header('Authorization')?.split(' ')[1];
+      const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+
+      if (!user) {
+        return c.json({ error: 'Unauthorized' }, 401);
+      }
+
+      const { email } = await c.req.json();
+
+      if (!email) {
+        return c.json({ error: 'Email is required' }, 400);
+      }
+
+      // 檢查是否是自己
+      if (email.toLowerCase() === user.email?.toLowerCase()) {
+        return c.json({ error: 'Cannot transfer to yourself' }, 400);
+      }
+
+      // 查找收款人
+      const result = await findUserByEmail(email);
+
+      if (!result.found) {
+        return c.json({ error: 'Recipient not found' }, 404);
+      }
+
+      // 獲取收款人的訂閱資訊
+      const recipientSubscription = await kv.get(`subscription:${result.userId}`) || { plan: 'free' };
+
+      return c.json({
+        found: true,
+        email: result.profile.email,
+        name: result.profile.name || result.profile.displayName || 'Unknown',
+        userId: result.userId,
+        subscription: recipientSubscription.plan || 'free'
+      });
+    } catch (error: any) {
+      console.error('❌ [Transfer] Error searching recipient:', error);
+      return c.json({ error: error.message }, 500);
+    }
+  });
+
   console.log('✅ [Transfer] Internal transfer routes registered');
 }
 
