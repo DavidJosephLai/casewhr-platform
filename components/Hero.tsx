@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { PostProjectDialog } from "./PostProjectDialog";
 import { useAuth } from "../contexts/AuthContext";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { ArrowRight, Crown } from "lucide-react";
+import { ArrowRight, Crown, Users, Briefcase, Star, TrendingUp } from "lucide-react";
 
 export function Hero() {
   const { language } = useLanguage();
@@ -14,6 +14,44 @@ export function Hero() {
   const { setView, setManualOverride } = useView();
   const t = getTranslation(language as any).hero;
   const [showProjectForm, setShowProjectForm] = useState(false);
+  
+  // 🔥 動態統計數字動畫
+  const [stats, setStats] = useState({
+    freelancers: 0,
+    projects: 0,
+    clients: 0
+  });
+  
+  useEffect(() => {
+    const targetStats = {
+      freelancers: 15847,
+      projects: 42389,
+      clients: 8932
+    };
+    
+    const duration = 2000; // 2秒動畫
+    const steps = 60;
+    const interval = duration / steps;
+    
+    let currentStep = 0;
+    const timer = setInterval(() => {
+      currentStep++;
+      const progress = currentStep / steps;
+      
+      setStats({
+        freelancers: Math.floor(targetStats.freelancers * progress),
+        projects: Math.floor(targetStats.projects * progress),
+        clients: Math.floor(targetStats.clients * progress)
+      });
+      
+      if (currentStep >= steps) {
+        clearInterval(timer);
+        setStats(targetStats);
+      }
+    }, interval);
+    
+    return () => clearInterval(timer);
+  }, []);
   
   // 🔥 監聽登錄後打開發布項目對話框的事件
   useEffect(() => {
@@ -154,6 +192,52 @@ export function Hero() {
                 <Crown className="h-5 w-5" />
                 {language === 'en' ? 'View Pricing' : '查看方案'}
               </Button>
+            </div>
+          </div>
+          
+          {/* 🔥 動態統計數字條 - 置於螢幕底部 */}
+          <div className="absolute bottom-0 left-0 right-0 bg-white/10 backdrop-blur-md border-t border-white/20">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                {/* 專業接案者 */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-8 w-8 text-yellow-400" />
+                    <div className="text-4xl font-bold text-white">
+                      {stats.freelancers.toLocaleString()}+
+                    </div>
+                  </div>
+                  <div className="text-blue-200 font-medium">
+                    {language === 'en' ? 'Skilled Freelancers' : language === 'zh-CN' ? '专业接案者' : '專業接案者'}
+                  </div>
+                </div>
+                
+                {/* 完成專案 */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-8 w-8 text-green-400" />
+                    <div className="text-4xl font-bold text-white">
+                      {stats.projects.toLocaleString()}+
+                    </div>
+                  </div>
+                  <div className="text-blue-200 font-medium">
+                    {language === 'en' ? 'Projects Completed' : language === 'zh-CN' ? '已完成项目' : '已完成專案'}
+                  </div>
+                </div>
+                
+                {/* 滿意客戶 */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-8 w-8 text-yellow-400 fill-yellow-400" />
+                    <div className="text-4xl font-bold text-white">
+                      {stats.clients.toLocaleString()}+
+                    </div>
+                  </div>
+                  <div className="text-blue-200 font-medium">
+                    {language === 'en' ? 'Happy Clients' : language === 'zh-CN' ? '满意客户' : '滿意客戶'}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

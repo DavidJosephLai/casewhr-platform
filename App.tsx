@@ -28,6 +28,9 @@ import { Categories } from './components/Categories';
 import { BrowseProjects } from './components/BrowseProjects';
 import { Contact } from './components/Contact';
 import { Footer } from './components/Footer';
+import { PopularServices } from './components/PopularServices';
+import { Testimonials } from './components/Testimonials';
+import { TrustBadges } from './components/TrustBadges';
 
 // ✅ 只對大型頁面使用 Lazy Load（真正需要代碼分割的）
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -48,17 +51,7 @@ const EmailTestPage = lazy(() => import('./components/EmailTestPage'));
 const GoogleOAuthTester = lazy(() => import('./components/GoogleOAuthTester'));
 const GoogleSearchConsoleVerifier = lazy(() => import('./components/GoogleSearchConsoleVerifier'));
 const EnvironmentCheck = lazy(() => import('./components/EnvironmentCheck'));
-const AuthDiagnostic = lazy(() => import('./components/AuthDiagnostic'));
-const SimpleLoginTest = lazy(() => import('./components/SimpleLoginTest'));
-const FigmaEnvDiagnostic = lazy(() => import('./components/FigmaEnvDiagnostic'));
-const ECPayDiagnostic = lazy(() => import('./components/ECPayDiagnostic'));
-const EmailManagementPage = lazy(() => import('./components/EmailManagementPage').then(module => ({ default: module.EmailManagementPage })));
-const EmailIntegrationPanel = lazy(() => import('./components/EmailIntegrationPanel').then(module => ({ default: module.EmailIntegrationPanel })));
-const StripeEnvCheck = lazy(() => import('./components/StripeEnvCheck'));
-const AcceptInvitationPage = lazy(() => import('./components/AcceptInvitationPage'));
-const AuthCallback = lazy(() => import('./components/AuthCallback'));
-const ResetPasswordPage = lazy(() => import('./components/ResetPasswordPage'));
-const AuthVerifyPage = lazy(() => import('./components/AuthVerifyPage'));
+const TransferDebug = lazy(() => import('./components/TransferDebug').then(module => ({ default: module.TransferDebug })));
 
 // 📄 內容頁面 - Lazy Load（SEO 相關頁面）
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
@@ -478,6 +471,13 @@ function AppContent() {
             <EnvironmentCheck />
           </Suspense>
         </div>
+      ) : view === 'transfer-debug' ? (
+        <div className="pt-20">
+          <SEO title="Transfer Debug" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <TransferDebug />
+          </Suspense>
+        </div>
       ) : view === 'auth-diagnostic' ? (
         <div className="pt-20">
           <SEO title="Auth Diagnostic" description="" keywords="" noindex />
@@ -631,10 +631,13 @@ function AppContent() {
           <SEO {...getPageSEO('home', language)} />
           <Hero />
           {/* ⚡ 首頁組件 - 移除 Suspense 以提升性能 */}
+          <TrustBadges />
+          <PopularServices />
           <CoreValues />
           <Services />
           <MilestoneFeature />
           <Process />
+          <Testimonials />
           <TalentDirectory />
           <DevelopmentCategories />
           <WhoCanTakeOver />
