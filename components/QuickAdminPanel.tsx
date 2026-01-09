@@ -508,7 +508,7 @@ export function QuickAdminPanel() {
       return;
     }
     
-    // 🔥 檢查 accessToken 是否有效
+    // 🔥 檢�� accessToken 是否有效
     if (accessToken.startsWith('dev-user-')) {
       toast.error('❌ 登入憑證無效', {
         description: '檢測到開發模式憑證，請使用真實的 Supabase 登入',
@@ -626,24 +626,7 @@ export function QuickAdminPanel() {
 
         <div className="flex-1 overflow-y-auto p-4">{section === 'main' && (
           <div className="space-y-2">
-            {/* 🔥 開發模式警告 */}
-            {localStorage.getItem('dev_mode_active') === 'true' && (
-              <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 mb-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge className="bg-yellow-600">開發模式</Badge>
-                </div>
-                <p className="text-xs text-yellow-800 mb-2">
-                  當前使用模擬登入，無法查看訂閱狀態。請退出開發模式並使用真實的 Supabase 登入。
-                </p>
-                <Button 
-                  onClick={exitDevModeAndLogin} 
-                  size="sm" 
-                  className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
-                >
-                  🔓 退出開發模式並登入
-                </Button>
-              </div>
-            )}
+            {/* 🔥 開發模式警告 - 已移除 */}
             
             <Button onClick={() => setSection('gen')} className="w-full justify-start bg-green-600 hover:bg-green-700" size="sm">
               <Plus className="h-4 w-4 mr-2" />
