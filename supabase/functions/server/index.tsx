@@ -22,6 +22,7 @@ import * as deliverableEmails from "./email_templates_deliverables.tsx";
 import { EXCHANGE_RATES, toUSD, getExchangeRates } from "./exchange_rates.tsx";
 import { registerInternationalPayoutRoutes } from "./international_payout_service.tsx";
 import { registerInternalTransferRoutes } from "./internal_transfer_service.tsx";
+import { registerSinopacRoutes } from "./sinopac_bank_service.tsx";
 import { registerSubscriptionNotificationRoutes, checkSubscriptionsAndNotify } from "./subscription_notification_service.tsx";
 import { sendTeamInvitationEmail } from "./email_team_invitation.tsx";
 import { sendPasswordResetOTP, verifyPasswordResetOTP } from "./password_reset_service.tsx";
@@ -488,6 +489,37 @@ console.log('✅ [SERVER] International payout APIs registered');
 // Register Internal Transfer APIs
 registerInternalTransferRoutes(app);
 console.log('✅ [SERVER] Internal transfer APIs registered');
+
+// Register SinoPac Bank (永豐銀行) APIs
+registerSinopacRoutes(app);
+console.log('✅ [SERVER] SinoPac Bank (永豐銀行寰宇金融) APIs registered');
+
+// 🔍 診斷：查找用戶by 郵箱
+app.post('/make-server-215f78a5/debug/find-user', async (c) => {
+  try {
+    const { email } = await c.req.json();
+    const { findUserByEmail } = await import('./internal_transfer_service.tsx');
+    const result = await findUserByEmail(email);
+    return c.json(result);
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 🔍 診斷：查找用戶by 郵箱 (GET 版本 - 方便直接訪問)
+app.get('/make-server-215f78a5/debug/find-user-by-email', async (c) => {
+  try {
+    const email = c.req.query('email');
+    if (!email) {
+      return c.json({ error: 'Missing email parameter' }, 400);
+    }
+    const { findUserByEmail } = await import('./internal_transfer_service.tsx');
+    const result = await findUserByEmail(email);
+    return c.json(result);
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
 
 // 🐛 診斷路由：查看 KV Store 中的轉帳記錄
 app.get('/make-server-215f78a5/debug/transfer-records/:userId', async (c) => {
