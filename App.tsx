@@ -52,6 +52,17 @@ const GoogleOAuthTester = lazy(() => import('./components/GoogleOAuthTester'));
 const GoogleSearchConsoleVerifier = lazy(() => import('./components/GoogleSearchConsoleVerifier'));
 const EnvironmentCheck = lazy(() => import('./components/EnvironmentCheck'));
 const TransferDebug = lazy(() => import('./components/TransferDebug').then(module => ({ default: module.TransferDebug })));
+const AuthDiagnostic = lazy(() => import('./components/AuthDiagnostic'));
+const SimpleLoginTest = lazy(() => import('./components/SimpleLoginTest'));
+const FigmaEnvDiagnostic = lazy(() => import('./components/FigmaEnvDiagnostic'));
+const ECPayDiagnostic = lazy(() => import('./components/ECPayDiagnostic'));
+const EmailManagementPage = lazy(() => import('./components/EmailManagementPage'));
+const EmailIntegrationPanel = lazy(() => import('./components/EmailIntegrationPanel'));
+const StripeEnvCheck = lazy(() => import('./components/StripeEnvCheck'));
+const AcceptInvitationPage = lazy(() => import('./components/AcceptInvitationPage'));
+const AuthCallback = lazy(() => import('./components/AuthCallback'));
+const ResetPasswordPage = lazy(() => import('./components/ResetPasswordPage'));
+const AuthVerifyPage = lazy(() => import('./components/AuthVerifyPage'));
 
 // 📄 內容頁面 - Lazy Load（SEO 相關頁面）
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
