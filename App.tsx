@@ -51,7 +51,7 @@ const EmailTestPage = lazy(() => import('./components/EmailTestPage'));
 const GoogleOAuthTester = lazy(() => import('./components/GoogleOAuthTester'));
 const GoogleSearchConsoleVerifier = lazy(() => import('./components/GoogleSearchConsoleVerifier'));
 const EnvironmentCheck = lazy(() => import('./components/EnvironmentCheck'));
-const TransferDebug = lazy(() => import('./components/TransferDebug').then(module => ({ default: module.TransferDebug })));
+const TransferDebug = lazy(() => import('./components/TransferDebug'));
 const AuthDiagnostic = lazy(() => import('./components/AuthDiagnostic'));
 const SimpleLoginTest = lazy(() => import('./components/SimpleLoginTest'));
 const FigmaEnvDiagnostic = lazy(() => import('./components/FigmaEnvDiagnostic'));
