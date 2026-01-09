@@ -730,7 +730,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
               language === 'en'
                 ? '🔄 Redirecting to ECPay payment page...'
                 : language === 'zh-CN'
-                ? '🔄 正跳到绿界付款页面...'
+                ? '🔄 正在跳转到 ECPay 付款页面...'
                 : '🔄 正在跳轉到綠界付款頁面...',
               { duration: 3000 }
             );
@@ -768,7 +768,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
         language === 'en'
           ? 'Failed to start ECPay payment'
           : language === 'zh-CN'
-          ? '无法启动绿界付款'
+          ? '无法启动 ECPay 付款'
           : '無法啟動綠界付款'
       );
     }
@@ -1338,7 +1338,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
                     {language === 'en'
                       ? 'ECPay requires a minimum of NT$100, but we recommend NT$300 for better value.'
                       : language === 'zh-CN'
-                      ? '绿界金流最低 NT$100，建议 NT$300 以上较划算。'
+                      ? 'ECPay 最低 NT$100，建议 NT$300 以上较划算。'
                       : '綠界金流最低 NT$100，建議 NT$300 以上較划算。'}
                   </p>
                 </div>

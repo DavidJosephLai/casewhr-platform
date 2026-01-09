@@ -54,7 +54,7 @@ export function PaymentMethodSelector({
       title: '选择付款方式',
       description: '请选择您偏好的付款方式',
       amount: '金额',
-      ecpayTitle: '绿界支付（台湾）',
+      ecpayTitle: 'ECPay（台湾）',
       ecpayDesc: '信用卡、ATM转账、便利店缴费',
       ecpayNote: '台湾用户推荐使用',
       paypalTitle: 'PayPal（国际）',
