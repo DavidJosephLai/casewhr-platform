@@ -1305,8 +1305,8 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
               {language === 'en'
                 ? '• ECPay (Taiwan): Credit/Debit cards, ATM, convenience stores\n• PayPal: International payments via PayPal account'
                 : language === 'zh-CN'
-                ? '• 界支付（台湾）：信用卡/借记卡、ATM、便利店\n• PayPal：通过 PayPal 账号国际支付'
-                : '• 綠界支付（台灣）：信用卡/金融卡、ATM、超商代碼\n• PayPal：透過 PayPal 帳號國際支付'}
+                ? '• 綠界支付（台湾）：信用卡/借记卡\n• PayPal：通过 PayPal 账号国际支付'
+                : '• 綠界支付（台灣）：信用卡/金融卡\n• PayPal：透過 PayPal 帳號國際支付'}
             </p>
           </div>
 
@@ -1452,7 +1452,7 @@ ${transactions.slice(0, 5).map((t, i) => `${i + 1}. ${t.type}: $${t.amount.toFix
                     className="flex-1 bg-white hover:bg-gray-50 border-2 border-green-500"
                   >
                     <ShoppingCart className="h-4 w-4 mr-2 text-green-600" />
-                    <span className="text-green-600">綠界付款</span>
+                    <span className="text-green-600">ECPay</span>
                     <ExternalLink className="h-3 w-3 ml-1 text-green-600" />
                   </Button>
                 </>

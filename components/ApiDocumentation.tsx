@@ -303,8 +303,8 @@ export function ApiDocumentation() {
       {
         method: 'POST',
         path: '/ecpay/create-payment',
-        title: language === 'en' ? 'Create ECPay Order' : language === 'zh-CN' ? '创建绿界订单' : '建立綠界訂單',
-        description: language === 'en' ? 'Create an ECPay payment order' : language === 'zh-CN' ? '创建绿界付款订单' : '建立綠界付款訂單',
+        title: language === 'en' ? 'Create ECPay Order' : language === 'zh-CN' ? '创建 ECPay 订单' : '建立綠界訂單',
+        description: language === 'en' ? 'Create an ECPay payment order' : language === 'zh-CN' ? '创建 ECPay 付款订单' : '建立綠界付款訂單',
         auth: true,
         body: {
           amount: 'number',
