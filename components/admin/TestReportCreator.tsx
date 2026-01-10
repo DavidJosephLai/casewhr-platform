@@ -16,11 +16,52 @@ export default function TestReportCreator() {
   const [createdReportId, setCreatedReportId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // 調試：在控制台輸出 auth 狀態
+  React.useEffect(() => {
+    console.log('🔍 [TestReportCreator] Auth State:', {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      hasSession: !!session,
+      hasAccessToken: !!session?.access_token,
+    });
+  }, [user, session]);
+
   const createTestReport = async () => {
-    if (!user || !session?.access_token) {
+    // 更寬鬆的檢查：只要有 user 就嘗試獲取 token
+    if (!user) {
       toast.error('❌ 請先登入！');
+      console.error('❌ [TestReportCreator] No user found');
       return;
     }
+
+    // 嘗試多種方式獲取 access token
+    let accessToken = session?.access_token;
+    
+    if (!accessToken) {
+      console.warn('⚠️ [TestReportCreator] No access token in session, trying localStorage...');
+      
+      // 嘗試從 localStorage 獲取
+      try {
+        const authData = localStorage.getItem('supabase.auth.token');
+        if (authData) {
+          const parsed = JSON.parse(authData);
+          accessToken = parsed?.currentSession?.access_token || parsed?.access_token;
+          console.log('📦 [TestReportCreator] Found token in localStorage:', !!accessToken);
+        }
+      } catch (e) {
+        console.error('❌ [TestReportCreator] Failed to parse localStorage auth:', e);
+      }
+    }
+
+    if (!accessToken) {
+      toast.error('❌ 無法獲取登入憑證，請重新登入');
+      console.error('❌ [TestReportCreator] No access token available');
+      setError('No access token found. Please log out and log in again.');
+      return;
+    }
+
+    console.log('✅ [TestReportCreator] Access token found, proceeding...');
 
     setIsCreating(true);
     setCreatedReportId(null);
@@ -29,7 +70,7 @@ export default function TestReportCreator() {
     try {
       console.log('🧪 [TestReportCreator] Starting test report creation...');
       console.log('👤 [TestReportCreator] User:', user.email, user.id);
-      console.log('🔑 [TestReportCreator] Access token exists:', !!session.access_token);
+      console.log('🔑 [TestReportCreator] Access token exists:', !!accessToken);
 
       const reportData = {
         title: `🧪 測試報告 - ${new Date().toLocaleString('zh-TW')}`,
@@ -61,7 +102,7 @@ export default function TestReportCreator() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
+            'Authorization': `Bearer ${accessToken}`,
           },
           body: JSON.stringify({ reportData }),
         }
@@ -139,6 +180,17 @@ export default function TestReportCreator() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* 🔍 登入狀態顯示 */}
+        <div className="bg-gray-100 border border-gray-300 rounded-lg p-3 text-xs font-mono">
+          <div className="font-bold text-gray-700 mb-2">🔍 當前登入狀態：</div>
+          <div className="space-y-1">
+            <div>👤 User: {user ? `✅ ${user.email}` : '❌ 未登入'}</div>
+            <div>🆔 User ID: {user?.id || '❌ N/A'}</div>
+            <div>🔑 Session: {session ? '✅ 存在' : '❌ 不存在'}</div>
+            <div>🎫 Access Token: {session?.access_token ? '✅ 存在' : '❌ 不存在'}</div>
+          </div>
+        </div>
+
         <div className="text-sm text-gray-600">
           <p>點擊下方按鈕創建一個測試報告到雲端。</p>
           <p className="mt-2">
