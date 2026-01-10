@@ -24,6 +24,7 @@ import { SitemapURLChecker } from '../components/SitemapURLChecker';
 import { SEODiagnostic } from '../components/SEODiagnostic';
 import { AdminAISEO } from '../components/admin/AdminAISEO';
 import AdminAISEOReports from '../components/admin/AdminAISEOReports';
+import KVStoreDiagnostic from '../components/admin/KVStoreDiagnostic';
 import DataSyncDiagnostic from '../components/DataSyncDiagnostic';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -491,8 +492,17 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="seoTools" className="mt-0">
-              <AdminAISEO />
-              <AdminAISEOReports />
+              <div className="space-y-6">
+                <AdminAISEO />
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="font-semibold text-yellow-900 mb-2">🔍 KV Store 診斷工具</div>
+                  <p className="text-sm text-yellow-700 mb-4">
+                    如果 AI SEO 報告沒有正確顯示，請使用此工具診斷問題
+                  </p>
+                  <KVStoreDiagnostic />
+                </div>
+                <AdminAISEOReports />
+              </div>
             </TabsContent>
 
             <TabsContent value="sitemap" className="mt-0">

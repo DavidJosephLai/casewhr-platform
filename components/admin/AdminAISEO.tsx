@@ -5,10 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Sparkles, Search, TrendingUp, Settings, Database, FileText, Loader2 } from 'lucide-react';
+import { Sparkles, Search, TrendingUp, Settings, Database, FileText, Loader2, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { AISEOManager } from '../AISEOManager';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import KVStoreDiagnostic from './KVStoreDiagnostic';
 
 export function AdminAISEO() {
   const { language } = useLanguage();
@@ -89,33 +90,33 @@ export function AdminAISEO() {
     },
     'zh-CN': {
       title: 'AI SEO 管理',
-      subtitle: '管理平台的 AI 驱动 SEO 功能',
+      subtitle: '管理平台的 AI 驅動 SEO 功能',
       tabs: {
         manager: 'SEO 管理器',
-        health: '健康检查',
-        settings: '设置',
+        health: '健康檢查',
+        settings: '設定',
         analytics: '分析',
       },
       healthCheck: {
-        title: 'API 健康状态',
-        check: '检查健康',
-        checking: '检查中...',
-        status: '状态',
-        apiKey: 'API 密钥',
+        title: 'API 健康狀態',
+        check: '檢查健康',
+        checking: '檢查中...',
+        status: '狀態',
+        apiKey: 'API 金鑰',
         configured: '已配置',
         notConfigured: '未配置',
-        lastCheck: '最后检查',
+        lastCheck: '最後檢查',
       },
       manager: {
-        title: 'AI SEO 内容管理器',
-        description: '为平台页面生成和优化 SEO 内容',
+        title: 'AI SEO 內容管理器',
+        description: '為平台頁面生成和優化 SEO 內容',
       },
       analytics: {
         title: 'SEO 分析',
-        description: '查看 AI SEO 使用统计和性能',
-        totalGenerations: '总生成次数',
-        avgScore: '平均分数',
-        topKeywords: '热门关键字',
+        description: '查看 AI SEO 使用統計和性能',
+        totalGenerations: '總生成次數',
+        avgScore: '平均分數',
+        topKeywords: '熱門關鍵字',
       },
     },
   };

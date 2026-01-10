@@ -150,6 +150,19 @@ export default function AdminAISEOReports() {
       const allData = data.data || [];
       
       console.log('📦 Total KV items:', allData.length);
+      console.log('🔍 First 10 keys:', allData.slice(0, 10).map((item: any) => item.key));
+      
+      // 找出所有以 ai_seo 開頭的 key（任何變體）
+      const aiSeoKeys = allData
+        .filter((item: any) => item.key && (
+          item.key.startsWith('ai_seo') || 
+          item.key.toLowerCase().includes('ai_seo') ||
+          item.key.toLowerCase().includes('aiseo')
+        ))
+        .map((item: any) => item.key);
+      
+      console.log('🎯 All AI SEO related keys:', aiSeoKeys);
+      console.log('📊 AI SEO keys count:', aiSeoKeys.length);
 
       // 篩選出 AI SEO 報告（key 以 "ai_seo_" 開頭）
       const seoReports: AISEOReport[] = [];
@@ -159,6 +172,7 @@ export default function AdminAISEOReports() {
 
       allData.forEach((item: any) => {
         if (item.key && item.key.startsWith('ai_seo_')) {
+          console.log('✅ Found AI SEO report:', item.key, item.value);
           // 這是一個報告數據
           if (item.value && typeof item.value === 'object' && item.value.id) {
             seoReports.push(item.value as AISEOReport);
@@ -171,6 +185,8 @@ export default function AdminAISEOReports() {
             // 計算大小
             const size = new Blob([JSON.stringify(item.value)]).size;
             totalSize += size;
+          } else {
+            console.warn('⚠️ Invalid report structure:', item.key, item.value);
           }
         }
       });
@@ -197,7 +213,7 @@ export default function AdminAISEOReports() {
       toast.success(`載入了 ${seoReports.length} 個報告`);
     } catch (error) {
       console.error('❌ Error loading reports:', error);
-      toast.error('載入報告失敗');
+      toast.error('載入報告失敗: ' + (error as Error).message);
     } finally {
       setIsLoading(false);
     }
