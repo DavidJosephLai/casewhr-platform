@@ -123,6 +123,15 @@ export default function TestReportCreator() {
 
           if (verifyResponse.ok) {
             const kvData = await verifyResponse.json();
+            console.log('🔍 [TestReportCreator] KV Data:', kvData); // ✅ 添加日誌
+            
+            // ✅ 安全檢查：確保 kvData.data 存在且是數組
+            if (!kvData || !kvData.data || !Array.isArray(kvData.data)) {
+              console.error('❌ [TestReportCreator] Invalid KV data structure:', kvData);
+              toast.error('⚠️ KV Store 返回數據格式錯誤');
+              return;
+            }
+            
             const allKeys = kvData.data.map((item: any) => item.key);
             const aiSeoKeys = allKeys.filter((k: string) => k.includes('ai_seo'));
             const foundReport = allKeys.includes(data.reportId);

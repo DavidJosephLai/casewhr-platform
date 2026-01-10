@@ -148,7 +148,14 @@ export default function AdminAISEOReports() {
       }
 
       const data = await response.json();
+      console.log('🔍 [Admin] Raw API response:', data); // ✅ 添加完整響應日誌
+      
       const allData = data.data || [];
+      
+      if (!Array.isArray(allData)) {
+        console.error('❌ [Admin] allData is not an array:', allData);
+        throw new Error('Invalid data format from KV Store API');
+      }
       
       console.log('📦 [Admin] Total KV items:', allData.length);
       console.log('🔍 [Admin] First 10 keys:', allData.slice(0, 10).map((item: any) => item.key));
