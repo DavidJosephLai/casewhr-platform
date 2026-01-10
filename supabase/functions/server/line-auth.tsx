@@ -144,6 +144,7 @@ export async function createOrLoginUser(lineProfile: {
   email?: string;
 }): Promise<{ user: any; accessToken: string; needsEmail: boolean }> {
   console.log('🟢 [LINE Auth] Creating/logging in user...');
+  console.log('🔍 [LINE Auth] LINE User ID:', lineProfile.userId);
 
   // 生成郵箱（如果 LINE 沒提供）
   const hasRealEmail = !!lineProfile.email;
@@ -153,13 +154,24 @@ export async function createOrLoginUser(lineProfile: {
     console.log('⚠️ [LINE Auth] LINE did not provide email, using generated email:', email);
   }
 
-  // 檢查用戶是否已存在（使用 email 查詢而不是 LINE userId）
+  // 🎯 關鍵修復：使用 LINE User ID 查找用戶（而不是 email）
   let existingUser = null;
   try {
-    // 列出所有用戶並找到匹配的郵箱（注意：這只適用於小規模應用）
     const { data: { users }, error } = await supabase.auth.admin.listUsers();
     if (users) {
-      existingUser = users.find(u => u.email === email);
+      // 優先使用 LINE User ID 查找
+      existingUser = users.find(u => u.user_metadata?.line_user_id === lineProfile.userId);
+      
+      if (existingUser) {
+        console.log('✅ [LINE Auth] Found existing user by LINE ID:', existingUser.id);
+        console.log('🔍 [LINE Auth] Existing user email:', existingUser.email);
+      } else {
+        // 如果沒找到，再用 email 查找（兼容舊邏輯）
+        existingUser = users.find(u => u.email === email);
+        if (existingUser) {
+          console.log('✅ [LINE Auth] Found existing user by email:', existingUser.id);
+        }
+      }
     }
   } catch (error) {
     console.log('⚠️ [LINE Auth] Error checking existing user:', error);
@@ -169,10 +181,9 @@ export async function createOrLoginUser(lineProfile: {
     console.log('✅ [LINE Auth] User exists, generating access token...', existingUser.id);
     
     // 用戶已存在，生成新的 access token
-    // 使用 admin API 創建一個臨時 token
     const { data, error } = await supabase.auth.admin.generateLink({
       type: 'magiclink',
-      email: email,
+      email: existingUser.email, // 使用用戶當前的 email（可能已經更新過）
     });
 
     if (error || !data) {
@@ -180,10 +191,6 @@ export async function createOrLoginUser(lineProfile: {
       throw error || new Error('Failed to generate token');
     }
     
-    // 提取 access token from the verification token
-    // generateLink 返回的是一個 URL，我們需要從中提取 token
-    // 但更好的方法是使用 Supabase 的 Service Role Key 創建一個自定義 JWT
-    // 為了簡化，我們將使用用戶的 ID 作為唯一標識符
     console.log('✅ [LINE Auth] Link generated for existing user');
     
     // 返回用戶信息和一個可以用於前端的標識符
