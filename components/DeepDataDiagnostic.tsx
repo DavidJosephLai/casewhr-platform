@@ -20,11 +20,12 @@ import {
   FileSearch,
   Upload,
   Copy,
-  Trash2
+  Trash2,
+  Eye
 } from 'lucide-react';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { useLanguage } from '../lib/LanguageContext';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 interface LocalStorageData {
   key: string;
