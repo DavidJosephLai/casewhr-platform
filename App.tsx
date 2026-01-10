@@ -10,7 +10,6 @@ import { SEO, getPageSEO } from './components/SEO';
 import { Toaster, toast } from 'sonner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
-import { HelmetProvider } from 'react-helmet-async';
 
 // 🔥 Version marker to force cache invalidation - v2.0.89
 // 🐛 FIX: Resolve export mismatch errors for global components
@@ -183,7 +182,7 @@ function AppContent() {
   }, []); // 只應用啟動時顯示一次
   
   // 初始化匯率系統
-  // Note: useExchangeRate hook 已在各組件���按需使用
+  // Note: useExchangeRate hook 已在各組件按需使用
   
   // 檢測團隊邀請 URL
   useEffect(() => {
@@ -743,15 +742,13 @@ function AppContent() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <HelmetProvider>
-        <LanguageProvider>
-          <AuthProvider>
-            <ViewProvider>
-              <AppContent />
-            </ViewProvider>
-          </AuthProvider>
-        </LanguageProvider>
-      </HelmetProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <ViewProvider>
+            <AppContent />
+          </ViewProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </ErrorBoundary>
   );
 }
