@@ -290,6 +290,86 @@ function AppContent() {
   // 處理付款回調（Stripe 和 PayPal）
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
+    
+    // 🟢 處理 LINE OAuth 回調
+    const authType = urlParams.get('auth');
+    const tempKey = urlParams.get('temp_key');
+    const userEmail = urlParams.get('email');
+    
+    if (authType === 'line' && tempKey && userEmail) {
+      console.log('🟢 [LINE OAuth] Callback detected');
+      console.log('🟢 [LINE OAuth] Temp key:', tempKey);
+      console.log('🟢 [LINE OAuth] Email:', userEmail);
+      
+      // 調用後端獲取完整的用戶信息並完成登錄
+      const completeLineLogin = async () => {
+        try {
+          const response = await fetch(
+            `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/auth/line/complete`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${publicAnonKey}`,
+              },
+              body: JSON.stringify({
+                temp_key: tempKey,
+                email: userEmail,
+              }),
+            }
+          );
+          
+          if (!response.ok) {
+            throw new Error('Failed to complete LINE login');
+          }
+          
+          const data = await response.json();
+          console.log('✅ [LINE OAuth] Login completed:', data);
+          
+          // 清除 URL 參數
+          const cleanUrl = new URL(window.location.href);
+          cleanUrl.searchParams.delete('auth');
+          cleanUrl.searchParams.delete('temp_key');
+          cleanUrl.searchParams.delete('email');
+          cleanUrl.searchParams.delete('view');
+          window.history.replaceState({}, '', cleanUrl.toString());
+          
+          // 顯示成功提示
+          toast.success(
+            language === 'en'
+              ? '🟢 LINE login successful! Redirecting to dashboard...'
+              : '🟢 LINE 登入成功！正在跳轉到儀表板...',
+            { duration: 3000 }
+          );
+          
+          // 強制重新加載以觸發 AuthContext 更新
+          setTimeout(() => {
+            window.location.href = '/?view=dashboard';
+          }, 500);
+        } catch (error: any) {
+          console.error('❌ [LINE OAuth] Error completing login:', error);
+          toast.error(
+            language === 'en'
+              ? '❌ LINE login failed. Please try again.'
+              : '❌ LINE 登入失敗，請重試。',
+            { duration: 5000 }
+          );
+          
+          // 清除 URL 參數
+          const cleanUrl = new URL(window.location.href);
+          cleanUrl.searchParams.delete('auth');
+          cleanUrl.searchParams.delete('temp_key');
+          cleanUrl.searchParams.delete('email');
+          cleanUrl.searchParams.delete('view');
+          window.history.replaceState({}, '', cleanUrl.toString());
+        }
+      };
+      
+      completeLineLogin();
+      return; // 提前返回，避免執行後續的付款處理邏輯
+    }
+    
+    // 原有的付款回調處理
     const paymentStatus = urlParams.get('payment');
     const provider = urlParams.get('provider'); // 'paypal' or 'stripe'
     const token = urlParams.get('token'); // PayPal order ID

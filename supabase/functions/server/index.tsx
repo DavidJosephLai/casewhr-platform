@@ -787,15 +787,29 @@ app.get("/make-server-215f78a5/auth/line/callback", async (c) => {
     await kv.del(`line_oauth_state:${state}`);
     
     // 執行 LINE 登入流程
-    const { user, session, accessToken } = await lineAuth.handleLineCallback(code);
+    const { user, userId, email } = await lineAuth.handleLineCallback(code);
     
-    console.log('✅ [LINE OAuth] Login successful:', user.email);
+    console.log('✅ [LINE OAuth] Login successful:', email);
     
-    // 重定向回前端並帶上 session token
+    // 將用戶信息存儲到 KV（供前端使用）
+    const tempLoginKey = `temp_line_login:${userId}`;
+    await kv.set(tempLoginKey, {
+      user_id: userId,
+      email: email,
+      full_name: user.user_metadata?.full_name || 'LINE User',
+      avatar_url: user.user_metadata?.avatar_url || '',
+      created_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5分鐘過期
+    });
+    
+    console.log('✅ [LINE OAuth] Temp login data stored:', tempLoginKey);
+    
+    // 重定向回前端並帶上臨時登錄 key
     const redirectUrl = new URL('https://casewhr.com');
     redirectUrl.searchParams.set('view', 'dashboard');
     redirectUrl.searchParams.set('auth', 'line');
-    redirectUrl.searchParams.set('token', session.access_token || accessToken);
+    redirectUrl.searchParams.set('temp_key', userId);
+    redirectUrl.searchParams.set('email', email);
     
     return c.redirect(redirectUrl.toString());
   } catch (error: any) {
@@ -806,6 +820,80 @@ app.get("/make-server-215f78a5/auth/line/callback", async (c) => {
     console.error('❌ [LINE OAuth] Error name:', error.name);
     console.error('❌ [LINE OAuth] ========================================');
     return c.redirect(`https://casewhr.com?error=line_login_failed&message=${encodeURIComponent(error.message || 'Unknown error')}`);
+  }
+});
+
+// 🟢 LINE OAuth: 完成登入（生成 Supabase session）
+app.post("/make-server-215f78a5/auth/line/complete", async (c) => {
+  try {
+    const { temp_key, email } = await c.req.json();
+    
+    console.log('🟢 [LINE Auth Complete] Request received:', { temp_key, email });
+    
+    if (!temp_key || !email) {
+      console.error('❌ [LINE Auth Complete] Missing parameters');
+      return c.json({ error: 'Missing temp_key or email' }, 400);
+    }
+    
+    // 從 KV 讀取臨時登錄資料
+    const tempData = await kv.get(`temp_line_login:${temp_key}`);
+    
+    if (!tempData) {
+      console.error('❌ [LINE Auth Complete] Temp login data not found or expired');
+      return c.json({ error: 'Login session expired. Please try again.' }, 404);
+    }
+    
+    // 驗證郵箱匹配
+    if (tempData.email !== email) {
+      console.error('❌ [LINE Auth Complete] Email mismatch');
+      return c.json({ error: 'Invalid login session' }, 403);
+    }
+    
+    // 刪除臨時數據
+    await kv.del(`temp_line_login:${temp_key}`);
+    
+    console.log('✅ [LINE Auth Complete] Temp data validated and deleted');
+    
+    // 生成 Supabase magic link 供用戶登錄
+    const { data, error } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: email,
+    });
+    
+    if (error || !data) {
+      console.error('❌ [LINE Auth Complete] Failed to generate login link:', error);
+      return c.json({ error: 'Failed to complete login' }, 500);
+    }
+    
+    console.log('✅ [LINE Auth Complete] Magic link generated successfully');
+    
+    // 從 magic link 中提取 token 並返回給前端
+    // Magic link 格式: https://.../#access_token=xxx&...
+    const url = data.properties?.action_link || '';
+    const hashPart = url.split('#')[1] || '';
+    const params = new URLSearchParams(hashPart);
+    const accessToken = params.get('access_token');
+    
+    if (!accessToken) {
+      console.error('❌ [LINE Auth Complete] Failed to extract access token from magic link');
+      return c.json({ error: 'Failed to generate access token' }, 500);
+    }
+    
+    console.log('✅ [LINE Auth Complete] Access token extracted successfully');
+    
+    return c.json({
+      success: true,
+      access_token: accessToken,
+      user: {
+        id: tempData.user_id,
+        email: tempData.email,
+        full_name: tempData.full_name,
+        avatar_url: tempData.avatar_url,
+      },
+    });
+  } catch (error: any) {
+    console.error('❌ [LINE Auth Complete] Error:', error);
+    return c.json({ error: error.message || 'Unknown error' }, 500);
   }
 });
 
