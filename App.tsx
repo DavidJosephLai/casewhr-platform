@@ -10,6 +10,7 @@ import { SEO, getPageSEO } from './components/SEO';
 import { Toaster, toast } from 'sonner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
+import { HelmetProvider } from 'react-helmet-async';
 
 // 🔥 Version marker to force cache invalidation - v2.0.89
 // 🐛 FIX: Resolve export mismatch errors for global components
@@ -78,7 +79,9 @@ const AboutPage = lazy(() => import('./components/AboutPage'));
 const CaseStudies = lazy(() => import('./components/CaseStudies'));
 const TermsOfServicePage = lazy(() => import('./components/TermsOfServicePage'));
 const ApiDocumentation = lazy(() => import('./components/ApiDocumentation').then(module => ({ default: module.ApiDocumentation })));
-const SLADocumentation = lazy(() => import('./components/SLADocumentation').then(module => ({ default: module.SLADocumentation })));
+
+// 🌍 公開 SEO 報告頁面
+const PublicSEOReport = lazy(() => import('./components/PublicSEOReport').then(module => ({ default: module.PublicSEOReport })));
 
 // Loading fallback components - 🚀 優化：移除刺眼的藍色載入器
 function LoadingFallback() {
@@ -230,9 +233,16 @@ function AppContent() {
       return;
     }
     
+    // 🌍 檢查是否是公開 SEO 報告頁面
+    if (urlPath.startsWith('/seo-report/')) {
+      console.log('🌍 [App] Public SEO report page detected');
+      setView('public-seo-report');
+      return;
+    }
+    
     // 檢查是否是 OAuth 回調
     if (urlPath.includes('/auth/callback')) {
-      console.log(' [App] OAuth callback detected');
+      console.log('🔗 [App] OAuth callback detected');
       setView('auth-callback');
       return;
     }
@@ -622,11 +632,11 @@ function AppContent() {
             <ApiDocumentation />
           </Suspense>
         </div>
-      ) : view === 'sla-documentation' ? (
+      ) : view === 'public-seo-report' ? (
         <div className="pt-20">
-          <SEO title="SLA Documentation" description="" keywords="" noindex />
+          <SEO title="Public SEO Report" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
-            <SLADocumentation language={language} />
+            <PublicSEOReport />
           </Suspense>
         </div>
       ) : view === 'ai-seo' ? (
@@ -731,13 +741,15 @@ function AppContent() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <LanguageProvider>
-        <AuthProvider>
-          <ViewProvider>
-            <AppContent />
-          </ViewProvider>
-        </AuthProvider>
-      </LanguageProvider>
+      <HelmetProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <ViewProvider>
+              <AppContent />
+            </ViewProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </HelmetProvider>
     </ErrorBoundary>
   );
 }

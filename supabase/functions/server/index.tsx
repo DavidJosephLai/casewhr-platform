@@ -17074,12 +17074,19 @@ app.post("/make-server-215f78a5/ai/save-report", async (c) => {
     console.log('  📊 Report data size:', JSON.stringify(report).length, 'bytes');
 
     // 🔥 直接使用 Supabase Client 写入数据库（绕过 KV Store 的静默失败）
+    console.log('🔥 [DEBUG] About to call supabase.from(kv_store_215f78a5).upsert()');
+    console.log('🔥 [DEBUG] Supabase URL:', Deno.env.get('SUPABASE_URL'));
+    console.log('🔥 [DEBUG] Service Role Key exists:', !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'));
+    
     const { error: insertError } = await supabase
       .from('kv_store_215f78a5')
       .upsert({ key: reportId, value: report });
     
+    console.log('🔥 [DEBUG] Upsert completed. Error:', insertError);
+    
     if (insertError) {
       console.error('❌ [AI SEO] Database write failed:', insertError);
+      console.error('❌ [AI SEO] Error details:', JSON.stringify(insertError, null, 2));
       return c.json({ 
         error: 'Failed to save report to database', 
         details: insertError.message 
@@ -17105,15 +17112,26 @@ app.post("/make-server-215f78a5/ai/save-report", async (c) => {
     
     console.log('✅ [AI SEO] Verification successful - Report exists in database');
     
-    // 更新用戶的報告列表
+    // 更新用戶的報告列表（直接用 Supabase）
     const userReportsKey = `ai_seo_reports_${user.id}`;
     console.log('📋 [AI SEO] Updating user report list:', userReportsKey);
     
-    const existingReports = await kv.get(userReportsKey) || [];
-    console.log('  📦 Existing reports count:', Array.isArray(existingReports) ? existingReports.length : 0);
+    // 获取现有报告列表
+    const { data: existingData } = await supabase
+      .from('kv_store_215f78a5')
+      .select('value')
+      .eq('key', userReportsKey)
+      .maybeSingle();
+    
+    const existingReports = (existingData?.value || []) as string[];
+    console.log('  📦 Existing reports count:', existingReports.length);
     
     const updatedReports = [reportId, ...existingReports].slice(0, 50); // 最多保存 50 個報告
-    await kv.set(userReportsKey, updatedReports);
+    
+    // 保存更新后的列表
+    await supabase
+      .from('kv_store_215f78a5')
+      .upsert({ key: userReportsKey, value: updatedReports });
     
     console.log('  ✅ Updated reports count:', updatedReports.length);
 
@@ -17141,12 +17159,27 @@ app.get("/make-server-215f78a5/ai/reports", async (c) => {
     }
 
     const userReportsKey = `ai_seo_reports_${user.id}`;
-    const reportIds = await kv.get(userReportsKey) || [];
     
-    // 獲取所有報告的摘要信息
+    // 直接从数据库获取报告ID列表
+    const { data: listData } = await supabase
+      .from('kv_store_215f78a5')
+      .select('value')
+      .eq('key', userReportsKey)
+      .maybeSingle();
+    
+    const reportIds = (listData?.value || []) as string[];
+    console.log('📋 [AI Reports] User:', user.id, 'Report IDs:', reportIds.length);
+    
+    // 獲取所有報告的摘要信息（直接从数据库）
     const reports = [];
     for (const reportId of reportIds) {
-      const report = await kv.get(reportId);
+      const { data: reportData } = await supabase
+        .from('kv_store_215f78a5')
+        .select('value')
+        .eq('key', reportId)
+        .maybeSingle();
+      
+      const report = reportData?.value;
       if (report) {
         // 只返回摘要信息，不包含完整的分析數據
         reports.push({
@@ -17244,6 +17277,108 @@ app.delete("/make-server-215f78a5/ai/reports/:reportId", async (c) => {
     console.error('❌ Error deleting AI SEO report:', error);
     return c.json({ error: error.message || 'Failed to delete report' }, 500);
   }
+});
+
+// 🌍 公開訪問：獲取單個 AI SEO 報告（無需登錄）
+app.get("/make-server-215f78a5/public/seo-report/:reportId", async (c) => {
+  try {
+    const reportId = c.req.param('reportId');
+    console.log('🌍 [Public SEO Report] Fetching report:', reportId);
+    
+    // 從數據庫獲取報告
+    const { data, error } = await supabase
+      .from('kv_store_215f78a5')
+      .select('value')
+      .eq('key', reportId)
+      .single();
+    
+    if (error || !data) {
+      console.error('❌ [Public SEO Report] Report not found:', reportId);
+      return c.json({ error: 'Report not found' }, 404);
+    }
+
+    const report = data.value;
+    
+    console.log('✅ [Public SEO Report] Report found:', {
+      id: report.id,
+      keyword: report.keyword,
+      hasAnalysis: !!report.analysis
+    });
+
+    return c.json({ 
+      success: true,
+      report
+    });
+  } catch (error: any) {
+    console.error('❌ [Public SEO Report] Error:', error);
+    return c.json({ error: error.message || 'Failed to fetch report' }, 500);
+  }
+});
+
+// 🗺️ Sitemap.xml - 列出所有 AI SEO 報告
+app.get("/make-server-215f78a5/sitemap.xml", async (c) => {
+  try {
+    console.log('🗺️ [Sitemap] Generating sitemap...');
+    
+    // 獲取所有 AI SEO 報告
+    const { data, error } = await supabase
+      .from('kv_store_215f78a5')
+      .select('key, value, created_at')
+      .like('key', 'ai_seo_%')
+      .not('key', 'like', '%_reports_%');
+    
+    if (error) {
+      console.error('❌ [Sitemap] Database error:', error);
+      throw error;
+    }
+
+    const reports = data || [];
+    console.log(`✅ [Sitemap] Found ${reports.length} reports`);
+    
+    const baseUrl = 'https://casewhr.com';
+    const urls = reports.map(item => {
+      const lastmod = item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      return `
+  <url>
+    <loc>${baseUrl}/seo-report/${item.key}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+    }).join('');
+
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>${urls}
+</urlset>`;
+
+    console.log('✅ [Sitemap] Sitemap generated successfully');
+    
+    return c.text(sitemap, 200, {
+      'Content-Type': 'application/xml'
+    });
+  } catch (error: any) {
+    console.error('❌ [Sitemap] Error:', error);
+    return c.text('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>', 500);
+  }
+});
+
+// 🤖 robots.txt
+app.get("/make-server-215f78a5/robots.txt", async (c) => {
+  const robotsTxt = `User-agent: *
+Allow: /
+Allow: /seo-report/
+
+Sitemap: https://casewhr.com/sitemap.xml`;
+
+  return c.text(robotsTxt, 200, {
+    'Content-Type': 'text/plain'
+  });
 });
 
 // Validate critical environment variables before starting server

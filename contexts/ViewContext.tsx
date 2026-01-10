@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useMemo, useCallback, useEffect } from 'react';
 
-type ViewType = 'home' | 'dashboard' | 'pricing' | 'admin' | 'brevo-test' | 'email-test' | 'env-check' | 'email-management' | 'email-integration' | 'stripe-env-check' | 'accept-invitation' | 'auth-callback' | 'reset-password' | 'auth-verify' | 'privacy-policy' | 'cookies-policy' | 'disclaimer' | 'about' | 'cases' | 'terms-of-service' | 'google-dns-verifier' | 'sla-documentation' | 'api-documentation' | 'auth-diagnostic' | 'simple-login-test' | 'figma-env-diagnostic' | 'ecpay-diagnostic' | 'google-oauth-test' | 'ai-seo' | 'ai-seo-test';
+type ViewType = 'home' | 'dashboard' | 'pricing' | 'admin' | 'brevo-test' | 'email-test' | 'env-check' | 'email-management' | 'email-integration' | 'stripe-env-check' | 'accept-invitation' | 'auth-callback' | 'reset-password' | 'auth-verify' | 'privacy-policy' | 'cookies-policy' | 'disclaimer' | 'about' | 'cases' | 'terms-of-service' | 'google-dns-verifier' | 'sla-documentation' | 'api-documentation' | 'auth-diagnostic' | 'simple-login-test' | 'figma-env-diagnostic' | 'ecpay-diagnostic' | 'google-oauth-test' | 'ai-seo' | 'ai-seo-test' | 'public-seo-report' | 'ai-seo-diagnostic' | 'keyword-research-test' | 'keyword-deployment-check' | 'openai-key-guide' | 'data-sync-diagnostic' | 'deep-data-diagnostic' | 'transfer-debug';
 
 interface ViewContextType {
   view: ViewType;
@@ -94,6 +94,14 @@ export function ViewProvider({ children }: { children: ReactNode }) {
         'google-oauth-test': 'google-oauth-test',
         'ai-seo': 'ai-seo',
         'ai-seo-test': 'ai-seo-test',
+        'public-seo-report': 'public-seo-report',
+        'ai-seo-diagnostic': 'ai-seo-diagnostic',
+        'keyword-research-test': 'keyword-research-test',
+        'keyword-deployment-check': 'keyword-deployment-check',
+        'openai-key-guide': 'openai-key-guide',
+        'data-sync-diagnostic': 'data-sync-diagnostic',
+        'deep-data-diagnostic': 'deep-data-diagnostic',
+        'transfer-debug': 'transfer-debug',
       };
       
       if (hash && hashToView[hash]) {
