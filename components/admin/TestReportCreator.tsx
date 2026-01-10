@@ -14,41 +14,46 @@ export default function TestReportCreator() {
   const { user, session } = useAuth();
   const [isCreating, setIsCreating] = useState(false);
   const [createdReportId, setCreatedReportId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const createTestReport = async () => {
     if (!user || !session?.access_token) {
-      toast.error('請先登入！');
+      toast.error('❌ 請先登入！');
       return;
     }
 
     setIsCreating(true);
     setCreatedReportId(null);
+    setError(null);
 
     try {
-      console.log('🧪 Creating test report...');
-      console.log('👤 User ID:', user.id);
-      console.log('🔑 Has access token:', !!session.access_token);
+      console.log('🧪 [TestReportCreator] Starting test report creation...');
+      console.log('👤 [TestReportCreator] User:', user.email, user.id);
+      console.log('🔑 [TestReportCreator] Access token exists:', !!session.access_token);
 
       const reportData = {
-        title: `測試報告 - ${new Date().toLocaleString('zh-TW')}`,
-        description: '這是一個測試報告，用於驗證雲端儲存功能',
-        keywords: '測試,AI,SEO,雲端,報告',
+        title: `🧪 測試報告 - ${new Date().toLocaleString('zh-TW')}`,
+        description: '這是一個測試報告，用於驗證雲端儲存功能是否正常運作',
+        keywords: '測試,AI,SEO,雲端,報告,自動生成',
         pageType: 'home',
         analysis: {
           testField: '這是測試分析數據',
           timestamp: new Date().toISOString(),
           userAgent: navigator.userAgent,
+          testScore: 95,
         },
         generatedData: {
           testContent: '這是測試生成的內容',
           metadata: {
-            createdBy: 'TestReportCreator',
+            createdBy: 'TestReportCreator Component',
             version: '1.0',
+            environment: 'production',
           },
         },
       };
 
-      console.log('📤 Sending report data:', reportData);
+      console.log('📤 [TestReportCreator] Sending to:', `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai/save-report`);
+      console.log('📦 [TestReportCreator] Report data:', reportData);
 
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai/save-report`,
@@ -62,23 +67,28 @@ export default function TestReportCreator() {
         }
       );
 
-      console.log('📥 Response status:', response.status);
+      console.log('📥 [TestReportCreator] Response status:', response.status, response.statusText);
+
+      const responseText = await response.text();
+      console.log('📄 [TestReportCreator] Raw response:', responseText);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Error response:', errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        throw new Error(`HTTP ${response.status}: ${responseText}`);
       }
 
-      const data = await response.json();
-      console.log('✅ Response data:', data);
+      const data = JSON.parse(responseText);
+      console.log('✅ [TestReportCreator] Parsed response:', data);
+
+      if (!data.reportId) {
+        throw new Error('No reportId in response');
+      }
 
       setCreatedReportId(data.reportId);
       toast.success(`✅ 測試報告已創建：${data.reportId}`);
 
-      // 驗證報告是否真的存在於 KV Store
+      // 自動驗證報告
       setTimeout(async () => {
-        console.log('🔍 Verifying report in KV Store...');
+        console.log('🔍 [TestReportCreator] Verifying report in KV Store...');
         try {
           const verifyResponse = await fetch(
             `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/kv/all`,
@@ -92,27 +102,30 @@ export default function TestReportCreator() {
           if (verifyResponse.ok) {
             const kvData = await verifyResponse.json();
             const allKeys = kvData.data.map((item: any) => item.key);
+            const aiSeoKeys = allKeys.filter((k: string) => k.includes('ai_seo'));
             const foundReport = allKeys.includes(data.reportId);
             
-            console.log('🔍 All KV keys containing "ai_seo":', 
-              allKeys.filter((k: string) => k.includes('ai_seo'))
-            );
-            console.log('✅ Report found in KV Store:', foundReport);
+            console.log('📊 [TestReportCreator] KV Store verification:');
+            console.log('  Total keys:', allKeys.length);
+            console.log('  AI SEO keys:', aiSeoKeys);
+            console.log('  Report found:', foundReport);
 
             if (foundReport) {
-              toast.success('✅ 報告已確認存在於 KV Store！');
+              toast.success('✅ 報告已確認存在於 KV Store！請刷新下方報告列表。');
             } else {
-              toast.error('⚠️ 報告未在 KV Store 中找到');
+              toast.error('⚠️ 報告未在 KV Store 中找到！請檢查後端日誌。');
             }
           }
         } catch (verifyError) {
-          console.error('Verification error:', verifyError);
+          console.error('❌ [TestReportCreator] Verification error:', verifyError);
         }
-      }, 1000);
+      }, 1500);
 
-    } catch (error) {
-      console.error('❌ Error creating test report:', error);
-      toast.error('創建測試報告失敗: ' + (error as Error).message);
+    } catch (error: any) {
+      console.error('❌ [TestReportCreator] Error:', error);
+      const errorMsg = error.message || String(error);
+      setError(errorMsg);
+      toast.error('❌ 創建失敗: ' + errorMsg);
     } finally {
       setIsCreating(false);
     }
@@ -170,6 +183,23 @@ export default function TestReportCreator() {
                 </code>
                 <div className="text-sm text-green-700 mt-2">
                   請刷新上方的「AI SEO 報告 - 雲端存儲」來查看
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-100 border border-red-300 rounded-lg p-4">
+            <div className="flex items-start gap-2">
+              <Check className="w-5 h-5 text-red-600 mt-0.5" />
+              <div className="flex-1">
+                <div className="font-semibold text-red-800">❌ 創建失敗！</div>
+                <code className="text-xs bg-white px-2 py-1 rounded mt-2 block">
+                  {error}
+                </code>
+                <div className="text-sm text-red-700 mt-2">
+                  請檢查後端日誌以獲取更多資訊
                 </div>
               </div>
             </div>
