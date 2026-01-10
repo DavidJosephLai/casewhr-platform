@@ -97,7 +97,7 @@ export async function exchangeCodeForToken(code: string): Promise<{
 }
 
 /**
- * Get LINE user profile
+ * 獲取 LINE 用戶資料
  */
 export async function getLineProfile(accessToken: string): Promise<{
   userId: string;
@@ -105,7 +105,7 @@ export async function getLineProfile(accessToken: string): Promise<{
   pictureUrl?: string;
   email?: string;
 }> {
-  console.log('🟢 [LINE Auth] Fetching user profile...');
+  console.log('🟢 [LINE Auth] Fetching LINE profile...');
 
   const response = await fetch(LINE_PROFILE_URL, {
     headers: {
@@ -123,6 +123,7 @@ export async function getLineProfile(accessToken: string): Promise<{
   console.log('✅ [LINE Auth] Profile fetched:', {
     userId: profile.userId,
     displayName: profile.displayName,
+    email: profile.email || '⚠️ EMAIL NOT PROVIDED BY LINE',
   });
 
   return {
@@ -141,11 +142,16 @@ export async function createOrLoginUser(lineProfile: {
   displayName: string;
   pictureUrl?: string;
   email?: string;
-}): Promise<{ user: any; accessToken: string }> {
+}): Promise<{ user: any; accessToken: string; needsEmail: boolean }> {
   console.log('🟢 [LINE Auth] Creating/logging in user...');
 
   // 生成郵箱（如果 LINE 沒提供）
+  const hasRealEmail = !!lineProfile.email;
   const email = lineProfile.email || `line_${lineProfile.userId}@casewhr.com`;
+  
+  if (!hasRealEmail) {
+    console.log('⚠️ [LINE Auth] LINE did not provide email, using generated email:', email);
+  }
 
   // 檢查用戶是否已存在（使用 email 查詢而不是 LINE userId）
   let existingUser = null;
@@ -184,7 +190,8 @@ export async function createOrLoginUser(lineProfile: {
     // 前端將使用此信息通過標準登錄流程完成認證
     return { 
       user: existingUser, 
-      accessToken: existingUser.id // 使用用戶 ID 作為標識符
+      accessToken: existingUser.id, // 使用用戶 ID 作為標識符
+      needsEmail: !hasRealEmail && existingUser.email?.includes('@casewhr.com'),
     };
   }
 
@@ -199,6 +206,7 @@ export async function createOrLoginUser(lineProfile: {
       avatar_url: lineProfile.pictureUrl,
       line_user_id: lineProfile.userId,
       auth_provider: 'line',
+      needs_email_update: !hasRealEmail, // 標記需要更新 email
     },
   });
 
@@ -248,7 +256,8 @@ export async function createOrLoginUser(lineProfile: {
 
   return { 
     user: newUser.user, 
-    accessToken: newUser.user.id // 使用用戶 ID 作為標識符
+    accessToken: newUser.user.id, // 使用用戶 ID 作為標識符
+    needsEmail: !hasRealEmail,
   };
 }
 
@@ -270,7 +279,7 @@ export async function handleLineCallback(code: string): Promise<{
   const lineProfile = await getLineProfile(tokenData.access_token);
 
   // 3. Create or login Supabase user
-  const { user, accessToken } = await createOrLoginUser(lineProfile);
+  const { user, accessToken, needsEmail } = await createOrLoginUser(lineProfile);
   
   // 4. Generate magic link for automatic sign-in
   const supabase = createClient(

@@ -869,6 +869,12 @@ app.post("/make-server-215f78a5/auth/line/exchange-token", async (c) => {
     
     console.log('✅ [LINE Token Exchange] Login successful:', email);
     
+    // 檢查是否需要更新 email（自動生成的 email）
+    const needsEmailUpdate = email.includes('@casewhr.com');
+    if (needsEmailUpdate) {
+      console.log('⚠️ [LINE Token Exchange] User is using generated email, needs update');
+    }
+    
     return c.json({
       success: true,
       user: {
@@ -878,6 +884,7 @@ app.post("/make-server-215f78a5/auth/line/exchange-token", async (c) => {
         avatar_url: user.user_metadata?.avatar_url || '',
       },
       magic_link: magicLink, // Return the magic link for frontend to use
+      needsEmailUpdate, // Tell frontend if email needs updating
     });
   } catch (error: any) {
     console.error('❌ [LINE Token Exchange] Error:', error);

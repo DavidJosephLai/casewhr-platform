@@ -353,6 +353,19 @@ function AppContent() {
           const data = await response.json();
           console.log('✅ [LINE Callback] Token exchange successful:', data);
           
+          // 檢查是否需要提示用戶更新 email
+          if (data.needsEmailUpdate) {
+            console.log('⚠️ [LINE Callback] User needs to update email');
+            toast.info(
+              language === 'en'
+                ? '📧 Please update your email in Settings'
+                : language === 'zh-CN'
+                ? '📧 请在设置中更新您的电子邮件'
+                : '📧 請在設定中更新您的電子郵件',
+              { duration: 6000 }
+            );
+          }
+          
           // 使用 magic link 自動登入
           if (data.magic_link) {
             console.log('🔗 [LINE Callback] Using magic link to establish session');
