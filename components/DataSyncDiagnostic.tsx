@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { useLanguage } from '../lib/LanguageContext';
+import { useView } from '../contexts/ViewContext';
 import { toast } from 'sonner';
 
 interface DataItem {
@@ -44,6 +45,7 @@ interface DiagnosticResult {
 
 export default function DataSyncDiagnostic() {
   const { language } = useLanguage();
+  const { view, setView } = useView();
   const [isChecking, setIsChecking] = useState(false);
   const [results, setResults] = useState<DiagnosticResult[]>([]);
   const [kvData, setKvData] = useState<DataItem[]>([]);
@@ -274,7 +276,7 @@ export default function DataSyncDiagnostic() {
         return {
           category: isZh ? 'SEO 元數據' : 'SEO Metadata',
           status: 'error',
-          message: isZh ? '無法讀取 SEO 數���' : 'Cannot read SEO data',
+          message: isZh ? '無法讀取 SEO 數' : 'Cannot read SEO data',
         };
       }
     } catch (error: any) {
@@ -408,11 +410,7 @@ export default function DataSyncDiagnostic() {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => {
-                  const currentUrl = new URL(window.location.href);
-                  currentUrl.searchParams.set('view', 'deep-data-diagnostic');
-                  window.location.href = currentUrl.toString();
-                }}
+                onClick={() => setView('deep-data-diagnostic')}
                 className="flex items-center gap-2"
               >
                 <FileSearch className="w-4 h-4" />
