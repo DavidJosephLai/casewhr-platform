@@ -64,6 +64,7 @@ const AuthCallback = lazy(() => import('./components/AuthCallback'));
 const ResetPasswordPage = lazy(() => import('./components/ResetPasswordPage'));
 const AuthVerifyPage = lazy(() => import('./components/AuthVerifyPage'));
 const AISEODiagnostic = lazy(() => import('./components/AISEODiagnostic'));
+const KeywordResearchTest = lazy(() => import('./components/KeywordResearchTest'));
 
 // 📄 內容頁面 - Lazy Load（SEO 相關頁面）
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
@@ -643,6 +644,13 @@ function AppContent() {
           <SEO title="AI SEO Diagnostic" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
             <AISEODiagnostic />
+          </Suspense>
+        </div>
+      ) : view === 'keyword-research-test' ? (
+        <div className="pt-20">
+          <SEO title="Keyword Research Test" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <KeywordResearchTest />
           </Suspense>
         </div>
       ) : (

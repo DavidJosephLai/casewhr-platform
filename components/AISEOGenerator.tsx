@@ -249,14 +249,25 @@ export function AIKeywordResearch() {
     setIsAnalyzing(true);
 
     try {
-      const response = await fetch('/api/ai-seo/keyword-research', {
+      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai-seo/keywords`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic }),
+        headers: { 
+          'Authorization': `Bearer ${publicAnonKey}`,
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ 
+          topic,
+          language: 'zh-TW',
+          count: 10
+        }),
       });
 
-      const result = await response.json();
-      setKeywords(result.keywords);
+      if (response.ok) {
+        const result = await response.json();
+        setKeywords(result.data?.keywords || []);
+      } else {
+        console.error('Keyword research failed:', await response.text());
+      }
     } catch (error) {
       console.error('Keyword research failed:', error);
     } finally {
