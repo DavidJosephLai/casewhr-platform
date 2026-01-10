@@ -173,19 +173,30 @@ export default function AdminAISEOReports() {
 
       allData.forEach((item: any) => {
         // 檢查是否為實際報告（格式：ai_seo_{userId}_{timestamp}）
+        // 🔧 放寬條件：顯示所有以 ai_seo_ 開頭的 key（除了報告列表）
         if (item.key && item.key.startsWith('ai_seo_') && 
-            !item.key.includes('_reports_') && // 排除報告列表
-            item.key.match(/^ai_seo_[a-f0-9-]+_\d+$/)) { // 確保格式正確
+            !item.key.includes('_reports_')) { // 排除報告列表
           
           console.log('✅ [Admin] Found AI SEO report:', item.key);
+          console.log('  📦 Key format check:', {
+            key: item.key,
+            startsWithAiSeo: item.key.startsWith('ai_seo_'),
+            hasReportsWord: item.key.includes('_reports_'),
+            matchesRegex: item.key.match(/^ai_seo_[a-f0-9-]+_\d+$/),
+            valueType: typeof item.value,
+            hasId: item.value?.id,
+          });
           
           // 這是一個報告數據
-          if (item.value && typeof item.value === 'object' && item.value.id) {
-            seoReports.push(item.value as AISEOReport);
+          if (item.value && typeof item.value === 'object') {
+            // 如果沒有 id，使用 key 作為 id
+            const reportData = item.value.id ? item.value : { ...item.value, id: item.key };
+            
+            seoReports.push(reportData as AISEOReport);
             seoKeys.push(item.key);
             
-            if (item.value.userId) {
-              userIds.add(item.value.userId);
+            if (reportData.userId) {
+              userIds.add(reportData.userId);
             }
 
             // 計算大小
@@ -193,10 +204,10 @@ export default function AdminAISEOReports() {
             totalSize += size;
             
             console.log('  📝 Report details:', {
-              id: item.value.id,
-              userId: item.value.userId,
-              title: item.value.title,
-              createdAt: item.value.createdAt
+              id: reportData.id,
+              userId: reportData.userId,
+              title: reportData.title,
+              createdAt: reportData.createdAt
             });
           } else {
             console.warn('⚠️ [Admin] Invalid report structure:', item.key, item.value);
