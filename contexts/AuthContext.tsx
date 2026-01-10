@@ -317,7 +317,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const handleSignInWithLine = useCallback(async () => {
-    await auth.signInWithLine();
+    console.log('🔵 [AuthContext] handleSignInWithLine called');
+    try {
+      await auth.signInWithLine();
+      console.log('🔵 [AuthContext] signInWithLine completed');
+    } catch (error) {
+      console.error('❌ [AuthContext] signInWithLine error:', error);
+      throw error;
+    }
   }, []);
 
   const handleRefreshProfile = useCallback(async () => {

@@ -229,23 +229,32 @@ export function AuthDialogs({
   };
 
   const handleSocialAuth = async (provider: string) => {
+    console.log('🔵 [AuthDialogs] handleSocialAuth called with provider:', provider);
+    console.log('🔵 [AuthDialogs] oauthConfig:', oauthConfig);
+    
     try {
       if (provider === 'Google') {
+        console.log('🔵 [AuthDialogs] Calling signInWithGoogle...');
         await signInWithGoogle();
         // OAuth 會重定向，不需要顯示成功訊息
       } else if (provider === 'GitHub') {
+        console.log('🔵 [AuthDialogs] Calling signInWithGithub...');
         await signInWithGithub();
         // OAuth 會重定向，不需要顯示成功訊息
       } else if (provider === 'Facebook') {
+        console.log('🔵 [AuthDialogs] Calling signInWithFacebook...');
         await signInWithFacebook();
         // OAuth 會重定向，不需要顯示成功訊息
       } else if (provider === 'LINE') {
+        console.log('🔵 [AuthDialogs] Calling signInWithLine...');
         await signInWithLine();
+        console.log('🔵 [AuthDialogs] signInWithLine completed (should redirect)');
         // OAuth 會重定向，不需要顯示成功訊息
       } else {
         toast.info(language === 'en' ? `${provider} authentication coming soon` : `${provider} 登入即將推出`);
       }
     } catch (error: any) {
+      console.error('❌ [AuthDialogs] Social auth error:', error);
       toast.error(
         language === 'en' 
           ? `${provider} login failed: ${error.message}` 
