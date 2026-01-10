@@ -10,11 +10,11 @@ import { SEO, getPageSEO } from './components/SEO';
 import { Toaster, toast } from 'sonner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
+import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.0.89
-// 🐛 FIX: Resolve export mismatch errors for global components
-// 🎯 Strategy: Keep lazy loading but use Suspense with fallback=null
-console.log('🚀 [App v2.0.89] FIX: Corrected lazy loading for components with mixed exports');
+// 🔥 Version marker to force cache invalidation - v2.0.90
+// 🎯 Feature: Add mandatory email input modal for LINE OAuth users
+console.log('🚀 [App v2.0.90] Feature: LINE OAuth email requirement enforcement');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
@@ -99,6 +99,10 @@ function AppContent() {
   const [dashboardTab, setDashboardTab] = useState<string | undefined>(undefined);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [isTeamInvitation, setIsTeamInvitation] = useState(false);
+  
+  // 🟢 LINE OAuth Email 狀態
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [lineUserId, setLineUserId] = useState<string | null>(null);
   
   // 將語言轉換為 AIChatbot 支持的格式
   const chatbotLanguage = language === 'zh' ? 'zh-TW' : language as 'en' | 'zh-TW' | 'zh-CN';
@@ -356,14 +360,11 @@ function AppContent() {
           // 檢查是否需要提示用戶更新 email
           if (data.needsEmailUpdate) {
             console.log('⚠️ [LINE Callback] User needs to update email');
-            toast.info(
-              language === 'en'
-                ? '📧 Please update your email in Settings'
-                : language === 'zh-CN'
-                ? '📧 请在设置中更新您的电子邮件'
-                : '📧 請在設定中更新您的電子郵件',
-              { duration: 6000 }
-            );
+            // 設定 LINE User ID 並顯示 Email Modal
+            setLineUserId(data.user.id);
+            setShowEmailModal(true);
+            // 不繼續後續的自動登入流程，等待用戶輸入 email
+            return;
           }
           
           // 使用 magic link 自動登入
@@ -856,6 +857,12 @@ function AppContent() {
       {/* 🧪 開發模式登錄 - 僅在開發環境顯示 */}
       <DevModeLogin />
       <Toaster />
+      {/* 🟢 LINE OAuth Email Modal */}
+      <EmailRequiredModal
+        isOpen={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+        userId={lineUserId}
+      />
     </div>
   );
 }

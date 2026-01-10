@@ -310,3 +310,71 @@ export async function handleLineCallback(code: string): Promise<{
     magicLink: linkData.properties.action_link, // Full magic link URL
   };
 }
+
+/**
+ * 更新 LINE 用戶的 email
+ */
+export async function updateLineUserEmail(userId: string, newEmail: string): Promise<void> {
+  console.log('🟢 [LINE Auth] Updating user email:', { userId, newEmail });
+
+  // 1. 檢查 email 格式
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(newEmail)) {
+    throw new Error('Invalid email format');
+  }
+
+  // 2. 檢查 email 是否已被使用
+  const { data: existingUsers } = await supabase.auth.admin.listUsers();
+  const emailExists = existingUsers?.users.some(
+    (u) => u.email === newEmail && u.id !== userId
+  );
+
+  if (emailExists) {
+    throw new Error('Email already in use');
+  }
+
+  // 3. 更新 Supabase Auth 用戶 email
+  const { data: updatedUser, error: updateError } = await supabase.auth.admin.updateUserById(
+    userId,
+    {
+      email: newEmail,
+      email_confirm: true, // 自動確認新 email
+      user_metadata: {
+        needs_email_update: false, // 移除標記
+      },
+    }
+  );
+
+  if (updateError || !updatedUser) {
+    console.error('❌ [LINE Auth] Email update failed:', updateError);
+    throw updateError || new Error('Failed to update email');
+  }
+
+  // 4. 更新 profile 中的 email
+  try {
+    const { get, set } = await import('./kv_store.tsx');
+    
+    // 獲取現有 profile
+    const profileKey = `profile_${userId}`;
+    const existingProfile = await get(profileKey);
+
+    if (existingProfile) {
+      // 更新 email 字段
+      const updatedProfile = {
+        ...existingProfile,
+        email: newEmail,
+        updated_at: new Date().toISOString(),
+      };
+
+      // 保存到兩種格式
+      await set(profileKey, updatedProfile);
+      await set(`profile:${userId}`, updatedProfile);
+
+      console.log('✅ [LINE Auth] Profile email updated');
+    }
+  } catch (profileError) {
+    console.error('⚠️ [LINE Auth] Profile update failed (non-critical):', profileError);
+  }
+
+  console.log('✅ [LINE Auth] Email updated successfully');
+}
