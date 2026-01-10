@@ -124,6 +124,11 @@ export default function TestReportCreator() {
           if (verifyResponse.ok) {
             const kvData = await verifyResponse.json();
             console.log('🔍 [TestReportCreator] KV Data:', kvData); // ✅ 添加日誌
+            console.log('🔍 [TestReportCreator] KV Data type:', typeof kvData);
+            console.log('🔍 [TestReportCreator] kvData.data exists?', !!kvData.data);
+            console.log('🔍 [TestReportCreator] kvData.data type:', typeof kvData.data);
+            console.log('🔍 [TestReportCreator] kvData.data is array?', Array.isArray(kvData.data));
+            console.log('🔍 [TestReportCreator] Full kvData structure:', JSON.stringify(kvData, null, 2));
             
             // ✅ 安全檢查：確保 kvData.data 存在且是數組
             if (!kvData || !kvData.data || !Array.isArray(kvData.data)) {

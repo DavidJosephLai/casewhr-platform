@@ -149,6 +149,9 @@ export default function AdminAISEOReports() {
 
       const data = await response.json();
       console.log('🔍 [Admin] Raw API response:', data); // ✅ 添加完整響應日誌
+      console.log('🔍 [Admin] data.data type:', typeof data.data);
+      console.log('🔍 [Admin] data.data is array?', Array.isArray(data.data));
+      console.log('🔍 [Admin] Full response structure:', JSON.stringify(data, null, 2).substring(0, 500));
       
       const allData = data.data || [];
       

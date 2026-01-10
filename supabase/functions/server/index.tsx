@@ -4957,7 +4957,90 @@ app.post("/make-server-215f78a5/kv", async (c) => {
   }
 });
 
-// Get a value by key
+// ✅ 靜態路由必須在動態路由之前！
+// 🔧 KV Store 測試端點
+app.get("/make-server-215f78a5/kv/test", async (c) => {
+  try {
+    return c.json({ status: 'ok', message: 'KV Store is accessible' }, 200);
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 🔍 KV Store 搜索端點
+app.get("/make-server-215f78a5/kv/search", async (c) => {
+  try {
+    const prefix = c.req.query('prefix') || '';
+    console.log(`🔍 [KV Search] Searching with prefix: ${prefix}`);
+    
+    const results = await kv.getByPrefix(prefix) || [];
+    console.log(`✅ [KV Search] Found ${results.length} results`);
+    
+    return c.json({ 
+      success: true,
+      prefix,
+      count: results.length,
+      results 
+    }, 200);
+  } catch (error: any) {
+    console.error('❌ [KV Search] Error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 📊 KV Store 獲取所有數據端點
+app.get("/make-server-215f78a5/kv/all", async (c) => {
+  try {
+    console.log(`🔍 [KV All] Fetching all KV data...`);
+    
+    // 獲取所有常見前綴的數據
+    const prefixes = [
+      'keyword:',
+      'content:',
+      'seo:',
+      'ai_seo_',           // ✅ AI SEO 報告
+      'profile_',
+      'wallet_',
+      'project_',
+      'transaction_',
+      'team_member:',
+      'subscription_'
+    ];
+    
+    const allData: any[] = [];
+    
+    // 直接查詢數據庫以獲取完整的 key-value 對
+    for (const prefix of prefixes) {
+      const { data, error } = await supabase
+        .from('kv_store_215f78a5')
+        .select('key, value, created_at')
+        .like('key', `${prefix}%`);
+      
+      if (!error && data) {
+        allData.push(...data.map(item => ({
+          key: item.key,
+          value: item.value,
+          created_at: item.created_at
+        })));
+      } else if (error) {
+        console.warn(`⚠️ [KV All] Error fetching prefix "${prefix}":`, error.message);
+      }
+    }
+    
+    console.log(`✅ [KV All] Found ${allData.length} total records`);
+    
+    return c.json({ 
+      success: true,
+      count: allData.length,
+      data: allData
+    }, 200);
+  } catch (error: any) {
+    console.error('❌ [KV All] Error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Get a value by key (動態路由必須在靜態路由之後)
 app.get("/make-server-215f78a5/kv/:key", async (c) => {
   try {
     const key = c.req.param('key');
@@ -4971,6 +5054,26 @@ app.get("/make-server-215f78a5/kv/:key", async (c) => {
   } catch (error) {
     console.error('Error getting KV:', error);
     return c.json({ error: 'Failed to get value' }, 500);
+  }
+});
+
+// Delete a key
+app.delete("/make-server-215f78a5/kv/:key", async (c) => {
+  try {
+    const key = c.req.param('key');
+    console.log(`🗑️ [KV Delete] Deleting key: ${key}`);
+    
+    await kv.del(key);
+    
+    console.log(`✅ [KV Delete] Key deleted successfully`);
+    
+    return c.json({ 
+      success: true,
+      message: 'Key deleted successfully'
+    }, 200);
+  } catch (error: any) {
+    console.error('❌ [KV Delete] Error:', error);
+    return c.json({ error: error.message }, 500);
   }
 });
 
@@ -18896,105 +18999,6 @@ app.get("/make-server-215f78a5/check-team-member", async (c) => {
 });
 
 console.log('✅ [SERVER] Team member check API registered');
-
-// 🔧 KV Store 數據診斷 API
-app.get("/make-server-215f78a5/kv/test", async (c) => {
-  try {
-    return c.json({ status: 'ok', message: 'KV Store is accessible' }, 200);
-  } catch (error: any) {
-    return c.json({ error: error.message }, 500);
-  }
-});
-
-app.get("/make-server-215f78a5/kv/search", async (c) => {
-  try {
-    const prefix = c.req.query('prefix') || '';
-    console.log(`🔍 [KV Search] Searching with prefix: ${prefix}`);
-    
-    const results = await kv.getByPrefix(prefix) || [];
-    console.log(`✅ [KV Search] Found ${results.length} results`);
-    
-    return c.json({ 
-      success: true,
-      prefix,
-      count: results.length,
-      results 
-    }, 200);
-  } catch (error: any) {
-    console.error('❌ [KV Search] Error:', error);
-    return c.json({ error: error.message }, 500);
-  }
-});
-
-app.get("/make-server-215f78a5/kv/all", async (c) => {
-  try {
-    console.log(`🔍 [KV All] Fetching all KV data...`);
-    
-    // 獲取所有常見前綴的數據
-    const prefixes = [
-      'keyword:',
-      'content:',
-      'seo:',
-      'ai_seo_',           // ✅ AI SEO 報告
-      'profile_',
-      'wallet_',
-      'project_',
-      'transaction_',
-      'team_member:',
-      'subscription_'
-    ];
-    
-    const allData: any[] = [];
-    
-    // 直接查詢數據庫以獲取完整的 key-value 對
-    for (const prefix of prefixes) {
-      const { data, error } = await supabase
-        .from('kv_store_215f78a5')
-        .select('key, value, created_at')
-        .like('key', `${prefix}%`);
-      
-      if (!error && data) {
-        allData.push(...data.map(item => ({
-          key: item.key,
-          value: item.value,
-          created_at: item.created_at
-        })));
-      } else if (error) {
-        console.warn(`⚠️ [KV All] Error fetching prefix "${prefix}":`, error.message);
-      }
-    }
-    
-    console.log(`✅ [KV All] Found ${allData.length} total records`);
-    
-    return c.json({ 
-      success: true,
-      count: allData.length,
-      data: allData  // ✅ 改為 "data" 而不是 "results"
-    }, 200);
-  } catch (error: any) {
-    console.error('❌ [KV All] Error:', error);
-    return c.json({ error: error.message }, 500);
-  }
-});
-
-app.delete("/make-server-215f78a5/kv/:key", async (c) => {
-  try {
-    const key = c.req.param('key');
-    console.log(`🗑️ [KV Delete] Deleting key: ${key}`);
-    
-    await kv.del(key);
-    
-    console.log(`✅ [KV Delete] Key deleted successfully`);
-    
-    return c.json({ 
-      success: true,
-      message: 'Key deleted successfully'
-    }, 200);
-  } catch (error: any) {
-    console.error('❌ [KV Delete] Error:', error);
-    return c.json({ error: error.message }, 500);
-  }
-});
 
 console.log('✅ [SERVER] KV diagnostic APIs registered');
 
