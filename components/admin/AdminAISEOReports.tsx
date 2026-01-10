@@ -144,14 +144,24 @@ export default function AdminAISEOReports() {
       );
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        const errorText = await response.text();
+        console.error('❌ [Admin] HTTP Error:', response.status, errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       const data = await response.json();
-      console.log('🔍 [Admin] Raw API response:', data); // ✅ 添加完整響應日誌
-      console.log('🔍 [Admin] data.data type:', typeof data.data);
-      console.log('🔍 [Admin] data.data is array?', Array.isArray(data.data));
-      console.log('🔍 [Admin] Full response structure:', JSON.stringify(data, null, 2).substring(0, 500));
+      console.log('🔍 [Admin] Raw API response:', data);
+      console.log('🔍 [Admin] Total items in response:', data.data?.length || 0);
+      
+      // 🔥 直接显示所有 key 用于调试
+      if (data.data && data.data.length > 0) {
+        console.log('🔑 [Admin] All keys in database:');
+        data.data.forEach((item: any, index: number) => {
+          console.log(`  ${index + 1}. ${item.key}`);
+        });
+      } else {
+        console.warn('⚠️ [Admin] No data returned from /kv/all endpoint');
+      }
       
       const allData = data.data || [];
       

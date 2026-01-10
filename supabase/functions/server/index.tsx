@@ -17068,38 +17068,42 @@ app.post("/make-server-215f78a5/ai/save-report", async (c) => {
       createdAt: new Date().toISOString(),
     };
 
-    console.log('💾 [AI SEO] Saving report to KV Store...');
+    console.log('💾 [AI SEO] Saving report to database...');
     console.log('  📝 Report ID:', reportId);
     console.log('  👤 User ID:', user.id);
     console.log('  📊 Report data size:', JSON.stringify(report).length, 'bytes');
 
-    // 儲存到 KV Store（添加错误捕获）
-    try {
-      await kv.set(reportId, report);
-      console.log('✅ [AI SEO] Report saved to key:', reportId);
-    } catch (kvError: any) {
-      console.error('❌ [AI SEO] KV Store write failed:', kvError);
+    // 🔥 直接使用 Supabase Client 写入数据库（绕过 KV Store 的静默失败）
+    const { error: insertError } = await supabase
+      .from('kv_store_215f78a5')
+      .upsert({ key: reportId, value: report });
+    
+    if (insertError) {
+      console.error('❌ [AI SEO] Database write failed:', insertError);
       return c.json({ 
         error: 'Failed to save report to database', 
-        details: kvError.message 
+        details: insertError.message 
       }, 500);
     }
     
-    // 驗證保存是否成功（強制驗證）
-    const verifyReport = await kv.get(reportId);
-    if (!verifyReport) {
-      console.error('❌ [AI SEO] CRITICAL: Verification failed - Report NOT found in KV Store!');
-      console.error('  Expected key:', reportId);
-      console.error('  This indicates KV Store silent failure or network issue');
-      
+    console.log('✅ [AI SEO] Report saved to database');
+    
+    // 驗證保存是否成功
+    const { data: verifyData, error: verifyError } = await supabase
+      .from('kv_store_215f78a5')
+      .select('value')
+      .eq('key', reportId)
+      .maybeSingle();
+    
+    if (verifyError || !verifyData) {
+      console.error('❌ [AI SEO] Verification failed:', verifyError);
       return c.json({ 
-        error: 'Report save verification failed - data not found in database',
-        reportId,
-        hint: 'Database write may have failed silently'
+        error: 'Report save verification failed',
+        reportId
       }, 500);
     }
     
-    console.log('✅ [AI SEO] Verification successful - Report exists in KV Store');
+    console.log('✅ [AI SEO] Verification successful - Report exists in database');
     
     // 更新用戶的報告列表
     const userReportsKey = `ai_seo_reports_${user.id}`;
