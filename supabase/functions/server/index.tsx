@@ -787,9 +787,10 @@ app.get("/make-server-215f78a5/auth/line/callback", async (c) => {
     await kv.del(`line_oauth_state:${state}`);
     
     // 執行 LINE 登入流程
-    const { user, userId, email } = await lineAuth.handleLineCallback(code);
+    const { user, userId, email, needsEmail } = await lineAuth.handleLineCallback(code);
     
     console.log('✅ [LINE OAuth] Login successful:', email);
+    console.log('🔍 [LINE OAuth] Needs email update:', needsEmail);
     
     // 將用戶信息存儲到 KV（供前端使用）
     const tempLoginKey = `temp_line_login:${userId}`;
@@ -798,6 +799,7 @@ app.get("/make-server-215f78a5/auth/line/callback", async (c) => {
       email: email,
       full_name: user.user_metadata?.full_name || 'LINE User',
       avatar_url: user.user_metadata?.avatar_url || '',
+      needs_email_update: needsEmail, // 添加標記
       created_at: new Date().toISOString(),
       expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5分鐘過期
     });
@@ -810,6 +812,7 @@ app.get("/make-server-215f78a5/auth/line/callback", async (c) => {
     redirectUrl.searchParams.set('auth', 'line');
     redirectUrl.searchParams.set('temp_key', userId);
     redirectUrl.searchParams.set('email', email);
+    redirectUrl.searchParams.set('needs_email', needsEmail.toString()); // 添加標記到 URL
     
     return c.redirect(redirectUrl.toString());
   } catch (error: any) {
@@ -865,14 +868,15 @@ app.post("/make-server-215f78a5/auth/line/exchange-token", async (c) => {
     await kv.del(`line_oauth_state:${state}`);
     
     // 執行 LINE 登入流程
-    const { user, userId, email, magicLink } = await lineAuth.handleLineCallback(code);
+    const { user, userId, email, magicLink, needsEmail } = await lineAuth.handleLineCallback(code);
     
     console.log('✅ [LINE Token Exchange] Login successful:', email);
+    console.log('🔍 [LINE Token Exchange] Needs email update:', needsEmail);
     
-    // 檢查是否需要更新 email（自動生成的 email）
-    const needsEmailUpdate = email.includes('@casewhr.com');
+    // 檢查是否需要更新 email
+    const needsEmailUpdate = needsEmail;
     if (needsEmailUpdate) {
-      console.log('⚠️ [LINE Token Exchange] User is using generated email, needs update');
+      console.log('⚠️ [LINE Token Exchange] User needs to provide real email');
     }
     
     return c.json({

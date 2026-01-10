@@ -269,6 +269,7 @@ export async function handleLineCallback(code: string): Promise<{
   userId: string;
   email: string;
   magicLink: string;
+  needsEmail: boolean;
 }> {
   console.log('🟢 [LINE Auth] Starting LINE login flow...');
 
@@ -280,6 +281,9 @@ export async function handleLineCallback(code: string): Promise<{
 
   // 3. Create or login Supabase user
   const { user, accessToken, needsEmail } = await createOrLoginUser(lineProfile);
+  
+  console.log('🔍 [LINE Auth] User needs email update:', needsEmail);
+  console.log('🔍 [LINE Auth] User current email:', user.email);
   
   // 4. Generate magic link for automatic sign-in
   const supabase = createClient(
@@ -308,6 +312,7 @@ export async function handleLineCallback(code: string): Promise<{
     userId: user.id,
     email: user.email,
     magicLink: linkData.properties.action_link, // Full magic link URL
+    needsEmail: needsEmail,
   };
 }
 
