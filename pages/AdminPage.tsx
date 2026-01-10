@@ -23,6 +23,7 @@ import { SitemapGenerator } from '../components/SitemapGenerator';
 import { SitemapURLChecker } from '../components/SitemapURLChecker';
 import { SEODiagnostic } from '../components/SEODiagnostic';
 import { AdminAISEO } from '../components/admin/AdminAISEO';
+import DataSyncDiagnostic from '../components/DataSyncDiagnostic';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Shield, Crown, UserCog, Eye, LogOut, Loader2 } from 'lucide-react';
@@ -71,6 +72,7 @@ export default function AdminPage() {
         paymentManager: 'Payment Manager',
         seoTools: 'AI SEO',
         sitemap: 'Sitemap',
+        dataSync: 'Data Sync',
       },
     },
     'zh-TW': {
@@ -103,6 +105,7 @@ export default function AdminPage() {
         paymentManager: '付款管理',
         seoTools: 'AI SEO',
         sitemap: 'Sitemap 生成',
+        dataSync: '數據同步',
       },
     },
     'zh-CN': {
@@ -135,6 +138,7 @@ export default function AdminPage() {
         paymentManager: '付款管理',
         seoTools: 'AI SEO',
         sitemap: 'Sitemap 生成',
+        dataSync: '数据同步',
       },
     }
   };
@@ -279,7 +283,7 @@ export default function AdminPage() {
 
     // MODERATOR can view: dashboard, users, projects, messages, transactions, emailSender, settings, paymentManager, seoTools, sitemap
     if (adminLevel === AdminLevel.MODERATOR) {
-      return ['dashboard', 'users', 'projects', 'messages', 'transactions', 'emailSender', 'settings', 'paymentManager', 'seoTools', 'sitemap', 'withdrawals'].includes(tabName);
+      return ['dashboard', 'users', 'projects', 'messages', 'transactions', 'emailSender', 'settings', 'paymentManager', 'seoTools', 'sitemap', 'withdrawals', 'dataSync'].includes(tabName);
     }
 
     return false;
@@ -413,6 +417,11 @@ export default function AdminPage() {
                 {t.tabs.sitemap}
               </TabsTrigger>
             )}
+            {canViewTab('dataSync') && (
+              <TabsTrigger key="dataSync" value="dataSync" className="text-xs sm:text-sm">
+                {t.tabs.dataSync}
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <div className="mt-6">
@@ -486,6 +495,10 @@ export default function AdminPage() {
 
             <TabsContent value="sitemap" className="mt-0">
               <SitemapURLChecker />
+            </TabsContent>
+
+            <TabsContent value="dataSync" className="mt-0">
+              <DataSyncDiagnostic />
             </TabsContent>
           </div>
         </Tabs>

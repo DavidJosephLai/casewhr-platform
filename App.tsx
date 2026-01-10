@@ -67,6 +67,7 @@ const AISEODiagnostic = lazy(() => import('./components/AISEODiagnostic'));
 const KeywordResearchTest = lazy(() => import('./components/KeywordResearchTest'));
 const KeywordDeploymentCheck = lazy(() => import('./components/KeywordDeploymentCheck'));
 const OpenAIKeyGuide = lazy(() => import('./components/OpenAIKeyGuide'));
+const DataSyncDiagnostic = lazy(() => import('./components/DataSyncDiagnostic'));
 
 // 📄 內容頁面 - Lazy Load（SEO 相關頁面）
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
@@ -667,6 +668,13 @@ function AppContent() {
           <SEO title="OpenAI Key Guide" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
             <OpenAIKeyGuide />
+          </Suspense>
+        </div>
+      ) : view === 'data-sync-diagnostic' ? (
+        <div className="pt-20">
+          <SEO title="Data Sync Diagnostic" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <DataSyncDiagnostic />
           </Suspense>
         </div>
       ) : (
