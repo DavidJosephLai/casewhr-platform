@@ -20,7 +20,8 @@ import {
   FileText,
   Search,
   Eye,
-  Trash2
+  Trash2,
+  FileSearch
 } from 'lucide-react';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { useLanguage } from '../lib/LanguageContext';
@@ -273,7 +274,7 @@ export default function DataSyncDiagnostic() {
         return {
           category: isZh ? 'SEO 元數據' : 'SEO Metadata',
           status: 'error',
-          message: isZh ? '無法讀取 SEO 數據' : 'Cannot read SEO data',
+          message: isZh ? '無法讀取 SEO 數���' : 'Cannot read SEO data',
         };
       }
     } catch (error: any) {
@@ -384,238 +385,236 @@ export default function DataSyncDiagnostic() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-cyan-50 to-blue-50 py-12 px-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* 標題 */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2">
-            <Database className="h-10 w-10 text-cyan-600" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
-              {isZh ? '數據同步診斷工具' : 'Data Sync Diagnostic'}
-            </h1>
-          </div>
-          <p className="text-gray-600">
-            {isZh 
-              ? '檢查上傳到雲端的關鍵字和內容是否正確同步'
-              : 'Check if keywords and content are properly synced to cloud'}
-          </p>
-        </div>
+  const t = {
+    title: isZh ? '數據同步診斷工具' : 'Data Sync Diagnostic',
+    subtitle: isZh ? '檢查上傳到雲端的關鍵字和內容是否正確同步' : 'Check if keywords and content are properly synced to cloud',
+    checking: isZh ? '檢查中...' : 'Checking...',
+    checkButton: isZh ? '重新檢查' : 'Recheck'
+  };
 
-        {/* 操作按鈕 */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Database className="h-6 w-6 text-cyan-600" />
-                <div>
-                  <h3 className="font-bold">
-                    {isZh ? '數據庫狀態' : 'Database Status'}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {isZh 
-                      ? `找到 ${kvData.length} 條記錄`
-                      : `Found ${kvData.length} records`}
-                  </p>
-                </div>
-              </div>
+  return (
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <Database className="w-6 h-6" />
+                {t.title}
+              </CardTitle>
+              <CardDescription>{t.subtitle}</CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const currentUrl = new URL(window.location.href);
+                  currentUrl.searchParams.set('view', 'deep-data-diagnostic');
+                  window.location.href = currentUrl.toString();
+                }}
+                className="flex items-center gap-2"
+              >
+                <FileSearch className="w-4 h-4" />
+                深度診斷
+              </Button>
               <Button
                 onClick={runDiagnostics}
                 disabled={isChecking}
-                className="bg-cyan-600 hover:bg-cyan-700"
+                className="flex items-center gap-2"
               >
                 {isChecking ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {isZh ? '檢查中...' : 'Checking...'}
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t.checking}
                   </>
                 ) : (
                   <>
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    {isZh ? '重新檢查' : 'Recheck'}
+                    <RefreshCw className="w-4 h-4" />
+                    {t.checkButton}
                   </>
                 )}
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardHeader>
+      </Card>
 
-        {/* 診斷結果 */}
-        {results.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-cyan-600" />
-                {isZh ? '診斷結果' : 'Diagnostic Results'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {results.map((result, index) => (
-                <div 
-                  key={index}
-                  className="p-4 bg-white border-2 border-gray-200 rounded-lg"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3 flex-1">
-                      {renderStatusIcon(result.status)}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-bold">{result.category}</h4>
-                          {result.count !== undefined && (
-                            <Badge className="bg-blue-100 text-blue-800">
-                              {result.count} {isZh ? '條' : 'items'}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-700">{result.message}</p>
-                        
-                        {result.data && result.count && result.count > 0 && (
-                          <details className="mt-2 text-xs">
-                            <summary className="cursor-pointer text-blue-600 hover:text-blue-800">
-                              {isZh ? '查看數據' : 'View Data'}
-                            </summary>
-                            <pre className="mt-2 p-2 bg-gray-50 rounded overflow-x-auto max-h-40">
-                              {JSON.stringify(result.data.slice(0, 3), null, 2)}
-                            </pre>
-                          </details>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* 數據列表 */}
+      {/* 診斷結果 */}
+      {results.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5 text-cyan-600" />
-              {isZh ? '所有數據' : 'All Data'}
+              <FileText className="h-5 w-5 text-cyan-600" />
+              {isZh ? '診斷結果' : 'Diagnostic Results'}
             </CardTitle>
-            <CardDescription>
-              {isZh 
-                ? `共 ${kvData.length} 條記錄（顯示 ${filteredData.length} 條）`
-                : `${kvData.length} total records (showing ${filteredData.length})`}
-            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* 搜索框 */}
-            <div className="flex items-center gap-2">
-              <Search className="h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={isZh ? '搜索 key 或 value...' : 'Search key or value...'}
-                className="flex-1 px-3 py-2 border rounded-lg"
-              />
-            </div>
-
-            {/* 數據表格 */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-gray-50">
-                    <th className="text-left p-2">Key</th>
-                    <th className="text-left p-2">{isZh ? '創建時間' : 'Created'}</th>
-                    <th className="text-left p-2">{isZh ? '大小' : 'Size'}</th>
-                    <th className="text-right p-2">{isZh ? '操作' : 'Actions'}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredData.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="text-center p-4 text-gray-500">
-                        {isZh ? '未找到數據' : 'No data found'}
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredData.map((item, index) => (
-                      <tr key={index} className="border-b hover:bg-gray-50">
-                        <td className="p-2 font-mono text-xs">{item.key}</td>
-                        <td className="p-2 text-xs text-gray-600">
-                          {item.createdAt 
-                            ? new Date(item.createdAt).toLocaleString() 
-                            : '-'}
-                        </td>
-                        <td className="p-2 text-xs text-gray-600">
-                          {item.size ? `${(item.size / 1024).toFixed(2)} KB` : '-'}
-                        </td>
-                        <td className="p-2 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => viewData(item)}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => deleteData(item.key)}
-                              className="text-red-600 hover:text-red-800"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+          <CardContent className="space-y-3">
+            {results.map((result, index) => (
+              <div 
+                key={index}
+                className="p-4 bg-white border-2 border-gray-200 rounded-lg"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3 flex-1">
+                    {renderStatusIcon(result.status)}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-bold">{result.category}</h4>
+                        {result.count !== undefined && (
+                          <Badge className="bg-blue-100 text-blue-800">
+                            {result.count} {isZh ? '條' : 'items'}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-700">{result.message}</p>
+                      
+                      {result.data && result.count && result.count > 0 && (
+                        <details className="mt-2 text-xs">
+                          <summary className="cursor-pointer text-blue-600 hover:text-blue-800">
+                            {isZh ? '查看數據' : 'View Data'}
+                          </summary>
+                          <pre className="mt-2 p-2 bg-gray-50 rounded overflow-x-auto max-h-40">
+                            {JSON.stringify(result.data.slice(0, 3), null, 2)}
+                          </pre>
+                        </details>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
+      )}
 
-        {/* 數據詳情彈窗 */}
-        {selectedData && (
-          <div 
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-            onClick={() => setSelectedData(null)}
-          >
-            <Card 
-              className="max-w-4xl w-full max-h-[80vh] overflow-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="font-mono text-sm">{selectedData.key}</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setSelectedData(null)}
-                  >
-                    ✕
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <pre className="p-4 bg-gray-50 rounded-lg overflow-x-auto text-xs">
-                  {JSON.stringify(selectedData.value, null, 2)}
-                </pre>
-              </CardContent>
-            </Card>
+      {/* 數據列表 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5 text-cyan-600" />
+            {isZh ? '所有數據' : 'All Data'}
+          </CardTitle>
+          <CardDescription>
+            {isZh 
+              ? `共 ${kvData.length} 條記錄（顯示 ${filteredData.length} 條）`
+              : `${kvData.length} total records (showing ${filteredData.length})`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* 搜索框 */}
+          <div className="flex items-center gap-2">
+            <Search className="h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder={isZh ? '搜索 key 或 value...' : 'Search key or value...'}
+              className="flex-1 px-3 py-2 border rounded-lg"
+            />
           </div>
-        )}
 
-        {/* 說明 */}
-        <Alert className="border-cyan-200 bg-cyan-50">
-          <AlertDescription className="text-cyan-800 text-sm">
-            <strong>{isZh ? '💡 數據存儲說明：' : '💡 Data Storage Info:'}</strong>
-            <ul className="mt-2 space-y-1 list-disc list-inside">
-              <li>{isZh ? '關鍵字數據以 "keyword:" 為前綴' : 'Keywords prefixed with "keyword:"'}</li>
-              <li>{isZh ? '內容數據以 "content:" 為前綴' : 'Content prefixed with "content:"'}</li>
-              <li>{isZh ? 'SEO 元數據以 "seo:" 為前綴' : 'SEO metadata prefixed with "seo:"'}</li>
-              <li>{isZh ? '所有數據存儲在 Supabase KV Store' : 'All data stored in Supabase KV Store'}</li>
-            </ul>
-          </AlertDescription>
-        </Alert>
-      </div>
+          {/* 數據表格 */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-gray-50">
+                  <th className="text-left p-2">Key</th>
+                  <th className="text-left p-2">{isZh ? '創建時間' : 'Created'}</th>
+                  <th className="text-left p-2">{isZh ? '大小' : 'Size'}</th>
+                  <th className="text-right p-2">{isZh ? '操作' : 'Actions'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredData.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center p-4 text-gray-500">
+                      {isZh ? '未找到數據' : 'No data found'}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredData.map((item, index) => (
+                    <tr key={index} className="border-b hover:bg-gray-50">
+                      <td className="p-2 font-mono text-xs">{item.key}</td>
+                      <td className="p-2 text-xs text-gray-600">
+                        {item.createdAt 
+                          ? new Date(item.createdAt).toLocaleString() 
+                          : '-'}
+                      </td>
+                      <td className="p-2 text-xs text-gray-600">
+                        {item.size ? `${(item.size / 1024).toFixed(2)} KB` : '-'}
+                      </td>
+                      <td className="p-2 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => viewData(item)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deleteData(item.key)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 數據詳情彈窗 */}
+      {selectedData && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedData(null)}
+        >
+          <Card 
+            className="max-w-4xl w-full max-h-[80vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="font-mono text-sm">{selectedData.key}</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setSelectedData(null)}
+                >
+                  ✕
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <pre className="p-4 bg-gray-50 rounded-lg overflow-x-auto text-xs">
+                {JSON.stringify(selectedData.value, null, 2)}
+              </pre>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* 說明 */}
+      <Alert className="border-cyan-200 bg-cyan-50">
+        <AlertDescription className="text-cyan-800 text-sm">
+          <strong>{isZh ? '💡 數據存儲說明：' : '💡 Data Storage Info:'}</strong>
+          <ul className="mt-2 space-y-1 list-disc list-inside">
+            <li>{isZh ? '關鍵字數據以 "keyword:" 為前綴' : 'Keywords prefixed with "keyword:"'}</li>
+            <li>{isZh ? '內容數據以 "content:" 為前綴' : 'Content prefixed with "content:"'}</li>
+            <li>{isZh ? 'SEO 元數據以 "seo:" 為前綴' : 'SEO metadata prefixed with "seo:"'}</li>
+            <li>{isZh ? '所有數據存儲在 Supabase KV Store' : 'All data stored in Supabase KV Store'}</li>
+          </ul>
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }

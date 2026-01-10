@@ -24,6 +24,7 @@ import { SitemapURLChecker } from '../components/SitemapURLChecker';
 import { SEODiagnostic } from '../components/SEODiagnostic';
 import { AdminAISEO } from '../components/admin/AdminAISEO';
 import DataSyncDiagnostic from '../components/DataSyncDiagnostic';
+import DeepDataDiagnostic from '../components/DeepDataDiagnostic';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Shield, Crown, UserCog, Eye, LogOut, Loader2 } from 'lucide-react';
