@@ -65,6 +65,8 @@ const ResetPasswordPage = lazy(() => import('./components/ResetPasswordPage'));
 const AuthVerifyPage = lazy(() => import('./components/AuthVerifyPage'));
 const AISEODiagnostic = lazy(() => import('./components/AISEODiagnostic'));
 const KeywordResearchTest = lazy(() => import('./components/KeywordResearchTest'));
+const KeywordDeploymentCheck = lazy(() => import('./components/KeywordDeploymentCheck'));
+const OpenAIKeyGuide = lazy(() => import('./components/OpenAIKeyGuide'));
 
 // 📄 內容頁面 - Lazy Load（SEO 相關頁面）
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
@@ -651,6 +653,20 @@ function AppContent() {
           <SEO title="Keyword Research Test" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
             <KeywordResearchTest />
+          </Suspense>
+        </div>
+      ) : view === 'keyword-deployment-check' ? (
+        <div className="pt-20">
+          <SEO title="Keyword Deployment Check" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <KeywordDeploymentCheck />
+          </Suspense>
+        </div>
+      ) : view === 'openai-key-guide' ? (
+        <div className="pt-20">
+          <SEO title="OpenAI Key Guide" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <OpenAIKeyGuide />
           </Suspense>
         </div>
       ) : (
