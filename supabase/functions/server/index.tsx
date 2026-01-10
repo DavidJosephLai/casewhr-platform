@@ -896,6 +896,41 @@ app.post("/make-server-215f78a5/auth/line/exchange-token", async (c) => {
   }
 });
 
+// 🟢 LINE OAuth: 更新用戶 email
+app.post("/make-server-215f78a5/auth/line/update-email", async (c) => {
+  try {
+    const { user_id, email } = await c.req.json();
+    
+    console.log('🟢 [LINE Update Email] Request received:', { user_id, email });
+    
+    // 驗證必要參數
+    if (!user_id || !email) {
+      console.error('❌ [LINE Update Email] Missing parameters');
+      return c.json({ 
+        error: 'missing_parameters',
+        message: 'Missing user_id or email parameter'
+      }, 400);
+    }
+    
+    // 調用 line-auth 服務更新 email
+    const { magicLink } = await lineAuth.updateLineUserEmail(user_id, email);
+    
+    console.log('✅ [LINE Update Email] Email updated successfully');
+    
+    return c.json({
+      success: true,
+      message: 'Email updated successfully',
+      magic_link: magicLink,
+    });
+  } catch (error: any) {
+    console.error('❌ [LINE Update Email] Error:', error);
+    return c.json({ 
+      error: 'update_failed',
+      message: error.message || 'Unknown error'
+    }, 500);
+  }
+});
+
 // 🟢 LINE OAuth: 完成登入（生成 Supabase session）
 app.post("/make-server-215f78a5/auth/line/complete", async (c) => {
   try {
@@ -16481,7 +16516,7 @@ app.post("/make-server-215f78a5/api/paypal/config-test", async (c) => {
   try {
     const PAYPAL_CLIENT_ID = (Deno.env.get('PAYPAL_CLIENT_ID') || '').trim();
     const PAYPAL_CLIENT_SECRET = (Deno.env.get('PAYPAL_CLIENT_SECRET') || '').trim();
-    const PAYPAL_MODE = (Deno.env.get('PAYPAL_MODE') || 'live').trim(); // ✅ 生產環境
+    const PAYPAL_MODE = (Deno.env.get('PAYPAL_MODE') || 'live').trim(); // �� 生產環境
     const PAYPAL_API_BASE = PAYPAL_MODE === 'live'
       ? 'https://api-m.paypal.com'
       : 'https://api-m.sandbox.paypal.com';

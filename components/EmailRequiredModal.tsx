@@ -107,13 +107,34 @@ export function EmailRequiredModal({ isOpen, onClose, userId }: EmailRequiredMod
       // 關閉 Modal
       onClose();
 
-      // 重定向到 dashboard
+      // 使用 magic link 自動登入
+      if (data.magic_link) {
+        console.log('🔗 [EmailRequiredModal] Using magic link to establish session');
+        window.location.href = data.magic_link;
+        return;
+      }
+
+      // 備用：直接跳轉到 dashboard（應該不會執行到這裡）
       setTimeout(() => {
         window.location.href = '/?view=dashboard';
       }, 1000);
     } catch (err: any) {
       console.error('❌ [EmailRequiredModal] Submit error:', err);
-      setError(err.message || text.networkError);
+      
+      // 根據錯誤類型顯示不同的訊息
+      let errorMessage = err.message || text.networkError;
+      
+      if (err.message?.includes('Email already in use')) {
+        errorMessage = language === 'en'
+          ? 'This email is already registered. Please use a different email address.'
+          : language === 'zh-CN'
+          ? '此电子邮件已被注册，请使用其他邮箱地址。'
+          : '此電子郵件已被註冊，請使用其他信箱地址。';
+      } else if (err.message?.includes('Invalid email format')) {
+        errorMessage = text.invalidEmail;
+      }
+      
+      setError(errorMessage);
       setIsSubmitting(false);
     }
   };

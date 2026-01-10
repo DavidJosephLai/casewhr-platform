@@ -314,7 +314,7 @@ export async function handleLineCallback(code: string): Promise<{
 /**
  * 更新 LINE 用戶的 email
  */
-export async function updateLineUserEmail(userId: string, newEmail: string): Promise<void> {
+export async function updateLineUserEmail(userId: string, newEmail: string): Promise<{ magicLink: string }> {
   console.log('🟢 [LINE Auth] Updating user email:', { userId, newEmail });
 
   // 1. 檢查 email 格式
@@ -325,21 +325,42 @@ export async function updateLineUserEmail(userId: string, newEmail: string): Pro
 
   // 2. 檢查 email 是否已被使用
   const { data: existingUsers } = await supabase.auth.admin.listUsers();
+  
+  console.log('🔍 [LINE Auth] Checking for duplicate emails...');
+  console.log('🔍 [LINE Auth] Current user ID:', userId);
+  console.log('🔍 [LINE Auth] New email:', newEmail);
+  console.log('🔍 [LINE Auth] Total users:', existingUsers?.users.length);
+  
+  // 查找使用相同 email 的用戶
+  const duplicateUsers = existingUsers?.users.filter((u) => u.email === newEmail);
+  console.log('🔍 [LINE Auth] Users with same email:', duplicateUsers?.map(u => ({ id: u.id, email: u.email })));
+  
   const emailExists = existingUsers?.users.some(
     (u) => u.email === newEmail && u.id !== userId
   );
 
   if (emailExists) {
+    console.error('❌ [LINE Auth] Email already in use by another user');
     throw new Error('Email already in use');
   }
 
-  // 3. 更新 Supabase Auth 用戶 email
+  console.log('✅ [LINE Auth] Email is available');
+
+  // 3. 獲取當前用戶以保留現有的 metadata
+  const { data: currentUser } = await supabase.auth.admin.getUserById(userId);
+  
+  if (!currentUser || !currentUser.user) {
+    throw new Error('User not found');
+  }
+
+  // 4. 更新 Supabase Auth 用戶 email
   const { data: updatedUser, error: updateError } = await supabase.auth.admin.updateUserById(
     userId,
     {
       email: newEmail,
       email_confirm: true, // 自動確認新 email
       user_metadata: {
+        ...currentUser.user.user_metadata, // 保留現有 metadata
         needs_email_update: false, // 移除標記
       },
     }
@@ -350,7 +371,7 @@ export async function updateLineUserEmail(userId: string, newEmail: string): Pro
     throw updateError || new Error('Failed to update email');
   }
 
-  // 4. 更新 profile 中的 email
+  // 5. 更新 profile 中的 email
   try {
     const { get, set } = await import('./kv_store.tsx');
     
@@ -377,4 +398,24 @@ export async function updateLineUserEmail(userId: string, newEmail: string): Pro
   }
 
   console.log('✅ [LINE Auth] Email updated successfully');
+
+  // 6. Generate magic link for automatic sign-in
+  const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+    type: 'magiclink',
+    email: newEmail,
+    options: {
+      redirectTo: 'https://casewhr.com/?view=dashboard',
+    },
+  });
+  
+  if (linkError || !linkData) {
+    console.error('❌ [LINE Auth] Magic link generation failed:', linkError);
+    throw linkError || new Error('Failed to generate magic link');
+  }
+
+  console.log('✅ [LINE Auth] Magic link generated');
+
+  return {
+    magicLink: linkData.properties.action_link, // Full magic link URL
+  };
 }
