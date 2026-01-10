@@ -4958,11 +4958,45 @@ app.post("/make-server-215f78a5/kv", async (c) => {
 });
 
 // ✅ 靜態路由必須在動態路由之前！
-// 🔧 KV Store 測試端點
+// 🔧 KV Store 測試端點 - 完整讀寫測試
 app.get("/make-server-215f78a5/kv/test", async (c) => {
   try {
-    return c.json({ status: 'ok', message: 'KV Store is accessible' }, 200);
+    const testKey = `test_${Date.now()}`;
+    const testValue = { message: 'Test data', timestamp: new Date().toISOString() };
+    
+    console.log('🧪 [KV Test] Testing write operation...');
+    console.log('  Key:', testKey);
+    console.log('  Value:', testValue);
+    
+    // 测试写入
+    await kv.set(testKey, testValue);
+    console.log('✅ [KV Test] Write completed');
+    
+    // 测试读取
+    const readValue = await kv.get(testKey);
+    console.log('🔍 [KV Test] Read result:', readValue);
+    
+    // 删除测试数据
+    await kv.del(testKey);
+    console.log('🗑️ [KV Test] Test data cleaned up');
+    
+    if (readValue && readValue.message === testValue.message) {
+      return c.json({ 
+        status: 'ok', 
+        message: 'KV Store read/write test passed',
+        testKey,
+        readValue
+      }, 200);
+    } else {
+      return c.json({ 
+        status: 'error', 
+        message: 'KV Store read/write test failed - data mismatch',
+        expected: testValue,
+        actual: readValue
+      }, 500);
+    }
   } catch (error: any) {
+    console.error('❌ [KV Test] Error:', error);
     return c.json({ error: error.message }, 500);
   }
 });
@@ -5011,12 +5045,19 @@ app.get("/make-server-215f78a5/kv/all", async (c) => {
     
     // 直接查詢數據庫以獲取完整的 key-value 對
     for (const prefix of prefixes) {
+      console.log(`  🔍 Querying prefix: "${prefix}"`);
+      
       const { data, error } = await supabase
         .from('kv_store_215f78a5')
         .select('key, value, created_at')
         .like('key', `${prefix}%`);
       
       if (!error && data) {
+        console.log(`    ✅ Found ${data.length} records for prefix "${prefix}"`);
+        if (data.length > 0) {
+          console.log(`    📋 First key: ${data[0].key}`);
+        }
+        
         allData.push(...data.map(item => ({
           key: item.key,
           value: item.value,
@@ -5024,10 +5065,19 @@ app.get("/make-server-215f78a5/kv/all", async (c) => {
         })));
       } else if (error) {
         console.warn(`⚠️ [KV All] Error fetching prefix "${prefix}":`, error.message);
+      } else {
+        console.log(`    ℹ️ No records found for prefix "${prefix}"`);
       }
     }
     
     console.log(`✅ [KV All] Found ${allData.length} total records`);
+    
+    // 列出所有 ai_seo_ 开头的 key
+    const aiSeoKeys = allData.filter(item => item.key && item.key.startsWith('ai_seo_'));
+    console.log(`🎯 [KV All] AI SEO reports count: ${aiSeoKeys.length}`);
+    if (aiSeoKeys.length > 0) {
+      console.log(`  📋 AI SEO keys:`, aiSeoKeys.map(item => item.key));
+    }
     
     return c.json({ 
       success: true,
@@ -17018,14 +17068,50 @@ app.post("/make-server-215f78a5/ai/save-report", async (c) => {
       createdAt: new Date().toISOString(),
     };
 
-    // 儲存到 KV Store
-    await kv.set(reportId, report);
+    console.log('💾 [AI SEO] Saving report to KV Store...');
+    console.log('  📝 Report ID:', reportId);
+    console.log('  👤 User ID:', user.id);
+    console.log('  📊 Report data size:', JSON.stringify(report).length, 'bytes');
+
+    // 儲存到 KV Store（添加错误捕获）
+    try {
+      await kv.set(reportId, report);
+      console.log('✅ [AI SEO] Report saved to key:', reportId);
+    } catch (kvError: any) {
+      console.error('❌ [AI SEO] KV Store write failed:', kvError);
+      return c.json({ 
+        error: 'Failed to save report to database', 
+        details: kvError.message 
+      }, 500);
+    }
+    
+    // 驗證保存是否成功（強制驗證）
+    const verifyReport = await kv.get(reportId);
+    if (!verifyReport) {
+      console.error('❌ [AI SEO] CRITICAL: Verification failed - Report NOT found in KV Store!');
+      console.error('  Expected key:', reportId);
+      console.error('  This indicates KV Store silent failure or network issue');
+      
+      return c.json({ 
+        error: 'Report save verification failed - data not found in database',
+        reportId,
+        hint: 'Database write may have failed silently'
+      }, 500);
+    }
+    
+    console.log('✅ [AI SEO] Verification successful - Report exists in KV Store');
     
     // 更新用戶的報告列表
     const userReportsKey = `ai_seo_reports_${user.id}`;
+    console.log('📋 [AI SEO] Updating user report list:', userReportsKey);
+    
     const existingReports = await kv.get(userReportsKey) || [];
+    console.log('  📦 Existing reports count:', Array.isArray(existingReports) ? existingReports.length : 0);
+    
     const updatedReports = [reportId, ...existingReports].slice(0, 50); // 最多保存 50 個報告
     await kv.set(userReportsKey, updatedReports);
+    
+    console.log('  ✅ Updated reports count:', updatedReports.length);
 
     console.log('✅ AI SEO report saved:', reportId);
 
