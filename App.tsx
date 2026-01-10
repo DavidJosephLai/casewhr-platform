@@ -32,6 +32,7 @@ import { Footer } from './components/Footer';
 import { PopularServices } from './components/PopularServices';
 import { Testimonials } from './components/Testimonials';
 import { TrustBadges } from './components/TrustBadges';
+import { LatestSEOReports } from './components/LatestSEOReports';
 
 // ✅ 只對大型頁面使用 Lazy Load（真正需要代碼分割的）
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -182,7 +183,7 @@ function AppContent() {
   }, []); // 只應用啟動時顯示一次
   
   // 初始化匯率系統
-  // Note: useExchangeRate hook 已在各組件中按需使用
+  // Note: useExchangeRate hook 已在各組件���按需使用
   
   // 檢測團隊邀請 URL
   useEffect(() => {
@@ -713,6 +714,7 @@ function AppContent() {
           <Categories />
           <BrowseProjects />
           <Contact />
+          <LatestSEOReports />
         </>
       )}
       <Footer />
