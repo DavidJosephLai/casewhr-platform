@@ -823,6 +823,72 @@ app.get("/make-server-215f78a5/auth/line/callback", async (c) => {
   }
 });
 
+// 🟢 LINE OAuth: Exchange code for token (前端調用 - 新架構)
+app.post("/make-server-215f78a5/auth/line/exchange-token", async (c) => {
+  try {
+    const { code, state } = await c.req.json();
+    
+    console.log('🟢 [LINE Token Exchange] Request received:', { 
+      hasCode: !!code, 
+      hasState: !!state 
+    });
+    
+    // 檢查環境變數
+    if (!Deno.env.get('LINE_CHANNEL_ID') || !Deno.env.get('LINE_CHANNEL_SECRET')) {
+      console.error('❌ [LINE Token Exchange] LINE credentials not configured!');
+      return c.json({ 
+        error: 'line_not_configured',
+        message: 'LINE Channel ID or Secret not configured. Please set environment variables in Supabase Dashboard.'
+      }, 500);
+    }
+    
+    // 驗證必要參數
+    if (!code || !state) {
+      console.error('❌ [LINE Token Exchange] Missing code or state');
+      return c.json({ 
+        error: 'missing_parameters',
+        message: 'Missing code or state parameter'
+      }, 400);
+    }
+    
+    // 驗證 state（CSRF 保護）
+    const savedState = await kv.get(`line_oauth_state:${state}`);
+    if (!savedState) {
+      console.error('❌ [LINE Token Exchange] Invalid or expired state');
+      return c.json({ 
+        error: 'invalid_state',
+        message: 'Invalid or expired state. Please try logging in again.'
+      }, 400);
+    }
+    
+    // 刪除已使用的 state
+    await kv.del(`line_oauth_state:${state}`);
+    
+    // 執行 LINE 登入流程
+    const { user, userId, email, magicLink } = await lineAuth.handleLineCallback(code);
+    
+    console.log('✅ [LINE Token Exchange] Login successful:', email);
+    
+    return c.json({
+      success: true,
+      user: {
+        id: userId,
+        email: email,
+        full_name: user.user_metadata?.full_name || 'LINE User',
+        avatar_url: user.user_metadata?.avatar_url || '',
+      },
+      magic_link: magicLink, // Return the magic link for frontend to use
+    });
+  } catch (error: any) {
+    console.error('❌ [LINE Token Exchange] Error:', error);
+    console.error('❌ [LINE Token Exchange] Error stack:', error.stack);
+    return c.json({ 
+      error: 'exchange_failed',
+      message: error.message || 'Unknown error'
+    }, 500);
+  }
+});
+
 // 🟢 LINE OAuth: 完成登入（生成 Supabase session）
 app.post("/make-server-215f78a5/auth/line/complete", async (c) => {
   try {

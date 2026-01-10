@@ -259,6 +259,7 @@ export async function handleLineCallback(code: string): Promise<{
   user: any;
   userId: string;
   email: string;
+  magicLink: string;
 }> {
   console.log('🟢 [LINE Auth] Starting LINE login flow...');
 
@@ -270,12 +271,33 @@ export async function handleLineCallback(code: string): Promise<{
 
   // 3. Create or login Supabase user
   const { user, accessToken } = await createOrLoginUser(lineProfile);
+  
+  // 4. Generate magic link for automatic sign-in
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') || '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
+  );
+  
+  const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+    type: 'magiclink',
+    email: user.email,
+    options: {
+      redirectTo: 'https://casewhr.com/?view=dashboard',
+    },
+  });
+  
+  if (linkError || !linkData) {
+    console.error('❌ [LINE Auth] Magic link generation failed:', linkError);
+    throw linkError || new Error('Failed to generate magic link');
+  }
 
   console.log('✅ [LINE Auth] LINE login completed successfully');
+  console.log('🔗 [LINE Auth] Magic link generated');
 
   return {
     user,
     userId: user.id,
     email: user.email,
+    magicLink: linkData.properties.action_link, // Full magic link URL
   };
 }

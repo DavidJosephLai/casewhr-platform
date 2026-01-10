@@ -287,52 +287,78 @@ function AppContent() {
     };
   }, [language, signOut, setView]);
 
-  // 處理付款回調（Stripe 和 PayPal）
+  // 處理 LINE OAuth 回調
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    // 🟢 處理 LINE OAuth 回調
-    const authType = urlParams.get('auth');
-    const tempKey = urlParams.get('temp_key');
-    const userEmail = urlParams.get('email');
-    
-    if (authType === 'line' && tempKey && userEmail) {
-      console.log('🟢 [LINE OAuth] Callback detected');
-      console.log('🟢 [LINE OAuth] Temp key:', tempKey);
-      console.log('🟢 [LINE OAuth] Email:', userEmail);
+    // 檢查是否為 LINE 回調 URL
+    if (window.location.pathname === '/line-callback') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const state = urlParams.get('state');
+      const error = urlParams.get('error');
+      const errorDescription = urlParams.get('error_description');
       
-      // 調用後端獲取完整的用戶信息並完成登錄
-      const completeLineLogin = async () => {
+      console.log('🟢 [LINE Callback] Detected LINE callback');
+      console.log('🟢 [LINE Callback] Parameters:', { code: !!code, state: !!state, error });
+      
+      if (error) {
+        console.error('❌ [LINE Callback] Authorization failed:', error);
+        toast.error(
+          language === 'en'
+            ? `LINE authorization failed: ${errorDescription || error}`
+            : `LINE 授權失敗：${errorDescription || error}`,
+          { duration: 5000 }
+        );
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+        return;
+      }
+      
+      if (!code || !state) {
+        console.error('❌ [LINE Callback] Missing code or state');
+        toast.error(
+          language === 'en'
+            ? 'LINE login failed: Missing parameters'
+            : 'LINE 登入失敗：缺少參數',
+          { duration: 5000 }
+        );
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+        return;
+      }
+      
+      // 調用後端交換 token
+      const exchangeToken = async () => {
         try {
+          console.log('🟢 [LINE Callback] Exchanging code for token...');
+          
           const response = await fetch(
-            `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/auth/line/complete`,
+            `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/auth/line/exchange-token`,
             {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${publicAnonKey}`,
               },
-              body: JSON.stringify({
-                temp_key: tempKey,
-                email: userEmail,
-              }),
+              body: JSON.stringify({ code, state }),
             }
           );
           
           if (!response.ok) {
-            throw new Error('Failed to complete LINE login');
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to exchange token');
           }
           
           const data = await response.json();
-          console.log('✅ [LINE OAuth] Login completed:', data);
+          console.log('✅ [LINE Callback] Token exchange successful:', data);
           
-          // 清除 URL 參數
-          const cleanUrl = new URL(window.location.href);
-          cleanUrl.searchParams.delete('auth');
-          cleanUrl.searchParams.delete('temp_key');
-          cleanUrl.searchParams.delete('email');
-          cleanUrl.searchParams.delete('view');
-          window.history.replaceState({}, '', cleanUrl.toString());
+          // 使用 magic link 自動登入
+          if (data.magic_link) {
+            console.log('🔗 [LINE Callback] Using magic link to establish session');
+            window.location.href = data.magic_link;
+            return;
+          }
           
           // 顯示成功提示
           toast.success(
@@ -342,32 +368,34 @@ function AppContent() {
             { duration: 3000 }
           );
           
-          // 強制重新加載以觸發 AuthContext 更新
+          // 重定向到儀表板
           setTimeout(() => {
             window.location.href = '/?view=dashboard';
-          }, 500);
+          }, 1000);
         } catch (error: any) {
-          console.error('❌ [LINE OAuth] Error completing login:', error);
+          console.error('❌ [LINE Callback] Error:', error);
           toast.error(
             language === 'en'
-              ? '❌ LINE login failed. Please try again.'
-              : '❌ LINE 登入失敗，請重試。',
+              ? `❌ LINE login failed: ${error.message}`
+              : `❌ LINE 登入失敗：${error.message}`,
             { duration: 5000 }
           );
           
-          // 清除 URL 參數
-          const cleanUrl = new URL(window.location.href);
-          cleanUrl.searchParams.delete('auth');
-          cleanUrl.searchParams.delete('temp_key');
-          cleanUrl.searchParams.delete('email');
-          cleanUrl.searchParams.delete('view');
-          window.history.replaceState({}, '', cleanUrl.toString());
+          // 重定向回首頁
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 2000);
         }
       };
       
-      completeLineLogin();
-      return; // 提前返回，避免執行後續的付款處理邏輯
+      exchangeToken();
+      return;
     }
+  }, [language, projectId, publicAnonKey]);
+  
+  // 處理付款回調（Stripe 和 PayPal）
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
     
     // 原有的付款回調處理
     const paymentStatus = urlParams.get('payment');
