@@ -18935,6 +18935,7 @@ app.get("/make-server-215f78a5/kv/all", async (c) => {
       'keyword:',
       'content:',
       'seo:',
+      'ai_seo_',           // ✅ AI SEO 報告
       'profile_',
       'wallet_',
       'project_',
@@ -18945,13 +18946,22 @@ app.get("/make-server-215f78a5/kv/all", async (c) => {
     
     const allData: any[] = [];
     
+    // 直接查詢數據庫以獲取完整的 key-value 對
     for (const prefix of prefixes) {
-      const results = await kv.getByPrefix(prefix) || [];
-      allData.push(...results.map((value: any, index: number) => ({
-        key: `${prefix}${index}`,
-        value,
-        created_at: value.created_at || value.createdAt || null
-      })));
+      const { data, error } = await supabase
+        .from('kv_store_215f78a5')
+        .select('key, value, created_at')
+        .like('key', `${prefix}%`);
+      
+      if (!error && data) {
+        allData.push(...data.map(item => ({
+          key: item.key,
+          value: item.value,
+          created_at: item.created_at
+        })));
+      } else if (error) {
+        console.warn(`⚠️ [KV All] Error fetching prefix "${prefix}":`, error.message);
+      }
     }
     
     console.log(`✅ [KV All] Found ${allData.length} total records`);
@@ -18959,7 +18969,7 @@ app.get("/make-server-215f78a5/kv/all", async (c) => {
     return c.json({ 
       success: true,
       count: allData.length,
-      results: allData
+      data: allData  // ✅ 改為 "data" 而不是 "results"
     }, 200);
   } catch (error: any) {
     console.error('❌ [KV All] Error:', error);
