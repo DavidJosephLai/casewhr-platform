@@ -23,8 +23,8 @@ import { SitemapGenerator } from '../components/SitemapGenerator';
 import { SitemapURLChecker } from '../components/SitemapURLChecker';
 import { SEODiagnostic } from '../components/SEODiagnostic';
 import { AdminAISEO } from '../components/admin/AdminAISEO';
+import AdminAISEOReports from '../components/admin/AdminAISEOReports';
 import DataSyncDiagnostic from '../components/DataSyncDiagnostic';
-import DeepDataDiagnostic from '../components/DeepDataDiagnostic';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Shield, Crown, UserCog, Eye, LogOut, Loader2 } from 'lucide-react';
@@ -492,6 +492,7 @@ export default function AdminPage() {
 
             <TabsContent value="seoTools" className="mt-0">
               <AdminAISEO />
+              <AdminAISEOReports />
             </TabsContent>
 
             <TabsContent value="sitemap" className="mt-0">
