@@ -319,7 +319,7 @@ export async function handleLineCallback(code: string): Promise<{
 /**
  * 更新 LINE 用戶的 email
  */
-export async function updateLineUserEmail(userId: string, newEmail: string): Promise<{ magicLink: string }> {
+export async function updateLineUserEmail(userId: string, newEmail: string): Promise<{ magicLink: string; linked?: boolean }> {
   console.log('🟢 [LINE Auth] Updating user email:', { userId, newEmail });
 
   // 1. 檢查 email 格式
@@ -339,27 +339,100 @@ export async function updateLineUserEmail(userId: string, newEmail: string): Pro
   // 獲取當前用戶信息
   const currentUser = existingUsers?.users.find((u) => u.id === userId);
   console.log('🔍 [LINE Auth] Current user email:', currentUser?.email);
+  console.log('🔍 [LINE Auth] Current user LINE ID:', currentUser?.user_metadata?.line_user_id);
   
   // 查找使用相同 email 的用戶
   const duplicateUsers = existingUsers?.users.filter((u) => u.email === newEmail);
   console.log('🔍 [LINE Auth] Users with same email:', duplicateUsers?.map(u => ({ 
     id: u.id, 
     email: u.email,
-    isCurrentUser: u.id === userId 
+    isCurrentUser: u.id === userId,
+    authProvider: u.user_metadata?.auth_provider,
+    hasLineId: !!u.user_metadata?.line_user_id,
   })));
   
   // 檢查是否有「其他用戶」使用這個 email（排除自己）
-  const emailExists = existingUsers?.users.some(
-    (u) => u.email === newEmail && u.id !== userId
-  );
-
-  if (emailExists) {
-    console.error('❌ [LINE Auth] Email already in use by another user');
-    console.error('❌ [LINE Auth] Conflicting users:', duplicateUsers?.filter(u => u.id !== userId).map(u => u.id));
+  const conflictingUser = duplicateUsers?.find((u) => u.id !== userId);
+  
+  if (conflictingUser) {
+    console.log('⚠️ [LINE Auth] Email conflict detected!');
+    console.log('🔍 [LINE Auth] Conflicting user:', {
+      id: conflictingUser.id,
+      email: conflictingUser.email,
+      authProvider: conflictingUser.user_metadata?.auth_provider,
+      hasLineId: !!conflictingUser.user_metadata?.line_user_id,
+    });
     
-    // 獲取衝突用戶的登入方式
-    const conflictingUser = duplicateUsers?.find(u => u.id !== userId);
-    const authProvider = conflictingUser?.user_metadata?.auth_provider || 'email';
+    // 🎯 賬戶合併邏輯：如果衝突賬戶沒有綁定 LINE，則允許合併
+    if (!conflictingUser.user_metadata?.line_user_id && currentUser?.user_metadata?.line_user_id) {
+      console.log('✨ [LINE Auth] Account linking opportunity detected!');
+      console.log('📎 [LINE Auth] Attempting to link LINE account to existing email account...');
+      
+      try {
+        // 將當前用戶的 LINE ID 添加到衝突用戶的 metadata
+        const { data: linkedUser, error: linkError } = await supabase.auth.admin.updateUserById(
+          conflictingUser.id,
+          {
+            user_metadata: {
+              ...conflictingUser.user_metadata,
+              line_user_id: currentUser.user_metadata.line_user_id,
+              linked_accounts: [
+                ...(conflictingUser.user_metadata?.linked_accounts || []),
+                {
+                  provider: 'line',
+                  line_user_id: currentUser.user_metadata.line_user_id,
+                  linked_at: new Date().toISOString(),
+                }
+              ],
+            },
+          }
+        );
+        
+        if (linkError) {
+          console.error('❌ [LINE Auth] Account linking failed:', linkError);
+          throw linkError;
+        }
+        
+        console.log('✅ [LINE Auth] LINE account linked to existing email account');
+        
+        // 刪除臨時的 LINE 賬戶（因為已經合併到主賬戶）
+        try {
+          await supabase.auth.admin.deleteUser(userId);
+          console.log('✅ [LINE Auth] Temporary LINE account deleted:', userId);
+        } catch (deleteError) {
+          console.warn('⚠️ [LINE Auth] Failed to delete temporary account (non-critical):', deleteError);
+        }
+        
+        // 為合併後的賬戶生成 magic link
+        const { data: linkData, error: linkError2 } = await supabase.auth.admin.generateLink({
+          type: 'magiclink',
+          email: newEmail,
+          options: {
+            redirectTo: 'https://casewhr.com/?view=dashboard',
+          },
+        });
+        
+        if (linkError2 || !linkData) {
+          console.error('❌ [LINE Auth] Magic link generation failed:', linkError2);
+          throw linkError2 || new Error('Failed to generate magic link');
+        }
+        
+        console.log('✅ [LINE Auth] Account linking completed! User can now sign in with both email and LINE.');
+        
+        return {
+          magicLink: linkData.properties.action_link,
+          linked: true,
+        };
+      } catch (linkingError) {
+        console.error('❌ [LINE Auth] Account linking process failed:', linkingError);
+        // 繼續拋出原有的錯誤
+      }
+    }
+    
+    // 如果不能合併，返回友好的錯誤
+    const authProvider = conflictingUser.user_metadata?.auth_provider || 'email';
+    console.error('❌ [LINE Auth] Email already in use by another user');
+    console.error('❌ [LINE Auth] Conflicting users:', [conflictingUser.id]);
     
     throw new Error(`This email is already registered with another account (via ${authProvider}). Please use a different email or sign in with your existing account.`);
   }

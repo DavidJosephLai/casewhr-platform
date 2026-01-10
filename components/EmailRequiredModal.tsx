@@ -102,7 +102,16 @@ export function EmailRequiredModal({ isOpen, onClose, userId }: EmailRequiredMod
       const data = await response.json();
       console.log('✅ [EmailRequiredModal] Email updated successfully:', data);
 
-      toast.success(text.success, { duration: 3000 });
+      // 檢查是否是賬戶合併（如果後端日誌顯示合併成功）
+      const successMessage = data.linked 
+        ? (language === 'en'
+          ? '✅ Accounts linked! You can now sign in with both LINE and email.'
+          : language === 'zh-CN'
+          ? '✅ 账户已关联！您现在可以使用 LINE 和邮箱登录。'
+          : '✅ 帳戶已關聯！您現在可以使用 LINE 和信箱登入。')
+        : text.success;
+
+      toast.success(successMessage, { duration: 4000 });
 
       // 關閉 Modal
       onClose();

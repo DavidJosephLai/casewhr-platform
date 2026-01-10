@@ -917,14 +917,18 @@ app.post("/make-server-215f78a5/auth/line/update-email", async (c) => {
     }
     
     // 調用 line-auth 服務更新 email
-    const { magicLink } = await lineAuth.updateLineUserEmail(user_id, email);
+    const { magicLink, linked } = await lineAuth.updateLineUserEmail(user_id, email);
     
     console.log('✅ [LINE Update Email] Email updated successfully');
+    if (linked) {
+      console.log('✨ [LINE Update Email] Accounts linked successfully');
+    }
     
     return c.json({
       success: true,
-      message: 'Email updated successfully',
+      message: linked ? 'Accounts linked successfully' : 'Email updated successfully',
       magic_link: magicLink,
+      linked: linked || false,
     });
   } catch (error: any) {
     console.error('❌ [LINE Update Email] Error:', error);
