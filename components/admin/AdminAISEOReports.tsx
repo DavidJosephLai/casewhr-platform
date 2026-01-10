@@ -24,7 +24,7 @@ import {
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { useLanguage } from '../../lib/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 interface AISEOReport {
   id: string;
@@ -295,25 +295,27 @@ export default function AdminAISEOReports() {
     }
 
     try {
+      // 使用正確的 DELETE API 端點
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/kv/${encodeURIComponent(reportId)}`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai/reports/${encodeURIComponent(reportId)}`,
         {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
+            'Authorization': `Bearer ${session?.access_token || publicAnonKey}`,
           },
         }
       );
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}`);
       }
 
       toast.success('報告已刪除');
       loadReports(); // 重新載入
     } catch (error) {
       console.error('Delete error:', error);
-      toast.error('刪除失敗');
+      toast.error('刪除失敗: ' + (error as Error).message);
     }
   };
 
@@ -563,7 +565,7 @@ export default function AdminAISEOReports() {
           <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xl">報告詳情</CardTitle>
+                <CardTitle className="text-xl">📊 報告詳情</CardTitle>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -573,10 +575,93 @@ export default function AdminAISEOReports() {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <pre className="bg-gray-50 p-4 rounded-lg overflow-auto text-xs">
-                {JSON.stringify(selectedReport, null, 2)}
-              </pre>
+            <CardContent className="space-y-6">
+              {/* 基本信息 */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg border-b pb-2">基本信息</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="text-sm text-gray-500">報告 ID：</span>
+                    <code className="text-xs bg-gray-100 px-2 py-1 rounded block mt-1">
+                      {selectedReport.id}
+                    </code>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">用戶 ID：</span>
+                    <code className="text-xs bg-gray-100 px-2 py-1 rounded block mt-1">
+                      {selectedReport.userId}
+                    </code>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">標題：</span>
+                    <div className="text-sm mt-1">{selectedReport.title || '(無標題)'}</div>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">頁面類型：</span>
+                    <Badge className="mt-1">{selectedReport.pageType}</Badge>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-sm text-gray-500">創建時間：</span>
+                    <div className="text-sm mt-1">{formatDate(selectedReport.createdAt)}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 描述 */}
+              {selectedReport.description && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-lg border-b pb-2">描述</h3>
+                  <p className="text-sm text-gray-700">{selectedReport.description}</p>
+                </div>
+              )}
+
+              {/* 關鍵字 */}
+              {selectedReport.keywords && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-lg border-b pb-2">關鍵字</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedReport.keywords.split(',').map((keyword, i) => (
+                      <Badge key={i} variant="outline">
+                        {keyword.trim()}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* AI 分析 */}
+              {selectedReport.analysis && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-lg border-b pb-2">🤖 AI 分析結果</h3>
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <pre className="text-xs whitespace-pre-wrap">
+                      {JSON.stringify(selectedReport.analysis, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              )}
+
+              {/* 生成的數據 */}
+              {selectedReport.generatedData && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-lg border-b pb-2">📝 生成的內容</h3>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <pre className="text-xs whitespace-pre-wrap">
+                      {JSON.stringify(selectedReport.generatedData, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+              )}
+
+              {/* 原始 JSON（摺疊） */}
+              <details className="space-y-2">
+                <summary className="font-semibold text-lg border-b pb-2 cursor-pointer hover:text-blue-600">
+                  🔍 完整 JSON 數據
+                </summary>
+                <pre className="bg-gray-50 p-4 rounded-lg overflow-auto text-xs mt-2">
+                  {JSON.stringify(selectedReport, null, 2)}
+                </pre>
+              </details>
             </CardContent>
           </Card>
         </div>
