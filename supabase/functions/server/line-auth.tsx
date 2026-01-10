@@ -329,27 +329,42 @@ export async function updateLineUserEmail(userId: string, newEmail: string): Pro
   console.log('🔍 [LINE Auth] Checking for duplicate emails...');
   console.log('🔍 [LINE Auth] Current user ID:', userId);
   console.log('🔍 [LINE Auth] New email:', newEmail);
-  console.log('🔍 [LINE Auth] Total users:', existingUsers?.users.length);
+  console.log('🔍 [LINE Auth] Total users in system:', existingUsers?.users.length);
+  
+  // 獲取當前用戶信息
+  const currentUser = existingUsers?.users.find((u) => u.id === userId);
+  console.log('🔍 [LINE Auth] Current user email:', currentUser?.email);
   
   // 查找使用相同 email 的用戶
   const duplicateUsers = existingUsers?.users.filter((u) => u.email === newEmail);
-  console.log('🔍 [LINE Auth] Users with same email:', duplicateUsers?.map(u => ({ id: u.id, email: u.email })));
+  console.log('🔍 [LINE Auth] Users with same email:', duplicateUsers?.map(u => ({ 
+    id: u.id, 
+    email: u.email,
+    isCurrentUser: u.id === userId 
+  })));
   
+  // 檢查是否有「其他用戶」使用這個 email（排除自己）
   const emailExists = existingUsers?.users.some(
     (u) => u.email === newEmail && u.id !== userId
   );
 
   if (emailExists) {
     console.error('❌ [LINE Auth] Email already in use by another user');
-    throw new Error('Email already in use');
+    console.error('❌ [LINE Auth] Conflicting users:', duplicateUsers?.filter(u => u.id !== userId).map(u => u.id));
+    
+    // 獲取衝突用戶的登入方式
+    const conflictingUser = duplicateUsers?.find(u => u.id !== userId);
+    const authProvider = conflictingUser?.user_metadata?.auth_provider || 'email';
+    
+    throw new Error(`This email is already registered with another account (via ${authProvider}). Please use a different email or sign in with your existing account.`);
   }
 
-  console.log('✅ [LINE Auth] Email is available');
+  console.log('✅ [LINE Auth] Email is available (or already owned by this user)');
 
   // 3. 獲取當前用戶以保留現有的 metadata
-  const { data: currentUser } = await supabase.auth.admin.getUserById(userId);
+  const { data: user } = await supabase.auth.admin.getUserById(userId);
   
-  if (!currentUser || !currentUser.user) {
+  if (!user || !user.user) {
     throw new Error('User not found');
   }
 
@@ -360,7 +375,7 @@ export async function updateLineUserEmail(userId: string, newEmail: string): Pro
       email: newEmail,
       email_confirm: true, // 自動確認新 email
       user_metadata: {
-        ...currentUser.user.user_metadata, // 保留現有 metadata
+        ...user.user.user_metadata, // 保留現有 metadata
         needs_email_update: false, // 移除標記
       },
     }

@@ -124,7 +124,17 @@ export function EmailRequiredModal({ isOpen, onClose, userId }: EmailRequiredMod
       // 根據錯誤類型顯示不同的訊息
       let errorMessage = err.message || text.networkError;
       
-      if (err.message?.includes('Email already in use')) {
+      if (err.message?.includes('already registered with another account')) {
+        // 提取登入方式（如果有）
+        const providerMatch = err.message.match(/via (\w+)/);
+        const provider = providerMatch ? providerMatch[1] : 'another method';
+        
+        errorMessage = language === 'en'
+          ? `This email is already registered via ${provider}. Please use a different email or sign in with your existing ${provider} account.`
+          : language === 'zh-CN'
+          ? `此电子邮件已通过 ${provider} 注册。请使用其他邮箱或用现有的 ${provider} 账户登录。`
+          : `此電子郵件已透過 ${provider} 註冊。請使用其他信箱或用現有的 ${provider} 帳戶登入。`;
+      } else if (err.message?.includes('Email already in use')) {
         errorMessage = language === 'en'
           ? 'This email is already registered. Please use a different email address.'
           : language === 'zh-CN'
