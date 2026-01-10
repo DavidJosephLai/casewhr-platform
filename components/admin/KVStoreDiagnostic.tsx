@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Loader2, Database, Search, AlertCircle } from 'lucide-react';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
 
 interface KVItem {
@@ -26,6 +27,8 @@ export default function KVStoreDiagnostic() {
     byPrefix: {} as Record<string, number>,
   });
 
+  const { session } = useAuth();
+
   const diagnose = async () => {
     setIsLoading(true);
     setError(null);
@@ -33,7 +36,46 @@ export default function KVStoreDiagnostic() {
     try {
       console.log('🔍 [診斷] 開始檢查 KV Store...');
       
-      // 測試 API 連接
+      // 測試 API 連接 - 先嘗試用戶專屬的報告
+      if (session?.access_token) {
+        console.log('📡 [診斷] 嘗試載入用戶專屬報告...');
+        try {
+          const reportsUrl = `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai/reports`;
+          const reportsResponse = await fetch(reportsUrl, {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+          });
+
+          if (reportsResponse.ok) {
+            const reportsData = await reportsResponse.json();
+            console.log('✅ [診斷] 用戶報告 API 響應:', reportsData);
+            
+            if (reportsData.reports && reportsData.reports.length > 0) {
+              toast.success(`✅ 找到 ${reportsData.reports.length} 個您的報告！`);
+              
+              // 顯示統計
+              setStats({
+                total: reportsData.reports.length,
+                byPrefix: { 'ai_seo_': reportsData.reports.length },
+              });
+              
+              setAllItems(reportsData.reports.map((r: any) => ({
+                key: r.id,
+                value: r,
+                created_at: r.createdAt,
+              })));
+              
+              setIsLoading(false);
+              return;
+            }
+          }
+        } catch (err) {
+          console.warn('⚠️ [診斷] 用戶報告 API 失敗:', err);
+        }
+      }
+      
+      // 後備方案：檢查所有 KV Store 數據
       const url = `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/kv/all`;
       console.log('📡 [診斷] API URL:', url);
       

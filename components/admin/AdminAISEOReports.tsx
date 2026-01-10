@@ -130,9 +130,56 @@ export default function AdminAISEOReports() {
   const loadReports = async () => {
     setIsLoading(true);
     try {
-      console.log('🔍 Loading AI SEO reports from KV Store...');
+      console.log('🔍 Loading AI SEO reports...');
 
-      // 獲取所有 KV Store 數據
+      // 方法 1: 使用 /ai/reports API（這是 AISEOManager 使用的正確端點）
+      console.log('📡 Method 1: Using /ai/reports API');
+      try {
+        const reportsResponse = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai/reports`,
+          {
+            headers: {
+              'Authorization': `Bearer ${session?.access_token || publicAnonKey}`,
+            },
+          }
+        );
+
+        if (reportsResponse.ok) {
+          const reportsData = await reportsResponse.json();
+          console.log('✅ /ai/reports response:', reportsData);
+          
+          const reports = reportsData.reports || [];
+          console.log('📊 Found reports from /ai/reports:', reports.length);
+
+          if (reports.length > 0) {
+            // 計算統計
+            const userIds = new Set(reports.map((r: AISEOReport) => r.userId).filter(Boolean));
+            let totalSize = 0;
+            reports.forEach((r: AISEOReport) => {
+              totalSize += new Blob([JSON.stringify(r)]).size;
+            });
+
+            setReports(reports);
+            setAllKeys(reports.map((r: AISEOReport) => r.id));
+            setStats({
+              totalReports: reports.length,
+              totalUsers: userIds.size,
+              totalSize,
+            });
+
+            toast.success(`載入了 ${reports.length} 個報告`);
+            setIsLoading(false);
+            return; // 成功，直接返回
+          }
+        } else {
+          console.warn('⚠️ /ai/reports failed:', reportsResponse.status);
+        }
+      } catch (err) {
+        console.warn('⚠️ /ai/reports error:', err);
+      }
+
+      // 方法 2: 使用 /kv/all（後備方案）
+      console.log('📡 Method 2: Using /kv/all as fallback');
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/kv/all`,
         {
@@ -171,9 +218,9 @@ export default function AdminAISEOReports() {
       let totalSize = 0;
 
       allData.forEach((item: any) => {
-        if (item.key && item.key.startsWith('ai_seo_')) {
-          console.log('✅ Found AI SEO report:', item.key, item.value);
-          // 這是一個報告數據
+        if (item.key && item.key.startsWith('ai_seo_') && !item.key.includes('_reports_')) {
+          console.log('✅ Found AI SEO report:', item.key);
+          // 這是一個報告數據（不是報告列表）
           if (item.value && typeof item.value === 'object' && item.value.id) {
             seoReports.push(item.value as AISEOReport);
             seoKeys.push(item.key);
@@ -198,7 +245,7 @@ export default function AdminAISEOReports() {
         return dateB - dateA;
       });
 
-      console.log('✅ Found SEO reports:', seoReports.length);
+      console.log('✅ Found SEO reports from /kv/all:', seoReports.length);
       console.log('👥 Unique users:', userIds.size);
       console.log('📊 Total size:', formatSize(totalSize));
 
