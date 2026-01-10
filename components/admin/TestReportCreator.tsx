@@ -11,10 +11,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
 
 export default function TestReportCreator() {
-  const { user, session } = useAuth();
+  const { user, accessToken, refreshSession } = useAuth(); // ✅ 添加 refreshSession
   const [isCreating, setIsCreating] = useState(false);
   const [createdReportId, setCreatedReportId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false); // ✅ 新增刷新狀態
 
   // 調試：在控制台輸出 auth 狀態
   React.useEffect(() => {
@@ -22,36 +23,16 @@ export default function TestReportCreator() {
       hasUser: !!user,
       userId: user?.id,
       userEmail: user?.email,
-      hasSession: !!session,
-      hasAccessToken: !!session?.access_token,
+      hasAccessToken: !!accessToken,
+      accessTokenPreview: accessToken ? accessToken.substring(0, 20) + '...' : 'N/A',
     });
-  }, [user, session]);
+  }, [user, accessToken]);
 
   const createTestReport = async () => {
-    // 更寬鬆的檢查：只要有 user 就嘗試獲取 token
     if (!user) {
       toast.error('❌ 請先登入！');
       console.error('❌ [TestReportCreator] No user found');
       return;
-    }
-
-    // 嘗試多種方式獲取 access token
-    let accessToken = session?.access_token;
-    
-    if (!accessToken) {
-      console.warn('⚠️ [TestReportCreator] No access token in session, trying localStorage...');
-      
-      // 嘗試從 localStorage 獲取
-      try {
-        const authData = localStorage.getItem('supabase.auth.token');
-        if (authData) {
-          const parsed = JSON.parse(authData);
-          accessToken = parsed?.currentSession?.access_token || parsed?.access_token;
-          console.log('📦 [TestReportCreator] Found token in localStorage:', !!accessToken);
-        }
-      } catch (e) {
-        console.error('❌ [TestReportCreator] Failed to parse localStorage auth:', e);
-      }
     }
 
     if (!accessToken) {
@@ -172,6 +153,30 @@ export default function TestReportCreator() {
     }
   };
 
+  // ✅ 新增：刷新 Session
+  const handleRefreshSession = async () => {
+    setIsRefreshing(true);
+    setError(null);
+    
+    try {
+      console.log('🔄 [TestReportCreator] Refreshing session...');
+      const newToken = await refreshSession();
+      
+      if (newToken) {
+        toast.success('✅ Session 已刷新！請再次嘗試創建報告。');
+        console.log('✅ [TestReportCreator] Session refreshed, new token:', newToken.substring(0, 20) + '...');
+      } else {
+        toast.error('❌ 無法刷新 Session，請重新登入');
+        console.error('❌ [TestReportCreator] Failed to refresh session');
+      }
+    } catch (error) {
+      console.error('❌ [TestReportCreator] Error refreshing session:', error);
+      toast.error('❌ 刷新 Session 失敗');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <Card className="border-2 border-dashed border-blue-300 bg-blue-50">
       <CardHeader>
@@ -186,8 +191,7 @@ export default function TestReportCreator() {
           <div className="space-y-1">
             <div>👤 User: {user ? `✅ ${user.email}` : '❌ 未登入'}</div>
             <div>🆔 User ID: {user?.id || '❌ N/A'}</div>
-            <div>🔑 Session: {session ? '✅ 存在' : '❌ 不存在'}</div>
-            <div>🎫 Access Token: {session?.access_token ? '✅ 存在' : '❌ 不存在'}</div>
+            <div>🔑 Access Token: {accessToken ? '✅ 存在' : '❌ 不存在'}</div>
           </div>
         </div>
 
@@ -201,7 +205,7 @@ export default function TestReportCreator() {
         <div className="flex items-center gap-4">
           <Button
             onClick={createTestReport}
-            disabled={isCreating || !user}
+            disabled={isCreating || !user || !accessToken}
             className="flex items-center gap-2"
           >
             {isCreating ? (
@@ -217,9 +221,36 @@ export default function TestReportCreator() {
             )}
           </Button>
 
+          {/* ✅ 新增：刷新 Session 按鈕 */}
+          {user && !accessToken && (
+            <Button
+              onClick={handleRefreshSession}
+              disabled={isRefreshing}
+              variant="outline"
+              className="flex items-center gap-2 border-orange-300 text-orange-700 hover:bg-orange-50"
+            >
+              {isRefreshing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  刷新中...
+                </>
+              ) : (
+                <>
+                  🔄 刷新 Session
+                </>
+              )}
+            </Button>
+          )}
+
           {!user && (
             <span className="text-sm text-red-500">
               ⚠️ 請先登入
+            </span>
+          )}
+          
+          {user && !accessToken && (
+            <span className="text-sm text-orange-500">
+              ⚠️ Session 已過期，請點擊「刷新 Session」
             </span>
           )}
         </div>
