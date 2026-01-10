@@ -24,7 +24,7 @@ import {
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { useLanguage } from '../../lib/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface AISEOReport {
   id: string;
@@ -54,7 +54,7 @@ export default function AdminAISEOReports() {
 
   const content = {
     en: {
-      title: 'AI SEO Reports - Cloud Storage',
+      pageTitle: 'AI SEO Reports - Cloud Storage',
       subtitle: 'Check all saved AI SEO reports in KV Store',
       loadButton: 'Load Reports',
       loading: 'Loading...',
@@ -64,19 +64,19 @@ export default function AdminAISEOReports() {
       totalSize: 'Total Size',
       search: 'Search...',
       viewDetails: 'View Details',
-      delete: 'Delete',
+      deleteBtn: 'Delete',
       download: 'Export',
       noReports: 'No reports found',
       reportId: 'Report ID',
       userId: 'User ID',
-      title: 'Title',
+      reportTitle: 'Title',
       keywords: 'Keywords',
       pageType: 'Page Type',
       createdAt: 'Created At',
       close: 'Close',
     },
     'zh-TW': {
-      title: 'AI SEO 報告 - 雲端存儲',
+      pageTitle: 'AI SEO 報告 - 雲端存儲',
       subtitle: '檢查 KV Store 中已保存的所有 AI SEO 報告',
       loadButton: '載入報告',
       loading: '載入中...',
@@ -86,19 +86,19 @@ export default function AdminAISEOReports() {
       totalSize: '總大小',
       search: '搜索...',
       viewDetails: '查看詳情',
-      delete: '刪除',
+      deleteBtn: '刪除',
       download: '匯出',
       noReports: '未找到報告',
       reportId: '報告 ID',
       userId: '用戶 ID',
-      title: '標題',
+      reportTitle: '標題',
       keywords: '關鍵字',
       pageType: '頁面類型',
       createdAt: '創建時間',
       close: '關閉',
     },
     'zh-CN': {
-      title: 'AI SEO 报告 - 云端存储',
+      pageTitle: 'AI SEO 报告 - 云端存储',
       subtitle: '检查 KV Store 中已保存的所有 AI SEO 报告',
       loadButton: '加载报告',
       loading: '加载中...',
@@ -108,12 +108,12 @@ export default function AdminAISEOReports() {
       totalSize: '总大小',
       search: '搜索...',
       viewDetails: '查看详情',
-      delete: '删除',
+      deleteBtn: '删除',
       download: '导出',
       noReports: '未找到报告',
       reportId: '报告 ID',
       userId: '用户 ID',
-      title: '标题',
+      reportTitle: '标题',
       keywords: '关键字',
       pageType: '页面类型',
       createdAt: '创建时间',
@@ -178,7 +178,7 @@ export default function AdminAISEOReports() {
         console.warn('⚠️ /ai/reports error:', err);
       }
 
-      // 方法 2: 使用 /kv/all（後備方案）
+      // 方法 2: 使用 /kv/all（後備方���）
       console.log('📡 Method 2: Using /kv/all as fallback');
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/kv/all`,
@@ -364,7 +364,7 @@ export default function AdminAISEOReports() {
             <div>
               <CardTitle className="text-2xl flex items-center gap-2">
                 <Cloud className="w-6 h-6" />
-                {t.title}
+                {t.pageTitle}
               </CardTitle>
               <CardDescription>{t.subtitle}</CardDescription>
             </div>

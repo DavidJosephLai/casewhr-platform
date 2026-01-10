@@ -10,7 +10,7 @@ import { Badge } from '../ui/badge';
 import { Loader2, Database, Search, AlertCircle } from 'lucide-react';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { useAuth } from '../../contexts/AuthContext';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface KVItem {
   key: string;
