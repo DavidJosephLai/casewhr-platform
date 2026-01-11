@@ -1,15 +1,7 @@
-import { useState } from 'react';
-import { useLanguage } from '../../lib/LanguageContext';
-import { useAuth } from '../../contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { Sparkles, Search, TrendingUp, Settings, Database, FileText, Loader2, Wrench } from 'lucide-react';
-import { toast } from 'sonner';
-import { AISEOManager } from '../AISEOManager';
-import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import KVStoreDiagnostic from './KVStoreDiagnostic';
+import AISEODataDiagnostic from './AISEODataDiagnostic';
+import AdminAISEOReports from './AdminAISEOReports';
+import QuickAISEOTest from './QuickAISEOTest';
 
 export function AdminAISEO() {
   const { language } = useLanguage();
@@ -278,6 +270,16 @@ export function AdminAISEO() {
 
         {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-4">
+          {/* 🔬 快速測試工具 */}
+          <QuickAISEOTest />
+          
+          {/* 🔧 診斷工具 */}
+          <AISEODataDiagnostic />
+          
+          {/* 📊 AI SEO 報告 */}
+          <AdminAISEOReports />
+          
+          {/* 📈 統計卡片（即將推出） */}
           <Card>
             <CardHeader>
               <CardTitle>{t.analytics.title}</CardTitle>
