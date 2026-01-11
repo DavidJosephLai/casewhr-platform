@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Alert, AlertDescription } from '../ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Loader2, Database, CheckCircle, XCircle, Info } from 'lucide-react';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { toast } from 'sonner';
