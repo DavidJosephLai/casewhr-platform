@@ -1,0 +1,54 @@
+# 排除所有 Markdown 文件（開發文檔）
+*.md
+!README.md
+
+# 排除 docs 目錄
+/docs/
+
+# 排除開發用 HTML 工具（保留必要頁面）
+*.html
+!index.html
+!data-deletion.html
+
+# 排除診斷工具
+diagnostic*.html
+test-*.html
+fix-*.html
+*-debug*.html
+*-diagnostic*.html
+check-*.html
+verify-*.html
+domain-*.html
+ecpay-*.html
+paypal-*.html
+stripe-*.html
+google-*.html
+email-*.html
+wasm-*.html
+login-*.html
+seo-*.html
+
+# 排除腳本文件
+*.sh
+*.bat
+*.ps1
+*.cjs
+*.py
+*.js
+!vite.config.js
+!postcss.config.js
+!tailwind.config.js
+
+# 排除配置文件
+*.toml
+!supabase/functions/make-server-215f78a5/config.toml
+
+# 排除工具文件
+*.txt
+!robots.txt
+
+# 排除臨時文件
+*.swp
+*.swo
+*~
+.DS_Store

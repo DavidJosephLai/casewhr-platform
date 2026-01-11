@@ -1,94 +1,47 @@
-# 🚀 CaseWhr Platform - Git Ignore File
-
-# ==================== 依赖 ====================
-node_modules/
+# Dependencies
+node_modules
 .pnp
 .pnp.js
 
-# ==================== 构建输出 ====================
-dist/
-dist-ssr/
-*.local
-build/
-.next/
-out/
+# Testing
+coverage
 
-# ==================== 环境变量（重要！）====================
+# Production
+dist
+build
+.next
+.vercel
+.cloudflare
+
+# Misc
+.DS_Store
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-.env.production
-.env.*.local
 
-# ==================== 日志 ====================
+# Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+.pnpm-debug.log*
 
-# ==================== 编辑器和 IDE ====================
-.vscode/*
-!.vscode/extensions.json
+# IDE
+.vscode
 .idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
 *.swp
+*.swo
 *~
 
-# ==================== 测试 ====================
-coverage
-*.lcov
-.nyc_output
-
-# ==================== 操作系统 ====================
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# ==================== Vercel ====================
-.vercel
-
-# ==================== Temporary ====================
-*.tmp
-*.temp
-.cache
-
-# ==================== 文档文件（可选 - 如果不想提交）====================
-# 注意：保留这些注释，您可以根据需要取消注释
+# 🗑️ 開發文檔（可選：取消註釋以不推送到 GitHub）
 # *.md
 # !README.md
-# !PRODUCTION_DEPLOYMENT_CHECKLIST.md
+# /docs/
 
-# ==================== HTML 工具文件（开发用）====================
-BATCH_DOWNLOAD_ALL.html
-BROWSER_FIX_TOOL.html
-check-stripe-url.html
-debug-route.html
-diagnose-wasm-error.html
-diagnostic.html
-env-check.html
-fix-*.html
-test-*.html
-*.html
-!index.html
-!google*.html
-
-# ==================== 脚本工具（保留在本地）====================
-*.bat
-*.ps1
-*.sh
-!deploy*.sh
-!scripts/*.sh
-
-# ==================== 其他临时文件 ====================
-*.log
-*.cache
-.temp/
-temp/
+# 🗑️ 開發工具（可選：取消註釋以不推送到 GitHub）
+# diagnostic*.html
+# test-*.html
+# fix-*.html
+# *-debug*.html
+# download-*.html
