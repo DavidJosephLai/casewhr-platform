@@ -14,17 +14,18 @@ export default function QuickAISEOTest() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
 
-  const supabase = createClient(
-    `https://${projectId}.supabase.co`,
-    publicAnonKey
-  );
-
   const testDirectQuery = async () => {
     setIsLoading(true);
     setResult(null);
 
     try {
       console.log('🔍 直接查詢數據庫...');
+      
+      // 在函數內部創建 supabase client
+      const supabase = createClient(
+        `https://${projectId}.supabase.co`,
+        publicAnonKey
+      );
 
       // 1. 查詢所有 key 包含 ai_seo 的記錄
       const { data: allRecords, error } = await supabase
