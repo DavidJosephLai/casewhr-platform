@@ -1,7 +1,7 @@
 import KVStoreDiagnostic from './KVStoreDiagnostic';
-import AISEODataDiagnostic from './AISEODataDiagnostic';
+// import AISEODataDiagnostic from './AISEODataDiagnostic';
 import AdminAISEOReports from './AdminAISEOReports';
-import QuickAISEOTest from './QuickAISEOTest';
+// import QuickAISEOTest from './QuickAISEOTest';
 
 export function AdminAISEO() {
   const { language } = useLanguage();
@@ -271,10 +271,10 @@ export function AdminAISEO() {
         {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-4">
           {/* 🔬 快速測試工具 */}
-          <QuickAISEOTest />
+          {/* <QuickAISEOTest /> */}
           
           {/* 🔧 診斷工具 */}
-          <AISEODataDiagnostic />
+          {/* <AISEODataDiagnostic /> */}
           
           {/* 📊 AI SEO 報告 */}
           <AdminAISEOReports />
