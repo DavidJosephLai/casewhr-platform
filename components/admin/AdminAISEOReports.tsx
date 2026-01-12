@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { createClient } from '@supabase/supabase-js';
 
 interface SEOReport {
   key: string;
@@ -40,6 +41,21 @@ export default function AdminAISEOReports() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [selectedReport, setSelectedReport] = useState<SEOReport | null>(null);
 
+  // 獲取用戶 access token
+  const getAccessToken = async () => {
+    try {
+      const supabase = createClient(
+        `https://${projectId}.supabase.co`,
+        publicAnonKey
+      );
+      const { data: { session } } = await supabase.auth.getSession();
+      return session?.access_token || null;
+    } catch (error) {
+      console.error('❌ Error getting access token:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     loadReports();
   }, []);
@@ -49,16 +65,25 @@ export default function AdminAISEOReports() {
       setLoading(true);
       console.log('🔍 Loading SEO reports...');
 
+      const accessToken = await getAccessToken();
+      
+      if (!accessToken) {
+        console.warn('⚠️ No access token available, user may not be logged in');
+        // 即使沒有 token 也嘗試調用（後端支持 dev mode）
+      }
+
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai-seo/reports`,
         {
           headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
+            'Authorization': `Bearer ${accessToken || publicAnonKey}`,
           },
         }
       );
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ API error:', response.status, errorText);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -69,6 +94,7 @@ export default function AdminAISEOReports() {
     } catch (error) {
       console.error('❌ Error loading reports:', error);
       toast.error('載入報告失敗');
+      setReports([]); // 設置為空陣列避免顯示錯誤
     } finally {
       setLoading(false);
     }
@@ -79,12 +105,14 @@ export default function AdminAISEOReports() {
       setDeleting(key);
       console.log('🗑️ Deleting report:', key);
 
+      const accessToken = await getAccessToken();
+
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai-seo/reports/${encodeURIComponent(key)}`,
         {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
+            'Authorization': `Bearer ${accessToken || publicAnonKey}`,
           },
         }
       );
