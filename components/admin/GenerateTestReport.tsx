@@ -11,7 +11,7 @@ import { Loader2, Sparkles, CheckCircle, XCircle, Beaker } from 'lucide-react';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../lib/LanguageContext';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 export default function GenerateTestReport() {
   const { user, accessToken } = useAuth();
