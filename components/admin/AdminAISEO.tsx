@@ -7,12 +7,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Badge } from '../ui/badge';
 import { Sparkles, FileText, TrendingUp, Search, Settings, Loader2, Shield } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 import { isAnyAdmin } from '../../config/admin';
 import KVStoreDiagnostic from './KVStoreDiagnostic';
 import AISEODataDiagnostic from './AISEODataDiagnostic';
 import AdminAISEOReports from './AdminAISEOReports';
 import QuickAISEOTest from './QuickAISEOTest';
+import GenerateTestReport from './GenerateTestReport';
 
 export function AdminAISEO() {
   const { language } = useLanguage();
@@ -286,6 +287,9 @@ export function AdminAISEO() {
 
         {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-4">
+          {/* 🧪 測試報告生成器 */}
+          <GenerateTestReport />
+          
           {/* 🔬 快速測試工具 */}
           <QuickAISEOTest />
           
