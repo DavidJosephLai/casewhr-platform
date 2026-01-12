@@ -399,6 +399,162 @@ function parseKeywordResponse(text: string): any[] {
 
 // ==================== 雲端報告管理 API ====================
 
+// 🆕 自動生成 SEO 內容端點（從頁面 URL 自動分析）
+app.post('/generate', async (c) => {
+  try {
+    const { url, autoAnalyze } = await c.req.json();
+    
+    if (!url) {
+      return c.json({ error: 'URL is required' }, 400);
+    }
+    
+    console.log('🤖 [AI SEO] Auto-generating SEO for page:', url);
+    
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    
+    if (!openaiApiKey) {
+      console.error('❌ [AI SEO] OpenAI API key not found');
+      return c.json({ error: 'OpenAI API key not configured' }, 500);
+    }
+
+    // 根據 URL 生成頁面主題和上下文
+    const pageContext = getPageContext(url);
+    
+    // 構建 AI 提示詞
+    const prompt = buildAutoGeneratePrompt(url, pageContext);
+    
+    // 調用 OpenAI API
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4',
+        messages: [
+          {
+            role: 'system',
+            content: `你是一位專業的 SEO 專家，專精於為網站頁面生成高質量的 SEO 元數據。
+你需要根據頁面的 URL 和上下文，自動生成：
+1. 優化的 SEO 標題（50-60 字符）
+2. 吸引人的描述（150-160 字符）
+3. 相關的關鍵詞列表（5-8 個）
+
+請以 JSON 格式回應。`,
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('❌ [AI SEO] OpenAI API error:', errorData);
+      throw new Error('OpenAI API request failed');
+    }
+
+    const aiResponse = await response.json();
+    const generatedText = aiResponse.choices[0].message.content;
+    
+    console.log('✅ [AI SEO] AI generation completed');
+    
+    // 解析 AI 回應
+    const seoData = parseGenerateResponse(generatedText);
+    
+    // 保存到 KV Store
+    const kvKey = `ai_seo_page:${url}`;
+    await kv.set(kvKey, JSON.stringify({
+      url,
+      ...seoData,
+      generatedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }));
+    
+    console.log('✅ [AI SEO] SEO data saved for:', url);
+    
+    return c.json({
+      success: true,
+      url,
+      ...seoData,
+    });
+  } catch (error) {
+    console.error('❌ [AI SEO] Generate error:', error);
+    return c.json({ 
+      error: 'AI SEO generation failed',
+      details: error.message 
+    }, 500);
+  }
+});
+
+// 輔助函數：根據 URL 獲取頁面上下文
+function getPageContext(url: string): string {
+  const contexts = {
+    '/': 'Casewhere 是一個全球接案平台，連接客戶與專業自由工作者。首頁應該突出平台的核心價值、服務範圍和用戶優勢。',
+    '/about': '關於我們頁面介紹 Casewhere 平台的使命、願景、團隊和發展歷程。',
+    '/services': '服務列表展示平台上可用的各種專業服務類別，包括設計、開發、營銷等。',
+    '/pricing': '定價方案頁面說明平台的收費結構、服務費率和價值主張。',
+    '/how-it-works': '運作方式頁面解釋如何使用平台發布項目、尋找專家和完成交易。',
+    '/for-clients': '客戶專區介紹如何作為客戶在平台上發布項目、選擇專家和管理項目。',
+    '/for-freelancers': '接案者專區說明自由工作者如何加入平台、接案和賺取收入。',
+    '/contact': '聯絡我們頁面提供與 Casewhere 團隊溝通的方式和管道。',
+    '/blog': '部落格頁面分享行業洞察、平台更新和專業知識文章。',
+    '/faq': '常見問題頁面回答用戶關於平台使用、付款、安全等常見疑問。',
+  };
+  
+  return contexts[url] || `這是 Casewhere 平台的 ${url} 頁面。`;
+}
+
+// 輔助函數：構建自動生成提示詞
+function buildAutoGeneratePrompt(url: string, context: string): string {
+  return `請為 Casewhere 接案平台的以下頁面生成 SEO 優化內容：
+
+URL: ${url}
+頁面上下文: ${context}
+
+請生成：
+1. SEO 標題（title）：50-60 字符，包含核心關鍵詞，吸引點擊
+2. SEO 描述（description）：150-160 字符，簡潔有力，包含行動呼籲
+3. 關鍵詞列表（keywords）：5-8 個相關關鍵詞，用逗號分隔
+
+請以以下 JSON 格式回應：
+{
+  "title": "...",
+  "description": "...",
+  "keywords": "關鍵詞1, 關鍵詞2, 關鍵詞3, ..."
+}`;
+}
+
+// 輔助函數：解析自動生成回應
+function parseGenerateResponse(text: string): any {
+  try {
+    // 嘗試直接解析 JSON
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        title: parsed.title || '',
+        description: parsed.description || '',
+        keywords: parsed.keywords || '',
+      };
+    }
+  } catch (e) {
+    console.error('Failed to parse generate response as JSON:', e);
+  }
+  
+  // 如果解析失敗，返回默認值
+  return {
+    title: 'Casewhere - 全球專業接案平台',
+    description: '連接全球客戶與專業自由工作者，提供高質量的設計、開發、營銷等專業服務。',
+    keywords: '接案平台, 自由工作者, 專業服務, 外包, 遠程工作',
+  };
+}
+
 // 保存 SEO 報告到雲端
 app.post('/save-report', async (c) => {
   try {
