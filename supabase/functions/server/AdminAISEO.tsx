@@ -1,0 +1,201 @@
+/**
+ * AI SEO 頁面生成器
+ * 自動分析現有頁面並生成 SEO 優化內容
+ */
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { Label } from '../ui/label';
+import { Alert, AlertDescription } from '../ui/alert';
+import { 
+  Sparkles, 
+  Loader2, 
+  Globe,
+  Info,
+  CheckCircle
+} from 'lucide-react';
+import { toast } from 'sonner@2.0.3';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
+
+// 可用的頁面路由
+const AVAILABLE_ROUTES = [
+  { value: '/', label: '首頁 (Home)' },
+  { value: '/about', label: '關於我們 (About)' },
+  { value: '/services', label: '服務列表 (Services)' },
+  { value: '/pricing', label: '定價方案 (Pricing)' },
+  { value: '/how-it-works', label: '運作方式 (How It Works)' },
+  { value: '/for-clients', label: '客戶專區 (For Clients)' },
+  { value: '/for-freelancers', label: '接案者專區 (For Freelancers)' },
+  { value: '/contact', label: '聯絡我們 (Contact)' },
+  { value: '/blog', label: '部落格 (Blog)' },
+  { value: '/faq', label: '常見問題 (FAQ)' },
+];
+
+export function AdminAISEO() {
+  const [selectedUrl, setSelectedUrl] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedContent, setGeneratedContent] = useState<any>(null);
+
+  const handleGenerate = async () => {
+    // 驗證選擇
+    if (!selectedUrl) {
+      toast.error('請選擇要優化的頁面');
+      return;
+    }
+
+    setIsGenerating(true);
+    setGeneratedContent(null);
+
+    try {
+      console.log('🚀 開始 AI 分析頁面並生成 SEO 內容...', selectedUrl);
+
+      // 調用後端 API
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai-seo/generate`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${publicAnonKey}`,
+          },
+          body: JSON.stringify({
+            url: selectedUrl,
+            // AI 會自動分析頁面內容
+            autoAnalyze: true,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ AI SEO 內容已生成:', data);
+
+      setGeneratedContent(data);
+      toast.success('✅ AI SEO 內容已生成並保存！');
+
+    } catch (error: any) {
+      console.error('❌ AI 生成失敗:', error);
+      toast.error(`AI 生成失敗: ${error.message}`);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* AI SEO 頁面生成器卡片 */}
+      <Card className="border-purple-200 bg-gradient-to-r from-purple-50 via-pink-50 to-blue-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-purple-700">
+            <Sparkles className="h-5 w-5" />
+            AI SEO 頁面生成器
+          </CardTitle>
+          <CardDescription>
+            選擇頁面，AI 自動分析並生成 SEO 優化的標題、描述和關鍵字
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* 頁面選擇 */}
+          <div className="space-y-2">
+            <Label htmlFor="page-select" className="flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              選擇頁面 *
+            </Label>
+            <select
+              id="page-select"
+              className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              value={selectedUrl}
+              onChange={(e) => setSelectedUrl(e.target.value)}
+              disabled={isGenerating}
+            >
+              <option value="">-- 請選擇頁面 --</option>
+              {AVAILABLE_ROUTES.map((route) => (
+                <option key={route.value} value={route.value}>
+                  {route.label}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500">
+              選擇需要 SEO 優化的頁面
+            </p>
+          </div>
+
+          {/* 生成按鈕 */}
+          <Button
+            onClick={handleGenerate}
+            disabled={!selectedUrl || isGenerating}
+            className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 hover:from-purple-700 hover:via-pink-700 hover:to-blue-700"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                AI 正在分析並生成中...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                開始 AI SEO 優化
+              </>
+            )}
+          </Button>
+
+          {/* AI 提示信息 */}
+          <Alert className="border-purple-200 bg-purple-50">
+            <Info className="h-4 w-4 text-purple-600" />
+            <AlertDescription className="text-sm text-purple-900">
+              <div className="space-y-1">
+                <p><strong>AI 自動化流程：</strong></p>
+                <ul className="list-disc list-inside space-y-0.5 text-xs">
+                  <li>AI 會分析頁面內容和結構</li>
+                  <li>自動生成 SEO 優化的標題</li>
+                  <li>自動生成描述和關鍵字</li>
+                  <li>自動保存到資料庫</li>
+                </ul>
+                <p className="text-xs mt-2 text-purple-700">
+                  🤖 使用 OpenAI GPT-4 技術
+                </p>
+              </div>
+            </AlertDescription>
+          </Alert>
+
+          {/* 生成結果預覽 */}
+          {generatedContent && (
+            <Card className="border-green-200 bg-green-50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-green-700 text-base">
+                  <CheckCircle className="h-5 w-5" />
+                  AI 生成結果
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-xs font-semibold text-gray-700 mb-1">標題 (Title)</p>
+                  <p className="text-sm text-gray-900 bg-white p-2 rounded border border-green-200">
+                    {generatedContent.title || '未生成'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-700 mb-1">描述 (Description)</p>
+                  <p className="text-sm text-gray-900 bg-white p-2 rounded border border-green-200">
+                    {generatedContent.description || '未生成'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-700 mb-1">關鍵字 (Keywords)</p>
+                  <p className="text-sm text-gray-900 bg-white p-2 rounded border border-green-200">
+                    {generatedContent.keywords || '未生成'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

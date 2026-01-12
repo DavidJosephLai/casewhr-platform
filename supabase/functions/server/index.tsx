@@ -19320,10 +19320,116 @@ app.post("/make-server-215f78a5/ai-seo/generate", async (c) => {
     }
 
     const body = await c.req.json();
+    
+    // 🆕 支持 URL 自動生成模式
+    if (body.url && body.autoAnalyze) {
+      console.log(`🤖 [AI SEO] URL Auto-generate mode for: ${body.url}`);
+      
+      const pageContexts: Record<string, string> = {
+        '/': 'Casewhere 是一個全球接案平台，連接客戶與專業自由工作者。首頁應該突出平台的核心價值、服務範圍和用戶優勢。',
+        '/about': '關於我們頁面介紹 Casewhere 平台的使命、願景、團隊和發展歷程。',
+        '/services': '服務列表展示平台上可用的各種專業服務類別，包括設計、開發、營銷等。',
+        '/pricing': '定價方案頁面說明平台的收費結構、服務費率和價值主張。',
+        '/how-it-works': '運作方式頁面解釋如何使用平台發布項目、尋找專家和完成交易。',
+        '/for-clients': '客戶專區介紹如何作為客戶在平台上發布項目、選擇專家和管理項目。',
+        '/for-freelancers': '接案者專區說明自由工作者如何加入平台、接案和賺取收入。',
+        '/contact': '聯絡我們頁面提供與 Casewhere 團隊溝通的方式和管道。',
+        '/blog': '部落格頁面分享行業洞察、平台更新和專業知識文章。',
+        '/faq': '常見問題頁面回答用戶關於平台使用、付款、安全等常見疑問。',
+      };
+      
+      const pageContext = pageContexts[body.url] || `這是 Casewhere 平台的 ${body.url} 頁面。`;
+      
+      const prompt = `請為 Casewhere 接案平台的以下頁面生成 SEO 優化內容：
+
+URL: ${body.url}
+頁面上下文: ${pageContext}
+
+請生成：
+1. SEO 標題（title）：50-60 字符，包含核心關鍵詞，吸引點擊
+2. SEO 描述（description）：150-160 字符，簡潔有力，包含行動呼籲
+3. 關鍵詞列表（keywords）：5-8 個相關關鍵詞，用逗號分隔
+
+請以以下 JSON 格式回應：
+{
+  "title": "...",
+  "description": "...",
+  "keywords": "關鍵詞1, 關鍵詞2, 關鍵詞3, ..."
+}`;
+
+      const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+      if (!openaiApiKey) {
+        return c.json({ error: 'OpenAI API key not configured' }, 500);
+      }
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [
+            { role: 'system', content: '你是一位專業的 SEO 專家，專精於為網站頁面生成高質量的 SEO 元數據。請以 JSON 格式回應。' },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 1000,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ [AI SEO] OpenAI error:', errorText);
+        throw new Error('OpenAI API request failed');
+      }
+
+      const aiResponse = await response.json();
+      const generatedText = aiResponse.choices[0].message.content;
+      
+      const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
+      let seoData = {
+        title: 'Casewhere - 全球專業接案平台',
+        description: '連接全球客戶與專業自由工作者，提供高質量的設計、開發、營銷等專業服務。',
+        keywords: '接案平台, 自由工作者, 專業服務, 外包, 遠程工作',
+      };
+      
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          seoData = {
+            title: parsed.title || seoData.title,
+            description: parsed.description || seoData.description,
+            keywords: parsed.keywords || seoData.keywords,
+          };
+        } catch (e) {
+          console.error('❌ [AI SEO] JSON parse error:', e);
+        }
+      }
+      
+      const kvKey = `ai_seo_page:${body.url}`;
+      await kv.set(kvKey, JSON.stringify({
+        url: body.url,
+        ...seoData,
+        generatedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }));
+      
+      console.log(`✅ [AI SEO] URL auto-generated for: ${body.url}`);
+      
+      return c.json({
+        success: true,
+        url: body.url,
+        ...seoData,
+      });
+    }
+    
+    // 傳統模式
     const { title, description, category, tags, language, targetAudience, projectType } = body;
 
     if (!title || !description) {
-      return c.json({ error: 'Title and description are required' }, 400);
+      return c.json({ error: 'Title and description are required (or use url + autoAnalyze mode)' }, 400);
     }
 
     console.log(`🤖 [AI SEO] Generating SEO for user ${userId}, language: ${language || 'zh-TW'}`);
