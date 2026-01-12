@@ -94,7 +94,7 @@ export async function generateSEO(
 
     // 调用 OpenAI API
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o", // 升級到最新 GPT-4o 模型（更快、更便宜、更強大）
       messages: [
         {
           role: "system",
@@ -111,7 +111,7 @@ export async function generateSEO(
 
     const responseText = completion.choices[0]?.message?.content || "";
     
-    // 解析 AI 响应
+    // 解析 AI 回應
     const result = parseAIResponse(responseText, language);
 
     console.log(`[AI SEO] SEO 生成成功 - 评分: ${result.score}`);
@@ -141,7 +141,7 @@ export async function researchKeywords(
 
     // 调用 OpenAI API
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o", // 升級到最新 GPT-4o 模型（更快、更便宜、更強大）
       messages: [
         {
           role: "system",
@@ -434,7 +434,7 @@ export async function healthCheck(): Promise<{
 
     // 简单测试 API 调用
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o", // 升級到最新 GPT-4o 模型（更快、更便宜、更強大）
       messages: [
         {
           role: "user",

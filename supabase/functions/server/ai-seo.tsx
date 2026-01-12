@@ -62,7 +62,7 @@ app.post('/analyze', async (c) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o', // 升級到最新 GPT-4o 模型（更快、更便宜、更強大）
         messages: [
           {
             role: 'system',
@@ -124,7 +124,7 @@ app.post('/generate-content', async (c) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o', // 升級到最新 GPT-4o 模型（更快、更便宜、更強大）
         messages: [
           {
             role: 'system',
@@ -181,7 +181,7 @@ app.post('/keyword-research', async (c) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o', // 升級到最新 GPT-4o 模型（更快、更便宜、更強大）
         messages: [
           {
             role: 'system',
@@ -431,7 +431,7 @@ app.post('/generate', async (c) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o', // 升級到最新 GPT-4o 模型（更快、更便宜、更強大）
         messages: [
           {
             role: 'system',
