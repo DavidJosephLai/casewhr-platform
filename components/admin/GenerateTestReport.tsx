@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Loader2, Sparkles, CheckCircle, XCircle, TestTube } from 'lucide-react';
+import { Loader2, Sparkles, CheckCircle, XCircle, Beaker } from 'lucide-react';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../lib/LanguageContext';
@@ -190,7 +190,7 @@ export default function GenerateTestReport() {
     <Card className="border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-purple-700">
-          <TestTube className="h-5 w-5" />
+          <Beaker className="h-5 w-5" />
           {t.title}
         </CardTitle>
         <CardDescription>{t.description}</CardDescription>
