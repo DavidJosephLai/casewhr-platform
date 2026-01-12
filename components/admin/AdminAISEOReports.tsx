@@ -52,6 +52,14 @@ export default function AdminAISEOReports() {
     totalSize: 0,
   });
 
+  // 🔍 Debug: 組件是否渲染
+  useEffect(() => {
+    console.log('✅ AdminAISEOReports 組件已掛載');
+    return () => {
+      console.log('❌ AdminAISEOReports 組件已卸載');
+    };
+  }, []);
+
   const content = {
     en: {
       pageTitle: 'AI SEO Reports - Cloud Storage',
