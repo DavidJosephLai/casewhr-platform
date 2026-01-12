@@ -292,59 +292,6 @@ export function AdminAISEO() {
           
           {/* 🔬 快速測試工具 */}
           <QuickAISEOTest />
-          
-          {/* 🔧 診斷工具 */}
-          <AISEODataDiagnostic />
-          
-          {/* 📊 AI SEO 報告 */}
-          <AdminAISEOReports />
-          
-          {/* 📈 統計卡片（即將推出） */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t.analytics.title}</CardTitle>
-              <CardDescription>{t.analytics.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 bg-purple-50 rounded-lg">
-                  <div className="text-sm text-purple-700 font-medium">
-                    {t.analytics.totalGenerations}
-                  </div>
-                  <div className="text-3xl font-bold text-purple-900 mt-2">
-                    -
-                  </div>
-                  <div className="text-xs text-purple-600 mt-1">
-                    {language === 'en' ? 'Coming soon' : '即將推出'}
-                  </div>
-                </div>
-
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <div className="text-sm text-blue-700 font-medium">
-                    {t.analytics.avgScore}
-                  </div>
-                  <div className="text-3xl font-bold text-blue-900 mt-2">
-                    -
-                  </div>
-                  <div className="text-xs text-blue-600 mt-1">
-                    {language === 'en' ? 'Coming soon' : '即將推出'}
-                  </div>
-                </div>
-
-                <div className="p-4 bg-green-50 rounded-lg">
-                  <div className="text-sm text-green-700 font-medium">
-                    {t.analytics.topKeywords}
-                  </div>
-                  <div className="text-3xl font-bold text-green-900 mt-2">
-                    -
-                  </div>
-                  <div className="text-xs text-green-600 mt-1">
-                    {language === 'en' ? 'Coming soon' : '即將推出'}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Settings Tab */}
