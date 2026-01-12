@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Badge } from '../ui/badge';
 import { Sparkles, FileText, TrendingUp, Search, Settings, Loader2, Shield } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { isAnyAdmin } from '../../config/admin';
 import KVStoreDiagnostic from './KVStoreDiagnostic';
 import AISEODataDiagnostic from './AISEODataDiagnostic';
