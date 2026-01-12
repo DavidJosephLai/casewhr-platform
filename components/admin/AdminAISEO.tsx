@@ -1,3 +1,14 @@
+import React, { useState } from 'react';
+import { useLanguage } from '../../lib/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { projectId, publicAnonKey } from '../../utils/supabase/info';
+import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Badge } from '../ui/badge';
+import { Sparkles, FileText, TrendingUp, Search, Settings, Loader2, Shield } from 'lucide-react';
+import { toast } from 'sonner@2.0.3';
+import { isAnyAdmin } from '../../config/admin';
 import KVStoreDiagnostic from './KVStoreDiagnostic';
 import AISEODataDiagnostic from './AISEODataDiagnostic';
 import AdminAISEOReports from './AdminAISEOReports';
@@ -5,16 +16,28 @@ import QuickAISEOTest from './QuickAISEOTest';
 
 export function AdminAISEO() {
   const { language } = useLanguage();
-  const { user, accessToken } = useAuth();
+  const { user, profile, accessToken } = useAuth();
   const [activeTab, setActiveTab] = useState('manager');
   const [isLoading, setIsLoading] = useState(false);
   const [healthStatus, setHealthStatus] = useState<any>(null);
 
-  // 只有平台擁有者可見
-  const isPlatformOwner = user?.email === 'davidlai234@hotmail.com';
+  // ✅ 允許所有管理員訪問（不再限制只有平台擁有者）
+  const isAdmin = isAnyAdmin(user?.email || '', profile);
 
-  if (!isPlatformOwner) {
-    return null;
+  if (!isAdmin) {
+    return (
+      <div className="p-8 text-center">
+        <Shield className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-gray-700 mb-2">
+          {language === 'en' ? 'Admin Access Required' : '需要管理員權限'}
+        </h2>
+        <p className="text-gray-500">
+          {language === 'en' 
+            ? 'This feature is only available to administrators' 
+            : '此功能僅對管理員開放'}
+        </p>
+      </div>
+    );
   }
 
   const translations = {
@@ -140,14 +163,24 @@ export function AdminAISEO() {
           toast.warning(language === 'en' ? '⚠️ API has issues' : '⚠️ API 有問題');
         }
       } else {
-        throw new Error('Health check failed');
+        const errorText = await response.text();
+        console.error('❌ Health check failed:', errorText);
+        throw new Error(`Health check failed: ${response.status}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Health check error:', error);
-      toast.error(language === 'en' ? '❌ Health check failed' : '❌ 健康檢查失敗');
+      console.error('完整錯誤信息:', {
+        message: error.message,
+        stack: error.stack
+      });
+      toast.error(
+        language === 'en' 
+          ? `❌ Health check failed: ${error.message || 'Unknown error'}` 
+          : `❌ 健康檢查失敗: ${error.message || '未知錯誤'}`
+      );
       setHealthStatus({
         status: 'error',
-        message: 'Failed to connect to API',
+        message: error.message || 'Failed to connect to API',
         lastCheck: new Date().toISOString(),
       });
     } finally {
@@ -168,11 +201,7 @@ export function AdminAISEO() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="manager" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            {t.tabs.manager}
-          </TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="health" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
             {t.tabs.health}
@@ -186,19 +215,6 @@ export function AdminAISEO() {
             {t.tabs.settings}
           </TabsTrigger>
         </TabsList>
-
-        {/* SEO Manager Tab */}
-        <TabsContent value="manager" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t.manager.title}</CardTitle>
-              <CardDescription>{t.manager.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AISEOManager />
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         {/* Health Check Tab */}
         <TabsContent value="health" className="space-y-4">

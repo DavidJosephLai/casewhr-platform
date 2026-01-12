@@ -93,7 +93,9 @@ export function ProjectAISEOHelper({
       );
 
       if (!response.ok) {
-        throw new Error('Failed to optimize');
+        const errorText = await response.text();
+        console.error('❌ AI SEO optimization failed:', errorText);
+        throw new Error(`Optimization failed: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
@@ -102,9 +104,13 @@ export function ProjectAISEOHelper({
         setOptimizedData(result.data);
         setShowResults(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('AI SEO optimization failed:', error);
-      alert('Optimization failed');
+      console.error('完整錯誤信息:', {
+        message: error.message,
+        stack: error.stack
+      });
+      alert(`Optimization failed: ${error.message || '未知錯誤'}`);
     } finally {
       setIsOptimizing(false);
     }

@@ -73,7 +73,16 @@ export function AISEOGenerator({
       }
     } catch (error: any) {
       console.error('AI SEO 生成失败:', error);
-      toast.error(language === 'en' ? 'SEO generation failed' : 'SEO 生成失败');
+      console.error('完整錯誤信息:', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response
+      });
+      toast.error(
+        language === 'en' 
+          ? `SEO generation failed: ${error.message || 'Unknown error'}` 
+          : `SEO 生成失败: ${error.message || '未知錯誤'}`
+      );
     } finally {
       setIsGenerating(false);
     }

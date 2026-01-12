@@ -1,6 +1,7 @@
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { useState } from 'react';
 import { Sparkles, TrendingUp, Target, Zap, Search, Globe, BarChart3, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 interface AISEOAnalyzerProps {
   language: 'en' | 'zh-TW' | 'zh-CN';
@@ -82,7 +83,7 @@ export function AISEOAnalyzer({ language, currentPage = 'home', onApplyOptimizat
       critical: '嚴重',
       warning: '警告',
       info: '資訊',
-      noAnalysis: '點擊「分析當前頁面」開始 AI SEO 分析',
+      noAnalysis: '點擊「分析當前���面」開始 AI SEO 分析',
       optimizedTitle: '優化標題',
       optimizedDesc: '優化描述',
       keywords: '關鍵詞',
@@ -152,13 +153,24 @@ export function AISEOAnalyzer({ language, currentPage = 'home', onApplyOptimizat
       );
 
       if (!response.ok) {
-        throw new Error('AI SEO analysis failed');
+        const errorText = await response.text();
+        console.error('❌ AI SEO analysis failed:', errorText);
+        throw new Error(`AI SEO analysis failed: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
       setResult(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('AI SEO Analysis Error:', error);
+      console.error('完整錯誤信息:', {
+        message: error.message,
+        stack: error.stack
+      });
+      toast.error(
+        language === 'en'
+          ? `Analysis failed: ${error.message || 'Unknown error'}`
+          : `分析失敗: ${error.message || '未知錯誤'}`
+      );
       // 使用模擬數據以便測試
       setResult(getMockAnalysisResult());
     } finally {
