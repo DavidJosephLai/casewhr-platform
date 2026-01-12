@@ -499,21 +499,6 @@ export default function AdminPage() {
             <TabsContent value="seoTools" className="mt-0">
               <div className="space-y-6">
                 <AdminAISEO />
-                
-                {/* 🧪 測試報告創建器 */}
-                {/* 暫時移除 TestReportCreator，它導致頁面崩潰 */}
-                {/* <TestReportCreator /> */}
-                
-                {/* 🔍 暫時移除診斷工具，測試是否導致崩潰 */}
-                {/* <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <div className="font-semibold text-yellow-900 mb-2">🔍 KV Store 診斷工具</div>
-                  <p className="text-sm text-yellow-700 mb-4">
-                    如果 AI SEO 報告沒有正確顯示，請使用此工具診斷問題
-                  </p>
-                  <KVStoreDiagnostic />
-                </div> */}
-                
-                {/* 📊 測試：恢復報告列表 */}
                 <AdminAISEOReports />
               </div>
             </TabsContent>
