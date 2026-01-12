@@ -9,7 +9,7 @@ import { Button } from '../ui/button';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Loader2, Database, CheckCircle, XCircle, Info } from 'lucide-react';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 export default function AISEODataDiagnostic() {
   const [isLoading, setIsLoading] = useState(false);
