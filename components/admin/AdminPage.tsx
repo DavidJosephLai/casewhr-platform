@@ -6,6 +6,7 @@ import { AdminDashboard } from '../components/admin/AdminDashboard';
 import { AdminUsers } from '../components/admin/AdminUsers';
 import { AdminProjects } from '../components/admin/AdminProjects';
 import { AdminWithdrawals } from '../components/admin/AdminWithdrawals';
+import { AdminKYCVerification } from '../components/admin/AdminKYCVerification';
 import { AdminTransactions } from '../components/admin/AdminTransactions';
 import { AdminBankAccounts } from '../components/admin/AdminBankAccounts';
 import { AdminEmailSender } from '../components/admin/AdminEmailSender';
@@ -16,11 +17,20 @@ import { AdminRevenue } from '../components/admin/AdminRevenue';
 import { InvoiceManager } from '../components/InvoiceManager';
 import { TestClientCleaner } from '../components/TestClientCleaner';
 // ❌ 已移除 QuickDepositHelper - 不再為 davidjosephilai1@outlook.com 提供儲值功能
-import { UserCreationHelper } from '../components/UserCreationHelper';
-import { EnterpriseTestHelper } from '../components/EnterpriseTestHelper';
+// ❌ 已移除 UserCreationHelper - 不再需要用戶檢查工具
+// ❌ 已移除 EnterpriseTestHelper - 不再需要 Enterprise 升級測試工具
 import { SitemapGenerator } from '../components/SitemapGenerator';
 import { SitemapURLChecker } from '../components/SitemapURLChecker';
+import { SitemapManager } from '../components/admin/SitemapManager';
+import { SitemapUpdater } from '../components/admin/SitemapUpdater';
+import { GoogleSearchConsoleGuide } from '../components/admin/GoogleSearchConsoleGuide';
 import { SEODiagnostic } from '../components/SEODiagnostic';
+import { AdminAISEO } from '../components/admin/AdminAISEO';
+import AdminAISEOReports from '../components/admin/AdminAISEOReports';
+import KVStoreDiagnostic from '../components/admin/KVStoreDiagnostic';
+// 暫時移除 TestReportCreator，它導致頁面崩潰
+// import TestReportCreator from '../components/admin/TestReportCreator';
+import DataSyncDiagnostic from '../components/DataSyncDiagnostic';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Shield, Crown, UserCog, Eye, LogOut, Loader2 } from 'lucide-react';
@@ -56,6 +66,7 @@ export default function AdminPage() {
         users: 'Users',
         projects: 'Projects',
         withdrawals: 'Withdrawals',
+        kyc: 'KYC Verification',
         transactions: 'Transactions',
         revenue: 'Platform Revenue',
         memberships: 'Memberships',
@@ -66,8 +77,9 @@ export default function AdminPage() {
         messages: 'Messages',
         administrators: 'Administrators',
         paymentManager: 'Payment Manager',
-        seoTools: 'SEO Tools',
+        seoTools: 'AI SEO',
         sitemap: 'Sitemap',
+        dataSync: 'Data Sync',
       },
     },
     'zh-TW': {
@@ -86,6 +98,7 @@ export default function AdminPage() {
         users: '用戶管理',
         projects: '項目管理',
         withdrawals: '提現管理',
+        kyc: 'KYC 身份驗證',
         transactions: '交易記錄',
         revenue: '平台收入',
         memberships: '會員管理',
@@ -97,8 +110,9 @@ export default function AdminPage() {
         messages: '消息監控',
         administrators: '管理員',
         paymentManager: '付款管理',
-        seoTools: 'SEO 工具',
+        seoTools: 'AI SEO',
         sitemap: 'Sitemap 生成',
+        dataSync: '數據同步',
       },
     },
     'zh-CN': {
@@ -117,6 +131,7 @@ export default function AdminPage() {
         users: '用户管理',
         projects: '项目管理',
         withdrawals: '提现管理',
+        kyc: 'KYC 身份验证',
         transactions: '交易记录',
         revenue: '平台收入',
         memberships: '会员管理',
@@ -128,8 +143,9 @@ export default function AdminPage() {
         messages: '消息监控',
         administrators: '管理员',
         paymentManager: '付款管理',
-        seoTools: 'SEO 工具',
+        seoTools: 'AI SEO',
         sitemap: 'Sitemap 生成',
+        dataSync: '数据同步',
       },
     }
   };
@@ -142,7 +158,12 @@ export default function AdminPage() {
   }, [user, profile]);
 
   const checkAdminPermission = async () => {
+    console.log('🔍 [AdminPage] Checking admin permission...');
+    console.log('🔍 [AdminPage] User:', user?.email);
+    console.log('🔍 [AdminPage] Profile:', profile);
+    
     if (!user) {
+      console.error('❌ [AdminPage] No user found');
       toast.error('未經授權的訪問');
       setView('home');
       setManualOverride(true);
@@ -150,8 +171,10 @@ export default function AdminPage() {
     }
 
     const userIsAdmin = isAnyAdmin(user.email || '', profile);
+    console.log('🔍 [AdminPage] isAnyAdmin result:', userIsAdmin);
 
     if (!userIsAdmin) {
+      console.error('❌ [AdminPage] User is not admin:', user.email);
       toast.error('未經授權的訪問');
       setView('home');
       setManualOverride(true);
@@ -159,6 +182,7 @@ export default function AdminPage() {
     }
 
     const level = getAdminLevel(user.email || '', profile);
+    console.log('✅ [AdminPage] Admin level:', level);
     setAdminLevel(level);
     setIsAdmin(true);
     setLoading(false);
@@ -266,7 +290,7 @@ export default function AdminPage() {
 
     // MODERATOR can view: dashboard, users, projects, messages, transactions, emailSender, settings, paymentManager, seoTools, sitemap
     if (adminLevel === AdminLevel.MODERATOR) {
-      return ['dashboard', 'users', 'projects', 'messages', 'transactions', 'emailSender', 'settings', 'paymentManager', 'seoTools', 'sitemap', 'withdrawals'].includes(tabName);
+      return ['dashboard', 'users', 'projects', 'messages', 'transactions', 'emailSender', 'settings', 'paymentManager', 'seoTools', 'sitemap', 'withdrawals', 'dataSync'].includes(tabName);
     }
 
     return false;
@@ -355,6 +379,11 @@ export default function AdminPage() {
                 {t.tabs.withdrawals}
               </TabsTrigger>
             )}
+            {canViewTab('kyc') && (
+              <TabsTrigger key="kyc" value="kyc" className="text-xs sm:text-sm">
+                {t.tabs.kyc}
+              </TabsTrigger>
+            )}
             {canViewTab('transactions') && (
               <TabsTrigger key="transactions" value="transactions" className="text-xs sm:text-sm">
                 {t.tabs.transactions}
@@ -395,6 +424,11 @@ export default function AdminPage() {
                 {t.tabs.sitemap}
               </TabsTrigger>
             )}
+            {canViewTab('dataSync') && (
+              <TabsTrigger key="dataSync" value="dataSync" className="text-xs sm:text-sm">
+                {t.tabs.dataSync}
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <div className="mt-6">
@@ -405,8 +439,8 @@ export default function AdminPage() {
             <TabsContent value="users" className="mt-0">
               <div className="space-y-6">
                 {/* ❌ 已移除 QuickDepositHelper - 不再為 davidjosephilai1@outlook.com 提供儲值功能 */}
-                <UserCreationHelper />
-                <EnterpriseTestHelper />
+                {/* ❌ 已移除 UserCreationHelper - 不再需要用戶檢查工具 */}
+                {/* ❌ 已移除 EnterpriseTestHelper - 不再需要 Enterprise 升級測試工具 */}
                 <AdminUsers adminLevel={adminLevel} />
               </div>
             </TabsContent>
@@ -421,6 +455,10 @@ export default function AdminPage() {
 
             <TabsContent value="withdrawals" className="mt-0">
               <AdminWithdrawals adminLevel={adminLevel} />
+            </TabsContent>
+
+            <TabsContent value="kyc" className="mt-0">
+              <AdminKYCVerification />
             </TabsContent>
 
             <TabsContent value="transactions" className="mt-0">
@@ -459,11 +497,45 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="seoTools" className="mt-0">
-              <SEODiagnostic />
+              <div className="space-y-6">
+                <AdminAISEO />
+                
+                {/* 🧪 測試報告創建器 */}
+                {/* 暫時移除 TestReportCreator，它導致頁面崩潰 */}
+                {/* <TestReportCreator /> */}
+                
+                {/* 🔍 暫時移除診斷工具，測試是否導致崩潰 */}
+                {/* <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="font-semibold text-yellow-900 mb-2">🔍 KV Store 診斷工具</div>
+                  <p className="text-sm text-yellow-700 mb-4">
+                    如果 AI SEO 報告沒有正確顯示，請使用此工具診斷問題
+                  </p>
+                  <KVStoreDiagnostic />
+                </div> */}
+                
+                {/* 📊 測試：恢復報告列表 */}
+                <AdminAISEOReports />
+              </div>
             </TabsContent>
 
             <TabsContent value="sitemap" className="mt-0">
-              <SitemapURLChecker />
+              <div className="space-y-6">
+                {/* 🔄 一鍵更新靜態 Sitemap 工具（最重要！） */}
+                <SitemapUpdater />
+                
+                {/* 🗺️ 新的動態 Sitemap 管理器 */}
+                <SitemapManager />
+                
+                {/* 📚 Google Search Console 設置指南 */}
+                <GoogleSearchConsoleGuide />
+                
+                {/* 舊的 Sitemap 檢查工具 */}
+                <SitemapURLChecker />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="dataSync" className="mt-0">
+              <DataSyncDiagnostic />
             </TabsContent>
           </div>
         </Tabs>

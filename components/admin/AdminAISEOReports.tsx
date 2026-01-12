@@ -366,6 +366,14 @@ export default function AdminAISEOReports() {
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
+      {/* 🔥 Debug: 確認組件渲染 */}
+      <div className="bg-purple-100 border-2 border-purple-500 p-4 rounded-lg">
+        <h2 className="text-2xl font-bold text-purple-900">🚀 AdminAISEOReports 組件已渲染！</h2>
+        <p className="text-purple-700">如果你看到這個，表示組件有被載入</p>
+        <p className="text-sm text-purple-600">isLoading: {isLoading ? 'true' : 'false'}</p>
+        <p className="text-sm text-purple-600">reports.length: {reports.length}</p>
+      </div>
+      
       {/* Header */}
       <Card>
         <CardHeader>
