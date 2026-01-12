@@ -9,11 +9,12 @@ import { Badge } from '../ui/badge';
 import { Sparkles, FileText, TrendingUp, Search, Settings, Loader2, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { isAnyAdmin } from '../../config/admin';
-import KVStoreDiagnostic from './KVStoreDiagnostic';
-import AISEODataDiagnostic from './AISEODataDiagnostic';
-import AdminAISEOReports from './AdminAISEOReports';
-import QuickAISEOTest from './QuickAISEOTest';
-import GenerateTestReport from './GenerateTestReport';
+// 暫時移除所有子組件以進行診斷
+// import KVStoreDiagnostic from './KVStoreDiagnostic';
+// import AISEODataDiagnostic from './AISEODataDiagnostic';
+// import AdminAISEOReports from './AdminAISEOReports';
+// import QuickAISEOTest from './QuickAISEOTest';
+// import GenerateTestReport from './GenerateTestReport';
 
 export function AdminAISEO() {
   const { language } = useLanguage();
@@ -287,11 +288,18 @@ export function AdminAISEO() {
 
         {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-4">
-          {/* 🧪 測試報告生成器 */}
-          <GenerateTestReport />
-          
-          {/* 🔬 快速測試工具 */}
-          <QuickAISEOTest />
+          <Card>
+            <CardHeader>
+              <CardTitle>📊 測試：Analytics Tab 載入成功</CardTitle>
+              <CardDescription>
+                如果你看到這個訊息，表示 AdminAISEO 組件本身沒問題
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-green-600 font-semibold">✅ 基本結構正常載入！</p>
+              <p className="text-sm text-gray-600 mt-2">問題可能出在子組件</p>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Settings Tab */}
