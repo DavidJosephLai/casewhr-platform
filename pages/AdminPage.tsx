@@ -21,11 +21,15 @@ import { TestClientCleaner } from '../components/TestClientCleaner';
 // ❌ 已移除 EnterpriseTestHelper - 不再需要 Enterprise 升級測試工具
 import { SitemapGenerator } from '../components/SitemapGenerator';
 import { SitemapURLChecker } from '../components/SitemapURLChecker';
+import { SitemapManager } from '../components/admin/SitemapManager';
+import { SitemapUpdater } from '../components/admin/SitemapUpdater';
+import { GoogleSearchConsoleGuide } from '../components/admin/GoogleSearchConsoleGuide';
 import { SEODiagnostic } from '../components/SEODiagnostic';
 import { AdminAISEO } from '../components/admin/AdminAISEO';
 import AdminAISEOReports from '../components/admin/AdminAISEOReports';
 import KVStoreDiagnostic from '../components/admin/KVStoreDiagnostic';
-import TestReportCreator from '../components/admin/TestReportCreator';
+// 暫時移除 TestReportCreator，它導致頁面崩潰
+// import TestReportCreator from '../components/admin/TestReportCreator';
 import DataSyncDiagnostic from '../components/DataSyncDiagnostic';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -497,7 +501,8 @@ export default function AdminPage() {
                 <AdminAISEO />
                 
                 {/* 🧪 測試報告創建器 */}
-                <TestReportCreator />
+                {/* 暫時移除 TestReportCreator，它導致頁面崩潰 */}
+                {/* <TestReportCreator /> */}
                 
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <div className="font-semibold text-yellow-900 mb-2">🔍 KV Store 診斷工具</div>
@@ -512,7 +517,19 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="sitemap" className="mt-0">
-              <SitemapURLChecker />
+              <div className="space-y-6">
+                {/* 🔄 一鍵更新靜態 Sitemap 工具（最重要！） */}
+                <SitemapUpdater />
+                
+                {/* 🗺️ 新的動態 Sitemap 管理器 */}
+                <SitemapManager />
+                
+                {/* 📚 Google Search Console 設置指南 */}
+                <GoogleSearchConsoleGuide />
+                
+                {/* 舊的 Sitemap 檢查工具 */}
+                <SitemapURLChecker />
+              </div>
             </TabsContent>
 
             <TabsContent value="dataSync" className="mt-0">
