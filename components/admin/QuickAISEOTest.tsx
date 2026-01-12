@@ -30,7 +30,7 @@ export default function QuickAISEOTest() {
       // 1. 查詢所有 key 包含 ai_seo 的記錄
       const { data: allRecords, error } = await supabase
         .from('kv_store_215f78a5')
-        .select('key, value, created_at')
+        .select('key, value')
         .ilike('key', 'ai_seo%');
 
       if (error) {
@@ -209,7 +209,6 @@ export default function QuickAISEOTest() {
                   <div className="font-semibold mb-2">📝 第一個報告:</div>
                   <div className="text-xs space-y-1 bg-gray-50 p-2 rounded">
                     <div><strong>Key:</strong> {result.directQuery.firstReport.key}</div>
-                    <div><strong>Created:</strong> {result.directQuery.firstReport.created_at}</div>
                     <div className="mt-2">
                       <strong>Value:</strong>
                       <pre className="mt-1 text-xs overflow-auto max-h-48">

@@ -37,6 +37,7 @@ import aiSeoRoutes from "./ai-seo.ts";
 import { handleSitemapRequest, handleRobotsRequest, handleSEOHealthCheck } from "./sitemap_service.tsx";
 import * as lineAuth from "./line-auth.tsx";
 import { logLineEnvStatus } from "./line_health_check.tsx";
+import { sitemapRouter } from "./sitemap.tsx";
 
 console.log('🚀 [SERVER STARTUP] Edge Function v2.0.6 - LINE Auth Integration - Starting...');
 
@@ -608,6 +609,10 @@ console.log('✅ [SERVER] AI Chatbot APIs registered');
 // Register AI SEO APIs
 app.route('/make-server-215f78a5/ai', aiSeoRoutes);
 console.log('✅ [SERVER] AI SEO APIs registered');
+
+// Register Dynamic Sitemap APIs
+app.route('/make-server-215f78a5/sitemap', sitemapRouter);
+console.log('✅ [SERVER] Dynamic Sitemap APIs registered');
 
 // Register Invoice Management APIs
 app.route('/make-server-215f78a5', invoiceService.default);
@@ -5270,7 +5275,7 @@ app.get("/make-server-215f78a5/kv/all", async (c) => {
       
       const { data, error } = await supabase
         .from('kv_store_215f78a5')
-        .select('key, value, created_at')
+        .select('key, value')
         .like('key', `${prefix}%`);
       
       if (!error && data) {
@@ -5281,8 +5286,7 @@ app.get("/make-server-215f78a5/kv/all", async (c) => {
         
         allData.push(...data.map(item => ({
           key: item.key,
-          value: item.value,
-          created_at: item.created_at
+          value: item.value
         })));
       } else if (error) {
         console.warn(`⚠️ [KV All] Error fetching prefix "${prefix}":`, error.message);
@@ -17544,7 +17548,7 @@ app.get("/make-server-215f78a5/sitemap.xml", async (c) => {
     // 獲取所有 AI SEO 報告
     const { data, error } = await supabase
       .from('kv_store_215f78a5')
-      .select('key, value, created_at')
+      .select('key, value')
       .like('key', 'ai_seo_%')
       .not('key', 'like', '%_reports_%');
     
@@ -17558,7 +17562,8 @@ app.get("/make-server-215f78a5/sitemap.xml", async (c) => {
     
     const baseUrl = 'https://casewhr.com';
     const urls = reports.map(item => {
-      const lastmod = item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      // 使用當前日期作為 lastmod，因為 kv_store 沒有 created_at 欄位
+      const lastmod = new Date().toISOString().split('T')[0];
       return `
   <url>
     <loc>${baseUrl}/seo-report/${item.key}</loc>
