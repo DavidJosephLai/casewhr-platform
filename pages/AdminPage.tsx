@@ -30,6 +30,8 @@ import AdminAISEOReports from '../components/admin/AdminAISEOReports';
 import { AdvancedAISEOConsole } from '../components/admin/AdvancedAISEOConsole';
 import { AISEOContentList } from '../components/admin/AISEOContentList';
 import KVStoreDiagnostic from '../components/admin/KVStoreDiagnostic';
+import { WithdrawalAdminPanel } from '../components/WithdrawalAdminPanel';
+import { WalletResetTool } from '../components/admin/WalletResetTool';
 // 暫時移除 TestReportCreator，它導致頁面崩潰
 // import TestReportCreator from '../components/admin/TestReportCreator';
 import DataSyncDiagnostic from '../components/DataSyncDiagnostic';
@@ -285,9 +287,9 @@ export default function AdminPage() {
     // SUPER_ADMIN 和 SUPERADMIN (舊版) 可以查看所有標籤
     if (adminLevel === AdminLevel.SUPER_ADMIN || adminLevel === 'SUPERADMIN') return true;
 
-    // ADMIN can view all tabs except bankAccounts and administrators
+    // ADMIN can view all tabs except bankAccounts, administrators, and walletReset
     if (adminLevel === AdminLevel.ADMIN) {
-      return !['bankAccounts', 'administrators'].includes(tabName);
+      return !['bankAccounts', 'administrators', 'walletReset'].includes(tabName);
     }
 
     // MODERATOR can view: dashboard, users, projects, messages, transactions, emailSender, settings, paymentManager, seoTools, sitemap
@@ -396,6 +398,11 @@ export default function AdminPage() {
                 {t.tabs.revenue}
               </TabsTrigger>
             )}
+            {canViewTab('walletReset') && (
+              <TabsTrigger key="walletReset" value="walletReset" className="text-xs sm:text-sm text-red-600">
+                🗑️ Wallet Reset
+              </TabsTrigger>
+            )}
             {canViewTab('bankAccounts') && (
               <TabsTrigger key="bankAccounts" value="bankAccounts" className="text-xs sm:text-sm">
                 {t.tabs.bankAccounts}
@@ -456,7 +463,11 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="withdrawals" className="mt-0">
-              <AdminWithdrawals adminLevel={adminLevel} />
+              <div className="space-y-6">
+                <WithdrawalAdminPanel />
+                {/* 舊的提款系統保留在下方 */}
+                <AdminWithdrawals adminLevel={adminLevel} />
+              </div>
             </TabsContent>
 
             <TabsContent value="kyc" className="mt-0">
@@ -469,6 +480,10 @@ export default function AdminPage() {
 
             <TabsContent value="revenue" className="mt-0">
               <AdminRevenue />
+            </TabsContent>
+
+            <TabsContent value="walletReset" className="mt-0">
+              <WalletResetTool />
             </TabsContent>
 
             <TabsContent value="bankAccounts" className="mt-0">

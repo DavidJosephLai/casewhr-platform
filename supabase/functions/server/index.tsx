@@ -5773,7 +5773,7 @@ app.post("/make-server-215f78a5/subscription/downgrade", async (c) => {
                 : '您的帳戶現在具���新方案��功能和限制'}</li>
               <li>${language === 'en' 
                 ? 'You can upgrade again at any time'
-                : '您可以隨時再次升級'}</li>
+                : '您可以���時再次升級'}</li>
               ${plan === 'free' ? `<li>${language === 'en' 
                 ? 'No future billing - you are on the Free plan'
                 : '無需未來付款 - 您現在使用免費方案'}</li>` : ''}
@@ -20597,6 +20597,14 @@ app.post("/make-server-215f78a5/admin/kyc/:userId/reject", async (c) => {
 });
 
 console.log('✅ [SERVER] KYC verification routes registered');
+
+// ============= WITHDRAWAL REQUEST ROUTES (NEW SYSTEM) =============
+import { registerWithdrawalRequestRoutes } from './withdrawal_request_routes.tsx';
+registerWithdrawalRequestRoutes(app, supabase, emailService);
+
+// ============= WALLET RESET ROUTES =============
+import { registerWalletResetRoutes } from './wallet_reset_routes.tsx';
+registerWalletResetRoutes(app, supabase);
 
 console.log('🎉 [SERVER] All routes registered, starting server...');
 
