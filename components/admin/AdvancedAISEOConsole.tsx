@@ -22,13 +22,37 @@ import {
   Sparkles,
   BarChart3,
   Lightbulb,
-  Zap
+  Zap,
+  ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 
+// 定義共享的狀態類型
+interface ContentFormData {
+  url: string;
+  title: string;
+  description: string;
+  keywords: string;
+  language: string;
+  contentType: string;
+  tone: string;
+  wordCount: number;
+}
+
 export function AdvancedAISEOConsole() {
   const [activeTab, setActiveTab] = useState('content-generator');
+  // 共享的表單數據，用於在標籤之間傳遞
+  const [contentFormData, setContentFormData] = useState<ContentFormData>({
+    url: '',
+    title: '',
+    description: '',
+    keywords: '',
+    language: 'zh-TW',
+    contentType: 'article',
+    tone: 'professional',
+    wordCount: 1200,
+  });
 
   return (
     <div className="space-y-6">
@@ -72,12 +96,26 @@ export function AdvancedAISEOConsole() {
 
         {/* Content Generator Tab */}
         <TabsContent value="content-generator" className="mt-6">
-          <ContentGeneratorPanel />
+          <ContentGeneratorPanel formData={contentFormData} setFormData={setContentFormData} />
         </TabsContent>
 
         {/* Keyword Research Tab */}
         <TabsContent value="keyword-research" className="mt-6">
-          <KeywordResearchPanel />
+          <KeywordResearchPanel 
+            onUseKeywords={(keywords: string, language: string, topic: string) => {
+              // 將關鍵字帶入內容生成表單
+              setContentFormData({
+                ...contentFormData,
+                keywords: keywords,
+                language: language,
+                title: topic,
+                description: `關於 ${topic} 的詳細內容`,
+              });
+              // 切換到內容生成標籤
+              setActiveTab('content-generator');
+              toast.success('✅ 關鍵字已帶入內容生成表單！');
+            }}
+          />
         </TabsContent>
 
         {/* Competitor Analysis Tab */}
@@ -102,18 +140,8 @@ export function AdvancedAISEOConsole() {
 /**
  * Content Generator Panel
  */
-function ContentGeneratorPanel() {
+function ContentGeneratorPanel({ formData, setFormData }: { formData: ContentFormData, setFormData: React.Dispatch<React.SetStateAction<ContentFormData>> }) {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    url: '',
-    title: '',
-    description: '',
-    keywords: '',
-    language: 'zh-TW',
-    contentType: 'article',
-    tone: 'professional',
-    wordCount: 1200,
-  });
   const [result, setResult] = useState<any>(null);
 
   const generateContent = async () => {
@@ -347,7 +375,7 @@ function ContentGeneratorPanel() {
 /**
  * Keyword Research Panel
  */
-function KeywordResearchPanel() {
+function KeywordResearchPanel({ onUseKeywords }: { onUseKeywords?: (keywords: string, language: string, topic: string) => void }) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     topic: '',
@@ -395,6 +423,20 @@ function KeywordResearchPanel() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 處理將關鍵字帶入內容生成
+  const handleUseKeywords = () => {
+    if (!result || !onUseKeywords) return;
+    
+    // 組合所有關鍵字
+    const allKeywords = [
+      ...(result.primary || []),
+      ...(result.secondary?.slice(0, 5) || []),
+      ...(result.longTail?.slice(0, 3) || []),
+    ].join(', ');
+    
+    onUseKeywords(allKeywords, formData.language, formData.topic);
   };
 
   return (
@@ -483,66 +525,108 @@ function KeywordResearchPanel() {
 
       {/* Results */}
       {result && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Primary Keywords */}
-          <Card className="p-6">
-            <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
-              <Zap className="h-5 w-5 text-yellow-600" />
-              主要關鍵字
-            </h4>
-            <div className="space-y-2">
-              {result.primary?.map((kw: string, index: number) => (
-                <Badge key={index} variant="secondary" className="mr-2 mb-2">
-                  {kw}
-                </Badge>
-              ))}
-            </div>
-          </Card>
-
-          {/* Secondary Keywords */}
-          <Card className="p-6">
-            <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
-              <Target className="h-5 w-5 text-blue-600" />
-              次要關鍵字
-            </h4>
-            <div className="space-y-2">
-              {result.secondary?.slice(0, 10).map((kw: string, index: number) => (
-                <Badge key={index} variant="outline" className="mr-2 mb-2">
-                  {kw}
-                </Badge>
-              ))}
-            </div>
-          </Card>
-
-          {/* Long-tail Keywords */}
-          <Card className="p-6 md:col-span-2">
-            <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-              長尾關鍵字
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              {result.longTail?.slice(0, 15).map((kw: string, index: number) => (
-                <div key={index} className="text-sm text-gray-700 p-2 bg-gray-50 rounded">
-                  {kw}
+        <div className="space-y-6">
+          {/* Action Bar */}
+          <Card className="p-6 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+                <div>
+                  <h3 className="font-bold text-lg text-gray-900">關鍵字研究完成！</h3>
+                  <p className="text-sm text-gray-600">
+                    找到 {(result.primary?.length || 0) + (result.secondary?.length || 0) + (result.longTail?.length || 0)} 個相關關鍵字
+                  </p>
                 </div>
-              ))}
+              </div>
+              <Button
+                onClick={handleUseKeywords}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg"
+                size="lg"
+              >
+                <ArrowRight className="mr-2 h-5 w-5" />
+                帶入內容生成器
+              </Button>
             </div>
           </Card>
 
-          {/* Question Keywords */}
-          <Card className="p-6 md:col-span-2">
-            <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-purple-600" />
-              問題型關鍵字
-            </h4>
-            <ul className="space-y-2">
-              {result.questions?.slice(0, 10).map((kw: string, index: number) => (
-                <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
-                  <span className="text-purple-600">•</span>
-                  {kw}
-                </li>
-              ))}
-            </ul>
+          {/* Keywords Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Primary Keywords */}
+            <Card className="p-6">
+              <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <Zap className="h-5 w-5 text-yellow-600" />
+                主要關鍵字
+              </h4>
+              <div className="space-y-2">
+                {result.primary?.map((kw: string, index: number) => (
+                  <Badge key={index} variant="secondary" className="mr-2 mb-2">
+                    {kw}
+                  </Badge>
+                ))}
+              </div>
+            </Card>
+
+            {/* Secondary Keywords */}
+            <Card className="p-6">
+              <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <Target className="h-5 w-5 text-blue-600" />
+                次要關鍵字
+              </h4>
+              <div className="space-y-2">
+                {result.secondary?.slice(0, 10).map((kw: string, index: number) => (
+                  <Badge key={index} variant="outline" className="mr-2 mb-2">
+                    {kw}
+                  </Badge>
+                ))}
+              </div>
+            </Card>
+
+            {/* Long-tail Keywords */}
+            <Card className="p-6 md:col-span-2">
+              <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-green-600" />
+                長尾關鍵字
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                {result.longTail?.slice(0, 15).map((kw: string, index: number) => (
+                  <div key={index} className="text-sm text-gray-700 p-2 bg-gray-50 rounded">
+                    {kw}
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Question Keywords */}
+            <Card className="p-6 md:col-span-2">
+              <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-purple-600" />
+                問題型關鍵字
+              </h4>
+              <ul className="space-y-2">
+                {result.questions?.slice(0, 10).map((kw: string, index: number) => (
+                  <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
+                    <span className="text-purple-600">•</span>
+                    {kw}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </div>
+
+          {/* Bottom Action Button */}
+          <Card className="p-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+            <Button
+              onClick={handleUseKeywords}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg"
+              size="lg"
+            >
+              <Sparkles className="mr-2 h-5 w-5" />
+              立即使用這些關鍵字生成內容
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <p className="text-sm text-gray-600 text-center mt-3">
+              點擊後將自動切換到內容生成器，並填入以上關鍵字
+            </p>
           </Card>
         </div>
       )}
