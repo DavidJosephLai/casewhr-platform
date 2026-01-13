@@ -37,7 +37,7 @@ interface SEOReport {
 
 export default function AdminAISEOReports() {
   const [reports, setReports] = useState<SEOReport[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // 改為 false，不再自動載入
   const [deleting, setDeleting] = useState<string | null>(null);
   const [selectedReport, setSelectedReport] = useState<SEOReport | null>(null);
 
@@ -56,9 +56,10 @@ export default function AdminAISEOReports() {
     }
   };
 
-  useEffect(() => {
-    loadReports();
-  }, []);
+  // 暫時停用自動載入，避免崩潰
+  // useEffect(() => {
+  //   loadReports();
+  // }, []);
 
   const loadReports = async () => {
     try {
