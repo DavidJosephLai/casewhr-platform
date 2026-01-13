@@ -19,6 +19,7 @@ export function PlatformComparison() {
         fiverr: 'Fiverr',
         upwork: 'Upwork',
         freelancer: 'Freelancer',
+        job518: '518外包網',
       },
       features: {
         multiCurrency: 'Multi-Currency Support (USD/TWD/CNY)',
@@ -46,6 +47,7 @@ export function PlatformComparison() {
         fiverr: 'Fiverr',
         upwork: 'Upwork',
         freelancer: 'Freelancer',
+        job518: '518外包網',
       },
       features: {
         multiCurrency: '多幣計價系統 (USD/TWD/CNY)',
@@ -73,6 +75,7 @@ export function PlatformComparison() {
         fiverr: 'Fiverr',
         upwork: 'Upwork',
         freelancer: 'Freelancer',
+        job518: '518外包網',
       },
       features: {
         multiCurrency: '多币计价系统 (USD/TWD/CNY)',
@@ -104,6 +107,7 @@ export function PlatformComparison() {
       fiverr: false,
       upwork: false,
       freelancer: false,
+      job518: false, // 518只支援TWD
     },
     {
       feature: t.features.lowFees,
@@ -111,6 +115,7 @@ export function PlatformComparison() {
       fiverr: false, // Fiverr 收 20%
       upwork: false, // Upwork 收 10-20%
       freelancer: false, // Freelancer 收 10%
+      job518: false, // 518 收 10-15%
     },
     {
       feature: t.features.fastPayment,
@@ -118,6 +123,7 @@ export function PlatformComparison() {
       fiverr: true,
       upwork: true,
       freelancer: true,
+      job518: false, // 較慢的付款流程
     },
     {
       feature: t.features.escrow,
@@ -125,6 +131,7 @@ export function PlatformComparison() {
       fiverr: true,
       upwork: true,
       freelancer: true,
+      job518: false, // 無託管系統
     },
     {
       feature: t.features.milestone,
@@ -132,6 +139,7 @@ export function PlatformComparison() {
       fiverr: false,
       upwork: true,
       freelancer: true,
+      job518: false, // 不支援里程碑付款
     },
     {
       feature: t.features.localSupport,
@@ -139,6 +147,7 @@ export function PlatformComparison() {
       fiverr: false,
       upwork: false,
       freelancer: false,
+      job518: true, // 518有在地支援
     },
     {
       feature: t.features.bankTransfer,
@@ -146,6 +155,7 @@ export function PlatformComparison() {
       fiverr: false,
       upwork: true,
       freelancer: true,
+      job518: true, // 518支援銀行轉帳
     },
     {
       feature: t.features.cryptoPayment,
@@ -153,6 +163,7 @@ export function PlatformComparison() {
       fiverr: false,
       upwork: false,
       freelancer: false,
+      job518: false, // 無加密貨幣支援
     },
     {
       feature: t.features.noSubscription,
@@ -160,6 +171,7 @@ export function PlatformComparison() {
       fiverr: true,
       upwork: false, // Upwork 有付費會員
       freelancer: false, // Freelancer 有付費會員
+      job518: false, // 518有付費會員制度
     },
     {
       feature: t.features.instantChat,
@@ -167,6 +179,7 @@ export function PlatformComparison() {
       fiverr: true,
       upwork: true,
       freelancer: true,
+      job518: false, // 無即時聊天系統
     },
     {
       feature: t.features.aiMatching,
@@ -174,6 +187,7 @@ export function PlatformComparison() {
       fiverr: false,
       upwork: false,
       freelancer: false,
+      job518: false, // 無AI配對功能
     },
     {
       feature: t.features.transparentFees,
@@ -181,6 +195,7 @@ export function PlatformComparison() {
       fiverr: false,
       upwork: false,
       freelancer: false,
+      job518: false, // 費用結構不透明
     },
     {
       feature: t.features.sameDay,
@@ -188,6 +203,7 @@ export function PlatformComparison() {
       fiverr: false,
       upwork: false,
       freelancer: false,
+      job518: false, // 無當日提款
     },
     {
       feature: t.features.enterprise,
@@ -195,6 +211,7 @@ export function PlatformComparison() {
       fiverr: true,
       upwork: true,
       freelancer: false,
+      job518: false, // 無企業解決方案
     },
     {
       feature: t.features.customBranding,
@@ -202,6 +219,7 @@ export function PlatformComparison() {
       fiverr: false,
       upwork: false,
       freelancer: false,
+      job518: false, // 無客製化品牌
     },
   ];
 
@@ -225,25 +243,28 @@ export function PlatformComparison() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 w-1/3">
+                    <th className="px-4 py-4 text-left text-sm font-semibold text-gray-900 w-[30%]">
                       {language === 'en' ? 'Features' : '功能特色'}
                     </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-blue-600 bg-blue-50 w-1/6">
+                    <th className="px-4 py-4 text-center text-sm font-semibold text-blue-600 bg-blue-50 w-[14%]">
                       <div className="flex flex-col items-center">
-                        <span className="text-lg">{t.caseWhr}</span>
+                        <span className="text-base">{t.caseWhr}</span>
                         <span className="text-xs text-gray-500 mt-1">
                           {language === 'en' ? '(Us)' : '(本平台)'}
                         </span>
                       </div>
                     </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 w-1/6">
+                    <th className="px-4 py-4 text-center text-xs font-semibold text-gray-700 w-[14%]">
                       {t.platforms.fiverr}
                     </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 w-1/6">
+                    <th className="px-4 py-4 text-center text-xs font-semibold text-gray-700 w-[14%]">
                       {t.platforms.upwork}
                     </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 w-1/6">
+                    <th className="px-4 py-4 text-center text-xs font-semibold text-gray-700 w-[14%]">
                       {t.platforms.freelancer}
+                    </th>
+                    <th className="px-4 py-4 text-center text-xs font-semibold text-gray-700 w-[14%]">
+                      {t.platforms.job518}
                     </th>
                   </tr>
                 </thead>
@@ -279,6 +300,13 @@ export function PlatformComparison() {
                       </td>
                       <td className="px-6 py-4 text-center">
                         {row.freelancer ? (
+                          <Check className="h-6 w-6 text-green-600 mx-auto" />
+                        ) : (
+                          <X className="h-6 w-6 text-gray-300 mx-auto" />
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {row.job518 ? (
                           <Check className="h-6 w-6 text-green-600 mx-auto" />
                         ) : (
                           <X className="h-6 w-6 text-gray-300 mx-auto" />
