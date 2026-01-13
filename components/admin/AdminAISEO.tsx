@@ -13,7 +13,8 @@ import {
   Loader2, 
   Globe,
   Info,
-  CheckCircle
+  CheckCircle,
+  KeyRound // 新增：關鍵字圖標
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
@@ -36,6 +37,8 @@ export function AdminAISEO() {
   const [selectedUrl, setSelectedUrl] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<any>(null);
+  const [customKeywords, setCustomKeywords] = useState(''); // 新增：自定義關鍵字
+  const [useCustomKeywords, setUseCustomKeywords] = useState(false); // 新增：是否使用自定義關鍵字
 
   const handleGenerate = async () => {
     // 驗證選擇
@@ -44,11 +47,20 @@ export function AdminAISEO() {
       return;
     }
 
+    // 驗證自定義關鍵字（如果開啟了選項）
+    if (useCustomKeywords && !customKeywords.trim()) {
+      toast.error('請輸入自定義關鍵字，或關閉此選項');
+      return;
+    }
+
     setIsGenerating(true);
     setGeneratedContent(null);
 
     try {
       console.log('🚀 開始 AI 分析頁面並生成 SEO 內容...', selectedUrl);
+      if (useCustomKeywords && customKeywords) {
+        console.log('🎯 使用自定義關鍵字:', customKeywords);
+      }
 
       // 調用後端 API
       const response = await fetch(
@@ -63,6 +75,8 @@ export function AdminAISEO() {
             url: selectedUrl,
             // AI 會自動分析頁面內容
             autoAnalyze: true,
+            // 新增：自定義關鍵字
+            customKeywords: useCustomKeywords && customKeywords ? customKeywords.trim() : null,
           }),
         }
       );
@@ -125,6 +139,47 @@ export function AdminAISEO() {
             </p>
           </div>
 
+          {/* 自定義關鍵字選項 */}
+          <div className="space-y-3 p-4 bg-white rounded-lg border border-purple-100">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="use-custom-keywords" className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
+                <KeyRound className="h-4 w-4 text-purple-600" />
+                使用自定義關鍵字
+              </Label>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  id="use-custom-keywords"
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={useCustomKeywords}
+                  onChange={(e) => setUseCustomKeywords(e.target.checked)}
+                  disabled={isGenerating}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+              </label>
+            </div>
+            
+            {useCustomKeywords && (
+              <div className="space-y-2 pt-2 border-t border-purple-100">
+                <Label htmlFor="custom-keywords" className="text-sm text-gray-700">
+                  關鍵字 (用逗號分隔)
+                </Label>
+                <input
+                  id="custom-keywords"
+                  type="text"
+                  placeholder="例如: 接案平台, 自由工作者, 專業外包"
+                  className="flex h-10 w-full rounded-md border border-purple-200 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={customKeywords}
+                  onChange={(e) => setCustomKeywords(e.target.value)}
+                  disabled={isGenerating}
+                />
+                <p className="text-xs text-gray-500">
+                  💡 AI 會根據這些關鍵字優化 SEO 內容，讓搜尋結果更精準
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* 生成按鈕 */}
           <Button
             onClick={handleGenerate}
@@ -151,10 +206,11 @@ export function AdminAISEO() {
               <div className="space-y-1">
                 <p><strong>AI 自動化流程：</strong></p>
                 <ul className="list-disc list-inside space-y-0.5 text-xs">
-                  <li>AI 會分析頁面內容和結構</li>
-                  <li>自動生成 SEO 優化的標題</li>
-                  <li>自動生成描述和關鍵字</li>
-                  <li>自動保存到資料庫</li>
+                  <li>使用 GPT-4o 分析頁面內容</li>
+                  <li>根據關鍵詞生成優化建議</li>
+                  <li>檢測內容可讀性問題</li>
+                  <li>評估頁面競爭力</li>
+                  <li>使用 OpenAI GPT-4o 分析</li>
                 </ul>
                 <p className="text-xs mt-2 text-purple-700">
                   🤖 使用 OpenAI GPT-4 技術
@@ -171,6 +227,11 @@ export function AdminAISEO() {
                   <CheckCircle className="h-5 w-5" />
                   AI 生成結果
                 </CardTitle>
+                {useCustomKeywords && customKeywords && (
+                  <p className="text-xs text-purple-600 mt-1">
+                    🎯 已使用自定義關鍵字: {customKeywords}
+                  </p>
+                )}
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>

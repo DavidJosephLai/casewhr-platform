@@ -19323,7 +19323,7 @@ app.post("/make-server-215f78a5/ai-seo/generate", async (c) => {
     
     // 🆕 支持 URL 自動生成模式
     if (body.url && body.autoAnalyze) {
-      console.log(`🤖 [AI SEO] URL Auto-generate mode for: ${body.url}`);
+      console.log(`🤖 [AI SEO] URL Auto-generate mode for: ${body.url}${body.customKeywords ? ` (Custom Keywords: ${body.customKeywords})` : ''}`);
       
       const pageContexts: Record<string, string> = {
         '/': 'Casewhere 是一個全球接案平台，連接客戶與專業自由工作者。首頁應該突出平台的核心價值、服務範圍和用戶優勢。',
@@ -19340,15 +19340,20 @@ app.post("/make-server-215f78a5/ai-seo/generate", async (c) => {
       
       const pageContext = pageContexts[body.url] || `這是 Casewhere 平台的 ${body.url} 頁面。`;
       
+      // 新增：支持自定義關鍵字
+      const customKeywordsHint = body.customKeywords 
+        ? `\n\n🎯 用戶指定的重點關鍵字: ${body.customKeywords}\n請務必在生成的 SEO 內容中優先使用這些關鍵字。` 
+        : '';
+      
       const prompt = `請為 Casewhere 接案平台的以下頁面生成 SEO 優化內容：
 
 URL: ${body.url}
-頁面上下文: ${pageContext}
+頁面上下文: ${pageContext}${customKeywordsHint}
 
 請生成：
 1. SEO 標題（title）：50-60 字符，包含核心關鍵詞，吸引點擊
 2. SEO 描述（description）：150-160 字符，簡潔有力，包含行動呼籲
-3. 關鍵詞列表（keywords）：5-8 個相關關鍵詞，用逗號分隔
+3. 關鍵詞列表（keywords）：5-8 個相關關鍵詞，用逗號分隔${body.customKeywords ? '（優先使用用戶指定的關鍵字）' : ''}
 
 請以以下 JSON 格式回應：
 {
@@ -19412,6 +19417,7 @@ URL: ${body.url}
       await kv.set(kvKey, JSON.stringify({
         url: body.url,
         ...seoData,
+        customKeywords: body.customKeywords || null, // 記錄使用的自定義關鍵字
         generatedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }));
