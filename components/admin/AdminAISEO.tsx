@@ -69,6 +69,7 @@ export function AdminAISEO() {
       const data = await response.json();
       setReports(data.reports || []);
       console.log('✅ 已載入報告列表:', data.reports.length);
+      console.log('📊 報告詳情:', data.reports);
     } catch (error: any) {
       console.error('❌ 載入報告失敗:', error);
       toast.error('載入報告失敗');
@@ -84,6 +85,8 @@ export function AdminAISEO() {
     }
 
     try {
+      console.log('🗑️ 準備刪除報告:', reportId);
+      
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai-seo/reports/${reportId}`,
         {
@@ -95,17 +98,24 @@ export function AdminAISEO() {
       );
 
       if (!response.ok) {
-        throw new Error('Failed to delete report');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete report');
       }
 
+      console.log('✅ 報告已刪除:', reportId);
       toast.success('✅ 報告已刪除');
-      fetchReports(); // 重新載入列表
+      
+      // 清除選中狀態（如果是當前選中的報告）
       if (selectedReport?.id === reportId) {
         setSelectedReport(null);
       }
+      
+      // 重新載入列表
+      await fetchReports();
+      
     } catch (error: any) {
       console.error('❌ 刪除失敗:', error);
-      toast.error('刪除報告失敗');
+      toast.error(`刪除報告失敗: ${error.message}`);
     }
   };
 
@@ -405,7 +415,10 @@ export function AdminAISEO() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => setSelectedReport(selectedReport?.id === report.id ? null : report)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedReport(selectedReport?.id === report.id ? null : report);
+                        }}
                         className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
                       >
                         <Eye className="h-4 w-4" />
@@ -413,7 +426,10 @@ export function AdminAISEO() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => deleteReport(report.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteReport(report.id);
+                        }}
                         className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-100"
                       >
                         <Trash2 className="h-4 w-4" />

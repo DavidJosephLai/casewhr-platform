@@ -19478,20 +19478,24 @@ app.get("/make-server-215f78a5/ai-seo/reports", async (c) => {
     // 使用 getByPrefix 獲取所有報告
     const allReports = await kv.getByPrefix('ai_seo_report:');
     
+    console.log(`📊 [AI SEO] Raw reports count: ${allReports?.length || 0}`);
+    
     // 解析並排序報告（最新的在前）
     const reports = allReports
-      .map(report => {
+      .map((report, index) => {
         try {
-          return JSON.parse(report);
+          const parsed = JSON.parse(report);
+          console.log(`✅ [AI SEO] Parsed report ${index + 1}:`, parsed.id);
+          return parsed;
         } catch (e) {
-          console.error('❌ [AI SEO] Failed to parse report:', e);
+          console.error(`❌ [AI SEO] Failed to parse report ${index + 1}:`, e);
           return null;
         }
       })
       .filter(report => report !== null)
       .sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime());
     
-    console.log(`✅ [AI SEO] Found ${reports.length} reports`);
+    console.log(`✅ [AI SEO] Found ${reports.length} valid reports`);
     
     return c.json({
       success: true,
