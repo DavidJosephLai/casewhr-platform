@@ -17,10 +17,13 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle,
-  ArrowRight
+  ArrowRight,
+  Copy,
+  Check
 } from 'lucide-react';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { useLanguage } from '../lib/LanguageContext';
+import { toast } from 'sonner';
 
 interface DynamicSEOPageProps {
   contentId: string;
@@ -58,6 +61,7 @@ export function DynamicSEOPage({ contentId }: DynamicSEOPageProps) {
   const [content, setContent] = useState<GeneratedContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const { language } = useLanguage();
 
   useEffect(() => {
@@ -223,6 +227,55 @@ export function DynamicSEOPage({ contentId }: DynamicSEOPageProps) {
     insertSchema('schema-article', articleSchema);
     insertSchema('schema-faq', faqSchema);
     insertSchema('schema-breadcrumb', breadcrumbSchema);
+  };
+
+  /**
+   * 處理分享功能
+   */
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: content?.title || 'CaseWHR',
+      text: content?.description || '',
+      url: shareUrl,
+    };
+
+    // 檢查是否支持 Web Share API
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        toast.success('分享成功！');
+      } catch (error: any) {
+        // 用戶取消分享
+        if (error.name !== 'AbortError') {
+          console.error('Share failed:', error);
+          // 降級到複製連結
+          copyToClipboard(shareUrl);
+        }
+      }
+    } else {
+      // 不支持 Web Share API，直接複製連結
+      copyToClipboard(shareUrl);
+    }
+  };
+
+  /**
+   * 複製連結到剪貼簿
+   */
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success('✅ 連結已複製到剪貼簿！');
+      
+      // 3秒後重置圖標
+      setTimeout(() => {
+        setCopied(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Copy failed:', error);
+      toast.error('複製失敗，請手動複製連結');
+    }
   };
 
   if (loading) {
@@ -403,11 +456,69 @@ export function DynamicSEOPage({ contentId }: DynamicSEOPageProps) {
         )}
 
         {/* Share Section */}
-        <div className="mt-8 flex justify-center">
-          <Button variant="outline" size="sm">
-            <Share2 className="h-4 w-4 mr-2" />
-            分享此頁面
+        <div className="mt-8 flex justify-center gap-3">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleShare}
+            className="hover:bg-blue-50 hover:border-blue-500"
+          >
+            {copied ? (
+              <>
+                <Check className="h-4 w-4 mr-2 text-green-600" />
+                已複製
+              </>
+            ) : (
+              <>
+                <Share2 className="h-4 w-4 mr-2" />
+                分享此頁面
+              </>
+            )}
           </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => copyToClipboard(window.location.href)}
+            className="hover:bg-gray-50"
+          >
+            {copied ? (
+              <Check className="h-4 w-4 text-green-600" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+
+        {/* Social Share Links (Optional, shown on larger screens) */}
+        <div className="mt-4 flex justify-center gap-2 text-xs text-gray-500">
+          <span>分享到：</span>
+          <a
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-blue-600 transition-colors"
+          >
+            Facebook
+          </a>
+          <span>•</span>
+          <a
+            href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(content.title)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-blue-400 transition-colors"
+          >
+            Twitter
+          </a>
+          <span>•</span>
+          <a
+            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-blue-700 transition-colors"
+          >
+            LinkedIn
+          </a>
         </div>
       </div>
     </article>
