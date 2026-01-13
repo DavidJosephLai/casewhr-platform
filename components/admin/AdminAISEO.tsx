@@ -63,20 +63,23 @@ export function AdminAISEO() {
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch reports');
+        console.error('❌ API 返回錯誤:', response.status, response.statusText);
+        setReports([]);
+        return;
       }
 
       const data = await response.json();
       
-      // 確保 reports 是數組
-      const reportsList = Array.isArray(data.reports) ? data.reports : [];
+      // 確保 reports 是數組，並過濾掉無效數據
+      const reportsList = Array.isArray(data.reports) 
+        ? data.reports.filter((r: any) => r && r.id && r.url && r.title) 
+        : [];
+      
       setReports(reportsList);
       
       console.log('✅ 已載入報告列表:', reportsList.length);
-      console.log('📊 報告詳情:', reportsList);
     } catch (error: any) {
       console.error('❌ 載入報告失敗:', error);
-      // 不顯示 toast，避免干擾用戶
       setReports([]); // 設置為空數組
     } finally {
       setIsLoadingReports(false);
@@ -126,8 +129,17 @@ export function AdminAISEO() {
 
   // 🆕 組件載入時獲取報告
   useEffect(() => {
-    fetchReports();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // 安全地獲取報告，避免崩潰
+    const loadReports = async () => {
+      try {
+        await fetchReports();
+      } catch (error) {
+        console.error('❌ 初始化載入報告失敗:', error);
+        // 靜默失敗，不影響其他功能
+      }
+    };
+    
+    loadReports();
   }, []); // 只在組件掛載時執行一次
 
   const handleGenerate = async () => {
