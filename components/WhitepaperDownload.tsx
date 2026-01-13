@@ -10,9 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export function WhitepaperDownload() {
   const { language } = useLanguage();
@@ -179,216 +180,19 @@ export function WhitepaperDownload() {
         }
       );
 
-      // Generate whitepaper content
-      const whitepaperContent = generateWhitepaper(language);
+      // Generate HTML whitepaper (supports Chinese perfectly)
+      const htmlContent = generateHTMLWhitepaper(language);
       
-      // Create PDF and download
-      const pdf = new jsPDF();
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 15;
-      const maxLineWidth = pageWidth - margin * 2;
-      let yPosition = margin;
-
-      // Helper function to add text with auto-pagination
-      const addText = (text: string, fontSize = 10, isBold = false) => {
-        pdf.setFontSize(fontSize);
-        const lines = pdf.splitTextToSize(text, maxLineWidth);
-        
-        lines.forEach((line: string) => {
-          if (yPosition > pageHeight - margin) {
-            pdf.addPage();
-            yPosition = margin;
-          }
-          pdf.text(line, margin, yPosition);
-          yPosition += fontSize * 0.5;
-        });
-      };
-
-      // Add content based on language
-      if (language === 'en') {
-        // Cover page
-        pdf.setFontSize(24);
-        pdf.text('CASEWHR PLATFORM WHITEPAPER', pageWidth / 2, 50, { align: 'center' });
-        pdf.setFontSize(14);
-        pdf.text('January 2026', pageWidth / 2, 70, { align: 'center' });
-        pdf.addPage();
-        yPosition = margin;
-
-        // Table of Contents
-        addText('TABLE OF CONTENTS', 16, true);
-        yPosition += 5;
-        addText('1. Executive Summary');
-        addText('2. Platform Architecture & Technology Stack');
-        addText('3. Multi-Currency System Design');
-        addText('4. AI-Powered Project Matching Algorithm');
-        addText('5. Security & Escrow System');
-        addText('6. Enterprise Solutions Overview');
-        addText('7. Future Roadmap & Vision');
-        pdf.addPage();
-        yPosition = margin;
-
-        // Chapter 1
-        addText('1. EXECUTIVE SUMMARY', 14, true);
-        yPosition += 5;
-        addText('CaseWhr is a next-generation global freelance platform designed to connect businesses with talented professionals worldwide. Our platform addresses the key pain points of traditional freelance marketplaces through innovative technology and user-centric design.');
-        yPosition += 5;
-        addText('Key Differentiators:');
-        addText('- Multi-currency support (USD, TWD, CNY)');
-        addText('- Low service fees (5-10% vs industry standard 20%)');
-        addText('- AI-powered project matching');
-        addText('- Same-day withdrawal capability');
-        addText('- Enterprise-grade solutions with custom branding');
-        yPosition += 10;
-
-        // Chapter 2
-        addText('2. PLATFORM ARCHITECTURE & TECHNOLOGY STACK', 14, true);
-        yPosition += 5;
-        addText('Frontend: React + TypeScript for type-safe development, Tailwind CSS v4 for modern responsive design, Real-time updates with WebSocket connections');
-        yPosition += 3;
-        addText('Backend: Supabase for database and authentication, Edge Functions for serverless API endpoints, PostgreSQL for reliable data storage');
-        yPosition += 3;
-        addText('Payment Infrastructure: Stripe for international payments, PayPal for global transactions, ECPay for Taiwan market, Bank transfer integration for local payments');
-        yPosition += 10;
-
-        // Chapter 3
-        addText('3. MULTI-CURRENCY SYSTEM DESIGN', 14, true);
-        yPosition += 5;
-        addText('Our innovative multi-currency system allows users to work in their preferred currency while maintaining platform-wide consistency.');
-        yPosition += 3;
-        addText('Storage: All transactions stored in USD (base currency)');
-        addText('Display: Automatic conversion to user preferred currency (USD/TWD/CNY)');
-        addText('Rates: Real-time exchange rates with daily updates');
-        addText('Transparency: Clear fee breakdown in all currencies');
-        yPosition += 10;
-
-        // Chapter 4
-        addText('4. AI-POWERED PROJECT MATCHING ALGORITHM', 14, true);
-        yPosition += 5;
-        addText('Our proprietary AI matching algorithm analyzes: Freelancer skills and expertise, Project requirements and complexity, Historical performance data, Client preferences and feedback, Timezone and language compatibility.');
-        yPosition += 3;
-        addText('Result: 85% higher project success rate compared to manual matching');
-        yPosition += 10;
-
-        // Chapter 5
-        addText('5. SECURITY & ESCROW SYSTEM', 14, true);
-        yPosition += 5;
-        addText('Security Features: KYC verification for all users, Two-factor authentication (2FA), Encrypted data transmission, Regular security audits');
-        yPosition += 3;
-        addText('Escrow System: Client funds held securely until project completion, Milestone-based release system, Dispute resolution mechanism, Same-day withdrawal for completed projects');
-        yPosition += 10;
-
-        // Chapter 6
-        addText('6. ENTERPRISE SOLUTIONS OVERVIEW', 14, true);
-        yPosition += 5;
-        addText('Our Enterprise tier offers: Custom branding and white-label options, Dedicated account manager, Priority support (24/7), Advanced analytics and reporting, Team management tools, Custom integration capabilities');
-        yPosition += 3;
-        addText('Ideal for: Agencies, consulting firms, and businesses with ongoing freelance needs');
-        yPosition += 10;
-
-        // Chapter 7
-        addText('7. FUTURE ROADMAP & VISION', 14, true);
-        yPosition += 5;
-        addText('Q1 2026: Cryptocurrency payment integration, Mobile app launch (iOS & Android), Advanced AI project recommendations');
-        yPosition += 3;
-        addText('Q2 2026: Blockchain-based reputation system, Global talent certification program, Video consultation features');
-        yPosition += 3;
-        addText('Q3 2026: Marketplace for digital products, Automated contract generation, Multi-language AI translation');
-        yPosition += 3;
-        addText('Q4 2026: Decentralized identity verification, Smart contract automation, Global expansion to 50+ countries');
-        yPosition += 10;
-
-        // Conclusion
-        addText('CONCLUSION', 14, true);
-        yPosition += 5;
-        addText('CaseWhr is positioned to become the leading global freelance platform by combining cutting-edge technology with user-focused features. Our commitment to transparency, security, and innovation sets us apart in the competitive freelance marketplace.');
-        yPosition += 10;
-
-        // Contact
-        addText('Contact: support@casewhr.com');
-        addText('Website: https://casewhr.com');
-        addText('Version: 1.0 | Updated: January 2026');
-      } else {
-        // Chinese version (similar structure)
-        pdf.setFontSize(24);
-        pdf.text('接得準平台白皮書', pageWidth / 2, 50, { align: 'center' });
-        pdf.setFontSize(14);
-        pdf.text('2026 年 1 月', pageWidth / 2, 70, { align: 'center' });
-        pdf.addPage();
-        yPosition = margin;
-
-        addText('目錄', 16, true);
-        yPosition += 5;
-        addText('1. 執行摘要');
-        addText('2. 平台架構與技術堆疊');
-        addText('3. 多幣計價系統設計');
-        addText('4. AI 智能專案配對演算法');
-        addText('5. 安全性與託管系統');
-        addText('6. 企業級解決方案概覽');
-        addText('7. 未來發展藍圖與願景');
-        pdf.addPage();
-        yPosition = margin;
-
-        addText('1. 執行摘要', 14, true);
-        yPosition += 5;
-        addText('接得準（CaseWhr）是新一代全球接案平台，旨在連接全球企業與專業人才。我們的平台透過創新技術和以用戶為中心的設計，解決了傳統接案市場的關鍵痛點。');
-        yPosition += 5;
-        addText('核心優勢：多幣計價支援（USD、TWD、CNY）、低服務費（5-10% vs 業界標準 20%）、AI 智能專案配對、當日提款功能、企業級解決方案與客製化品牌');
-        yPosition += 10;
-
-        addText('2. 平台架構與技術堆疊', 14, true);
-        yPosition += 5;
-        addText('前端技術：React + TypeScript 實現類型安全開發，Tailwind CSS v4 打造現代響應式設計，WebSocket 實現即時更新');
-        yPosition += 3;
-        addText('後端技術：Supabase 提供數���庫和身份驗證，Edge Functions 實現無服務器 API，PostgreSQL 確保可靠的數據存儲');
-        yPosition += 3;
-        addText('支付基礎設施：Stripe 處理國際支付，PayPal 支援全球交易，ECPay 服務台灣市場，銀行轉帳整合本地支付');
-        yPosition += 10;
-
-        addText('3. 多幣計價系統設計', 14, true);
-        yPosition += 5;
-        addText('我們創新的多幣計價系統允許用戶使用偏好貨幣，同時保持平台一致性。存儲：所有交易以 USD（基準貨幣）存儲。顯示：自動轉換為用戶偏好貨幣（USD/TWD/CNY）。匯率：每日更新的即時匯率。透明度：所有貨幣的清晰費用明細。');
-        yPosition += 10;
-
-        addText('4. AI 智能專案配對演算法', 14, true);
-        yPosition += 5;
-        addText('我們專有的 AI 配對演算法分析：接案者技能與專業知識、專案需求與複雜度、歷史績效數據、客戶偏好與回饋、時區與語言相容性。結果：與手動配對相比，專案成功率提高 85%');
-        yPosition += 10;
-
-        addText('5. 安全性與託管系統', 14, true);
-        yPosition += 5;
-        addText('安全功能：所有用戶的 KYC 身份驗證、雙因素身份驗證（2FA）、加密數據傳輸、定期安全審計');
-        yPosition += 3;
-        addText('託管系統：客戶資金安全��管至專案完成、里程碑式釋放系統、爭議解決機制、完成專案當日提款');
-        yPosition += 10;
-
-        addText('6. 企業級解決方案概覽', 14, true);
-        yPosition += 5;
-        addText('我們的企業版提供：客製化品牌與白標選項、專屬客戶經理、優先支援（24/7）、高級分析與報表、團隊管理工具、客製化整合功能。適合：代理商、諮詢公司及有持續接案需求的企業');
-        yPosition += 10;
-
-        addText('7. 未來發展藍圖與願景', 14, true);
-        yPosition += 5;
-        addText('2026 年第一季：加密貨幣支付整合、移動應用程式發布（iOS & Android）、高級 AI 專案推薦');
-        yPosition += 3;
-        addText('2026 年第二季：區塊鏈聲譽系統、全球人才認證計劃、視訊諮詢功能');
-        yPosition += 3;
-        addText('2026 年第三季：數位產品市場、自動化合約生成、多語言 AI 翻譯');
-        yPosition += 3;
-        addText('2026 年第四季：去中心化身份驗證、智能合約自動化、全球擴展至 50+ 國家');
-        yPosition += 10;
-
-        addText('結論', 14, true);
-        yPosition += 5;
-        addText('接得準致力於結合尖端技術與用戶導向功能，成為領先的全球接案平台。我們對透明度、安全性和創新的承諾，讓我們在競爭激烈的接案市場中脫穎而出。');
-        yPosition += 10;
-
-        addText('聯絡方式：support@casewhr.com');
-        addText('網站：https://casewhr.com');
-        addText('版本：1.0 | 更新日期：2026 年 1 月');
-      }
-
-      pdf.save(`CaseWhr-Whitepaper-${language.toUpperCase()}-2026.pdf`);
+      // Create blob and download
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `CaseWhr-Whitepaper-${language.toUpperCase()}-2026.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
       toast.success(t.success);
       setShowDialog(false);
@@ -401,302 +205,360 @@ export function WhitepaperDownload() {
     }
   };
 
-  const generateWhitepaper = (lang: string) => {
+  const generateHTMLWhitepaper = (lang: string) => {
     if (lang === 'en') {
       return `
-================================================================================
-                    CASEWHR PLATFORM WHITEPAPER
-                          January 2026
-================================================================================
-
-TABLE OF CONTENTS
-1. Executive Summary
-2. Platform Architecture & Technology Stack
-3. Multi-Currency System Design
-4. AI-Powered Project Matching Algorithm
-5. Security & Escrow System
-6. Enterprise Solutions Overview
-7. Future Roadmap & Vision
-
-================================================================================
-1. EXECUTIVE SUMMARY
-================================================================================
-
-CaseWhr (接得準) is a next-generation global freelance platform designed to 
-connect businesses with talented professionals worldwide. Our platform addresses
-the key pain points of traditional freelance marketplaces through innovative
-technology and user-centric design.
-
-Key Differentiators:
-- Multi-currency support (USD, TWD, CNY)
-- Low service fees (5-10% vs industry standard 20%)
-- AI-powered project matching
-- Same-day withdrawal capability
-- Enterprise-grade solutions with custom branding
-
-================================================================================
-2. PLATFORM ARCHITECTURE & TECHNOLOGY STACK
-================================================================================
-
-Frontend:
-- React + TypeScript for type-safe development
-- Tailwind CSS v4 for modern, responsive design
-- Real-time updates with WebSocket connections
-
-Backend:
-- Supabase for database and authentication
-- Edge Functions for serverless API endpoints
-- PostgreSQL for reliable data storage
-
-Payment Infrastructure:
-- Stripe for international payments
-- PayPal for global transactions
-- ECPay for Taiwan market
-- Bank transfer integration for local payments
-
-================================================================================
-3. MULTI-CURRENCY SYSTEM DESIGN
-================================================================================
-
-Our innovative multi-currency system allows users to work in their preferred
-currency while maintaining platform-wide consistency:
-
-Storage: All transactions stored in USD (base currency)
-Display: Automatic conversion to user's preferred currency (USD/TWD/CNY)
-Rates: Real-time exchange rates with daily updates
-Transparency: Clear fee breakdown in all currencies
-
-This system eliminates currency confusion and provides a seamless experience
-for international collaboration.
-
-================================================================================
-4. AI-POWERED PROJECT MATCHING ALGORITHM
-================================================================================
-
-Our proprietary AI matching algorithm analyzes:
-- Freelancer skills and expertise
-- Project requirements and complexity
-- Historical performance data
-- Client preferences and feedback
-- Timezone and language compatibility
-
-Result: 85% higher project success rate compared to manual matching
-
-================================================================================
-5. SECURITY & ESCROW SYSTEM
-================================================================================
-
-Security Features:
-- KYC verification for all users
-- Two-factor authentication (2FA)
-- Encrypted data transmission
-- Regular security audits
-
-Escrow System:
-- Client funds held securely until project completion
-- Milestone-based release system
-- Dispute resolution mechanism
-- Same-day withdrawal for completed projects
-
-================================================================================
-6. ENTERPRISE SOLUTIONS OVERVIEW
-================================================================================
-
-Our Enterprise tier offers:
-- Custom branding and white-label options
-- Dedicated account manager
-- Priority support (24/7)
-- Advanced analytics and reporting
-- Team management tools
-- Custom integration capabilities
-
-Ideal for: Agencies, consulting firms, and businesses with ongoing freelance needs
-
-================================================================================
-7. FUTURE ROADMAP & VISION
-================================================================================
-
-Q1 2026:
-- Cryptocurrency payment integration
-- Mobile app launch (iOS & Android)
-- Advanced AI project recommendations
-
-Q2 2026:
-- Blockchain-based reputation system
-- Global talent certification program
-- Video consultation features
-
-Q3 2026:
-- Marketplace for digital products
-- Automated contract generation
-- Multi-language AI translation
-
-Q4 2026:
-- Decentralized identity verification
-- Smart contract automation
-- Global expansion to 50+ countries
-
-================================================================================
-CONCLUSION
-================================================================================
-
-CaseWhr is positioned to become the leading global freelance platform by
-combining cutting-edge technology with user-focused features. Our commitment
-to transparency, security, and innovation sets us apart in the competitive
-freelance marketplace.
-
-Join us in revolutionizing the future of work.
-
-================================================================================
-Contact: info@casewhr.com
-Website: https://casewhr.com
-Version: 1.0 | Updated: January 2026
-================================================================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CaseWhr Platform Whitepaper</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .container {
+      width: 80%;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2, h3, h4, h5, h6 {
+      color: #333;
+    }
+    p {
+      color: #666;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    .header h2 {
+      font-size: 14px;
+      color: #999;
+    }
+    .toc {
+      margin-bottom: 20px;
+    }
+    .toc h2 {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .toc p {
+      margin: 0;
+      margin-bottom: 3px;
+    }
+    .chapter {
+      margin-bottom: 20px;
+    }
+    .chapter h2 {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .chapter p {
+      margin: 0;
+      margin-bottom: 3px;
+    }
+    .chapter ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .chapter ul li {
+      margin-bottom: 3px;
+    }
+    .conclusion {
+      margin-bottom: 20px;
+    }
+    .conclusion h2 {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .conclusion p {
+      margin: 0;
+      margin-bottom: 3px;
+    }
+    .contact {
+      margin-bottom: 20px;
+    }
+    .contact h2 {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .contact p {
+      margin: 0;
+      margin-bottom: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>CASEWHR PLATFORM WHITEPAPER</h1>
+      <h2>January 2026</h2>
+    </div>
+    <div class="toc">
+      <h2>TABLE OF CONTENTS</h2>
+      <p>1. Executive Summary</p>
+      <p>2. Platform Architecture & Technology Stack</p>
+      <p>3. Multi-Currency System Design</p>
+      <p>4. AI-Powered Project Matching Algorithm</p>
+      <p>5. Security & Escrow System</p>
+      <p>6. Enterprise Solutions Overview</p>
+      <p>7. Future Roadmap & Vision</p>
+    </div>
+    <div class="chapter">
+      <h2>1. EXECUTIVE SUMMARY</h2>
+      <p>CaseWhr is a next-generation global freelance platform designed to connect businesses with talented professionals worldwide. Our platform addresses the key pain points of traditional freelance marketplaces through innovative technology and user-centric design.</p>
+      <p>Key Differentiators:</p>
+      <ul>
+        <li>Multi-currency support (USD, TWD, CNY)</li>
+        <li>Low service fees (5-10% vs industry standard 20%)</li>
+        <li>AI-powered project matching</li>
+        <li>Same-day withdrawal capability</li>
+        <li>Enterprise-grade solutions with custom branding</li>
+      </ul>
+    </div>
+    <div class="chapter">
+      <h2>2. PLATFORM ARCHITECTURE & TECHNOLOGY STACK</h2>
+      <p>Frontend: React + TypeScript for type-safe development, Tailwind CSS v4 for modern responsive design, Real-time updates with WebSocket connections</p>
+      <p>Backend: Supabase for database and authentication, Edge Functions for serverless API endpoints, PostgreSQL for reliable data storage</p>
+      <p>Payment Infrastructure: Stripe for international payments, PayPal for global transactions, ECPay for Taiwan market, Bank transfer integration for local payments</p>
+    </div>
+    <div class="chapter">
+      <h2>3. MULTI-CURRENCY SYSTEM DESIGN</h2>
+      <p>Our innovative multi-currency system allows users to work in their preferred currency while maintaining platform-wide consistency.</p>
+      <ul>
+        <li>Storage: All transactions stored in USD (base currency)</li>
+        <li>Display: Automatic conversion to user preferred currency (USD/TWD/CNY)</li>
+        <li>Rates: Real-time exchange rates with daily updates</li>
+        <li>Transparency: Clear fee breakdown in all currencies</li>
+      </ul>
+    </div>
+    <div class="chapter">
+      <h2>4. AI-POWERED PROJECT MATCHING ALGORITHM</h2>
+      <p>Our proprietary AI matching algorithm analyzes: Freelancer skills and expertise, Project requirements and complexity, Historical performance data, Client preferences and feedback, Timezone and language compatibility.</p>
+      <p>Result: 85% higher project success rate compared to manual matching</p>
+    </div>
+    <div class="chapter">
+      <h2>5. SECURITY & ESCROW SYSTEM</h2>
+      <p>Security Features: KYC verification for all users, Two-factor authentication (2FA), Encrypted data transmission, Regular security audits</p>
+      <p>Escrow System: Client funds held securely until project completion, Milestone-based release system, Dispute resolution mechanism, Same-day withdrawal for completed projects</p>
+    </div>
+    <div class="chapter">
+      <h2>6. ENTERPRISE SOLUTIONS OVERVIEW</h2>
+      <p>Our Enterprise tier offers: Custom branding and white-label options, Dedicated account manager, Priority support (24/7), Advanced analytics and reporting, Team management tools, Custom integration capabilities</p>
+      <p>Ideal for: Agencies, consulting firms, and businesses with ongoing freelance needs</p>
+    </div>
+    <div class="chapter">
+      <h2>7. FUTURE ROADMAP & VISION</h2>
+      <p>Q1 2026: Cryptocurrency payment integration, Mobile app launch (iOS & Android), Advanced AI project recommendations</p>
+      <p>Q2 2026: Blockchain-based reputation system, Global talent certification program, Video consultation features</p>
+      <p>Q3 2026: Marketplace for digital products, Automated contract generation, Multi-language AI translation</p>
+      <p>Q4 2026: Decentralized identity verification, Smart contract automation, Global expansion to 50+ countries</p>
+    </div>
+    <div class="conclusion">
+      <h2>CONCLUSION</h2>
+      <p>CaseWhr is positioned to become the leading global freelance platform by combining cutting-edge technology with user-focused features. Our commitment to transparency, security, and innovation sets us apart in the competitive freelance marketplace.</p>
+    </div>
+    <div class="contact">
+      <h2>Contact</h2>
+      <p>Email: support@casewhr.com</p>
+      <p>Website: https://casewhr.com</p>
+      <p>Version: 1.0 | Updated: January 2026</p>
+    </div>
+  </div>
+</body>
+</html>
 `;
     } else {
       return `
-================================================================================
-                    接得準平台��皮書
-                      2026 年 1 月
-================================================================================
-
-目錄
-1. 執行摘要
-2. 平台架構與技術堆疊
-3. 多幣計價系統設計
-4. AI 智能專案配對演算法
-5. 安全性與託管系統
-6. 企業級解決方案概覽
-7. 未來發展藍圖與願景
-
-================================================================================
-1. 執行摘要
-================================================================================
-
-接得準（CaseWhr）是新一代全球接案平台，旨在連接全球企業與專業人才。
-我們的平台透過創新技術和以用戶為中心的設計，解決了傳統接案市場的關鍵痛點。
-
-核心優勢：
-- 多幣計價支援（USD、TWD、CNY）
-- 低服務費（5-10% vs 業界標準 20%）
-- AI 智能專案配對
-- 當日提款功能
-- 企業級解決方案與客製化品牌
-
-================================================================================
-2. 平台架構與技術堆疊
-================================================================================
-
-前端技術：
-- React + TypeScript 實現類型安全開發
-- Tailwind CSS v4 打造現代響應式設計
-- WebSocket 實現即時更新
-
-後端技術：
-- Supabase 提供數據庫和身份驗證
-- Edge Functions 實現無服務器 API
-- PostgreSQL 確保可靠的數據存儲
-
-支付基礎設施：
-- Stripe 處理國際支付
-- PayPal 支援全球交易
-- ECPay 服務台灣市場
-- 銀行轉帳整合本地支付
-
-================================================================================
-3. 多幣計價系統設計
-================================================================================
-
-我們創新的多幣計價系統允許用戶使用偏好貨幣，同時保持平台一致性：
-
-存儲：所有交易以 USD（基準貨幣）存儲
-顯示：自動轉換為用戶偏好貨幣（USD/TWD/CNY）
-匯率：每日更新的即時匯率
-透明度：所有貨幣的清晰費用明細
-
-此系統消除了貨幣混淆，為國際合作提供無縫體驗。
-
-================================================================================
-4. AI 智能專案配對演算法
-================================================================================
-
-我們專有的 AI 配對演算法分析：
-- 接案者技能與專業知識
-- 專案需求與複雜度
-- 歷史績效數據
-- 客戶偏好與回饋
-- 時區與語言相容性
-
-結果：與手動配對相比，專案成功率提高 85%
-
-================================================================================
-5. 安全性與託管系統
-================================================================================
-
-安全功能：
-- 所有用戶的 KYC 身份驗證
-- 雙因素身份驗證（2FA）
-- 加密數據傳輸
-- 定期安全審計
-
-託管系統：
-- 客戶資金安全保管至專案完成
-- 里程碑式釋放系統
-- 爭議解決機制
-- 完成專案當日提款
-
-================================================================================
-6. 企業級解決方案概覽
-================================================================================
-
-我們的企業版提供：
-- 客製化品牌與白標選項
-- 專屬客戶經理
-- 優先支援（24/7）
-- 高級分析與報表
-- 團隊管理工具
-- 客製化整合功能
-
-適合：代理商、諮詢公司及有持續接案需求的企業
-
-================================================================================
-7. 未來發展藍圖與願景
-================================================================================
-
-2026 年第一季：
-- 加密貨幣支付整合
-- 移動應用程式發布（iOS & Android）
-- 高級 AI 專案推薦
-
-2026 年第二季：
-- 區塊鏈聲譽系統
-- 全球人才認證計劃
-- 視訊諮詢功能
-
-2026 年第三季：
-- 數位產品市場
-- 自動化合約生成
-- 多語言 AI 翻譯
-
-2026 年第四季：
-- 去中心化身份驗證
-- 智能合約自動化
-- 全球擴展至 50+ 國家
-
-================================================================================
-結論
-================================================================================
-
-接得準致力於結合尖端技術與用戶導向功能，成為領先的全球接案平台。
-我們對透明度、安全性和創新的承諾，讓我們在競爭激烈的接案市場中脫穎而出。
-
-加入我們，共同革新工作的未來。
-
-================================================================================
-聯絡方式：info@casewhr.com
-網站：https://casewhr.com
-版本：1.0 | 更新日期：2026 年 1 月
-================================================================================
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>接得準平台白皮書</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .container {
+      width: 80%;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2, h3, h4, h5, h6 {
+      color: #333;
+    }
+    p {
+      color: #666;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    .header h2 {
+      font-size: 14px;
+      color: #999;
+    }
+    .toc {
+      margin-bottom: 20px;
+    }
+    .toc h2 {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .toc p {
+      margin: 0;
+      margin-bottom: 3px;
+    }
+    .chapter {
+      margin-bottom: 20px;
+    }
+    .chapter h2 {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .chapter p {
+      margin: 0;
+      margin-bottom: 3px;
+    }
+    .chapter ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .chapter ul li {
+      margin-bottom: 3px;
+    }
+    .conclusion {
+      margin-bottom: 20px;
+    }
+    .conclusion h2 {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .conclusion p {
+      margin: 0;
+      margin-bottom: 3px;
+    }
+    .contact {
+      margin-bottom: 20px;
+    }
+    .contact h2 {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .contact p {
+      margin: 0;
+      margin-bottom: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>接得準平台白皮書</h1>
+      <h2>2026 年 1 月</h2>
+    </div>
+    <div class="toc">
+      <h2>目錄</h2>
+      <p>1. 執行摘要</p>
+      <p>2. 平台架構與技術堆疊</p>
+      <p>3. 多幣計價系統設計</p>
+      <p>4. AI 智能專案配對演算法</p>
+      <p>5. 安全性與託管系統</p>
+      <p>6. 企業級解決方案概覽</p>
+      <p>7. 未來發展藍圖與願景</p>
+    </div>
+    <div class="chapter">
+      <h2>1. 執行摘要</h2>
+      <p>接得準（CaseWhr）是新一代全球接案平台，旨在連接全球企業與專業人才。我們的平台透過創新技術和以用戶為中心的設計，解決了傳統接案市場的關鍵痛點。</p>
+      <p>核心優勢：</p>
+      <ul>
+        <li>多幣計價支援（USD、TWD、CNY）</li>
+        <li>低服務費（5-10% vs 業界標準 20%）</li>
+        <li>AI 智能專案配對</li>
+        <li>當日提款功能</li>
+        <li>企業級解決方案與客製化品牌</li>
+      </ul>
+    </div>
+    <div class="chapter">
+      <h2>2. 平台架構與技術堆疊</h2>
+      <p>前端技術：React + TypeScript 實現類型安全開發，Tailwind CSS v4 打造現代響應式設計，WebSocket 實現即時更新</p>
+      <p>後端技術：Supabase 提供數庫和身份驗證，Edge Functions 實現無服務器 API，PostgreSQL 確保可靠的數據存儲</p>
+      <p>支付基礎設施：Stripe 處理國際支付，PayPal 支援全球交易，ECPay 服務台灣市場，銀行轉帳整合本地支付</p>
+    </div>
+    <div class="chapter">
+      <h2>3. 多幣計價系統設計</h2>
+      <p>我們創新的多幣計價系統允許用戶使用偏好貨幣，同時保持平台一致性。</p>
+      <ul>
+        <li>存儲：所有交易以 USD（基準貨幣）存儲</li>
+        <li>顯示：自動轉換為用戶偏好貨幣（USD/TWD/CNY）</li>
+        <li>匯率：每日更新的即時匯率</li>
+        <li>透明度：所有貨幣的清晰費用明細</li>
+      </ul>
+    </div>
+    <div class="chapter">
+      <h2>4. AI 智能專案配對演算法</h2>
+      <p>我們專有的 AI 配對演算法分析：接案者技能與專業知識、專案需求與複雜度、歷史績效數據、客戶偏好與回饋、時區與語言相容性。</p>
+      <p>結果：與手動配對相比，專案成功率提高 85%</p>
+    </div>
+    <div class="chapter">
+      <h2>5. 安全性與託管系統</h2>
+      <p>安全功能：所有用戶的 KYC 身份驗證、雙因素身份驗證（2FA）、加密數據傳輸、定期安全審計</p>
+      <p>託管系統：客戶資金安全管至專案完成、里程碑式釋放系統、爭議解決機制、完成專案當日提款</p>
+    </div>
+    <div class="chapter">
+      <h2>6. 企業級解決方案概覽</h2>
+      <p>我們的企業版提供：客製化品牌與白標選項、專屬客戶經理、優先支援（24/7）、高級分析與報表、團隊管理工具、客製化整合功能。</p>
+      <p>適合：代理商、諮詢公司及有持續接案需求的企業</p>
+    </div>
+    <div class="chapter">
+      <h2>7. 未來發展藍圖與願景</h2>
+      <p>2026 年第一季：加密貨幣支付整合、移動應用程式發布（iOS & Android）、高級 AI 專案推薦</p>
+      <p>2026 年第二季：區塊鏈聲譽系統、全球人才認證計劃、視訊諮詢功能</p>
+      <p>2026 年第三季：數位產品市場、自動化合約生成、多語言 AI 翻譯</p>
+      <p>2026 年第四季：去中心化身份驗證、智能合約自動化、全球擴展至 50+ 國家</p>
+    </div>
+    <div class="conclusion">
+      <h2>結論</h2>
+      <p>接得準致力於結合尖端技術與用戶導向功能，成為領先的全球接案平台。我們對透明度、安全性和創新的承諾，讓我們在競爭激烈的接案市場中脫穎而出。</p>
+    </div>
+    <div class="contact">
+      <h2>聯絡方式</h2>
+      <p>Email: support@casewhr.com</p>
+      <p>網站: https://casewhr.com</p>
+      <p>版本: 1.0 | 更新日期: 2026 年 1 月</p>
+    </div>
+  </div>
+</body>
+</html>
 `;
     }
   };
