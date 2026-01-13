@@ -19586,6 +19586,321 @@ app.post("/make-server-215f78a5/ai-seo/keywords", async (c) => {
 
 console.log('✅ [SERVER] AI SEO APIs registered');
 
+// ==========================================
+// 🚀 Advanced AI Content Generator APIs
+// ==========================================
+
+// 🆕 生成完整文章內容（AI SEO 平台核心功能）
+app.post("/make-server-215f78a5/ai-content/generate-full", async (c) => {
+  try {
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return c.json({ error: 'OpenAI API key not configured' }, 500);
+    }
+
+    const generator = new (await import('./ai-content-generator.tsx')).AIContentGenerator(openaiApiKey);
+    const body = await c.req.json();
+
+    console.log(`🤖 [AI Content] Generating full content for: ${body.url}`);
+
+    const content = await generator.generateFullContent({
+      url: body.url,
+      title: body.title,
+      description: body.description,
+      keywords: body.keywords,
+      language: body.language || 'zh-TW',
+      contentType: body.contentType || 'article',
+      targetAudience: body.targetAudience,
+      tone: body.tone || 'professional',
+      wordCount: body.wordCount || 1200,
+    });
+
+    // 保存生成的內容到 KV Store
+    const reportId = `content_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const kvKey = `ai_content:${reportId}`;
+    
+    const reportData = {
+      id: reportId,
+      ...content,
+      generatedAt: new Date().toISOString(),
+      url: body.url,
+    };
+    
+    await kv.set(kvKey, JSON.stringify(reportData));
+
+    console.log(`✅ [AI Content] Full content generated: ${reportId}`);
+
+    return c.json({
+      success: true,
+      reportId,
+      ...content,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content Full] Error:', error);
+    return c.json({
+      error: 'Failed to generate content',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 生成 FAQ（專門針對 AI 搜尋引擎優化）
+app.post("/make-server-215f78a5/ai-content/generate-faq", async (c) => {
+  try {
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return c.json({ error: 'OpenAI API key not configured' }, 500);
+    }
+
+    const generator = new (await import('./ai-content-generator.tsx')).AIContentGenerator(openaiApiKey);
+    const body = await c.req.json();
+
+    console.log(`❓ [AI Content] Generating FAQ for: ${body.topic}`);
+
+    const faq = await generator.generateFAQ({
+      topic: body.topic,
+      keywords: body.keywords || [],
+      language: body.language || 'zh-TW',
+      count: body.count || 8,
+    });
+
+    return c.json({
+      success: true,
+      faq,
+      count: faq.length,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content FAQ] Error:', error);
+    return c.json({
+      error: 'Failed to generate FAQ',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 關鍵字研究（進階版）
+app.post("/make-server-215f78a5/ai-content/research-keywords", async (c) => {
+  try {
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return c.json({ error: 'OpenAI API key not configured' }, 500);
+    }
+
+    const generator = new (await import('./ai-content-generator.tsx')).AIContentGenerator(openaiApiKey);
+    const body = await c.req.json();
+
+    console.log(`🔍 [AI Content] Researching keywords for: ${body.topic}`);
+
+    const keywords = await generator.researchKeywords({
+      topic: body.topic,
+      industry: body.industry || 'freelancing',
+      language: body.language || 'zh-TW',
+      competitors: body.competitors || [],
+    });
+
+    return c.json({
+      success: true,
+      ...keywords,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content Keywords] Error:', error);
+    return c.json({
+      error: 'Failed to research keywords',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 競爭對手分析
+app.post("/make-server-215f78a5/ai-content/analyze-competitors", async (c) => {
+  try {
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return c.json({ error: 'OpenAI API key not configured' }, 500);
+    }
+
+    const generator = new (await import('./ai-content-generator.tsx')).AIContentGenerator(openaiApiKey);
+    const body = await c.req.json();
+
+    console.log(`🎯 [AI Content] Analyzing competitors: ${body.competitors?.join(', ')}`);
+
+    const analysis = await generator.analyzeCompetitors({
+      competitors: body.competitors || [],
+      topic: body.topic || 'freelancing platform',
+      language: body.language || 'zh-TW',
+    });
+
+    return c.json({
+      success: true,
+      ...analysis,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content Competitors] Error:', error);
+    return c.json({
+      error: 'Failed to analyze competitors',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 SEO 評分和改進建議
+app.post("/make-server-215f78a5/ai-content/score-seo", async (c) => {
+  try {
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return c.json({ error: 'OpenAI API key not configured' }, 500);
+    }
+
+    const generator = new (await import('./ai-content-generator.tsx')).AIContentGenerator(openaiApiKey);
+    const body = await c.req.json();
+
+    console.log(`📊 [AI Content] Scoring SEO for: ${body.url}`);
+
+    const score = await generator.scoreSEO({
+      url: body.url,
+      title: body.title,
+      description: body.description,
+      content: body.content,
+      keywords: body.keywords || [],
+      headings: body.headings || { h2: [], h3: [] },
+      language: body.language || 'zh-TW',
+    });
+
+    return c.json({
+      success: true,
+      ...score,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content Score] Error:', error);
+    return c.json({
+      error: 'Failed to score SEO',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 內部連結建議
+app.post("/make-server-215f78a5/ai-content/suggest-internal-links", async (c) => {
+  try {
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return c.json({ error: 'OpenAI API key not configured' }, 500);
+    }
+
+    const generator = new (await import('./ai-content-generator.tsx')).AIContentGenerator(openaiApiKey);
+    const body = await c.req.json();
+
+    console.log(`🔗 [AI Content] Suggesting internal links for: ${body.currentPage}`);
+
+    const links = await generator.suggestInternalLinks({
+      currentPage: body.currentPage,
+      content: body.content,
+      allPages: body.allPages || [],
+      language: body.language || 'zh-TW',
+    });
+
+    return c.json({
+      success: true,
+      links,
+      count: links.length,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content Links] Error:', error);
+    return c.json({
+      error: 'Failed to suggest internal links',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 獲取所有生成的內容
+app.get("/make-server-215f78a5/ai-content/list", async (c) => {
+  try {
+    console.log('📋 [AI Content] Fetching all generated content...');
+    
+    const allContent = await kv.getByPrefix('ai_content:');
+    
+    const contents = allContent
+      .map((item: string) => {
+        try {
+          return JSON.parse(item);
+        } catch (e) {
+          return null;
+        }
+      })
+      .filter((item: any) => item !== null)
+      .sort((a: any, b: any) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime());
+    
+    console.log(`✅ [AI Content] Found ${contents.length} content items`);
+    
+    return c.json({
+      success: true,
+      contents,
+      total: contents.length,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content List] Error:', error);
+    return c.json({
+      error: 'Failed to fetch content',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 獲取單個生成的內容
+app.get("/make-server-215f78a5/ai-content/:contentId", async (c) => {
+  try {
+    const contentId = c.req.param('contentId');
+    console.log(`📄 [AI Content] Fetching content: ${contentId}`);
+    
+    const kvKey = `ai_content:${contentId}`;
+    const content = await kv.get(kvKey);
+    
+    if (!content) {
+      return c.json({ error: 'Content not found' }, 404);
+    }
+    
+    const parsed = typeof content === 'string' ? JSON.parse(content) : content;
+    
+    return c.json({
+      success: true,
+      ...parsed,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content Get] Error:', error);
+    return c.json({
+      error: 'Failed to fetch content',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 刪除生成的內容
+app.delete("/make-server-215f78a5/ai-content/:contentId", async (c) => {
+  try {
+    const contentId = c.req.param('contentId');
+    console.log(`🗑️ [AI Content] Deleting content: ${contentId}`);
+    
+    const kvKey = `ai_content:${contentId}`;
+    await kv.del(kvKey);
+    
+    console.log(`✅ [AI Content] Content deleted: ${contentId}`);
+    
+    return c.json({
+      success: true,
+      message: 'Content deleted successfully',
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content Delete] Error:', error);
+    return c.json({
+      error: 'Failed to delete content',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+console.log('✅ [SERVER] Advanced AI Content Generator APIs registered');
+
 // Check if user is a team member (for enterprise chat access)
 app.get("/make-server-215f78a5/check-team-member", async (c) => {
   try {

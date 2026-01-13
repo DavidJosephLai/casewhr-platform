@@ -37,6 +37,7 @@ import { LatestSEOReports } from './components/LatestSEOReports';
 const Dashboard = lazy(() => import('./components/Dashboard'));
 const PricingPage = lazy(() => import('./components/PricingPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
+const DynamicSEOPage = lazy(() => import('./components/DynamicSEOPage').then(module => ({ default: module.DynamicSEOPage })));
 
 // 🎯 全局組件 - 使用 lazy 但保持輕量級（這些組件需要 default export）
 const AdminFloatingButton = lazy(() => import('./components/AdminFloatingButton'));
@@ -627,6 +628,15 @@ function AppContent() {
             <TransferDebug />
           </Suspense>
         </div>
+      ) : view === 'seo-content' ? (
+        <>
+          {/* Dynamic SEO Content Page - 完全由 DynamicSEOPage 組件控制 SEO */}
+          <Suspense fallback={<PageLoadingFallback />}>
+            <DynamicSEOPage 
+              contentId={window.location.pathname.split('/seo-content/')[1] || ''}
+            />
+          </Suspense>
+        </>
       ) : view === 'auth-diagnostic' ? (
         <div className="pt-20">
           <SEO title="Auth Diagnostic" description="" keywords="" noindex />

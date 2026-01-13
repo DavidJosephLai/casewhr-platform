@@ -27,6 +27,8 @@ import { GoogleSearchConsoleGuide } from '../components/admin/GoogleSearchConsol
 import { SEODiagnostic } from '../components/SEODiagnostic';
 import { AdminAISEO } from '../components/admin/AdminAISEO';
 import AdminAISEOReports from '../components/admin/AdminAISEOReports';
+import { AdvancedAISEOConsole } from '../components/admin/AdvancedAISEOConsole';
+import { AISEOContentList } from '../components/admin/AISEOContentList';
 import KVStoreDiagnostic from '../components/admin/KVStoreDiagnostic';
 // 暫時移除 TestReportCreator，它導致頁面崩潰
 // import TestReportCreator from '../components/admin/TestReportCreator';
@@ -120,7 +122,7 @@ export default function AdminPage() {
       logout: '登出',
       unauthorized: '未经授权的访问',
       checking: '证权中...',
-      adminLevel: '管理员级别',
+      adminLevel: '��理员级别',
       levels: {
         SUPER_ADMIN: '超级管理员',
         ADMIN: '普通管理员',
@@ -164,7 +166,7 @@ export default function AdminPage() {
     
     if (!user) {
       console.error('❌ [AdminPage] No user found');
-      toast.error('未經授權的訪問');
+      toast.error('未經���權的訪問');
       setView('home');
       setManualOverride(true);
       return;
@@ -500,6 +502,8 @@ export default function AdminPage() {
               <div className="space-y-6">
                 <AdminAISEO />
                 <AdminAISEOReports />
+                <AdvancedAISEOConsole />
+                <AISEOContentList />
               </div>
             </TabsContent>
 
