@@ -23,21 +23,19 @@ import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { createClient } from '@supabase/supabase-js';
 
 interface SEOReport {
-  key: string;
-  value: {
-    url: string;
-    title: string;
-    description: string;
-    keywords: string[];
-    content: string;
-    generatedAt: string;
-    status: 'draft' | 'published';
-  };
+  id: string;
+  url: string;
+  title: string;
+  description: string;
+  keywords: string;  // 後端返回的是字符串，不是數組
+  customKeywords?: string | null;
+  generatedAt: string;
+  updatedAt?: string;
 }
 
 export default function AdminAISEOReports() {
   const [reports, setReports] = useState<SEOReport[]>([]);
-  const [loading, setLoading] = useState(false); // 改為 false，不再自動載入
+  const [loading, setLoading] = useState(true); // 改回 true，顯示載入中
   const [deleting, setDeleting] = useState<string | null>(null);
   const [selectedReport, setSelectedReport] = useState<SEOReport | null>(null);
 
@@ -56,10 +54,21 @@ export default function AdminAISEOReports() {
     }
   };
 
-  // 暫時停用自動載入，避免崩潰
-  // useEffect(() => {
-  //   loadReports();
-  // }, []);
+  // 恢復自動載入，但加上完整的錯誤處理
+  useEffect(() => {
+    const safeLoadReports = async () => {
+      try {
+        await loadReports();
+      } catch (error) {
+        console.error('❌ [AdminAISEOReports] 初始化載入失敗:', error);
+        // 靜默失敗，設置為空數組
+        setReports([]);
+        setLoading(false);
+      }
+    };
+    
+    safeLoadReports();
+  }, []);
 
   const loadReports = async () => {
     try {
@@ -191,15 +200,15 @@ export default function AdminAISEOReports() {
           </div>
           <div className="bg-green-50 rounded-lg p-4">
             <div className="text-2xl font-bold text-green-900">
-              {reports.filter(r => r.value.status === 'published').length}
+              {reports.filter(r => r.customKeywords).length}
             </div>
-            <div className="text-sm text-green-700">已發布</div>
+            <div className="text-sm text-green-700">自定義關鍵字</div>
           </div>
-          <div className="bg-orange-50 rounded-lg p-4">
-            <div className="text-2xl font-bold text-orange-900">
-              {reports.filter(r => r.value.status === 'draft').length}
+          <div className="bg-purple-50 rounded-lg p-4">
+            <div className="text-2xl font-bold text-purple-900">
+              {reports.filter(r => !r.customKeywords).length}
             </div>
-            <div className="text-sm text-orange-700">草稿</div>
+            <div className="text-sm text-purple-700">自動生成</div>
           </div>
         </div>
       </Card>
@@ -215,54 +224,46 @@ export default function AdminAISEOReports() {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {reports.map((report) => (
-            <Card key={report.key} className="p-6 hover:shadow-lg transition-shadow">
+            <Card key={report.id} className="p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-lg font-semibold">
-                      {report.value.title || '無標題'}
+                      {report.title || '無標題'}
                     </h3>
-                    <Badge
-                      variant={report.value.status === 'published' ? 'default' : 'secondary'}
-                    >
-                      {report.value.status === 'published' ? (
-                        <>
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          已發布
-                        </>
-                      ) : (
-                        '草稿'
-                      )}
-                    </Badge>
+                    {report.customKeywords && (
+                      <Badge variant="secondary">
+                        🎯 自定義關鍵字
+                      </Badge>
+                    )}
                   </div>
 
                   <p className="text-sm text-gray-600 mb-3">
-                    {report.value.description || '無描述'}
+                    {report.description || '無描述'}
                   </p>
 
                   <div className="flex items-center gap-4 text-xs text-gray-500">
                     <div className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      {formatDate(report.value.generatedAt)}
+                      {formatDate(report.generatedAt)}
                     </div>
                     <div className="flex items-center gap-1">
                       <FileText className="h-3 w-3" />
-                      URL: {report.value.url}
+                      URL: {report.url}
                     </div>
                   </div>
 
-                  {report.value.keywords && report.value.keywords.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {report.value.keywords.slice(0, 5).map((keyword, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs">
-                          {keyword}
-                        </Badge>
-                      ))}
-                      {report.value.keywords.length > 5 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{report.value.keywords.length - 5} more
-                        </Badge>
-                      )}
+                  {report.customKeywords && (
+                    <div className="mt-2 text-xs text-purple-600">
+                      🎯 {report.customKeywords}
+                    </div>
+                  )}
+
+                  {report.keywords && (
+                    <div className="mt-3">
+                      <Badge variant="outline" className="text-xs">
+                        {report.keywords}
+                      </Badge>
                     </div>
                   )}
                 </div>
@@ -272,7 +273,7 @@ export default function AdminAISEOReports() {
                     variant="outline"
                     size="sm"
                     onClick={() => setSelectedReport(
-                      selectedReport?.key === report.key ? null : report
+                      selectedReport?.id === report.id ? null : report
                     )}
                   >
                     <Eye className="h-4 w-4" />
@@ -280,10 +281,10 @@ export default function AdminAISEOReports() {
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => deleteReport(report.key)}
-                    disabled={deleting === report.key}
+                    onClick={() => deleteReport(report.id)}
+                    disabled={deleting === report.id}
                   >
-                    {deleting === report.key ? (
+                    {deleting === report.id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Trash2 className="h-4 w-4" />
@@ -293,13 +294,28 @@ export default function AdminAISEOReports() {
               </div>
 
               {/* Preview */}
-              {selectedReport?.key === report.key && (
+              {selectedReport?.id === report.id && (
                 <div className="mt-4 pt-4 border-t">
-                  <h4 className="font-semibold mb-2">內容預覽：</h4>
-                  <div className="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
-                    <pre className="text-xs whitespace-pre-wrap font-mono">
-                      {report.value.content}
-                    </pre>
+                  <h4 className="font-semibold mb-2">報告詳情：</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700 mb-1">標題</p>
+                      <p className="text-sm">{report.title}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700 mb-1">描述</p>
+                      <p className="text-sm">{report.description}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-gray-700 mb-1">關鍵字</p>
+                      <p className="text-sm">{report.keywords}</p>
+                    </div>
+                    {report.customKeywords && (
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700 mb-1">自定義關鍵字</p>
+                        <p className="text-sm text-purple-600">{report.customKeywords}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
