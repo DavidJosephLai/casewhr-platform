@@ -32,8 +32,7 @@ import { AISEOContentList } from '../components/admin/AISEOContentList';
 import KVStoreDiagnostic from '../components/admin/KVStoreDiagnostic';
 import { WithdrawalAdminPanel } from '../components/WithdrawalAdminPanel';
 import { WalletResetTool } from '../components/admin/WalletResetTool';
-// 暫時移除 TestReportCreator，它導致頁面崩潰
-// import TestReportCreator from '../components/admin/TestReportCreator';
+import { RevenueResetTool } from '../components/admin/RevenueResetTool';
 import DataSyncDiagnostic from '../components/DataSyncDiagnostic';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -124,7 +123,7 @@ export default function AdminPage() {
       logout: '登出',
       unauthorized: '未经授权的访问',
       checking: '证权中...',
-      adminLevel: '��理员级别',
+      adminLevel: '理员级别',
       levels: {
         SUPER_ADMIN: '超级管理员',
         ADMIN: '普通管理员',
@@ -168,7 +167,7 @@ export default function AdminPage() {
     
     if (!user) {
       console.error('❌ [AdminPage] No user found');
-      toast.error('未經���權的訪問');
+      toast.error('未經權的訪問');
       setView('home');
       setManualOverride(true);
       return;
@@ -289,7 +288,7 @@ export default function AdminPage() {
 
     // ADMIN can view all tabs except bankAccounts, administrators, and walletReset
     if (adminLevel === AdminLevel.ADMIN) {
-      return !['bankAccounts', 'administrators', 'walletReset'].includes(tabName);
+      return !['bankAccounts', 'administrators', 'walletReset', 'revenueReset'].includes(tabName);
     }
 
     // MODERATOR can view: dashboard, users, projects, messages, transactions, emailSender, settings, paymentManager, seoTools, sitemap
@@ -403,6 +402,11 @@ export default function AdminPage() {
                 🗑️ Wallet Reset
               </TabsTrigger>
             )}
+            {canViewTab('revenueReset') && (
+              <TabsTrigger key="revenueReset" value="revenueReset" className="text-xs sm:text-sm text-orange-600">
+                🗑️ Revenue Reset
+              </TabsTrigger>
+            )}
             {canViewTab('bankAccounts') && (
               <TabsTrigger key="bankAccounts" value="bankAccounts" className="text-xs sm:text-sm">
                 {t.tabs.bankAccounts}
@@ -484,6 +488,10 @@ export default function AdminPage() {
 
             <TabsContent value="walletReset" className="mt-0">
               <WalletResetTool />
+            </TabsContent>
+
+            <TabsContent value="revenueReset" className="mt-0">
+              <RevenueResetTool />
             </TabsContent>
 
             <TabsContent value="bankAccounts" className="mt-0">

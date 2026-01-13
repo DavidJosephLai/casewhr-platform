@@ -20606,6 +20606,10 @@ registerWithdrawalRequestRoutes(app, supabase, emailService);
 import { registerWalletResetRoutes } from './wallet_reset_routes.tsx';
 registerWalletResetRoutes(app, supabase);
 
+// ============= REVENUE RESET ROUTES =============
+import { registerRevenueResetRoutes } from './revenue_reset_routes.tsx';
+registerRevenueResetRoutes(app, supabase);
+
 console.log('🎉 [SERVER] All routes registered, starting server...');
 
 // 禁用 JWT 验证（允许匿名访问测试端点）
