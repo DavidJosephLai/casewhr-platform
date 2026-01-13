@@ -636,32 +636,764 @@ function KeywordResearchPanel({ onUseKeywords }: { onUseKeywords?: (keywords: st
 
 // Placeholder panels for other tabs
 function CompetitorAnalysisPanel() {
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    competitors: '',
+    topic: '',
+    language: 'zh-TW',
+  });
+  const [result, setResult] = useState<any>(null);
+
+  const analyzeCompetitors = async () => {
+    if (!formData.competitors || !formData.topic) {
+      toast.error('請填寫競爭對手和主題');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setResult(null);
+
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai-content/analyze-competitors`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${publicAnonKey}`,
+          },
+          body: JSON.stringify({
+            ...formData,
+            competitors: formData.competitors.split(',').map(c => c.trim()).filter(Boolean),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to analyze competitors');
+      }
+
+      const data = await response.json();
+      setResult(data);
+      toast.success('✅ 競争分析完成！');
+    } catch (error: any) {
+      console.error('❌ Error:', error);
+      toast.error('競爭分析失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <Card className="p-8 text-center">
-      <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-xl font-bold mb-2">競爭對手分析</h3>
-      <p className="text-gray-600">功能開發中...</p>
-    </Card>
+    <div className="space-y-6">
+      <Card className="p-6">
+        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <Target className="h-5 w-5 text-orange-600" />
+          AI 競争對手分析
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              競争對手（逗號分隔）*
+            </label>
+            <input
+              type="text"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              placeholder="Fiverr, Upwork, Freelancer, TaskRabbit"
+              value={formData.competitors}
+              onChange={(e) => setFormData({ ...formData, competitors: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              主題 *
+            </label>
+            <input
+              type="text"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              placeholder="接案平台"
+              value={formData.topic}
+              onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              語言
+            </label>
+            <select
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              value={formData.language}
+              onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+            >
+              <option value="zh-TW">繁體中文</option>
+              <option value="zh-CN">简体中文</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+
+        <Button
+          onClick={analyzeCompetitors}
+          disabled={loading}
+          className="mt-6 w-full bg-orange-600 hover:bg-orange-700"
+          size="lg"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              分析中...
+            </>
+          ) : (
+            <>
+              <Target className="mr-2 h-5 w-5" />
+              開始競爭分析
+            </>
+          )}
+        </Button>
+      </Card>
+
+      {/* Results */}
+      {result && (
+        <div className="space-y-6">
+          {/* Summary */}
+          <Card className="p-6 bg-gradient-to-r from-orange-50 to-red-50 border-orange-200">
+            <div className="flex items-center gap-3 mb-4">
+              <CheckCircle className="h-6 w-6 text-orange-600" />
+              <div>
+                <h3 className="font-bold text-lg text-gray-900">競爭分析完成！</h3>
+                <p className="text-sm text-gray-600">
+                  分析了 {result.competitors?.length || 0} 個競爭對手
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Competitor Details */}
+          {result.competitors?.map((competitor: any, index: number) => (
+            <Card key={index} className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h4 className="text-xl font-bold text-gray-900">{competitor.name}</h4>
+                  <p className="text-sm text-gray-600 mt-1">{competitor.description}</p>
+                </div>
+                <Badge variant="secondary" className="text-lg">
+                  評分: {competitor.rating}/10
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                {/* Strengths */}
+                <div>
+                  <h5 className="font-semibold text-green-700 mb-2 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    優勢
+                  </h5>
+                  <ul className="space-y-1">
+                    {competitor.strengths?.map((strength: string, i: number) => (
+                      <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                        <span className="text-green-600">✓</span>
+                        {strength}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Weaknesses */}
+                <div>
+                  <h5 className="font-semibold text-red-700 mb-2 flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" />
+                    劣勢
+                  </h5>
+                  <ul className="space-y-1">
+                    {competitor.weaknesses?.map((weakness: string, i: number) => (
+                      <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                        <span className="text-red-600">×</span>
+                        {weakness}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Opportunities */}
+                <div>
+                  <h5 className="font-semibold text-blue-700 mb-2 flex items-center gap-2">
+                    <Lightbulb className="h-4 w-4" />
+                    機會點
+                  </h5>
+                  <ul className="space-y-1">
+                    {competitor.opportunities?.map((opp: string, i: number) => (
+                      <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                        <span className="text-blue-600">→</span>
+                        {opp}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Key Features */}
+              {competitor.keyFeatures && competitor.keyFeatures.length > 0 && (
+                <div className="mt-4 pt-4 border-t">
+                  <h5 className="font-semibold text-gray-700 mb-2">核心功能</h5>
+                  <div className="flex flex-wrap gap-2">
+                    {competitor.keyFeatures.map((feature: string, i: number) => (
+                      <Badge key={i} variant="outline">{feature}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Card>
+          ))}
+
+          {/* Overall Insights */}
+          {result.insights && (
+            <Card className="p-6 bg-blue-50 border-blue-200">
+              <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-blue-600" />
+                整體洞察
+              </h4>
+              <p className="text-gray-800 leading-relaxed">{result.insights}</p>
+            </Card>
+          )}
+
+          {/* Recommendations */}
+          {result.recommendations && result.recommendations.length > 0 && (
+            <Card className="p-6 bg-purple-50 border-purple-200">
+              <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                建議策略
+              </h4>
+              <ul className="space-y-2">
+                {result.recommendations.map((rec: string, i: number) => (
+                  <li key={i} className="text-gray-800 flex items-start gap-3">
+                    <span className="text-purple-600 font-bold">{i + 1}.</span>
+                    {rec}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
 function SEOScoringPanel() {
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    url: '',
+    title: '',
+    description: '',
+    content: '',
+    keywords: '',
+    language: 'zh-TW',
+  });
+  const [result, setResult] = useState<any>(null);
+
+  const scoreSEO = async () => {
+    if (!formData.url || !formData.title) {
+      toast.error('請填寫 URL 和標題');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setResult(null);
+
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai-content/score-seo`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${publicAnonKey}`,
+          },
+          body: JSON.stringify({
+            ...formData,
+            keywords: formData.keywords.split(',').map(k => k.trim()).filter(Boolean),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to score SEO');
+      }
+
+      const data = await response.json();
+      setResult(data);
+      toast.success('✅ SEO 評分完成！');
+    } catch (error: any) {
+      console.error('❌ Error:', error);
+      toast.error('SEO 評分失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <Card className="p-8 text-center">
-      <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-xl font-bold mb-2">SEO 評分系統</h3>
-      <p className="text-gray-600">功能開發中...</p>
-    </Card>
+    <div className="space-y-6">
+      <Card className="p-6">
+        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-green-600" />
+          AI SEO 評分系統
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              頁面 URL *
+            </label>
+            <input
+              type="text"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              placeholder="/services/web-development"
+              value={formData.url}
+              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              頁面標題 *
+            </label>
+            <input
+              type="text"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              placeholder="專業網站開發服務"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Meta 描述
+            </label>
+            <textarea
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              rows={2}
+              placeholder="頁面的 meta description..."
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              頁面內容（可選）
+            </label>
+            <textarea
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              rows={4}
+              placeholder="輸入頁面的實際內容以獲得更準確的評分..."
+              value={formData.content}
+              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              目標關鍵字（逗號分隔）
+            </label>
+            <input
+              type="text"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              placeholder="網站開發, React, 前端設計"
+              value={formData.keywords}
+              onChange={(e) => setFormData({ ...formData, keywords: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              語言
+            </label>
+            <select
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              value={formData.language}
+              onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+            >
+              <option value="zh-TW">繁體中文</option>
+              <option value="zh-CN">简体中文</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+
+        <Button
+          onClick={scoreSEO}
+          disabled={loading}
+          className="mt-6 w-full bg-green-600 hover:bg-green-700"
+          size="lg"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              評分中...
+            </>
+          ) : (
+            <>
+              <BarChart3 className="mr-2 h-5 w-5" />
+              開始 SEO 評分
+            </>
+          )}
+        </Button>
+      </Card>
+
+      {/* Results */}
+      {result && (
+        <div className="space-y-6">
+          {/* Overall Score */}
+          <Card className="p-8 bg-gradient-to-r from-green-50 to-blue-50 border-green-200 text-center">
+            <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-r from-green-600 to-blue-600 text-white mb-4 mx-auto">
+              <div>
+                <div className="text-5xl font-bold">{result.score}</div>
+                <div className="text-sm">/ 100</div>
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">SEO 總分</h3>
+            <p className="text-gray-600">{result.grade || 'B+'}</p>
+          </Card>
+
+          {/* Category Scores */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {result.categories?.map((cat: any, index: number) => (
+              <Card key={index} className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold text-gray-900">{cat.name}</h4>
+                  <Badge 
+                    variant={cat.score >= 80 ? "default" : cat.score >= 60 ? "secondary" : "destructive"}
+                  >
+                    {cat.score}
+                  </Badge>
+                </div>
+                <p className="text-xs text-gray-600">{cat.description}</p>
+              </Card>
+            ))}
+          </div>
+
+          {/* Issues */}
+          {result.issues && result.issues.length > 0 && (
+            <Card className="p-6">
+              <h4 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-red-600" />
+                發現的問題
+              </h4>
+              <div className="space-y-3">
+                {result.issues.map((issue: any, index: number) => (
+                  <div key={index} className="flex items-start gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                    <Badge 
+                      variant={
+                        issue.severity === 'critical' ? 'destructive' :
+                        issue.severity === 'warning' ? 'secondary' : 
+                        'outline'
+                      }
+                      className="mt-1"
+                    >
+                      {issue.severity === 'critical' ? '嚴重' : issue.severity === 'warning' ? '警告' : '提示'}
+                    </Badge>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">{issue.title}</p>
+                      <p className="text-sm text-gray-600 mt-1">{issue.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* Suggestions */}
+          {result.suggestions && result.suggestions.length > 0 && (
+            <Card className="p-6 bg-blue-50 border-blue-200">
+              <h4 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-blue-600" />
+                改進建議
+              </h4>
+              <ul className="space-y-2">
+                {result.suggestions.map((suggestion: string, index: number) => (
+                  <li key={index} className="text-gray-800 flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <span>{suggestion}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {/* Strengths */}
+          {result.strengths && result.strengths.length > 0 && (
+            <Card className="p-6 bg-green-50 border-green-200">
+              <h4 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-green-600" />
+                做得好的地方
+              </h4>
+              <ul className="space-y-2">
+                {result.strengths.map((strength: string, index: number) => (
+                  <li key={index} className="text-gray-800 flex items-start gap-3">
+                    <Zap className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span>{strength}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
 function InternalLinksPanel() {
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    currentPage: '',
+    content: '',
+    allPages: '',
+    language: 'zh-TW',
+  });
+  const [result, setResult] = useState<any>(null);
+
+  const suggestLinks = async () => {
+    if (!formData.currentPage || !formData.content) {
+      toast.error('請填寫當前頁面和內容');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setResult(null);
+
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai-content/suggest-internal-links`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${publicAnonKey}`,
+          },
+          body: JSON.stringify({
+            ...formData,
+            allPages: formData.allPages.split('\n').map(p => p.trim()).filter(Boolean),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to suggest links');
+      }
+
+      const data = await response.json();
+      setResult(data);
+      toast.success('✅ 內部連結建議完成！');
+    } catch (error: any) {
+      console.error('❌ Error:', error);
+      toast.error('內部連結建議失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <Card className="p-8 text-center">
-      <Link2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-xl font-bold mb-2">內部連結建議</h3>
-      <p className="text-gray-600">功能開發中...</p>
-    </Card>
+    <div className="space-y-6">
+      <Card className="p-6">
+        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+          <Link2 className="h-5 w-5 text-indigo-600" />
+          AI 內部連結建議
+        </h3>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              當前頁面 URL *
+            </label>
+            <input
+              type="text"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              placeholder="/services/web-development"
+              value={formData.currentPage}
+              onChange={(e) => setFormData({ ...formData, currentPage: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              頁面內容 *
+            </label>
+            <textarea
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              rows={6}
+              placeholder="輸入頁面的主要內容..."
+              value={formData.content}
+              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              網站所有頁面（每行一個 URL）
+            </label>
+            <textarea
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+              rows={8}
+              placeholder={`/\n/about\n/services/web-development\n/services/mobile-app\n/blog/react-tutorial\n/contact`}
+              value={formData.allPages}
+              onChange={(e) => setFormData({ ...formData, allPages: e.target.value })}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              提示：每行輸入一個頁面 URL，AI 會分析並建議最相關的內部連結
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              語言
+            </label>
+            <select
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+              value={formData.language}
+              onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+            >
+              <option value="zh-TW">繁體中文</option>
+              <option value="zh-CN">简体中文</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+
+        <Button
+          onClick={suggestLinks}
+          disabled={loading}
+          className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700"
+          size="lg"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              分析中...
+            </>
+          ) : (
+            <>
+              <Link2 className="mr-2 h-5 w-5" />
+              生成內部連結建議
+            </>
+          )}
+        </Button>
+      </Card>
+
+      {/* Results */}
+      {result && result.links && result.links.length > 0 && (
+        <div className="space-y-6">
+          {/* Summary */}
+          <Card className="p-6 bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="h-6 w-6 text-indigo-600" />
+              <div>
+                <h3 className="font-bold text-lg text-gray-900">建議完成！</h3>
+                <p className="text-sm text-gray-600">
+                  找到 {result.count || result.links.length} 個相關的內部連結機會
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Link Suggestions */}
+          <div className="space-y-4">
+            {result.links.map((link: any, index: number) => (
+              <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h4 className="font-bold text-lg text-gray-900">{link.anchorText}</h4>
+                      <Badge variant="secondary">
+                        相關度: {link.relevance || 'High'}
+                      </Badge>
+                    </div>
+                    <code className="text-sm bg-gray-100 px-3 py-1 rounded text-indigo-600">
+                      {link.targetUrl}
+                    </code>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-1">建議原因：</p>
+                    <p className="text-sm text-gray-600">{link.reason}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-1">建議位置：</p>
+                    <p className="text-sm text-gray-600 italic bg-gray-50 p-3 rounded border-l-4 border-indigo-500">
+                      "{link.context}"
+                    </p>
+                  </div>
+
+                  {link.benefits && (
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-1">SEO 效益：</p>
+                      <ul className="text-sm text-gray-600 space-y-1">
+                        {link.benefits.map((benefit: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <Zap className="h-4 w-4 text-indigo-600 mt-0.5 flex-shrink-0" />
+                            {benefit}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`<a href="${link.targetUrl}">${link.anchorText}</a>`);
+                      toast.success('已複製 HTML 代碼！');
+                    }}
+                  >
+                    複製 HTML 代碼
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Best Practices */}
+          <Card className="p-6 bg-yellow-50 border-yellow-200">
+            <h4 className="font-bold text-lg mb-3 flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-yellow-600" />
+              內部連結最佳實踐
+            </h4>
+            <ul className="space-y-2 text-sm text-gray-700">
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-600">•</span>
+                使用描述性的錨文本（避免「點擊這裡」等通用詞）
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-600">•</span>
+                連結到相關且有價值的內容頁面
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-600">•</span>
+                避免在單一頁面添加過多內部連結（建議 3-8 個）
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-600">•</span>
+                確保連結自然融入內容，不影響閱讀體驗
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-600">•</span>
+                優先連結到重要頁面以提升其權重
+              </li>
+            </ul>
+          </Card>
+        </div>
+      )}
+    </div>
   );
 }
 
