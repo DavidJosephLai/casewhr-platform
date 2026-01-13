@@ -127,20 +127,20 @@ export function AdminAISEO() {
     }
   };
 
-  // 🆕 組件載入時獲取報告
-  useEffect(() => {
-    // 安全地獲取報告，避免崩潰
-    const loadReports = async () => {
-      try {
-        await fetchReports();
-      } catch (error) {
-        console.error('❌ 初始化載入報告失敗:', error);
-        // 靜默失敗，不影響其他功能
-      }
-    };
+  // 🆕 組件載入時獲取報告 - 暫時停用自動載入，避免崩潰
+  // useEffect(() => {
+  //   // 安全地獲取報告，避免崩潰
+  //   const loadReports = async () => {
+  //     try {
+  //       await fetchReports();
+  //     } catch (error) {
+  //       console.error('❌ 初始化載入報告失敗:', error);
+  //       // 靜默失敗，不影響其他功能
+  //     }
+  //   };
     
-    loadReports();
-  }, []); // 只在組件掛載時執行一次
+  //   loadReports();
+  // }, []); // 只在組件掛載時執行一次
 
   const handleGenerate = async () => {
     // 驗證選擇
