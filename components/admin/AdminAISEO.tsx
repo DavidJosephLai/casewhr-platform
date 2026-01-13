@@ -67,12 +67,17 @@ export function AdminAISEO() {
       }
 
       const data = await response.json();
-      setReports(data.reports || []);
-      console.log('✅ 已載入報告列表:', data.reports.length);
-      console.log('📊 報告詳情:', data.reports);
+      
+      // 確保 reports 是數組
+      const reportsList = Array.isArray(data.reports) ? data.reports : [];
+      setReports(reportsList);
+      
+      console.log('✅ 已載入報告列表:', reportsList.length);
+      console.log('📊 報告詳情:', reportsList);
     } catch (error: any) {
       console.error('❌ 載入報告失敗:', error);
-      toast.error('載入報告失敗');
+      // 不顯示 toast，避免干擾用戶
+      setReports([]); // 設置為空數組
     } finally {
       setIsLoadingReports(false);
     }
@@ -122,7 +127,8 @@ export function AdminAISEO() {
   // 🆕 組件載入時獲取報告
   useEffect(() => {
     fetchReports();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 只在組件掛載時執行一次
 
   const handleGenerate = async () => {
     // 驗證選擇
