@@ -3,7 +3,7 @@
  * 自動分析現有頁面並生成 SEO 優化內容
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
@@ -14,7 +14,11 @@ import {
   Globe,
   Info,
   CheckCircle,
-  KeyRound // 新增：關鍵字圖標
+  KeyRound,
+  History,
+  Trash2,
+  Eye,
+  Clock // 新增圖標
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
@@ -37,8 +41,78 @@ export function AdminAISEO() {
   const [selectedUrl, setSelectedUrl] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<any>(null);
-  const [customKeywords, setCustomKeywords] = useState(''); // 新增：自定義關鍵字
-  const [useCustomKeywords, setUseCustomKeywords] = useState(false); // 新增：是否使用自定義關鍵字
+  const [customKeywords, setCustomKeywords] = useState('');
+  const [useCustomKeywords, setUseCustomKeywords] = useState(false);
+  
+  // 🆕 新增狀態：報告列表
+  const [reports, setReports] = useState<any[]>([]);
+  const [isLoadingReports, setIsLoadingReports] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<any>(null);
+
+  // 🆕 獲取所有報告
+  const fetchReports = async () => {
+    setIsLoadingReports(true);
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai-seo/reports`,
+        {
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch reports');
+      }
+
+      const data = await response.json();
+      setReports(data.reports || []);
+      console.log('✅ 已載入報告列表:', data.reports.length);
+    } catch (error: any) {
+      console.error('❌ 載入報告失敗:', error);
+      toast.error('載入報告失敗');
+    } finally {
+      setIsLoadingReports(false);
+    }
+  };
+
+  // 🆕 刪除報告
+  const deleteReport = async (reportId: string) => {
+    if (!confirm('確定要刪除此報告嗎？此操作無法復原。')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai-seo/reports/${reportId}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete report');
+      }
+
+      toast.success('✅ 報告已刪除');
+      fetchReports(); // 重新載入列表
+      if (selectedReport?.id === reportId) {
+        setSelectedReport(null);
+      }
+    } catch (error: any) {
+      console.error('❌ 刪除失敗:', error);
+      toast.error('刪除報告失敗');
+    }
+  };
+
+  // 🆕 組件載入時獲取報告
+  useEffect(() => {
+    fetchReports();
+  }, []);
 
   const handleGenerate = async () => {
     // 驗證選擇
@@ -91,6 +165,9 @@ export function AdminAISEO() {
 
       setGeneratedContent(data);
       toast.success('✅ AI SEO 內容已生成並保存！');
+      
+      // 🆕 重新載入報告列表
+      fetchReports();
 
     } catch (error: any) {
       console.error('❌ AI 生成失敗:', error);
@@ -254,6 +331,122 @@ export function AdminAISEO() {
                 </div>
               </CardContent>
             </Card>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 🆕 歷史報告列表 */}
+      <Card className="border-blue-200 bg-blue-50">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-blue-700">
+              <History className="h-5 w-5" />
+              歷史報告 ({reports.length})
+            </CardTitle>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={fetchReports}
+              disabled={isLoadingReports}
+              className="border-blue-300 text-blue-700 hover:bg-blue-100"
+            >
+              {isLoadingReports ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                '🔄 重新整理'
+              )}
+            </Button>
+          </div>
+          <CardDescription>
+            所有已生成的 AI SEO 報告，點擊查看詳情或刪除
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoadingReports ? (
+            <div className="text-center py-8 text-gray-500">
+              <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+              載入中...
+            </div>
+          ) : reports.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <History className="h-12 w-12 mx-auto mb-2 opacity-30" />
+              <p>尚無報告</p>
+              <p className="text-xs mt-1">開始生成您的第一個 AI SEO 報告吧！</p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {reports.map((report) => (
+                <div
+                  key={report.id}
+                  className="p-3 bg-white rounded-lg border border-blue-200 hover:border-blue-400 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Globe className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                        <span className="font-semibold text-sm text-gray-900 truncate">
+                          {AVAILABLE_ROUTES.find(r => r.value === report.url)?.label || report.url}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                        <Clock className="h-3 w-3" />
+                        {new Date(report.generatedAt).toLocaleString('zh-TW')}
+                      </div>
+                      {report.customKeywords && (
+                        <div className="text-xs text-purple-600 mb-2">
+                          🎯 {report.customKeywords}
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-700 line-clamp-2">
+                        {report.title}
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-1 flex-shrink-0">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setSelectedReport(selectedReport?.id === report.id ? null : report)}
+                        className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => deleteReport(report.id)}
+                        className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-100"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* 展開詳情 */}
+                  {selectedReport?.id === report.id && (
+                    <div className="mt-3 pt-3 border-t border-blue-200 space-y-2">
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700 mb-1">標題</p>
+                        <p className="text-xs text-gray-900 bg-gray-50 p-2 rounded">
+                          {report.title}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700 mb-1">描述</p>
+                        <p className="text-xs text-gray-900 bg-gray-50 p-2 rounded">
+                          {report.description}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700 mb-1">關鍵字</p>
+                        <p className="text-xs text-gray-900 bg-gray-50 p-2 rounded">
+                          {report.keywords}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

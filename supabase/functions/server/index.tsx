@@ -19413,21 +19413,26 @@ URL: ${body.url}
         }
       }
       
-      const kvKey = `ai_seo_page:${body.url}`;
-      await kv.set(kvKey, JSON.stringify({
+      // 🆕 使用時間戳創建唯一報告 ID，不覆蓋舊報告
+      const reportId = `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const kvKey = `ai_seo_report:${reportId}`;
+      
+      const reportData = {
+        id: reportId,
         url: body.url,
         ...seoData,
-        customKeywords: body.customKeywords || null, // 記錄使用的自定義關鍵字
+        customKeywords: body.customKeywords || null,
         generatedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      }));
+      };
       
-      console.log(`✅ [AI SEO] URL auto-generated for: ${body.url}`);
+      await kv.set(kvKey, JSON.stringify(reportData));
+      
+      console.log(`✅ [AI SEO] New report created: ${reportId} for ${body.url}`);
       
       return c.json({
         success: true,
-        url: body.url,
-        ...seoData,
+        ...reportData,
       });
     }
     
@@ -19460,6 +19465,68 @@ URL: ${body.url}
     console.error('❌ [AI SEO Generate] Error:', error);
     return c.json({
       error: 'Failed to generate SEO',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 獲取所有 AI SEO 報告列表
+app.get("/make-server-215f78a5/ai-seo/reports", async (c) => {
+  try {
+    console.log('📋 [AI SEO] Fetching all reports...');
+    
+    // 使用 getByPrefix 獲取所有報告
+    const allReports = await kv.getByPrefix('ai_seo_report:');
+    
+    // 解析並排序報告（最新的在前）
+    const reports = allReports
+      .map(report => {
+        try {
+          return JSON.parse(report);
+        } catch (e) {
+          console.error('❌ [AI SEO] Failed to parse report:', e);
+          return null;
+        }
+      })
+      .filter(report => report !== null)
+      .sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime());
+    
+    console.log(`✅ [AI SEO] Found ${reports.length} reports`);
+    
+    return c.json({
+      success: true,
+      reports,
+      total: reports.length,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI SEO Reports] Error:', error);
+    return c.json({
+      error: 'Failed to fetch reports',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 刪除單個 AI SEO 報告
+app.delete("/make-server-215f78a5/ai-seo/reports/:reportId", async (c) => {
+  try {
+    const reportId = c.req.param('reportId');
+    console.log(`🗑️ [AI SEO] Deleting report: ${reportId}`);
+    
+    const kvKey = `ai_seo_report:${reportId}`;
+    await kv.del(kvKey);
+    
+    console.log(`✅ [AI SEO] Report deleted: ${reportId}`);
+    
+    return c.json({
+      success: true,
+      message: 'Report deleted successfully',
+      reportId,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI SEO Delete] Error:', error);
+    return c.json({
+      error: 'Failed to delete report',
       message: error.message || 'Unknown error',
     }, 500);
   }
