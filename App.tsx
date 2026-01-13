@@ -32,6 +32,8 @@ import { PopularServices } from './components/PopularServices';
 import { Testimonials } from './components/Testimonials';
 import { TrustBadges } from './components/TrustBadges';
 import { LatestSEOReports } from './components/LatestSEOReports';
+import { PlatformComparison } from './components/PlatformComparison';
+import { WhitepaperDownload } from './components/WhitepaperDownload';
 
 // ✅ 只對大型頁面使用 Lazy Load（真正需要代碼分割的）
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -845,6 +847,8 @@ function AppContent() {
           <Categories />
           <BrowseProjects />
           <Contact />
+          <PlatformComparison />
+          <WhitepaperDownload />
           <LatestSEOReports />
         </>
       )}

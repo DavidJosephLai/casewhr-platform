@@ -20610,6 +20610,10 @@ registerWalletResetRoutes(app, supabase);
 import { registerRevenueResetRoutes } from './revenue_reset_routes.tsx';
 registerRevenueResetRoutes(app, supabase);
 
+// ============= WHITEPAPER ROUTES =============
+import { registerWhitepaperRoutes } from './whitepaper_routes.tsx';
+registerWhitepaperRoutes(app);
+
 console.log('🎉 [SERVER] All routes registered, starting server...');
 
 // 禁用 JWT 验证（允许匿名访问测试端点）
