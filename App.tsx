@@ -7,6 +7,7 @@ import { Hero } from './components/Hero';
 import { DevModeLogin } from './components/DevModeLogin';
 import { NetworkErrorNotice } from './components/NetworkErrorNotice';
 import { SEO, getPageSEO } from './components/SEO';
+import { SEOHead } from './components/SEOHead';
 import { Toaster, toast } from 'sonner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
@@ -188,7 +189,7 @@ function AppContent() {
     console.log('%c💡 提示: 點擊右下角藍色盾牌 → 設置特殊用戶', 'color: #6b7280; font-size: 12px;');
   }, []); // 只應用啟動時顯示一次
   
-  // 初始化匯率系統
+  // 初始化匯率系���
   // Note: useExchangeRate hook 已在各組件按需使用
   
   // 檢測團隊邀請 URL
@@ -551,10 +552,12 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* ✅ 全局 SEO 組 */}
+      {/* ✅ 全局 SEO 組件 */}
       <SEO 
         {...getPageSEO(view === 'home' ? 'home' : view, language)}
       />
+      {/* 🌐 多域名 SEO 優化 */}
+      <SEOHead />
       
       <Header />
       {view === 'dashboard' ? (
