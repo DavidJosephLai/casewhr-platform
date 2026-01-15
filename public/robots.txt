@@ -1,5 +1,6 @@
-# CaseWhr Multi-Domain Robots.txt
-# 支援多域名：casewhr.com 和 casewhere.com.tw
+# CaseWhr Robots.txt
+# Main domain: casewhr.com
+# Redirect domain: casewhere.com.tw → casewhr.com
 
 User-agent: *
 Allow: /
@@ -7,9 +8,8 @@ Disallow: /admin
 Disallow: /api/
 Disallow: /supabase/
 
-# Sitemaps for both domains
+# Main sitemap
 Sitemap: https://casewhr.com/sitemap.xml
-Sitemap: https://www.casewhere.com.tw/sitemap.xml
 
 # Crawl-delay for better server performance
 Crawl-delay: 1

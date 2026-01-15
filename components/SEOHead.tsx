@@ -1,7 +1,8 @@
 /**
  * SEO Head Component
- * 多域名 SEO 優化組件
- * 支援 casewhr.com 和 casewhere.com.tw
+ * 品牌域名關聯組件
+ * 主域名：casewhr.com
+ * 重定向域名：casewhere.com.tw → casewhr.com
  */
 
 import { useEffect } from 'react';
@@ -11,82 +12,13 @@ export function SEOHead() {
   const { language } = useLanguage();
 
   useEffect(() => {
-    // 偵測當前域名
-    const currentDomain = window.location.hostname;
-    const isTaiwanDomain = currentDomain.includes('casewhere.com.tw');
-    
-    // 設定 canonical URL
-    const canonicalUrl = isTaiwanDomain 
-      ? 'https://www.casewhere.com.tw'
-      : 'https://casewhr.com';
-
-    // 更新 canonical link
-    let canonical = document.querySelector('link[rel="canonical"]');
-    if (canonical) {
-      canonical.setAttribute('href', canonicalUrl);
-    } else {
-      canonical = document.createElement('link');
-      canonical.setAttribute('rel', 'canonical');
-      canonical.setAttribute('href', canonicalUrl);
-      document.head.appendChild(canonical);
-    }
-
-    // 更新 alternate links
-    updateAlternateLinks(currentDomain);
-
-    // 更新 Open Graph tags
-    updateOpenGraphTags(canonicalUrl);
-
     // 更新語言特定的 meta tags
     updateLanguageMeta();
 
-    // 添加結構化數據（JSON-LD）
-    addStructuredData(canonicalUrl);
+    // 添加結構化數據（JSON-LD）- 包含品牌關聯
+    addStructuredData();
 
   }, [language]);
-
-  const updateAlternateLinks = (currentDomain: string) => {
-    // 移除舊的 alternate links
-    const oldAlternates = document.querySelectorAll('link[rel="alternate"]');
-    oldAlternates.forEach(link => link.remove());
-
-    // 添加新的 alternate links
-    const alternates = [
-      { hreflang: 'zh-TW', href: 'https://www.casewhere.com.tw' },
-      { hreflang: 'x-default', href: 'https://casewhr.com' },
-      { hreflang: 'en', href: 'https://casewhr.com?lang=en' },
-      { hreflang: 'zh-CN', href: 'https://casewhr.com?lang=zh-CN' },
-    ];
-
-    alternates.forEach(({ hreflang, href }) => {
-      const link = document.createElement('link');
-      link.setAttribute('rel', 'alternate');
-      link.setAttribute('hreflang', hreflang);
-      link.setAttribute('href', href);
-      document.head.appendChild(link);
-    });
-  };
-
-  const updateOpenGraphTags = (url: string) => {
-    const ogTags = {
-      'og:url': url,
-      'og:title': getTitle(),
-      'og:description': getDescription(),
-      'og:image': `${url}/og-image.png`,
-    };
-
-    Object.entries(ogTags).forEach(([property, content]) => {
-      let meta = document.querySelector(`meta[property="${property}"]`);
-      if (meta) {
-        meta.setAttribute('content', content);
-      } else {
-        meta = document.createElement('meta');
-        meta.setAttribute('property', property);
-        meta.setAttribute('content', content);
-        document.head.appendChild(meta);
-      }
-    });
-  };
 
   const updateLanguageMeta = () => {
     // 更新 title
@@ -131,35 +63,36 @@ export function SEOHead() {
   const getKeywords = () => {
     const keywords = {
       'en': 'freelance platform, remote work, global freelancing, talent marketplace, project outsourcing, freelancer, casewhr, casewhere',
-      'zh-TW': '接案平台, 自由工作者, 台灣接案, 遠距工作, 外包平台, 接案網站, 斜槓工作, 兼職平台, 專案外包, 在家工作, 接案媒合, 人才平台, 台灣外包, 綠界金流, ECPay, freelance, remote work, global freelancing, 合約管理, 發票系統, casewhr, casewhere, 接得準',
+      'zh-TW': '接案平台, 自由工��者, 台灣接案, 遠距工作, 外包平台, 接案網站, 斜槓工作, 兼職平台, 專案外包, 在家工作, 接案媒合, 人才平台, 台灣外包, 綠界金流, ECPay, freelance, remote work, global freelancing, 合約管理, 發票系統, casewhr, casewhere, 接得準',
       'zh-CN': '接案平台, 自由职业者, 远程工作, 外包平台, 项目外包, 人才市场, freelance, remote work, casewhr',
     };
     return keywords[language as keyof typeof keywords] || keywords['zh-TW'];
   };
 
-  const addStructuredData = (url: string) => {
+  const addStructuredData = () => {
     // 移除舊的結構化數據
-    const oldScript = document.querySelector('script[type="application/ld+json"]');
+    const oldScript = document.querySelector('script[type="application/ld+json"]#brand-schema');
     if (oldScript) {
       oldScript.remove();
     }
 
-    // 創建新的結構化數據
+    // 創建新的結構化數據 - 包含品牌關聯
     const structuredData = {
       '@context': 'https://schema.org',
       '@type': 'WebSite',
       'name': 'CaseWhr 接得準',
       'alternateName': ['CaseWhere', '接得準', '接案平台'],
-      'url': url,
+      'url': 'https://casewhr.com',
       'description': getDescription(),
       'potentialAction': {
         '@type': 'SearchAction',
         'target': {
           '@type': 'EntryPoint',
-          'urlTemplate': `${url}/search?q={search_term_string}`
+          'urlTemplate': 'https://casewhr.com/search?q={search_term_string}'
         },
         'query-input': 'required name=search_term_string'
       },
+      // 品牌關聯：說明 casewhere.com.tw 重定向到 casewhr.com
       'sameAs': [
         'https://casewhr.com',
         'https://www.casewhere.com.tw'
@@ -168,10 +101,10 @@ export function SEOHead() {
       'publisher': {
         '@type': 'Organization',
         'name': 'CaseWhr',
-        'url': url,
+        'url': 'https://casewhr.com',
         'logo': {
           '@type': 'ImageObject',
-          'url': `${url}/logo.png`
+          'url': 'https://casewhr.com/logo.png'
         },
         'contactPoint': {
           '@type': 'ContactPoint',
@@ -185,6 +118,7 @@ export function SEOHead() {
 
     const script = document.createElement('script');
     script.type = 'application/ld+json';
+    script.id = 'brand-schema';
     script.text = JSON.stringify(structuredData);
     document.head.appendChild(script);
   };
