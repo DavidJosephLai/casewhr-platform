@@ -42,31 +42,34 @@ export function RobotsTxtFixer() {
 User-agent: *
 Allow: /
 
-# 不允許爬取的路徑（僅管理後台和敏感資料）
-Disallow: /admin
-Disallow: /dashboard
+# 不允許爬取的路徑
+Disallow: /admin/
+Disallow: /dashboard/
 Disallow: /api/
-Disallow: /*.json$
-Disallow: /*?*accessToken=
-Disallow: /*?*session=
+Disallow: /test/
+Disallow: /*.json
+Disallow: /*?accessToken
+Disallow: /*?session
 
 # Sitemap 位置
 Sitemap: https://casewhr.com/sitemap.xml
 
-# 爬取延遲（秒）
-Crawl-delay: 1
-
 # 特定搜尋引擎規則
 User-agent: Googlebot
 Allow: /
-Crawl-delay: 0
+
+User-agent: Googlebot-Image
+Allow: /
 
 User-agent: Bingbot
 Allow: /
 Crawl-delay: 1
 
-# Google 圖片爬蟲
-User-agent: Googlebot-Image
+User-agent: Baiduspider
+Allow: /
+Crawl-delay: 2
+
+User-agent: Baiduspider-image
 Allow: /
 
 # 禁止不良爬蟲（節省頻寬）
@@ -74,6 +77,12 @@ User-agent: AhrefsBot
 Disallow: /
 
 User-agent: SemrushBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: MJ12bot
 Disallow: /`;
 
   const checkRobotsTxt = async () => {
