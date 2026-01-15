@@ -33,6 +33,7 @@ import { SEOKeywordTools } from '../components/admin/SEOKeywordTools';
 import { AISEODiagnostic } from '../components/admin/AISEODiagnostic';
 import { SEOIndexChecker } from '../components/admin/SEOIndexChecker';
 import { SEOActionPlan } from '../components/admin/SEOActionPlan';
+import { RobotsTxtFixer } from '../components/admin/RobotsTxtFixer';
 import KVStoreDiagnostic from '../components/admin/KVStoreDiagnostic';
 import { WithdrawalAdminPanel } from '../components/WithdrawalAdminPanel';
 import { WalletResetTool } from '../components/admin/WalletResetTool';
@@ -252,7 +253,7 @@ export default function AdminPage() {
 
     const badge = badges[adminLevel];
     
-    // 如果找不到對應的 badge，��回默認的 Admin badge
+    // 如果找不到對應的 badge，回默認的 Admin badge
     if (!badge) {
       console.warn('Unknown admin level:', adminLevel);
       return (
@@ -535,6 +536,7 @@ export default function AdminPage() {
                 <AISEODiagnostic />
                 <SEOIndexChecker />
                 <SEOActionPlan />
+                <RobotsTxtFixer />
               </div>
             </TabsContent>
 
