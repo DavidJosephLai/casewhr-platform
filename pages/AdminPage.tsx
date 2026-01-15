@@ -16,7 +16,7 @@ import { AdminInvoicePrefixManager } from '../components/admin/AdminInvoicePrefi
 import { AdminRevenue } from '../components/admin/AdminRevenue';
 import { InvoiceManager } from '../components/InvoiceManager';
 import { TestClientCleaner } from '../components/TestClientCleaner';
-// ❌ 已移除 QuickDepositHelper - 不再為 davidjosephilai1@outlook.com 提供��值功能
+// ❌ 已移除 QuickDepositHelper - 不再為 davidjosephilai1@outlook.com 提供值功能
 // ❌ 已移除 UserCreationHelper - 不再需要用戶檢查工具
 // ❌ 已移除 EnterpriseTestHelper - 不再需要 Enterprise 升級測試工具
 import { SitemapGenerator } from '../components/SitemapGenerator';
@@ -30,6 +30,7 @@ import AdminAISEOReports from '../components/admin/AdminAISEOReports';
 import { AdvancedAISEOConsole } from '../components/admin/AdvancedAISEOConsole';
 import { AISEOContentList } from '../components/admin/AISEOContentList';
 import { SEOKeywordTools } from '../components/admin/SEOKeywordTools';
+import { AISEODiagnostic } from '../components/admin/AISEODiagnostic';
 import KVStoreDiagnostic from '../components/admin/KVStoreDiagnostic';
 import { WithdrawalAdminPanel } from '../components/WithdrawalAdminPanel';
 import { WalletResetTool } from '../components/admin/WalletResetTool';
@@ -529,6 +530,7 @@ export default function AdminPage() {
                 <AdvancedAISEOConsole />
                 <AISEOContentList />
                 <SEOKeywordTools />
+                <AISEODiagnostic />
               </div>
             </TabsContent>
 
