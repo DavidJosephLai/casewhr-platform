@@ -493,8 +493,8 @@ export default function AdminPage() {
             <TabsContent value="withdrawals" className="mt-0">
               <div className="space-y-6">
                 <WithdrawalAdminPanel />
-                {/* 舊的提款系統保留在下方 */}
-                <AdminWithdrawals adminLevel={adminLevel} />
+                {/* 🔧 臨時註釋舊的提款系統 - 調試用 */}
+                {/* <AdminWithdrawals adminLevel={adminLevel} /> */}
               </div>
             </TabsContent>
 
