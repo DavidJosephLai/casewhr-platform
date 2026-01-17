@@ -237,8 +237,7 @@ export const auth = {
       provider: 'facebook',
       options: {
         redirectTo: `${window.location.origin}/?view=dashboard&auth=facebook`,
-        scopes: 'public_profile', // ⚠️ 僅請求基本資料，不包含 email（適用於測試）
-        // scopes: 'public_profile email', // ✅ 生產環境：需要 Facebook 審核通過
+        scopes: 'public_profile email', // ✅ 生產環境：請求 email 權限
       },
     });
     
