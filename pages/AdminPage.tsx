@@ -288,6 +288,12 @@ export default function AdminPage() {
       });
     }
 
+    // 🚨 臨時強制顯示提現管理標籤（調試用）
+    if (tabName === 'withdrawals') {
+      console.log('🚨 [DEBUG] 強制顯示提現管理標籤');
+      return true;
+    }
+
     // SUPER_ADMIN 和 SUPERADMIN (舊版) 可以查看所有標籤
     if (adminLevel === AdminLevel.SUPER_ADMIN || adminLevel === 'SUPERADMIN') return true;
 

@@ -16,6 +16,7 @@ import {
 } from '../ui/dialog';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
+import { AdminLevel } from '../../config/admin';
 
 interface Withdrawal {
   id: string;
@@ -43,7 +44,11 @@ interface Withdrawal {
   rejection_reason?: string;
 }
 
-export function AdminWithdrawals() {
+interface AdminWithdrawalsProps {
+  adminLevel?: AdminLevel | null;
+}
+
+export function AdminWithdrawals({ adminLevel }: AdminWithdrawalsProps) {
   const { language } = useLanguage();
   const { accessToken } = useAuth();
   const [loading, setLoading] = useState(true);
