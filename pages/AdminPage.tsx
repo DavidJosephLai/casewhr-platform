@@ -278,8 +278,8 @@ export default function AdminPage() {
   const canViewTab = (tabName: string): boolean => {
     if (!adminLevel) return false;
 
-    // 🔍 Debug logging for SEO tabs
-    if (tabName === 'seoTools' || tabName === 'sitemap') {
+    // 🔍 Debug logging for withdrawals and SEO tabs
+    if (tabName === 'withdrawals' || tabName === 'seoTools' || tabName === 'sitemap') {
       console.log(`🔍 [canViewTab] Checking "${tabName}":`, {
         adminLevel,
         isSuperAdmin: adminLevel === AdminLevel.SUPER_ADMIN || adminLevel === 'SUPERADMIN',
