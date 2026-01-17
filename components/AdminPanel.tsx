@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Shield, Database, Users, Settings, Sparkles, Upload } from 'lucide-react';
+import { Shield, Database, Users, Settings, Sparkles } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { DiagnosticPanel } from './DiagnosticPanel';
@@ -10,6 +10,8 @@ import { AdminUserManagement } from './AdminUserManagement';
 import { AdminAISEO } from './admin/AdminAISEO';
 import { AvatarUploadDiagnostic } from './admin/AvatarUploadDiagnostic';
 import { FacebookLoginDiagnostic } from './FacebookLoginDiagnostic';
+import { FacebookOAuthGuide } from './FacebookOAuthGuide';
+import { FacebookAppReviewGuide } from './FacebookAppReviewGuide';
 import { isAdmin as checkIsAdmin } from '../lib/adminConfig';
 
 export function AdminPanel() {
@@ -135,6 +137,8 @@ export function AdminPanel() {
           <DiagnosticPanel />
           <AvatarUploadDiagnostic />
           <FacebookLoginDiagnostic />
+          <FacebookOAuthGuide />
+          <FacebookAppReviewGuide />
         </TabsContent>
 
         <TabsContent value="users" className="space-y-6">
