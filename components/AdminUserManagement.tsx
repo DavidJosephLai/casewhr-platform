@@ -6,8 +6,7 @@ import { Label } from './ui/label';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Wallet, Search, DollarSign } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
+import { projectId } from '../utils/supabase/info';
 
 export function AdminUserManagement() {
   const { language } = useLanguage();
@@ -16,6 +15,7 @@ export function AdminUserManagement() {
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [message, setMessage] = useState('');
 
   const content = {
     en: {
@@ -85,13 +85,20 @@ export function AdminUserManagement() {
 
   const t = content[language as keyof typeof content] || content['zh-TW'];
 
+  const showMessage = (msg: string, isError = false) => {
+    setMessage(msg);
+    setTimeout(() => setMessage(''), 3000);
+  };
+
   const searchUser = async () => {
     if (!userEmail.trim()) {
-      toast.error(t.enterEmail);
+      showMessage(t.enterEmail, true);
       return;
     }
 
     setLoading(true);
+    setMessage('');
+    
     try {
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/admin/get-user-by-email`,
@@ -109,14 +116,14 @@ export function AdminUserManagement() {
 
       if (response.ok && data.user) {
         setUserProfile(data.user);
-        toast.success(t.userFound);
+        showMessage(t.userFound);
       } else {
         setUserProfile(null);
-        toast.error(t.userNotFound);
+        showMessage(t.userNotFound, true);
       }
     } catch (error) {
       console.error('Error searching user:', error);
-      toast.error(t.error);
+      showMessage(t.error, true);
     } finally {
       setLoading(false);
     }
@@ -124,17 +131,19 @@ export function AdminUserManagement() {
 
   const addBalance = async () => {
     if (!userProfile) {
-      toast.error(t.noUserSelected);
+      showMessage(t.noUserSelected, true);
       return;
     }
 
     const amountNum = parseFloat(amount);
     if (!amountNum || amountNum <= 0) {
-      toast.error(t.validAmount);
+      showMessage(t.validAmount, true);
       return;
     }
 
     setLoading(true);
+    setMessage('');
+    
     try {
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/admin/add-test-balance`,
@@ -154,16 +163,16 @@ export function AdminUserManagement() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        toast.success(`${t.balanceAdded}: NT$ ${amountNum.toLocaleString()}`);
+        showMessage(`${t.balanceAdded}: NT$ ${amountNum.toLocaleString()}`);
         setAmount('');
         // 重新搜尋用戶以更新餘額
         await searchUser();
       } else {
-        toast.error(data.error || t.error);
+        showMessage(data.error || t.error, true);
       }
     } catch (error) {
       console.error('Error adding balance:', error);
-      toast.error(t.error);
+      showMessage(t.error, true);
     } finally {
       setLoading(false);
     }
@@ -171,6 +180,13 @@ export function AdminUserManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Message Display */}
+      {message && (
+        <div className={`p-4 rounded-lg ${message.includes('成功') || message.includes('found') ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>
+          {message}
+        </div>
+      )}
+
       {/* Search User */}
       <Card>
         <CardHeader>
