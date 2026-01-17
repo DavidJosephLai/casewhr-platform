@@ -104,6 +104,9 @@ function AppContent() {
   const [processingPayment, setProcessingPayment] = useState(false);
   const [isTeamInvitation, setIsTeamInvitation] = useState(false);
   
+  // 🔍 調試：監控 view 狀態
+  console.log('🔍 [App] Current view:', view);
+  
   // 🟢 LINE OAuth Email 狀態
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [lineUserId, setLineUserId] = useState<string | null>(null);
@@ -115,7 +118,7 @@ function AppContent() {
   useEffect(() => {
     // autoRegisterServiceWorker();
     
-    // ⚡ 啟動性能監控
+    // ⚡ 啟動性能監
     // startPerformanceMonitoring();
     
     // 監聽 Service Worker 更新
@@ -189,7 +192,7 @@ function AppContent() {
     console.log('%c💡 提示: 點擊右下角藍色盾牌 → 設置特殊用戶', 'color: #6b7280; font-size: 12px;');
   }, []); // 只應用啟動時顯示一次
   
-  // 初始化匯率系���
+  // 初始化匯率系
   // Note: useExchangeRate hook 已在各組件按需使用
   
   // 檢測團隊邀請 URL
@@ -255,7 +258,7 @@ function AppContent() {
       return;
     }
     
-    // 檢查是否是團隊邀請連結
+    // 檢查是否是團隊邀連結
     if (urlPath.includes('/team/accept-invitation') || urlParams.get('id')) {
       console.log('📧 [App] Team invitation link detected');
       setView('accept-invitation');
@@ -520,7 +523,7 @@ function AppContent() {
           : '❌ 付款已取消未產生任何費用。',
         { duration: 5000 }
       );
-      // 清除 URL 參數
+      // ��除 URL 參數
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, [language, setView, accessToken, processingPayment]);

@@ -60,6 +60,14 @@ export function AdminWithdrawals({ adminLevel }: AdminWithdrawalsProps) {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
 
+  // 🔍 調試：監控組件狀態
+  console.log('🔍 [AdminWithdrawals] Component state:', {
+    loading,
+    withdrawalsCount: withdrawals.length,
+    hasAccessToken: !!accessToken,
+    adminLevel,
+  });
+
   const content = {
     en: {
       title: 'Withdrawal Management',
