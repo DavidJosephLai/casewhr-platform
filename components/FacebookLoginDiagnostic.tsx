@@ -89,9 +89,9 @@ export function FacebookLoginDiagnostic() {
       // 檢查是否可以獲取 providers（間接確認配置）
       addResult({
         name: 'Facebook Provider 檢查',
-        status: 'warning',
-        message: '需要在 Supabase Dashboard 中確認',
-        details: '請訪問 Authentication → Providers → Facebook',
+        status: 'info',
+        message: '請手動確認 Facebook Provider 已在 Supabase 啟用',
+        details: '前往 Supabase Dashboard → Authentication → Providers → Facebook，確認已啟用並輸入 App ID 和 App Secret',
         action: {
           label: '前往 Supabase Dashboard',
           url: `https://supabase.com/dashboard/project/${projectId}/auth/providers`
