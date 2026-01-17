@@ -6,7 +6,7 @@ import { Label } from './ui/label';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Wallet, Search, DollarSign } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 
 export function AdminUserManagement() {
@@ -190,7 +190,12 @@ export function AdminUserManagement() {
                 placeholder={t.emailPlaceholder}
                 value={userEmail}
                 onChange={(e) => setUserEmail(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && searchUser()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchUser();
+                  }
+                }}
               />
               <Button onClick={searchUser} disabled={loading}>
                 <Search className="h-4 w-4 mr-2" />
@@ -234,7 +239,12 @@ export function AdminUserManagement() {
                 placeholder={t.amountPlaceholder}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addBalance()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addBalance();
+                  }
+                }}
                 min="1"
                 step="1"
               />

@@ -10,6 +10,7 @@ import { AdminUserManagement } from './AdminUserManagement';
 import { AdminAISEO } from './admin/AdminAISEO';
 import { AvatarUploadDiagnostic } from './admin/AvatarUploadDiagnostic';
 import { isAdmin as checkIsAdmin } from '../lib/adminConfig';
+import { ErrorBoundary } from './ErrorBoundary';
 
 export function AdminPanel() {
   const { language } = useLanguage();
@@ -136,7 +137,9 @@ export function AdminPanel() {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-6">
-          <AdminUserManagement />
+          <ErrorBoundary>
+            <AdminUserManagement />
+          </ErrorBoundary>
         </TabsContent>
 
         <TabsContent value="aiseo" className="space-y-6">
