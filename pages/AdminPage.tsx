@@ -57,6 +57,19 @@ export default function AdminPage() {
   const [adminLevel, setAdminLevel] = useState<AdminLevel | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
 
+  // 🔍 調試：監控 adminLevel 的變化
+  useEffect(() => {
+    console.log('🔍 [AdminPage] adminLevel changed:', adminLevel);
+  }, [adminLevel]);
+
+  // 🔍 調試：監控組件渲染
+  console.log('🔍 [AdminPage] Rendering with:', {
+    loading,
+    isAdmin,
+    adminLevel,
+    userEmail: user?.email,
+  });
+
   const content = {
     en: {
       title: 'Admin Panel',
