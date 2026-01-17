@@ -10,8 +10,6 @@ import { AdminUserManagement } from './AdminUserManagement';
 import { AdminAISEO } from './admin/AdminAISEO';
 import { AvatarUploadDiagnostic } from './admin/AvatarUploadDiagnostic';
 import { FacebookLoginDiagnostic } from './FacebookLoginDiagnostic';
-import { FacebookOAuthGuide } from './FacebookOAuthGuide';
-import { FacebookAppReviewGuide } from './FacebookAppReviewGuide';
 import { isAdmin as checkIsAdmin } from '../lib/adminConfig';
 
 export function AdminPanel() {
@@ -137,8 +135,6 @@ export function AdminPanel() {
           <DiagnosticPanel />
           <AvatarUploadDiagnostic />
           <FacebookLoginDiagnostic />
-          <FacebookOAuthGuide />
-          <FacebookAppReviewGuide />
         </TabsContent>
 
         <TabsContent value="users" className="space-y-6">
