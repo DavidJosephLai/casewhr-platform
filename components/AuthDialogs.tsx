@@ -566,8 +566,8 @@ export function AuthDialogs({
                   {oauthConfig.enableFacebookAuth && (
                     <Button
                       type="button"
-                      variant="outline"
                       onClick={() => handleSocialAuth('Facebook')}
+                      className="bg-[#1877F2] hover:bg-[#166FE5] text-white border-0"
                     >
                       <Facebook className="h-4 w-4 mr-2" />
                       Facebook
@@ -810,8 +810,8 @@ export function AuthDialogs({
                   {oauthConfig.enableFacebookAuth && (
                     <Button
                       type="button"
-                      variant="outline"
                       onClick={() => handleSocialAuth('Facebook')}
+                      className="bg-[#1877F2] hover:bg-[#166FE5] text-white border-0"
                     >
                       <Facebook className="h-4 w-4 mr-2" />
                       Facebook
