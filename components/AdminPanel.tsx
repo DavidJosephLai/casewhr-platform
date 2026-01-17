@@ -9,7 +9,6 @@ import { DiagnosticPanel } from './DiagnosticPanel';
 import { AdminUserManagement } from './AdminUserManagement';
 import { AdminAISEO } from './admin/AdminAISEO';
 import { AvatarUploadDiagnostic } from './admin/AvatarUploadDiagnostic';
-import { FacebookLoginDiagnostic } from './FacebookLoginDiagnostic';
 import { isAdmin as checkIsAdmin } from '../lib/adminConfig';
 
 export function AdminPanel() {
@@ -134,7 +133,6 @@ export function AdminPanel() {
         <TabsContent value="diagnostics" className="space-y-6">
           <DiagnosticPanel />
           <AvatarUploadDiagnostic />
-          <FacebookLoginDiagnostic />
         </TabsContent>
 
         <TabsContent value="users" className="space-y-6">
