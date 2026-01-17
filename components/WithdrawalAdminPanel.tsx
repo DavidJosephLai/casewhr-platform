@@ -8,9 +8,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+// ❌ 移除 Tabs 導入以避免與 AdminPage 的 Tabs 嵌套衝突
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import { Textarea } from './ui/textarea';
+import { Label } from './ui/label';
 import { 
   CheckCircle, 
   XCircle, 
@@ -315,154 +317,177 @@ export function WithdrawalAdminPanel() {
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="all">
+          {/* ✅ 用按鈕組替代 Tabs 以避免嵌套衝突 */}
+          <div className="space-y-4">
+            {/* 過濾按鈕組 */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={activeTab === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('all')}
+              >
                 {language === 'en' ? 'All' : '全部'} ({requests.length})
-              </TabsTrigger>
-              <TabsTrigger value="pending">
+              </Button>
+              <Button
+                variant={activeTab === 'pending' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('pending')}
+              >
                 {language === 'en' ? 'Pending' : '待審核'} ({stats.pending})
-              </TabsTrigger>
-              <TabsTrigger value="approved">
+              </Button>
+              <Button
+                variant={activeTab === 'approved' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('approved')}
+              >
                 {language === 'en' ? 'Approved' : '已批准'} ({stats.approved})
-              </TabsTrigger>
-              <TabsTrigger value="processing">
+              </Button>
+              <Button
+                variant={activeTab === 'processing' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('processing')}
+              >
                 {language === 'en' ? 'Processing' : '處理中'}
-              </TabsTrigger>
-              <TabsTrigger value="completed">
+              </Button>
+              <Button
+                variant={activeTab === 'completed' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('completed')}
+              >
                 {language === 'en' ? 'Completed' : '已完成'} ({stats.completed})
-              </TabsTrigger>
-              <TabsTrigger value="rejected">
+              </Button>
+              <Button
+                variant={activeTab === 'rejected' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('rejected')}
+              >
                 {language === 'en' ? 'Rejected' : '已拒絕'} ({stats.rejected})
-              </TabsTrigger>
-            </TabsList>
+              </Button>
+            </div>
 
-            {['all', 'pending', 'approved', 'processing', 'completed', 'rejected'].map(tab => (
-              <TabsContent key={tab} value={tab} className="mt-6">
-                <div className="space-y-4">
-                  {filterRequests(tab).length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                      <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p>{language === 'en' ? 'No requests found' : '沒有找到申請'}</p>
-                    </div>
-                  ) : (
-                    filterRequests(tab).map((request) => (
-                      <div
-                        key={request.id}
-                        className="border rounded-lg p-4 hover:border-blue-500 transition-colors"
-                      >
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <span className="font-mono text-sm text-gray-600">#{request.id.slice(0, 8)}</span>
-                              {getStatusBadge(request.status)}
-                              <span className="text-sm text-gray-500">
-                                {new Date(request.created_at).toLocaleString(language === 'en' ? 'en-US' : 'zh-TW')}
-                              </span>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-4 text-sm">
+            {/* 請求列表 */}
+            <div className="space-y-4 mt-6">
+              {filterRequests(activeTab).length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <p>{language === 'en' ? 'No requests found' : '沒有找到申請'}</p>
+                </div>
+              ) : (
+                filterRequests(activeTab).map((request) => (
+                  <div
+                    key={request.id}
+                    className="border rounded-lg p-4 hover:border-blue-500 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="font-mono text-sm text-gray-600">#{request.id.slice(0, 8)}</span>
+                          {getStatusBadge(request.status)}
+                          <span className="text-sm text-gray-500">
+                            {new Date(request.created_at).toLocaleString(language === 'en' ? 'en-US' : 'zh-TW')}
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-600 flex items-center gap-1">
+                              <User className="h-3 w-3" />
+                              {language === 'en' ? 'User:' : '用戶：'}
+                            </span>
+                            <span className="font-medium ml-4">
+                              {request.user_email || request.user_name || request.user_id}
+                            </span>
+                          </div>
+                          
+                          <div>
+                            <span className="text-gray-600 flex items-center gap-1">
+                              <DollarSign className="h-3 w-3" />
+                              {language === 'en' ? 'Amount:' : '金額：'}
+                            </span>
+                            <span className="font-bold text-lg ml-4">
+                              {formatCurrency(request.amount, request.currency as any)}
+                            </span>
+                          </div>
+
+                          {request.bank_account && (
+                            <>
                               <div>
                                 <span className="text-gray-600 flex items-center gap-1">
-                                  <User className="h-3 w-3" />
-                                  {language === 'en' ? 'User:' : '用戶：'}
+                                  <Building2 className="h-3 w-3" />
+                                  {language === 'en' ? 'Bank:' : '銀行：'}
                                 </span>
-                                <span className="font-medium ml-4">
-                                  {request.user_email || request.user_name || request.user_id}
-                                </span>
+                                <span className="font-medium ml-4">{request.bank_account.bank_name}</span>
                               </div>
                               
                               <div>
-                                <span className="text-gray-600 flex items-center gap-1">
-                                  <DollarSign className="h-3 w-3" />
-                                  {language === 'en' ? 'Amount:' : '金額：'}
+                                <span className="text-gray-600">
+                                  {language === 'en' ? 'Account:' : '帳號：'}
                                 </span>
-                                <span className="font-bold text-lg ml-4">
-                                  {formatCurrency(request.amount, request.currency as any)}
-                                </span>
+                                <span className="font-medium ml-2">{request.bank_account.account_number}</span>
                               </div>
 
-                              {request.bank_account && (
-                                <>
-                                  <div>
-                                    <span className="text-gray-600 flex items-center gap-1">
-                                      <Building2 className="h-3 w-3" />
-                                      {language === 'en' ? 'Bank:' : '銀行：'}
-                                    </span>
-                                    <span className="font-medium ml-4">{request.bank_account.bank_name}</span>
-                                  </div>
-                                  
-                                  <div>
-                                    <span className="text-gray-600">
-                                      {language === 'en' ? 'Account:' : '帳號：'}
-                                    </span>
-                                    <span className="font-medium ml-2">{request.bank_account.account_number}</span>
-                                  </div>
+                              <div className="col-span-2">
+                                <span className="text-gray-600">
+                                  {language === 'en' ? 'Account Name:' : '戶名：'}
+                                </span>
+                                <span className="font-medium ml-2">{request.bank_account.account_name}</span>
+                              </div>
+                            </>
+                          )}
 
-                                  <div className="col-span-2">
-                                    <span className="text-gray-600">
-                                      {language === 'en' ? 'Account Name:' : '戶名：'}
-                                    </span>
-                                    <span className="font-medium ml-2">{request.bank_account.account_name}</span>
-                                  </div>
-                                </>
-                              )}
-
-                              {request.note && (
-                                <div className="col-span-2">
-                                  <span className="text-gray-600">{language === 'en' ? 'Note:' : '備註：'}</span>
-                                  <p className="text-gray-800 mt-1 italic">{request.note}</p>
-                                </div>
-                              )}
-
-                              {request.admin_note && (
-                                <div className="col-span-2 bg-yellow-50 p-2 rounded">
-                                  <span className="text-gray-600">{language === 'en' ? 'Admin Note:' : '管理員備註：'}</span>
-                                  <p className="text-gray-800 mt-1">{request.admin_note}</p>
-                                </div>
-                              )}
+                          {request.note && (
+                            <div className="col-span-2">
+                              <span className="text-gray-600">{language === 'en' ? 'Note:' : '備註：'}</span>
+                              <p className="text-gray-800 mt-1 italic">{request.note}</p>
                             </div>
-                          </div>
+                          )}
 
-                          <div className="flex flex-col gap-2 ml-4">
-                            {request.status === 'pending' && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  onClick={() => openActionDialog(request, 'approve')}
-                                  className="bg-green-600 hover:bg-green-700"
-                                >
-                                  <CheckCircle className="h-4 w-4 mr-1" />
-                                  {language === 'en' ? 'Approve' : '批准'}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => openActionDialog(request, 'reject')}
-                                >
-                                  <XCircle className="h-4 w-4 mr-1" />
-                                  {language === 'en' ? 'Reject' : '拒絕'}
-                                </Button>
-                              </>
-                            )}
-                            {request.status === 'approved' && (
-                              <Button
-                                size="sm"
-                                onClick={() => openActionDialog(request, 'complete')}
-                              >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                {language === 'en' ? 'Mark as Complete' : '標記為完成'}
-                              </Button>
-                            )}
-                          </div>
+                          {request.admin_note && (
+                            <div className="col-span-2 bg-yellow-50 p-2 rounded">
+                              <span className="text-gray-600">{language === 'en' ? 'Admin Note:' : '管理員備註：'}</span>
+                              <p className="text-gray-800 mt-1">{request.admin_note}</p>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
+
+                      <div className="flex flex-col gap-2 ml-4">
+                        {request.status === 'pending' && (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => openActionDialog(request, 'approve')}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              {language === 'en' ? 'Approve' : '批准'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => openActionDialog(request, 'reject')}
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              {language === 'en' ? 'Reject' : '拒絕'}
+                            </Button>
+                          </>
+                        )}
+                        {request.status === 'approved' && (
+                          <Button
+                            size="sm"
+                            onClick={() => openActionDialog(request, 'complete')}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            {language === 'en' ? 'Mark as Complete' : '標記為完成'}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
 
