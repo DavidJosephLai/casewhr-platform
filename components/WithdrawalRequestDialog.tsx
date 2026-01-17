@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '../lib/LanguageContext';
-import { useAuth } from '../lib/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { formatCurrency, convertCurrency, type Currency } from '../lib/currency';
 
