@@ -475,7 +475,7 @@ export default function AdminPage() {
 
             <TabsContent value="users" className="mt-0">
               <div className="space-y-6">
-                {/* ❌ 已移除 QuickDepositHelper - 不再為 davidjosephilai1@outlook.com 提供儲值功能 */}
+                {/* ❌ 已移除 QuickDepositHelper - 不再為 davidjosephilai1@outlook.com 提供��值功能 */}
                 {/* ❌ 已移除 UserCreationHelper - 不再需要用戶檢查工具 */}
                 {/* ❌ 已移除 EnterpriseTestHelper - 不再需要 Enterprise 升級測試工具 */}
                 <AdminUsers adminLevel={adminLevel} />
@@ -492,9 +492,11 @@ export default function AdminPage() {
 
             <TabsContent value="withdrawals" className="mt-0">
               <div className="space-y-6">
-                <WithdrawalAdminPanel />
-                {/* 🔧 臨時註釋舊的提款系統 - 調試用 */}
-                {/* <AdminWithdrawals adminLevel={adminLevel} /> */}
+                {/* 🔧 臨時註釋新的提款系統 - 因為內部 Tabs 嵌套衝突 */}
+                {/* <WithdrawalAdminPanel /> */}
+                
+                {/* ✅ 使用舊的提款系統 */}
+                <AdminWithdrawals adminLevel={adminLevel} />
               </div>
             </TabsContent>
 
