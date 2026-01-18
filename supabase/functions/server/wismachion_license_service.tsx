@@ -1,0 +1,253 @@
+import * as kv from './kv_store.tsx';
+
+// License Key Generator
+export function generateLicenseKey(plan: 'standard' | 'enterprise'): string {
+  const prefix = plan === 'standard' ? 'PC-STD' : 'PC-ENT';
+  const segments = [];
+  
+  for (let i = 0; i < 3; i++) {
+    const segment = Math.random().toString(36).substring(2, 6).toUpperCase();
+    segments.push(segment);
+  }
+  
+  return `${prefix}-${segments.join('-')}`;
+}
+
+// Create new license
+export async function createLicense(data: {
+  email: string;
+  name: string;
+  company?: string;
+  plan: 'standard' | 'enterprise';
+  paymentMethod: string;
+  transactionId: string;
+  amount: number;
+  currency: string;
+}): Promise<string> {
+  const licenseKey = generateLicenseKey(data.plan);
+  
+  const license = {
+    licenseKey,
+    email: data.email,
+    name: data.name,
+    company: data.company || '',
+    plan: data.plan,
+    status: 'active',
+    createdAt: new Date().toISOString(),
+    expiryDate: data.plan === 'standard' 
+      ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // 1 year
+      : 'lifetime',
+    maxActivations: data.plan === 'standard' ? 1 : 5,
+    activations: [],
+    paymentMethod: data.paymentMethod,
+    transactionId: data.transactionId,
+    amount: data.amount,
+    currency: data.currency
+  };
+  
+  await kv.set(`wismachion:license:${licenseKey}`, license);
+  await kv.set(`wismachion:customer:${data.email}:${licenseKey}`, licenseKey);
+  
+  return licenseKey;
+}
+
+// Verify license
+export async function verifyLicense(licenseKey: string, machineId?: string): Promise<{
+  valid: boolean;
+  plan?: string;
+  expiryDate?: string;
+  daysRemaining?: number;
+  activationsRemaining?: number;
+  features?: string[];
+  message?: string;
+}> {
+  const license = await kv.get(`wismachion:license:${licenseKey}`);
+  
+  if (!license) {
+    return { valid: false, message: 'Invalid license key' };
+  }
+  
+  // Check status
+  if (license.status !== 'active') {
+    return { valid: false, message: 'License is not active' };
+  }
+  
+  // Check expiry
+  if (license.expiryDate !== 'lifetime') {
+    const expiryTime = new Date(license.expiryDate).getTime();
+    const now = Date.now();
+    
+    if (now > expiryTime) {
+      return { valid: false, message: 'License has expired' };
+    }
+    
+    const daysRemaining = Math.ceil((expiryTime - now) / (24 * 60 * 60 * 1000));
+    
+    // Check machine activation
+    if (machineId) {
+      const activations = license.activations || [];
+      const isActivated = activations.some((a: any) => a.machineId === machineId);
+      
+      if (!isActivated && activations.length >= license.maxActivations) {
+        return { 
+          valid: false, 
+          message: 'Maximum activations reached. Please deactivate on another machine first.' 
+        };
+      }
+      
+      // Add activation if not exists
+      if (!isActivated) {
+        activations.push({
+          machineId,
+          activatedAt: new Date().toISOString()
+        });
+        license.activations = activations;
+        await kv.set(`wismachion:license:${licenseKey}`, license);
+      }
+    }
+    
+    return {
+      valid: true,
+      plan: license.plan,
+      expiryDate: license.expiryDate,
+      daysRemaining,
+      activationsRemaining: license.maxActivations - (license.activations?.length || 0),
+      features: getPlanFeatures(license.plan)
+    };
+  }
+  
+  // Lifetime license
+  if (machineId) {
+    const activations = license.activations || [];
+    const isActivated = activations.some((a: any) => a.machineId === machineId);
+    
+    if (!isActivated && activations.length >= license.maxActivations) {
+      return { 
+        valid: false, 
+        message: 'Maximum activations reached. Please contact support.' 
+      };
+    }
+    
+    if (!isActivated) {
+      activations.push({
+        machineId,
+        activatedAt: new Date().toISOString()
+      });
+      license.activations = activations;
+      await kv.set(`wismachion:license:${licenseKey}`, license);
+    }
+  }
+  
+  return {
+    valid: true,
+    plan: license.plan,
+    expiryDate: 'lifetime',
+    activationsRemaining: license.maxActivations - (license.activations?.length || 0),
+    features: getPlanFeatures(license.plan)
+  };
+}
+
+// Get customer licenses
+export async function getCustomerLicenses(email: string): Promise<any[]> {
+  const keys = await kv.getByPrefix(`wismachion:customer:${email}:`);
+  const licenses = [];
+  
+  for (const key of keys) {
+    const licenseKey = key.value;
+    const license = await kv.get(`wismachion:license:${licenseKey}`);
+    if (license) {
+      licenses.push(license);
+    }
+  }
+  
+  return licenses;
+}
+
+// Deactivate machine
+export async function deactivateMachine(licenseKey: string, machineId: string): Promise<boolean> {
+  const license = await kv.get(`wismachion:license:${licenseKey}`);
+  
+  if (!license) {
+    return false;
+  }
+  
+  const activations = license.activations || [];
+  license.activations = activations.filter((a: any) => a.machineId !== machineId);
+  
+  await kv.set(`wismachion:license:${licenseKey}`, license);
+  return true;
+}
+
+// Get plan features
+function getPlanFeatures(plan: string): string[] {
+  const features = {
+    standard: [
+      'rs232-communication',
+      'protocol-development',
+      'data-logging',
+      'multi-port-4',
+      'email-support'
+    ],
+    enterprise: [
+      'rs232-communication',
+      'protocol-development',
+      'advanced-analysis',
+      'custom-scripts',
+      'unlimited-ports',
+      'priority-support',
+      'api-access',
+      'team-collaboration'
+    ]
+  };
+  
+  return features[plan as keyof typeof features] || [];
+}
+
+// Admin: Get all licenses
+export async function getAllLicenses(): Promise<any[]> {
+  const keys = await kv.getByPrefix('wismachion:license:');
+  const licenses = [];
+  
+  for (const key of keys) {
+    licenses.push(key.value);
+  }
+  
+  return licenses.sort((a, b) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
+// Admin: Revoke license
+export async function revokeLicense(licenseKey: string): Promise<boolean> {
+  const license = await kv.get(`wismachion:license:${licenseKey}`);
+  
+  if (!license) {
+    return false;
+  }
+  
+  license.status = 'revoked';
+  await kv.set(`wismachion:license:${licenseKey}`, license);
+  
+  return true;
+}
+
+// Admin: Extend license
+export async function extendLicense(licenseKey: string, days: number): Promise<boolean> {
+  const license = await kv.get(`wismachion:license:${licenseKey}`);
+  
+  if (!license) {
+    return false;
+  }
+  
+  if (license.expiryDate === 'lifetime') {
+    return true; // Already lifetime
+  }
+  
+  const currentExpiry = new Date(license.expiryDate);
+  const newExpiry = new Date(currentExpiry.getTime() + days * 24 * 60 * 60 * 1000);
+  
+  license.expiryDate = newExpiry.toISOString();
+  await kv.set(`wismachion:license:${licenseKey}`, license);
+  
+  return true;
+}

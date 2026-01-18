@@ -38,6 +38,7 @@ import { handleSitemapRequest, handleRobotsRequest, handleSEOHealthCheck } from 
 import * as lineAuth from "./line-auth.tsx";
 import { logLineEnvStatus } from "./line_health_check.tsx";
 import { sitemapRouter } from "./sitemap.tsx";
+import wismachionRoutes from "./wismachion_routes.tsx";
 
 console.log('🚀 [SERVER STARTUP] Edge Function v2.0.6 - LINE Auth Integration - Starting...');
 
@@ -613,6 +614,10 @@ console.log('✅ [SERVER] AI SEO APIs registered');
 // Register Dynamic Sitemap APIs
 app.route('/make-server-215f78a5/sitemap', sitemapRouter);
 console.log('✅ [SERVER] Dynamic Sitemap APIs registered');
+
+// Register Wismachion License APIs
+app.route('/make-server-215f78a5/wismachion', wismachionRoutes);
+console.log('✅ [SERVER] Wismachion License APIs registered');
 
 // Register Invoice Management APIs
 app.route('/make-server-215f78a5', invoiceService.default);
@@ -1472,7 +1477,7 @@ app.post("/make-server-215f78a5/test-enhanced-email", async (c) => {
       console.log('⚠️  [Test Email] Could not find user, using defaults');
     }
 
-    // 🎯 從 KV Store 獲取 Footer LOGO URL
+    // 🎯 從 KV Store 獲��� Footer LOGO URL
     const logoUrl = await kv.get('system:email:logo-url') as string | undefined;
     console.log('📧 [Test Email] Footer Logo URL:', logoUrl);
 
@@ -5251,7 +5256,7 @@ app.get("/make-server-215f78a5/kv/search", async (c) => {
 // 📊 KV Store 獲取所有數據端點
 app.get("/make-server-215f78a5/kv/all", async (c) => {
   try {
-    console.log(`🔍 [KV All] Fetching all KV data...`);
+    console.log(`�� [KV All] Fetching all KV data...`);
     
     // 獲取所有常見前綴的數據
     const prefixes = [
