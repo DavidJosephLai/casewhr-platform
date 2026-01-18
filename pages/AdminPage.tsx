@@ -39,6 +39,7 @@ import { WithdrawalAdminPanel } from '../components/WithdrawalAdminPanel';
 import { WalletResetTool } from '../components/admin/WalletResetTool';
 import { RevenueResetTool } from '../components/admin/RevenueResetTool';
 import DataSyncDiagnostic from '../components/DataSyncDiagnostic';
+import { WismachionAdminPanel } from '../wismachion/admin/WismachionAdminPanel';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Shield, Crown, UserCog, Eye, LogOut, Loader2 } from 'lucide-react';
@@ -101,6 +102,7 @@ export default function AdminPage() {
         seoTools: 'AI SEO',
         sitemap: 'Sitemap',
         dataSync: 'Data Sync',
+        wismachion: 'Wismachion',
       },
     },
     'zh-TW': {
@@ -134,6 +136,7 @@ export default function AdminPage() {
         seoTools: 'AI SEO',
         sitemap: 'Sitemap 生成',
         dataSync: '數據同步',
+        wismachion: 'Wismachion 授權',
       },
     },
     'zh-CN': {
@@ -167,6 +170,7 @@ export default function AdminPage() {
         seoTools: 'AI SEO',
         sitemap: 'Sitemap 生成',
         dataSync: '数据同步',
+        wismachion: 'Wismachion 授权',
       },
     }
   };
@@ -466,6 +470,11 @@ export default function AdminPage() {
                 {t.tabs.dataSync}
               </TabsTrigger>
             )}
+            {canViewTab('wismachion') && (
+              <TabsTrigger key="wismachion" value="wismachion" className="text-xs sm:text-sm">
+                {t.tabs.wismachion}
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <div className="mt-6">
@@ -579,6 +588,10 @@ export default function AdminPage() {
 
             <TabsContent value="dataSync" className="mt-0">
               <DataSyncDiagnostic />
+            </TabsContent>
+
+            <TabsContent value="wismachion" className="mt-0">
+              <WismachionAdminPanel />
             </TabsContent>
           </div>
         </Tabs>

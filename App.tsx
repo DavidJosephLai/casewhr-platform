@@ -87,6 +87,9 @@ const ApiDocumentation = lazy(() => import('./components/ApiDocumentation').then
 // 🌍 公開 SEO 報告頁面
 const PublicSEOReport = lazy(() => import('./components/PublicSEOReport').then(module => ({ default: module.PublicSEOReport })));
 
+// 💼 Wismachion - License Management Platform
+const WismachionApp = lazy(() => import('./wismachion/WismachionApp'));
+
 // Loading fallback components - 🚀 優化：移除刺眼的藍色載入器
 function LoadingFallback() {
   return null; // 靜默載入，不顯示任何內容
@@ -523,7 +526,7 @@ function AppContent() {
           : '❌ 付款已取消未產生任何費用。',
         { duration: 5000 }
       );
-      // ��除 URL 參數
+      // 除 URL 參數
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, [language, setView, accessToken, processingPayment]);
@@ -833,6 +836,17 @@ function AppContent() {
           <SEO title="Deep Data Diagnostic" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
             <DeepDataDiagnostic />
+          </Suspense>
+        </div>
+      ) : view === 'wismachion' ? (
+        <div className="pt-0">
+          <SEO 
+            title="PerfectComm - RS-232 Communication Software | Wismachion" 
+            description="Professional RS-232 serial communication software for Windows. Perfect for communication protocol development and testing."
+            keywords="RS-232, serial communication, VB.NET, Windows software, license management"
+          />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <WismachionApp />
           </Suspense>
         </div>
       ) : (
