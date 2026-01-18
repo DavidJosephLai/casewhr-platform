@@ -4,7 +4,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { CreditCard, DollarSign, Wallet } from 'lucide-react';
+import { DollarSign, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 
@@ -35,9 +35,9 @@ export function PurchaseDialog({ open, onClose, plan }: PurchaseDialogProps) {
 
   const currentPlan = plan ? planDetails[plan] : null;
 
-  const handlePayment = async (method: 'stripe' | 'paypal' | 'ecpay') => {
+  const handlePayment = async (method: 'paypal' | 'ecpay') => {
     if (!email || !name) {
-      toast.error('Please fill in all required fields');
+      toast.error('請填寫所有必填欄位 / Please fill in all required fields');
       return;
     }
 
@@ -47,7 +47,7 @@ export function PurchaseDialog({ open, onClose, plan }: PurchaseDialogProps) {
 
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/wismachion/purchase`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/wismachion/create-payment`,
         {
           method: 'POST',
           headers: {
@@ -66,17 +66,18 @@ export function PurchaseDialog({ open, onClose, plan }: PurchaseDialogProps) {
 
       const data = await response.json();
 
-      if (data.paymentUrl) {
+      if (data.success && data.paymentUrl) {
         // Redirect to payment page
+        toast.success('跳轉到付款頁面... / Redirecting to payment...');
         window.location.href = data.paymentUrl;
-      } else if (data.licenseKey) {
-        // Payment completed
-        toast.success('Purchase successful! License key sent to your email.');
-        onClose();
+      } else if (data.error) {
+        toast.error(data.error);
+      } else {
+        toast.error('無法創建付款會話 / Failed to create payment session');
       }
     } catch (error) {
       console.error('Purchase error:', error);
-      toast.error('Purchase failed. Please try again.');
+      toast.error('購買失敗，請重試 / Purchase failed. Please try again.');
     } finally {
       setProcessing(false);
     }
@@ -96,20 +97,22 @@ export function PurchaseDialog({ open, onClose, plan }: PurchaseDialogProps) {
         <div className="space-y-6">
           {/* Customer Information */}
           <div className="bg-blue-50 rounded-lg p-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Customer Information</h3>
+            <h3 className="font-semibold text-gray-900 mb-4">
+              客戶資訊 / Customer Information
+            </h3>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="name">Full Name *</Label>
+                <Label htmlFor="name">姓名 / Full Name *</Label>
                 <Input
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="John Doe"
+                  placeholder="王小明 / John Doe"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="email">Email Address *</Label>
+                <Label htmlFor="email">電子郵件 / Email Address *</Label>
                 <Input
                   id="email"
                   type="email"
@@ -120,7 +123,7 @@ export function PurchaseDialog({ open, onClose, plan }: PurchaseDialogProps) {
                 />
               </div>
               <div>
-                <Label htmlFor="company">Company (Optional)</Label>
+                <Label htmlFor="company">公司名稱 / Company (Optional)</Label>
                 <Input
                   id="company"
                   value={company}
@@ -133,80 +136,136 @@ export function PurchaseDialog({ open, onClose, plan }: PurchaseDialogProps) {
 
           {/* Payment Methods */}
           <div>
-            <h3 className="font-semibold text-gray-900 mb-4">Select Payment Method</h3>
-            <Tabs defaultValue="stripe" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="stripe">
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Card
+            <h3 className="font-semibold text-gray-900 mb-4">
+              選擇付款方式 / Select Payment Method
+            </h3>
+            <Tabs defaultValue="ecpay" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="ecpay">
+                  <Wallet className="w-4 h-4 mr-2" />
+                  ECPay 綠界（台灣）
                 </TabsTrigger>
                 <TabsTrigger value="paypal">
                   <DollarSign className="w-4 h-4 mr-2" />
-                  PayPal
-                </TabsTrigger>
-                <TabsTrigger value="ecpay">
-                  <Wallet className="w-4 h-4 mr-2" />
-                  ECPay (台灣)
+                  PayPal（國際）
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="stripe" className="space-y-4 mt-4">
-                <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-6 text-center">
-                  <div className="text-4xl font-bold text-gray-900 mb-2">
-                    ${currentPlan.priceUSD} USD
+              <TabsContent value="ecpay" className="space-y-4 mt-4">
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-6 border-2 border-green-200">
+                  <div className="text-center mb-4">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-3">
+                      <Wallet className="w-8 h-8 text-green-600" />
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                      🇹🇼 台灣本地支付
+                    </h4>
+                    <div className="text-4xl font-bold text-gray-900 mb-2">
+                      NT${currentPlan.priceTWD.toLocaleString()} TWD
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      支援：信用卡、ATM 轉帳、超商代碼、超商條碼
+                    </p>
                   </div>
-                  <p className="text-gray-600 mb-4">One-time payment via Stripe</p>
+                  
+                  <div className="space-y-3 mb-6 text-sm text-gray-700">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                      <span>💳 支援所有台灣信用卡</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                      <span>🏪 7-11、全家、萊爾富超商付款</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                      <span>🏦 ATM 虛擬帳號轉帳</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                      <span>✅ 安全、快速、方便</span>
+                    </div>
+                  </div>
+
                   <Button
-                    onClick={() => handlePayment('stripe')}
+                    onClick={() => handlePayment('ecpay')}
                     disabled={processing}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
                     size="lg"
                   >
-                    {processing ? 'Processing...' : 'Pay with Card'}
+                    {processing ? '處理中... / Processing...' : '使用 ECPay 付款'}
                   </Button>
+                  
+                  <div className="mt-4 text-center text-xs text-gray-500">
+                    powered by 綠界科技 ECPay
+                  </div>
                 </div>
               </TabsContent>
 
               <TabsContent value="paypal" className="space-y-4 mt-4">
-                <div className="bg-gradient-to-br from-blue-50 to-yellow-50 rounded-lg p-6 text-center">
-                  <div className="text-4xl font-bold text-gray-900 mb-2">
-                    ${currentPlan.priceUSD} USD
+                <div className="bg-gradient-to-br from-blue-50 to-yellow-50 rounded-lg p-6 border-2 border-blue-200">
+                  <div className="text-center mb-4">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-3">
+                      <DollarSign className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                      🌐 國際支付
+                    </h4>
+                    <div className="text-4xl font-bold text-gray-900 mb-2">
+                      ${currentPlan.priceUSD} USD
+                    </div>
+                    <p className="text-gray-600 mb-4">
+                      International payment via PayPal
+                    </p>
                   </div>
-                  <p className="text-gray-600 mb-4">One-time payment via PayPal</p>
+
+                  <div className="space-y-3 mb-6 text-sm text-gray-700">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <span>💳 Credit & Debit Cards</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <span>🌍 Available Worldwide</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <span>🔒 Secure Payment Protection</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <span>⚡ Instant Activation</span>
+                    </div>
+                  </div>
+
                   <Button
                     onClick={() => handlePayment('paypal')}
                     disabled={processing}
-                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                     size="lg"
                   >
                     {processing ? 'Processing...' : 'Pay with PayPal'}
                   </Button>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="ecpay" className="space-y-4 mt-4">
-                <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-lg p-6 text-center">
-                  <div className="text-4xl font-bold text-gray-900 mb-2">
-                    NT${currentPlan.priceTWD.toLocaleString()} TWD
+                  
+                  <div className="mt-4 text-center text-xs text-gray-500">
+                    powered by PayPal
                   </div>
-                  <p className="text-gray-600 mb-4">台灣綠界科技 ECPay</p>
-                  <Button
-                    onClick={() => handlePayment('ecpay')}
-                    disabled={processing}
-                    className="w-full bg-green-600 hover:bg-green-700"
-                    size="lg"
-                  >
-                    {processing ? '處理中...' : '使用 ECPay 付款'}
-                  </Button>
                 </div>
               </TabsContent>
             </Tabs>
           </div>
 
           {/* Terms */}
-          <div className="text-sm text-gray-500 text-center">
-            By completing this purchase, you agree to our Terms of Service and Privacy Policy.
-            License key will be sent to your email address within 5 minutes.
+          <div className="text-sm text-gray-500 text-center border-t pt-4">
+            <p className="mb-2">
+              完成購買即表示您同意我們的服務條款和隱私政策
+            </p>
+            <p>
+              By completing this purchase, you agree to our Terms of Service and Privacy Policy.
+            </p>
+            <p className="mt-2 text-xs">
+              授權碼將在 5 分鐘內發送至您的電子郵件 / License key will be sent to your email within 5 minutes.
+            </p>
           </div>
         </div>
       </DialogContent>

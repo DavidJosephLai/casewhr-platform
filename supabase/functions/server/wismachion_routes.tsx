@@ -1,8 +1,138 @@
 import { Hono } from 'npm:hono@3.11.7';
 import * as licenseService from './wismachion_license_service.tsx';
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
+import Stripe from 'npm:stripe@14.10.0';
+import * as kv from './kv_store.tsx';
+import * as ecpayService from './ecpay_payment_service.tsx';
 
 const wismachion = new Hono();
+
+// ============================================
+// PAYMENT CONFIGURATION
+// ============================================
+
+// Stripe
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY') || '';
+const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' }) : null;
+
+// PayPal
+const PAYPAL_CLIENT_ID = (Deno.env.get('PAYPAL_CLIENT_ID') || '').trim();
+const PAYPAL_CLIENT_SECRET = (Deno.env.get('PAYPAL_CLIENT_SECRET') || '').trim();
+const PAYPAL_MODE = (Deno.env.get('PAYPAL_MODE') || 'live').trim();
+const PAYPAL_API_BASE = PAYPAL_MODE === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+
+// ECPay
+const ECPAY_MERCHANT_ID = Deno.env.get('ECPAY_MERCHANT_ID') || '';
+const ECPAY_HASH_KEY = Deno.env.get('ECPAY_HASH_KEY') || '';
+const ECPAY_HASH_IV = Deno.env.get('ECPAY_HASH_IV') || '';
+
+// Base URL
+const getBaseUrl = () => {
+  return Deno.env.get('DEPLOYMENT_URL') || 'https://wismachion.com';
+};
+
+console.log('💳 [Wismachion Payments] Configuration:', {
+  stripe: !!STRIPE_SECRET_KEY,
+  paypal: !!(PAYPAL_CLIENT_ID && PAYPAL_CLIENT_SECRET),
+  ecpay: !!ECPAY_MERCHANT_ID
+});
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+// Get PayPal Access Token
+async function getPayPalAccessToken(): Promise<string> {
+  const auth = btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`);
+  const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${auth}`,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: 'grant_type=client_credentials'
+  });
+
+  const data = await response.json();
+  return data.access_token;
+}
+
+// Send License Email
+async function sendLicenseEmail(email: string, name: string, licenseKey: string, plan: string) {
+  const planNames = {
+    standard: 'PerfectComm Standard Edition',
+    enterprise: 'PerfectComm Enterprise Edition'
+  };
+
+  const subject = `Your ${planNames[plan as keyof typeof planNames]} License Key`;
+  
+  const body = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #2563eb;">Thank you for your purchase!</h2>
+      
+      <p>Dear ${name},</p>
+      
+      <p>Your PerfectComm license has been successfully activated. Here are your license details:</p>
+      
+      <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin-top: 0;">License Key:</h3>
+        <div style="font-family: monospace; font-size: 24px; font-weight: bold; color: #1f2937; letter-spacing: 2px;">
+          ${licenseKey}
+        </div>
+        <p style="margin-bottom: 0;"><strong>Plan:</strong> ${planNames[plan as keyof typeof planNames]}</p>
+      </div>
+      
+      <h3>Download PerfectComm:</h3>
+      <p>
+        <a href="${getBaseUrl()}/download" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
+          Download PerfectComm
+        </a>
+      </p>
+      
+      <h3>Installation Instructions:</h3>
+      <ol>
+        <li>Download and install PerfectComm</li>
+        <li>Launch the application</li>
+        <li>When prompted, enter your license key</li>
+        <li>Click "Activate" to complete the activation</li>
+      </ol>
+      
+      <h3>Need Help?</h3>
+      <p>If you have any questions or need assistance, please contact us at <a href="mailto:support@wismachion.com">support@wismachion.com</a></p>
+      
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+      
+      <p style="color: #6b7280; font-size: 14px;">
+        This is an automated email. Please do not reply to this message.<br>
+        © 2024 Wismachion. All rights reserved.
+      </p>
+    </div>
+  `;
+
+  try {
+    // Use Case Where's email service
+    const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/make-server-215f78a5/send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+      },
+      body: JSON.stringify({
+        to: email,
+        subject,
+        html: body
+      })
+    });
+
+    if (response.ok) {
+      console.log(`✅ [Email] License email sent to ${email}`);
+    } else {
+      console.error('❌ [Email] Failed to send license email:', await response.text());
+    }
+  } catch (error) {
+    console.error('❌ [Email] Error sending license email:', error);
+  }
+}
 
 // ============================================
 // PUBLIC API - License Verification
@@ -20,11 +150,11 @@ wismachion.post('/verify-license', async (c) => {
     const result = await licenseService.verifyLicense(licenseKey, machineId);
     
     // Log verification attempt
-    console.log(`License verification: ${licenseKey}, Machine: ${machineId}, Result: ${result.valid}`);
+    console.log(`✅ [License Verification] ${licenseKey}, Machine: ${machineId}, Valid: ${result.valid}`);
     
     return c.json(result);
   } catch (error) {
-    console.error('License verification error:', error);
+    console.error('❌ [License Verification] Error:', error);
     return c.json({ valid: false, message: 'Verification failed' }, 500);
   }
 });
@@ -40,19 +170,21 @@ wismachion.post('/deactivate-machine', async (c) => {
     
     const success = await licenseService.deactivateMachine(licenseKey, machineId);
     
+    console.log(`✅ [Deactivation] ${licenseKey}, Machine: ${machineId}, Success: ${success}`);
+    
     return c.json({ success, message: success ? 'Machine deactivated successfully' : 'License not found' });
   } catch (error) {
-    console.error('Deactivation error:', error);
+    console.error('❌ [Deactivation] Error:', error);
     return c.json({ success: false, message: 'Deactivation failed' }, 500);
   }
 });
 
 // ============================================
-// CUSTOMER API - Purchase & Management
+// PAYMENT API - Create Payment Sessions
 // ============================================
 
-// Purchase license
-wismachion.post('/purchase', async (c) => {
+// Create payment session
+wismachion.post('/create-payment', async (c) => {
   try {
     const { plan, email, name, company, paymentMethod } = await c.req.json();
     
@@ -70,41 +202,247 @@ wismachion.post('/purchase', async (c) => {
       return c.json({ error: 'Invalid plan' }, 400);
     }
     
-    // Determine currency based on payment method
-    const currency = paymentMethod === 'ecpay' ? 'TWD' : 'USD';
-    const amount = currency === 'TWD' ? planPrice.TWD : planPrice.USD;
-    
-    // For now, create a mock transaction
-    // In production, integrate with actual payment gateways
-    const transactionId = `MOCK-${Date.now()}`;
-    
-    // Create license
-    const licenseKey = await licenseService.createLicense({
+    // Save pending order
+    const orderId = `WIS-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    await kv.set(`wismachion:pending-order:${orderId}`, {
+      orderId,
+      plan,
       email,
       name,
       company,
-      plan,
       paymentMethod,
-      transactionId,
-      amount,
-      currency
+      createdAt: new Date().toISOString()
     });
     
-    // Send email with license key (integrate with email service)
-    console.log(`License created: ${licenseKey} for ${email}`);
+    // Create payment based on method
+    if (paymentMethod === 'stripe') {
+      // Stripe Payment
+      if (!stripe) {
+        return c.json({ error: 'Stripe not configured' }, 500);
+      }
+      
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `PerfectComm ${plan === 'standard' ? 'Standard' : 'Enterprise'} Edition`,
+              description: 'RS-232 Communication Software License'
+            },
+            unit_amount: planPrice.USD * 100 // Stripe uses cents
+          },
+          quantity: 1
+        }],
+        mode: 'payment',
+        success_url: `${getBaseUrl()}/payment/success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
+        cancel_url: `${getBaseUrl()}/payment/cancel`,
+        customer_email: email,
+        metadata: {
+          orderId,
+          plan,
+          email,
+          name,
+          company: company || ''
+        }
+      });
+      
+      console.log(`💳 [Stripe] Payment session created: ${session.id}`);
+      
+      return c.json({ 
+        success: true, 
+        paymentUrl: session.url,
+        orderId
+      });
+      
+    } else if (paymentMethod === 'paypal') {
+      // PayPal Payment
+      if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+        return c.json({ error: 'PayPal not configured' }, 500);
+      }
+      
+      const accessToken = await getPayPalAccessToken();
+      
+      const order = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          intent: 'CAPTURE',
+          purchase_units: [{
+            amount: {
+              currency_code: 'USD',
+              value: planPrice.USD.toString()
+            },
+            description: `PerfectComm ${plan === 'standard' ? 'Standard' : 'Enterprise'} Edition License`
+          }],
+          application_context: {
+            return_url: `${getBaseUrl()}/payment/paypal-success?order_id=${orderId}`,
+            cancel_url: `${getBaseUrl()}/payment/cancel`,
+            brand_name: 'Wismachion',
+            user_action: 'PAY_NOW'
+          }
+        })
+      });
+      
+      const orderData = await order.json();
+      const approveLink = orderData.links.find((link: any) => link.rel === 'approve');
+      
+      console.log(`💰 [PayPal] Order created: ${orderData.id}`);
+      
+      return c.json({
+        success: true,
+        paymentUrl: approveLink.href,
+        orderId,
+        paypalOrderId: orderData.id
+      });
+      
+    } else if (paymentMethod === 'ecpay') {
+      // ECPay Payment (Taiwan)
+      if (!ECPAY_MERCHANT_ID) {
+        return c.json({ error: 'ECPay not configured' }, 500);
+      }
+      
+      // ECPay integration would go here
+      // For now, return pending
+      return c.json({
+        success: true,
+        message: 'ECPay integration pending',
+        orderId
+      });
+      
+    } else {
+      return c.json({ error: 'Invalid payment method' }, 400);
+    }
     
-    // Return license key for demo purposes
-    // In production, only send via email
-    return c.json({ 
-      success: true, 
-      licenseKey,
-      message: 'Purchase successful! License key has been sent to your email.' 
-    });
   } catch (error) {
-    console.error('Purchase error:', error);
-    return c.json({ error: 'Purchase failed' }, 500);
+    console.error('❌ [Payment] Error creating payment:', error);
+    return c.json({ error: 'Failed to create payment' }, 500);
   }
 });
+
+// ============================================
+// PAYMENT WEBHOOKS & CALLBACKS
+// ============================================
+
+// Stripe Webhook
+wismachion.post('/webhook/stripe', async (c) => {
+  try {
+    const sig = c.req.header('stripe-signature');
+    const body = await c.req.text();
+    
+    if (!stripe) {
+      return c.json({ error: 'Stripe not configured' }, 500);
+    }
+    
+    const event = stripe.webhooks.constructEvent(
+      body,
+      sig!,
+      Deno.env.get('STRIPE_WEBHOOK_SECRET') || ''
+    );
+    
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as any;
+      const { orderId, plan, email, name, company } = session.metadata;
+      
+      console.log(`✅ [Stripe Webhook] Payment completed for order: ${orderId}`);
+      
+      // Create license
+      const licenseKey = await licenseService.createLicense({
+        email,
+        name,
+        company: company || '',
+        plan,
+        paymentMethod: 'stripe',
+        transactionId: session.payment_intent,
+        amount: session.amount_total / 100,
+        currency: session.currency.toUpperCase()
+      });
+      
+      // Send email
+      await sendLicenseEmail(email, name, licenseKey, plan);
+      
+      // Clean up pending order
+      await kv.del(`wismachion:pending-order:${orderId}`);
+    }
+    
+    return c.json({ received: true });
+  } catch (error) {
+    console.error('❌ [Stripe Webhook] Error:', error);
+    return c.json({ error: 'Webhook processing failed' }, 500);
+  }
+});
+
+// PayPal Success Callback
+wismachion.post('/payment/paypal-complete', async (c) => {
+  try {
+    const { paypalOrderId, orderId } = await c.req.json();
+    
+    if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+      return c.json({ error: 'PayPal not configured' }, 500);
+    }
+    
+    const accessToken = await getPayPalAccessToken();
+    
+    // Capture the payment
+    const capture = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders/${paypalOrderId}/capture`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    const captureData = await capture.json();
+    
+    if (captureData.status === 'COMPLETED') {
+      // Get pending order
+      const pendingOrder = await kv.get(`wismachion:pending-order:${orderId}`);
+      
+      if (!pendingOrder) {
+        return c.json({ error: 'Order not found' }, 404);
+      }
+      
+      console.log(`✅ [PayPal] Payment captured for order: ${orderId}`);
+      
+      // Create license
+      const licenseKey = await licenseService.createLicense({
+        email: pendingOrder.email,
+        name: pendingOrder.name,
+        company: pendingOrder.company || '',
+        plan: pendingOrder.plan,
+        paymentMethod: 'paypal',
+        transactionId: captureData.id,
+        amount: parseFloat(captureData.purchase_units[0].payments.captures[0].amount.value),
+        currency: captureData.purchase_units[0].payments.captures[0].amount.currency_code
+      });
+      
+      // Send email
+      await sendLicenseEmail(pendingOrder.email, pendingOrder.name, licenseKey, pendingOrder.plan);
+      
+      // Clean up pending order
+      await kv.del(`wismachion:pending-order:${orderId}`);
+      
+      return c.json({ 
+        success: true, 
+        licenseKey,
+        message: 'Payment completed! License key sent to your email.'
+      });
+    } else {
+      return c.json({ error: 'Payment not completed' }, 400);
+    }
+    
+  } catch (error) {
+    console.error('❌ [PayPal] Error completing payment:', error);
+    return c.json({ error: 'Failed to complete payment' }, 500);
+  }
+});
+
+// ============================================
+// CUSTOMER API - License Management
+// ============================================
 
 // Get customer licenses
 wismachion.post('/my-licenses', async (c) => {
@@ -119,8 +457,38 @@ wismachion.post('/my-licenses', async (c) => {
     
     return c.json({ licenses });
   } catch (error) {
-    console.error('Get licenses error:', error);
+    console.error('❌ [Get Licenses] Error:', error);
     return c.json({ error: 'Failed to retrieve licenses' }, 500);
+  }
+});
+
+// Check order status (for payment confirmation)
+wismachion.post('/check-order', async (c) => {
+  try {
+    const { orderId } = await c.req.json();
+    
+    if (!orderId) {
+      return c.json({ error: 'Order ID is required' }, 400);
+    }
+    
+    // Check if order is still pending
+    const pendingOrder = await kv.get(`wismachion:pending-order:${orderId}`);
+    
+    if (pendingOrder) {
+      return c.json({ status: 'pending' });
+    }
+    
+    // Check if license was created for this order
+    const licenseKey = await kv.get(`wismachion:order-license:${orderId}`);
+    
+    if (licenseKey) {
+      return c.json({ status: 'completed', licenseKey });
+    }
+    
+    return c.json({ status: 'not_found' });
+  } catch (error) {
+    console.error('❌ [Check Order] Error:', error);
+    return c.json({ error: 'Failed to check order status' }, 500);
   }
 });
 
@@ -136,7 +504,7 @@ wismachion.get('/admin/licenses', async (c) => {
     
     return c.json({ licenses });
   } catch (error) {
-    console.error('Get all licenses error:', error);
+    console.error('❌ [Admin] Error getting licenses:', error);
     return c.json({ error: 'Failed to retrieve licenses' }, 500);
   }
 });
@@ -155,7 +523,7 @@ wismachion.post('/admin/revoke-license', async (c) => {
     
     return c.json({ success, message: success ? 'License revoked' : 'License not found' });
   } catch (error) {
-    console.error('Revoke license error:', error);
+    console.error('❌ [Admin] Error revoking license:', error);
     return c.json({ error: 'Failed to revoke license' }, 500);
   }
 });
@@ -174,7 +542,7 @@ wismachion.post('/admin/extend-license', async (c) => {
     
     return c.json({ success, message: success ? `License extended by ${days} days` : 'License not found' });
   } catch (error) {
-    console.error('Extend license error:', error);
+    console.error('❌ [Admin] Error extending license:', error);
     return c.json({ error: 'Failed to extend license' }, 500);
   }
 });
@@ -192,7 +560,7 @@ wismachion.post('/admin/generate-license', async (c) => {
     const licenseKey = await licenseService.createLicense({
       email,
       name,
-      company,
+      company: company || '',
       plan,
       paymentMethod: 'manual',
       transactionId: `MANUAL-${Date.now()}`,
@@ -200,9 +568,12 @@ wismachion.post('/admin/generate-license', async (c) => {
       currency: 'USD'
     });
     
+    // Send email
+    await sendLicenseEmail(email, name, licenseKey, plan);
+    
     return c.json({ success: true, licenseKey });
   } catch (error) {
-    console.error('Generate license error:', error);
+    console.error('❌ [Admin] Error generating license:', error);
     return c.json({ error: 'Failed to generate license' }, 500);
   }
 });
