@@ -8,13 +8,22 @@ import { CustomerPortal } from './components/CustomerPortal';
 import { WismachionFooter } from './components/WismachionFooter';
 import { PurchaseDialog } from './components/PurchaseDialog';
 import { LoginDialog } from './components/LoginDialog';
+import { PayPalTestPage } from './components/PayPalTestPage';
 
 export default function WismachionApp() {
-  const [currentView, setCurrentView] = useState<'home' | 'portal'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'portal' | 'test'>('home');
   const [showPurchase, setShowPurchase] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'standard' | 'enterprise' | null>(null);
   const [user, setUser] = useState<any>(null);
+  
+  // Check for test mode in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('test') === 'paypal') {
+      setCurrentView('test');
+    }
+  }, []);
 
   const handlePurchase = (plan: 'standard' | 'enterprise') => {
     setSelectedPlan(plan);
@@ -49,8 +58,10 @@ export default function WismachionApp() {
           <PricingPlans onSelectPlan={handlePurchase} />
           <WismachionFooter />
         </>
-      ) : (
+      ) : currentView === 'portal' ? (
         <CustomerPortal user={user} />
+      ) : (
+        <PayPalTestPage />
       )}
 
       <PurchaseDialog
