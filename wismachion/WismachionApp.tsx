@@ -9,9 +9,11 @@ import { WismachionFooter } from './components/WismachionFooter';
 import { PurchaseDialog } from './components/PurchaseDialog';
 import { LoginDialog } from './components/LoginDialog';
 import { PayPalTestPage } from './components/PayPalTestPage';
+import { HealthCheckTest } from './components/HealthCheckTest';
+import { SimpleHealthTest } from './components/SimpleHealthTest';
 
 export default function WismachionApp() {
-  const [currentView, setCurrentView] = useState<'home' | 'portal' | 'test'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'portal' | 'test' | 'health' | 'simple'>('home');
   const [showPurchase, setShowPurchase] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'standard' | 'enterprise' | null>(null);
@@ -22,6 +24,10 @@ export default function WismachionApp() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('test') === 'paypal') {
       setCurrentView('test');
+    } else if (params.get('test') === 'health') {
+      setCurrentView('health');
+    } else if (params.get('test') === 'simple') {
+      setCurrentView('simple');
     }
   }, []);
 
@@ -60,8 +66,12 @@ export default function WismachionApp() {
         </>
       ) : currentView === 'portal' ? (
         <CustomerPortal user={user} />
-      ) : (
+      ) : currentView === 'test' ? (
         <PayPalTestPage />
+      ) : currentView === 'health' ? (
+        <HealthCheckTest />
+      ) : (
+        <SimpleHealthTest />
       )}
 
       <PurchaseDialog
