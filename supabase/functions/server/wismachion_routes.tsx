@@ -301,17 +301,43 @@ wismachion.post('/create-payment', async (c) => {
       
     } else if (paymentMethod === 'ecpay') {
       // ECPay Payment (Taiwan)
-      if (!ECPAY_MERCHANT_ID) {
+      if (!ECPAY_MERCHANT_ID || !ECPAY_HASH_KEY || !ECPAY_HASH_IV) {
         return c.json({ error: 'ECPay not configured' }, 500);
       }
       
-      // ECPay integration would go here
-      // For now, return pending
-      return c.json({
-        success: true,
-        message: 'ECPay integration pending',
-        orderId
+      // Create ECPay payment
+      console.log(`💳 [ECPay] Creating payment for order: ${orderId}`);
+      
+      const itemName = `PerfectComm ${plan === 'standard' ? 'Standard' : 'Enterprise'} Edition`;
+      const tradeDesc = 'RS-232 Serial Communication Software License';
+      
+      const ecpayResult = await ecpayService.createPayment({
+        merchantTradeNo: orderId,
+        tradeDesc,
+        itemName,
+        totalAmount: planPrice.TWD,
+        returnUrl: `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/wismachion/ecpay-callback`,
+        clientBackUrl: `${getBaseUrl()}/payment/success?order_id=${orderId}`,
+        customField1: email,
+        customField2: name,
+        customField3: company || '',
+        customField4: plan
       });
+      
+      if (ecpayResult.success && ecpayResult.formHtml) {
+        console.log(`✅ [ECPay] Payment created: ${orderId}`);
+        
+        // Return the form HTML to be submitted from the frontend
+        return c.json({
+          success: true,
+          paymentUrl: null, // ECPay uses form submission, not redirect URL
+          formHtml: ecpayResult.formHtml,
+          orderId
+        });
+      } else {
+        console.error(`❌ [ECPay] Failed to create payment:`, ecpayResult.error);
+        return c.json({ error: ecpayResult.error || 'Failed to create ECPay payment' }, 500);
+      }
       
     } else {
       return c.json({ error: 'Invalid payment method' }, 400);
@@ -437,6 +463,83 @@ wismachion.post('/payment/paypal-complete', async (c) => {
   } catch (error) {
     console.error('❌ [PayPal] Error completing payment:', error);
     return c.json({ error: 'Failed to complete payment' }, 500);
+  }
+});
+
+// ECPay Callback (ReturnURL)
+wismachion.post('/ecpay-callback', async (c) => {
+  try {
+    const formData = await c.req.formData();
+    const data: any = {};
+    
+    // Convert FormData to object
+    for (const [key, value] of formData.entries()) {
+      data[key] = value;
+    }
+    
+    console.log('💳 [ECPay Callback] Received:', data);
+    
+    // Verify callback from ECPay
+    const isValid = ecpayService.verifyCallback(data);
+    
+    if (!isValid) {
+      console.error('❌ [ECPay] Invalid callback signature');
+      return c.text('0|Invalid signature');
+    }
+    
+    const { MerchantTradeNo, RtnCode, TradeNo, TradeAmt, PaymentType, CustomField1, CustomField2, CustomField3, CustomField4 } = data;
+    
+    // Check if payment was successful (RtnCode = 1)
+    if (RtnCode === '1' || RtnCode === 1) {
+      // Get pending order
+      const pendingOrder = await kv.get(`wismachion:pending-order:${MerchantTradeNo}`);
+      
+      if (!pendingOrder) {
+        console.error(`❌ [ECPay] Order not found: ${MerchantTradeNo}`);
+        return c.text('0|Order not found');
+      }
+      
+      console.log(`✅ [ECPay] Payment successful for order: ${MerchantTradeNo}`);
+      
+      // Use custom fields or pending order data
+      const email = CustomField1 || pendingOrder.email;
+      const name = CustomField2 || pendingOrder.name;
+      const company = CustomField3 || pendingOrder.company || '';
+      const plan = CustomField4 || pendingOrder.plan;
+      
+      // Create license
+      const licenseKey = await licenseService.createLicense({
+        email,
+        name,
+        company,
+        plan,
+        paymentMethod: 'ecpay',
+        transactionId: TradeNo,
+        amount: parseInt(TradeAmt),
+        currency: 'TWD'
+      });
+      
+      console.log(`✅ [ECPay] License created: ${licenseKey}`);
+      
+      // Send email
+      await sendLicenseEmail(email, name, licenseKey, plan);
+      
+      // Store license key for order lookup
+      await kv.set(`wismachion:order-license:${MerchantTradeNo}`, licenseKey);
+      
+      // Clean up pending order
+      await kv.del(`wismachion:pending-order:${MerchantTradeNo}`);
+      
+      // ECPay expects "1|OK" response
+      return c.text('1|OK');
+    } else {
+      console.error(`❌ [ECPay] Payment failed for order: ${MerchantTradeNo}, RtnCode: ${RtnCode}`);
+      return c.text('0|Payment failed');
+    }
+    
+  } catch (error) {
+    console.error('❌ [ECPay Callback] Error:', error);
+    return c.text('0|Processing error');
   }
 });
 
