@@ -47,18 +47,41 @@ console.log('💳 [Wismachion Payments] Configuration:', {
 
 // Get PayPal Access Token
 async function getPayPalAccessToken(): Promise<string> {
-  const auth = btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`);
-  const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Basic ${auth}`,
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body: 'grant_type=client_credentials'
-  });
+  try {
+    console.log('[PayPal] Requesting access token...', {
+      clientId: PAYPAL_CLIENT_ID ? `${PAYPAL_CLIENT_ID.substring(0, 10)}...` : 'MISSING',
+      clientSecret: PAYPAL_CLIENT_SECRET ? '***SET***' : 'MISSING',
+      mode: PAYPAL_MODE,
+      apiBase: PAYPAL_API_BASE
+    });
+    
+    const auth = btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`);
+    const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'grant_type=client_credentials'
+    });
 
-  const data = await response.json();
-  return data.access_token;
+    const data = await response.json();
+    
+    if (!response.ok || data.error) {
+      console.error('❌ [PayPal] Token request failed:', {
+        status: response.status,
+        error: data.error,
+        error_description: data.error_description
+      });
+      throw new Error(`PayPal authentication failed: ${data.error_description || data.error || 'Unknown error'}`);
+    }
+    
+    console.log('✅ [PayPal] Access token obtained successfully');
+    return data.access_token;
+  } catch (error: any) {
+    console.error('❌ [PayPal] Exception getting access token:', error.message);
+    throw error;
+  }
 }
 
 // Send License Email
