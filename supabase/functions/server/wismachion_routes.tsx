@@ -444,6 +444,96 @@ wismachion.post('/payment/paypal-complete', async (c) => {
 // CUSTOMER API - License Management
 // ============================================
 
+// Download installer (requires valid license)
+wismachion.post('/download-installer', async (c) => {
+  try {
+    const { licenseKey, architecture } = await c.req.json();
+    
+    if (!licenseKey) {
+      return c.json({ error: 'License key is required' }, 400);
+    }
+    
+    if (!architecture || !['x64', 'x86'].includes(architecture)) {
+      return c.json({ error: 'Invalid architecture. Must be x64 or x86' }, 400);
+    }
+    
+    // Verify license is valid and active
+    const license = await kv.get(`wismachion:licenses:${licenseKey}`);
+    
+    if (!license) {
+      return c.json({ error: 'Invalid license key' }, 404);
+    }
+    
+    if (license.status !== 'active') {
+      return c.json({ error: `License is ${license.status}. Please contact support.` }, 403);
+    }
+    
+    // Check if license has expired
+    if (license.expiryDate !== 'lifetime') {
+      const expiryDate = new Date(license.expiryDate);
+      if (expiryDate < new Date()) {
+        return c.json({ error: 'License has expired. Please renew your license.' }, 403);
+      }
+    }
+    
+    // Generate download URL from Supabase Storage
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+    
+    const bucketName = 'make-215f78a5-wismachion-software';
+    const fileName = `installers/latest/PerfectComm-Setup-${architecture}.exe`;
+    
+    // Create signed URL (valid for 24 hours)
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .createSignedUrl(fileName, 86400); // 24 hours
+    
+    if (error) {
+      console.error('❌ [Download] Error creating download URL:', error);
+      return c.json({ error: 'Failed to generate download URL. Please try again.' }, 500);
+    }
+    
+    if (!data?.signedUrl) {
+      return c.json({ error: 'Software installer not found. Please contact support.' }, 404);
+    }
+    
+    // Log download
+    const downloadRecord = {
+      licenseKey,
+      architecture,
+      downloadedAt: new Date().toISOString(),
+      ipAddress: c.req.header('x-forwarded-for') || 'unknown',
+      userAgent: c.req.header('user-agent') || 'unknown'
+    };
+    
+    await kv.set(`wismachion:download:${Date.now()}`, downloadRecord);
+    
+    console.log(`📥 [Download] License: ${licenseKey}, Arch: ${architecture}, IP: ${downloadRecord.ipAddress}`);
+    
+    // Get current software version
+    const versionInfo = await kv.get('wismachion:software:current-version') || {
+      version: '1.0.0',
+      releaseDate: new Date().toISOString(),
+      releaseNotes: 'Initial release'
+    };
+    
+    return c.json({
+      success: true,
+      download_url: data.signedUrl,
+      version: versionInfo.version,
+      architecture,
+      expiresIn: 86400, // 24 hours in seconds
+      fileName: `PerfectComm-Setup-${versionInfo.version}-${architecture}.exe`
+    });
+    
+  } catch (error) {
+    console.error('❌ [Download] Error:', error);
+    return c.json({ error: 'Download failed. Please try again later.' }, 500);
+  }
+});
+
 // Get customer licenses
 wismachion.post('/my-licenses', async (c) => {
   try {

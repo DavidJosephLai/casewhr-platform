@@ -3,12 +3,15 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Download, Copy, Shield, Calendar, Monitor, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { useState } from 'react';
 
 interface CustomerPortalProps {
   user: any;
 }
 
 export function CustomerPortal({ user }: CustomerPortalProps) {
+  const [downloading, setDownloading] = useState<{ [key: string]: boolean }>({});
+
   if (!user || !user.licenses) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
@@ -20,6 +23,54 @@ export function CustomerPortal({ user }: CustomerPortalProps) {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success('License key copied to clipboard!');
+  };
+
+  const handleDownload = async (licenseKey: string, architecture: 'x64' | 'x86') => {
+    const downloadKey = `${licenseKey}-${architecture}`;
+    setDownloading(prev => ({ ...prev, [downloadKey]: true }));
+
+    try {
+      // Import Supabase info
+      const { projectId } = await import('../../utils/supabase/info.tsx');
+
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/wismachion/download-installer`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            licenseKey,
+            architecture
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || 'Failed to generate download link');
+        return;
+      }
+
+      if (data.success && data.download_url) {
+        // Start download
+        window.location.href = data.download_url;
+        
+        toast.success(
+          `Downloading PerfectComm ${data.version} (${architecture})...`,
+          { duration: 5000 }
+        );
+      } else {
+        toast.error('Failed to generate download link');
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Download failed. Please try again later.');
+    } finally {
+      setDownloading(prev => ({ ...prev, [downloadKey]: false }));
+    }
   };
 
   const getPlanBadge = (plan: string) => {
@@ -138,9 +189,21 @@ export function CustomerPortal({ user }: CustomerPortalProps) {
 
                 {/* Actions */}
                 <div className="flex flex-wrap gap-3">
-                  <Button className="bg-blue-600 hover:bg-blue-700 gap-2">
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700 gap-2"
+                    onClick={() => handleDownload(license.licenseKey, 'x64')}
+                    disabled={downloading[`${license.licenseKey}-x64`]}
+                  >
                     <Download className="w-4 h-4" />
-                    Download PerfectComm
+                    Download PerfectComm (64-bit)
+                  </Button>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700 gap-2"
+                    onClick={() => handleDownload(license.licenseKey, 'x86')}
+                    disabled={downloading[`${license.licenseKey}-x86`]}
+                  >
+                    <Download className="w-4 h-4" />
+                    Download PerfectComm (32-bit)
                   </Button>
                   <Button variant="outline">
                     View Installation Guide
