@@ -265,15 +265,12 @@ wismachion.post('/create-payment', async (c) => {
         return c.json({ error: 'PayPal not configured' }, 500);
       }
       
-      const accessToken = await getPayPalAccessToken();
-      
-      const order = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: JSON.stringify({
+      try {
+        const accessToken = await getPayPalAccessToken();
+        
+        console.log(`💰 [PayPal] Creating order for: ${email}, Plan: ${plan}, Amount: $${planPrice.USD}`);
+        
+        const orderPayload = {
           intent: 'CAPTURE',
           purchase_units: [{
             amount: {
@@ -288,20 +285,50 @@ wismachion.post('/create-payment', async (c) => {
             brand_name: 'Wismachion',
             user_action: 'PAY_NOW'
           }
-        })
-      });
-      
-      const orderData = await order.json();
-      const approveLink = orderData.links.find((link: any) => link.rel === 'approve');
-      
-      console.log(`💰 [PayPal] Order created: ${orderData.id}`);
-      
-      return c.json({
-        success: true,
-        paymentUrl: approveLink.href,
-        orderId,
-        paypalOrderId: orderData.id
-      });
+        };
+        
+        const order = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`
+          },
+          body: JSON.stringify(orderPayload)
+        });
+        
+        const orderData = await order.json();
+        
+        // Check for errors
+        if (!order.ok || orderData.error) {
+          console.error('❌ [PayPal] API Error:', orderData);
+          return c.json({ 
+            error: `PayPal Error: ${orderData.message || orderData.error_description || 'Unknown error'}`,
+            details: orderData
+          }, 500);
+        }
+        
+        const approveLink = orderData.links?.find((link: any) => link.rel === 'approve');
+        
+        if (!approveLink) {
+          console.error('❌ [PayPal] No approve link in response:', orderData);
+          return c.json({ error: 'PayPal did not return approval URL' }, 500);
+        }
+        
+        console.log(`✅ [PayPal] Order created: ${orderData.id}`);
+        
+        return c.json({
+          success: true,
+          paymentUrl: approveLink.href,
+          orderId,
+          paypalOrderId: orderData.id
+        });
+      } catch (paypalError: any) {
+        console.error('❌ [PayPal] Exception:', paypalError);
+        return c.json({ 
+          error: 'Failed to create PayPal order',
+          details: paypalError.message 
+        }, 500);
+      }
       
     } else if (paymentMethod === 'ecpay') {
       // ECPay Payment (Taiwan)
