@@ -24,6 +24,7 @@ export function PayPalTestPage() {
 
   useEffect(() => {
     checkConfig();
+    testPayPalAuth();
   }, []);
 
   const checkConfig = async () => {
@@ -45,33 +46,51 @@ export function PayPalTestPage() {
     }
   };
 
+  const testPayPalAuth = async () => {
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/wismachion/test-paypal`,
+        {
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`
+          }
+        }
+      );
+      const data = await response.json();
+      setTestResult({
+        success: response.ok && data.success,
+        status: response.status,
+        data
+      });
+    } catch (error: any) {
+      setTestResult({
+        success: false,
+        error: error.message
+      });
+    }
+  };
+
   const testPayPalPayment = async () => {
     setTesting(true);
-    setTestResult(null);
-
     try {
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/wismachion/create-payment`,
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${publicAnonKey}`
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             plan: 'standard',
-            email: 'test@example.com',
-            name: 'Test User',
-            company: 'Test Company',
-            paymentMethod: 'paypal'
+            paymentMethod: 'paypal',
+            email: 'test@example.com'
           })
         }
       );
-
       const data = await response.json();
-      
       setTestResult({
-        success: response.ok && data.success,
+        success: response.ok,
         status: response.status,
         data
       });
