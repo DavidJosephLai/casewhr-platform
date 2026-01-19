@@ -663,6 +663,125 @@ function generateAutoSubmitForm(action: string, params: Record<string, any>): st
 </html>`;
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🆕 Standalone ECPay Payment Creation (for Wismachion, etc.)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+export async function createPaymentForm(params: {
+  merchantTradeNo: string;
+  tradeDesc: string;
+  itemName: string;
+  totalAmount: number;
+  returnUrl: string;
+  clientBackUrl?: string;
+  customField1?: string;
+  customField2?: string;
+  customField3?: string;
+  customField4?: string;
+}): Promise<{ success: boolean; formHtml?: string; error?: string }> {
+  try {
+    console.log('[ECPay] Creating payment form:', {
+      merchantTradeNo: params.merchantTradeNo,
+      totalAmount: params.totalAmount,
+      itemName: params.itemName
+    });
+
+    // Validate configuration
+    if (!ECPAY_CONFIG.merchantId || !ECPAY_CONFIG.hashKey || !ECPAY_CONFIG.hashIV) {
+      return { success: false, error: 'ECPay not configured. Missing merchantId, hashKey, or hashIV.' };
+    }
+
+    // Validate params
+    if (params.merchantTradeNo.length > 20) {
+      return { success: false, error: 'MerchantTradeNo too long (max 20 characters)' };
+    }
+
+    if (params.totalAmount < 1) {
+      return { success: false, error: 'Total amount must be at least 1 TWD' };
+    }
+
+    // Generate trade date (yyyy/MM/dd HH:mm:ss)
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const tradeDate = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+
+    // Build ECPay params
+    const ecpayParams: Record<string, any> = {
+      MerchantID: ECPAY_CONFIG.merchantId,
+      MerchantTradeNo: params.merchantTradeNo,
+      MerchantTradeDate: tradeDate,
+      PaymentType: 'aio',
+      TotalAmount: params.totalAmount.toString(),
+      TradeDesc: params.tradeDesc,
+      ItemName: params.itemName,
+      ReturnURL: params.returnUrl,
+      ChoosePayment: 'ALL', // Support all payment methods
+      EncryptType: 1,
+    };
+
+    // Add optional fields
+    if (params.clientBackUrl) {
+      ecpayParams.ClientBackURL = params.clientBackUrl;
+    }
+
+    if (params.customField1) ecpayParams.CustomField1 = params.customField1;
+    if (params.customField2) ecpayParams.CustomField2 = params.customField2;
+    if (params.customField3) ecpayParams.CustomField3 = params.customField3;
+    if (params.customField4) ecpayParams.CustomField4 = params.customField4;
+
+    // Generate CheckMacValue
+    const checkMacValue = await generateCheckMacValue(ecpayParams);
+    ecpayParams.CheckMacValue = checkMacValue;
+
+    console.log('[ECPay] Payment form params:', {
+      MerchantID: ecpayParams.MerchantID,
+      MerchantTradeNo: ecpayParams.MerchantTradeNo,
+      TotalAmount: ecpayParams.TotalAmount,
+      CheckMacValue: checkMacValue.substring(0, 20) + '...',
+      apiUrl: ECPAY_CONFIG.apiUrl
+    });
+
+    // Generate auto-submit HTML form
+    const formHtml = generateAutoSubmitForm(ECPAY_CONFIG.apiUrl, ecpayParams);
+
+    return { success: true, formHtml };
+  } catch (error: any) {
+    console.error('[ECPay] Error creating payment form:', error);
+    return { success: false, error: error.message || 'Failed to create payment form' };
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Verify ECPay callback
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+export async function verifyCallback(params: Record<string, any>): Promise<boolean> {
+  try {
+    const receivedCheckMac = params.CheckMacValue;
+    if (!receivedCheckMac) {
+      console.error('[ECPay] No CheckMacValue in callback');
+      return false;
+    }
+
+    const calculatedCheckMac = await generateCheckMacValue(params);
+    const isValid = receivedCheckMac === calculatedCheckMac;
+
+    console.log('[ECPay] Callback verification:', {
+      received: receivedCheckMac?.substring(0, 20) + '...',
+      calculated: calculatedCheckMac?.substring(0, 20) + '...',
+      match: isValid
+    });
+
+    return isValid;
+  } catch (error) {
+    console.error('[ECPay] Error verifying callback:', error);
+    return false;
+  }
+}
+
 // Register ECPay API routes
 export function registerECPayRoutes(app: any) {
   console.log('[ECPay] Registering ECPay payment routes...');

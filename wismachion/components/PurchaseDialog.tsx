@@ -70,6 +70,23 @@ export function PurchaseDialog({ open, onClose, plan }: PurchaseDialogProps) {
         // Redirect to payment page
         toast.success('跳轉到付款頁面... / Redirecting to payment...');
         window.location.href = data.paymentUrl;
+      } else if (data.success && data.formHtml) {
+        // ECPay: Submit form HTML
+        toast.success('跳轉到 ECPay 付款頁面... / Redirecting to ECPay...');
+        
+        // Create a temporary div to hold the form
+        const div = document.createElement('div');
+        div.innerHTML = data.formHtml;
+        document.body.appendChild(div);
+        
+        // Find and submit the form
+        const form = div.querySelector('form');
+        if (form) {
+          form.submit();
+        } else {
+          toast.error('無法創建付款表單 / Failed to create payment form');
+          document.body.removeChild(div);
+        }
       } else if (data.error) {
         toast.error(data.error);
       } else {

@@ -26,6 +26,10 @@ const ECPAY_MERCHANT_ID = Deno.env.get('ECPAY_MERCHANT_ID') || '';
 const ECPAY_HASH_KEY = Deno.env.get('ECPAY_HASH_KEY') || '';
 const ECPAY_HASH_IV = Deno.env.get('ECPAY_HASH_IV') || '';
 
+// Supabase
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
+const projectId = SUPABASE_URL.replace('https://', '').split('.')[0];
+
 // Base URL
 const getBaseUrl = () => {
   return Deno.env.get('DEPLOYMENT_URL') || 'https://wismachion.com';
@@ -311,7 +315,7 @@ wismachion.post('/create-payment', async (c) => {
       const itemName = `PerfectComm ${plan === 'standard' ? 'Standard' : 'Enterprise'} Edition`;
       const tradeDesc = 'RS-232 Serial Communication Software License';
       
-      const ecpayResult = await ecpayService.createPayment({
+      const ecpayResult = await ecpayService.createPaymentForm({
         merchantTradeNo: orderId,
         tradeDesc,
         itemName,
