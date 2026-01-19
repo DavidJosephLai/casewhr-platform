@@ -207,7 +207,7 @@ wismachion.post('/create-payment', async (c) => {
     }
     
     // Save pending order
-    const orderId = `WIS-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const orderId = `WIS${Date.now().toString().slice(-10)}${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
     await kv.set(`wismachion:pending-order:${orderId}`, {
       orderId,
       plan,
