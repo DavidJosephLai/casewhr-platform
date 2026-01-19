@@ -8,6 +8,18 @@ import * as ecpayService from './ecpay_payment_service.tsx';
 const wismachion = new Hono();
 
 // ============================================
+// HEALTH CHECK
+// ============================================
+
+wismachion.get('/health', (c) => {
+  return c.json({ 
+    status: 'ok', 
+    service: 'wismachion',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ============================================
 // PAYMENT CONFIGURATION
 // ============================================
 
@@ -69,12 +81,21 @@ async function getPayPalAccessToken(): Promise<string> {
       throw new Error('PayPal credentials not configured. Please set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET environment variables.');
     }
     
-    // Create Basic auth token
+    // Create Basic auth token - Use proper base64 encoding for Deno
     const credentials = `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`;
-    const auth = btoa(credentials);
+    
+    // Use TextEncoder and btoa for proper encoding in Deno
+    const encoder = new TextEncoder();
+    const encodedData = encoder.encode(credentials);
+    let binary = '';
+    for (let i = 0; i < encodedData.length; i++) {
+      binary += String.fromCharCode(encodedData[i]);
+    }
+    const auth = btoa(binary);
     
     console.log('[PayPal] Requesting access token...', {
       authHeaderLength: auth.length,
+      credentialsLength: credentials.length,
       url: `${PAYPAL_API_BASE}/v1/oauth2/token`
     });
     
@@ -224,7 +245,12 @@ wismachion.get('/test-paypal', async (c) => {
           hasClientId: !!PAYPAL_CLIENT_ID,
           hasSecret: !!PAYPAL_CLIENT_SECRET,
           clientIdLength: PAYPAL_CLIENT_ID?.length || 0,
-          secretLength: PAYPAL_CLIENT_SECRET?.length || 0
+          secretLength: PAYPAL_CLIENT_SECRET?.length || 0,
+          envVars: {
+            PAYPAL_CLIENT_ID_exists: !!Deno.env.get('PAYPAL_CLIENT_ID'),
+            PAYPAL_CLIENT_SECRET_exists: !!Deno.env.get('PAYPAL_CLIENT_SECRET'),
+            PAYPAL_MODE_value: Deno.env.get('PAYPAL_MODE')
+          }
         }
       });
     }
@@ -241,6 +267,8 @@ wismachion.get('/test-paypal', async (c) => {
           api_base: PAYPAL_API_BASE,
           clientIdLength: PAYPAL_CLIENT_ID.length,
           secretLength: PAYPAL_CLIENT_SECRET.length,
+          clientIdPrefix: PAYPAL_CLIENT_ID.substring(0, 10),
+          secretPrefix: PAYPAL_CLIENT_SECRET.substring(0, 10),
           tokenReceived: !!token,
           tokenLength: token.length
         }
@@ -255,7 +283,8 @@ wismachion.get('/test-paypal', async (c) => {
           api_base: PAYPAL_API_BASE,
           clientIdLength: PAYPAL_CLIENT_ID.length,
           secretLength: PAYPAL_CLIENT_SECRET.length,
-          clientIdPrefix: PAYPAL_CLIENT_ID.substring(0, 10)
+          clientIdPrefix: PAYPAL_CLIENT_ID.substring(0, 10),
+          secretPrefix: PAYPAL_CLIENT_SECRET.substring(0, 10)
         }
       }, 401);
     }
