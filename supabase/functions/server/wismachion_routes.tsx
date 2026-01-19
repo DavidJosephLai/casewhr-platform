@@ -38,6 +38,9 @@ const getBaseUrl = () => {
 console.log('💳 [Wismachion Payments] Configuration:', {
   stripe: !!STRIPE_SECRET_KEY,
   paypal: !!(PAYPAL_CLIENT_ID && PAYPAL_CLIENT_SECRET),
+  paypal_mode: PAYPAL_MODE,
+  paypal_client_id_length: PAYPAL_CLIENT_ID?.length || 0,
+  paypal_secret_length: PAYPAL_CLIENT_SECRET?.length || 0,
   ecpay: !!ECPAY_MERCHANT_ID
 });
 
@@ -164,6 +167,27 @@ async function sendLicenseEmail(email: string, name: string, licenseKey: string,
 // ============================================
 // PUBLIC API - License Verification
 // ============================================
+
+// Configuration check endpoint
+wismachion.get('/config-check', async (c) => {
+  return c.json({
+    stripe: {
+      configured: !!STRIPE_SECRET_KEY,
+      key_length: STRIPE_SECRET_KEY?.length || 0
+    },
+    paypal: {
+      configured: !!(PAYPAL_CLIENT_ID && PAYPAL_CLIENT_SECRET),
+      client_id_length: PAYPAL_CLIENT_ID?.length || 0,
+      client_secret_length: PAYPAL_CLIENT_SECRET?.length || 0,
+      mode: PAYPAL_MODE,
+      api_base: PAYPAL_API_BASE
+    },
+    ecpay: {
+      configured: !!(ECPAY_MERCHANT_ID && ECPAY_HASH_KEY && ECPAY_HASH_IV),
+      merchant_id_length: ECPAY_MERCHANT_ID?.length || 0
+    }
+  });
+});
 
 // Verify license key (called by PerfectComm software)
 wismachion.post('/verify-license', async (c) => {
