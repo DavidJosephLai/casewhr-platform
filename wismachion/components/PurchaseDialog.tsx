@@ -65,6 +65,19 @@ export function PurchaseDialog({ open, onClose, plan }: PurchaseDialogProps) {
       );
 
       const data = await response.json();
+      
+      console.log('🔍 Payment Response:', {
+        status: response.status,
+        ok: response.ok,
+        data
+      });
+
+      if (!response.ok) {
+        console.error('❌ Payment API Error:', data);
+        toast.error(data.error || `Payment failed (${response.status})`);
+        setProcessing(false);
+        return;
+      }
 
       if (data.success && data.paymentUrl) {
         // Redirect to payment page
@@ -88,12 +101,14 @@ export function PurchaseDialog({ open, onClose, plan }: PurchaseDialogProps) {
           document.body.removeChild(div);
         }
       } else if (data.error) {
-        toast.error(data.error);
+        console.error('❌ Payment Error:', data.error, data.details);
+        toast.error(`${data.error}${data.details ? ` - ${data.details}` : ''}`);
       } else {
+        console.error('❌ Unexpected response:', data);
         toast.error('無法創建付款會話 / Failed to create payment session');
       }
     } catch (error) {
-      console.error('Purchase error:', error);
+      console.error('❌ Purchase exception:', error);
       toast.error('購買失敗，請重試 / Purchase failed. Please try again.');
     } finally {
       setProcessing(false);

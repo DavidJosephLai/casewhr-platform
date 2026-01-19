@@ -51,14 +51,33 @@ console.log('💳 [Wismachion Payments] Configuration:', {
 // Get PayPal Access Token
 async function getPayPalAccessToken(): Promise<string> {
   try {
-    console.log('[PayPal] Requesting access token...', {
-      clientId: PAYPAL_CLIENT_ID ? `${PAYPAL_CLIENT_ID.substring(0, 10)}...` : 'MISSING',
-      clientSecret: PAYPAL_CLIENT_SECRET ? '***SET***' : 'MISSING',
+    // Debug: Check if credentials exist
+    const hasClientId = !!PAYPAL_CLIENT_ID && PAYPAL_CLIENT_ID.length > 0;
+    const hasSecret = !!PAYPAL_CLIENT_SECRET && PAYPAL_CLIENT_SECRET.length > 0;
+    
+    console.log('[PayPal] Credential check:', {
+      hasClientId,
+      hasSecret,
+      clientIdLength: PAYPAL_CLIENT_ID?.length || 0,
+      secretLength: PAYPAL_CLIENT_SECRET?.length || 0,
+      clientIdPrefix: PAYPAL_CLIENT_ID ? PAYPAL_CLIENT_ID.substring(0, 10) : 'NONE',
       mode: PAYPAL_MODE,
       apiBase: PAYPAL_API_BASE
     });
     
-    const auth = btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`);
+    if (!hasClientId || !hasSecret) {
+      throw new Error('PayPal credentials not configured. Please set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET environment variables.');
+    }
+    
+    // Create Basic auth token
+    const credentials = `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`;
+    const auth = btoa(credentials);
+    
+    console.log('[PayPal] Requesting access token...', {
+      authHeaderLength: auth.length,
+      url: `${PAYPAL_API_BASE}/v1/oauth2/token`
+    });
+    
     const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
       method: 'POST',
       headers: {
@@ -73,8 +92,10 @@ async function getPayPalAccessToken(): Promise<string> {
     if (!response.ok || data.error) {
       console.error('❌ [PayPal] Token request failed:', {
         status: response.status,
+        statusText: response.statusText,
         error: data.error,
-        error_description: data.error_description
+        error_description: data.error_description,
+        responseBody: data
       });
       throw new Error(`PayPal authentication failed: ${data.error_description || data.error || 'Unknown error'}`);
     }
@@ -187,6 +208,64 @@ wismachion.get('/config-check', async (c) => {
       merchant_id_length: ECPAY_MERCHANT_ID?.length || 0
     }
   });
+});
+
+// Test PayPal credentials
+wismachion.get('/test-paypal', async (c) => {
+  try {
+    console.log('🧪 [Test] Testing PayPal credentials...');
+    
+    // Check if credentials exist
+    if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+      return c.json({
+        success: false,
+        error: 'PayPal credentials not configured',
+        details: {
+          hasClientId: !!PAYPAL_CLIENT_ID,
+          hasSecret: !!PAYPAL_CLIENT_SECRET,
+          clientIdLength: PAYPAL_CLIENT_ID?.length || 0,
+          secretLength: PAYPAL_CLIENT_SECRET?.length || 0
+        }
+      });
+    }
+    
+    // Try to get access token
+    try {
+      const token = await getPayPalAccessToken();
+      
+      return c.json({
+        success: true,
+        message: 'PayPal credentials are valid!',
+        details: {
+          mode: PAYPAL_MODE,
+          api_base: PAYPAL_API_BASE,
+          clientIdLength: PAYPAL_CLIENT_ID.length,
+          secretLength: PAYPAL_CLIENT_SECRET.length,
+          tokenReceived: !!token,
+          tokenLength: token.length
+        }
+      });
+    } catch (authError: any) {
+      return c.json({
+        success: false,
+        error: 'PayPal authentication failed',
+        message: authError.message,
+        details: {
+          mode: PAYPAL_MODE,
+          api_base: PAYPAL_API_BASE,
+          clientIdLength: PAYPAL_CLIENT_ID.length,
+          secretLength: PAYPAL_CLIENT_SECRET.length,
+          clientIdPrefix: PAYPAL_CLIENT_ID.substring(0, 10)
+        }
+      }, 401);
+    }
+  } catch (error: any) {
+    return c.json({
+      success: false,
+      error: 'Test failed',
+      message: error.message
+    }, 500);
+  }
 });
 
 // Verify license key (called by PerfectComm software)
