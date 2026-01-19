@@ -382,6 +382,16 @@ app.use(
 );
 console.log('✅ [SERVER] CORS configured');
 
+// Add global request logging middleware
+app.use("/*", async (c, next) => {
+  const path = c.req.path;
+  const method = c.req.method;
+  const hasAuth = !!c.req.header('Authorization');
+  console.log(`🌐 [REQUEST] ${method} ${path} (Auth: ${hasAuth ? 'YES' : 'NO'})`);
+  await next();
+});
+console.log('✅ [SERVER] Global request logging middleware configured');
+
 // Add global middleware to ensure CORS headers on all responses (including errors)
 app.use("/*", async (c, next) => {
   // Set CORS headers BEFORE processing the request
