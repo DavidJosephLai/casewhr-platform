@@ -1,5 +1,6 @@
 import { Hono } from 'npm:hono@3.11.7';
 import * as licenseService from './wismachion_license_service.tsx';
+import * as downloadService from './wismachion_download_service.tsx'; // 🆕
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
 import Stripe from 'npm:stripe@14.10.0';
 import * as kv from './kv_store.tsx';
@@ -1186,5 +1187,81 @@ async function sendTrialLicenseEmail(email: string, name: string, licenseKey: st
     console.error('❌ Error sending trial email:', error);
   }
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 📥 SOFTWARE DOWNLOAD
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// Get download URL (public - anyone can download)
+wismachion.get('/make-server-215f78a5/wismachion/download/:type', async (c: any) => {
+  try {
+    const type = c.req.param('type'); // 'trial', 'standard', 'enterprise'
+    const email = c.req.query('email') || 'anonymous';
+    const licenseKey = c.req.query('license') || '';
+    
+    console.log(`📥 [Download] Request: ${type}, Email: ${email}`);
+    
+    // Validate type
+    if (!['trial', 'standard', 'enterprise'].includes(type)) {
+      return c.json({ error: 'Invalid download type' }, 400);
+    }
+    
+    // Initialize download service bucket
+    await downloadService.ensureDownloadBucket();
+    
+    // Get download URL
+    const downloadUrl = await downloadService.getDownloadUrl(type as 'trial' | 'standard' | 'enterprise');
+    
+    if (!downloadUrl) {
+      return c.json({ 
+        error: 'Installer not available. Please contact support.',
+        message: 'The installer file is not yet uploaded to the storage.'
+      }, 404);
+    }
+    
+    // Record download statistics
+    const ipAddress = c.req.header('x-forwarded-for') || c.req.header('cf-connecting-ip') || 'unknown';
+    const userAgent = c.req.header('user-agent') || 'unknown';
+    
+    await downloadService.recordDownload({
+      licenseKey: licenseKey || undefined,
+      email: email !== 'anonymous' ? email : undefined,
+      licenseType: type as 'trial' | 'standard' | 'enterprise',
+      ipAddress,
+      userAgent
+    });
+    
+    console.log(`✅ [Download] URL generated for: ${type}`);
+    
+    return c.json({
+      success: true,
+      downloadUrl,
+      fileName: `PerfectComm_Setup_${type.charAt(0).toUpperCase() + type.slice(1)}.exe`,
+      expiresIn: 86400, // 24 hours
+      message: 'Download link generated successfully'
+    });
+    
+  } catch (error: any) {
+    console.error('❌ [Download] Error:', error);
+    return c.json({ error: error.message || 'Failed to generate download link' }, 500);
+  }
+});
+
+// Get download statistics (admin only)
+wismachion.get('/make-server-215f78a5/wismachion/admin/download-stats', async (c: any) => {
+  try {
+    // TODO: Add admin authentication
+    
+    const stats = await downloadService.getDownloadStats();
+    
+    return c.json({
+      success: true,
+      stats
+    });
+  } catch (error: any) {
+    console.error('❌ [Download Stats] Error:', error);
+    return c.json({ error: 'Failed to get download statistics' }, 500);
+  }
+});
 
 export default wismachion;
