@@ -625,6 +625,16 @@ console.log('✅ [SERVER] AI SEO APIs registered');
 app.route('/make-server-215f78a5/sitemap', sitemapRouter);
 console.log('✅ [SERVER] Dynamic Sitemap APIs registered');
 
+// 🧪 Test health endpoint BEFORE wismachion routes
+app.get('/make-server-215f78a5/wismachion/health-test', (c) => {
+  console.log('🩺 [HEALTH-TEST] Direct health-test endpoint hit!');
+  return c.json({ 
+    status: 'ok', 
+    message: 'Direct test route working!',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Register Wismachion License APIs
 app.route('/make-server-215f78a5/wismachion', wismachionRoutes);
 console.log('✅ [SERVER] Wismachion License APIs registered');
@@ -13534,8 +13544,14 @@ app.get("/make-server-215f78a5/admin/users", async (c) => {
         const wallet = await kv.get(`wallet_${profile.user_id}`);
         const subscription = await kv.get(`subscription_${profile.user_id}`);
         
+        // 🔧 Convert account_type (string) to account_types (array) for frontend compatibility
+        const accountTypes = profile.account_type 
+          ? [profile.account_type] 
+          : (profile.account_types || ['client']);
+        
         return {
           ...profile,
+          account_types: accountTypes,  // ✅ Ensure array format
           wallet_balance: wallet?.available_balance || 0,
           subscription_tier: subscription?.tier || 'free',
           subscription_status: subscription?.status || 'inactive',

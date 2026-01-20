@@ -51,7 +51,9 @@ interface User {
   user_id: string;
   email: string;
   name?: string;
+  full_name?: string;  // ✅ 加入 full_name 欄位
   account_types?: string[];
+  account_type?: string;  // ✅ 向後兼容
   wallet_balance: number;
   subscription_tier: string;
   subscription_status: string;
@@ -454,7 +456,7 @@ export function UserManagement() {
                           {user.email}
                         </div>
                       </TableCell>
-                      <TableCell>{user.name || '-'}</TableCell>
+                      <TableCell>{user.full_name || user.name || '-'}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
                           {user.account_types?.includes('client') && (
