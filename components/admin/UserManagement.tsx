@@ -172,7 +172,7 @@ export function UserManagement() {
       password: '密碼',
       resetWallet: '錢包歸零',
       resetWalletConfirm: '確定要將此用戶的錢包餘額歸零嗎？此操作無法撤銷。',
-      resetReason: '歸���原因（選填）',
+      resetReason: '歸原因（選填）',
       resetReasonPlaceholder: '輸入錢包歸零的因...',
       resetSuccess: '錢包歸零成功',
       resetError: '錢包歸零失敗',
@@ -595,16 +595,6 @@ export function UserManagement() {
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 {text.deleteUser}
-              </Button>
-            )}
-            {userIsSuperAdmin && selectedUser?.wallet?.available_balance > 0 && (
-              <Button
-                variant="destructive"
-                className="bg-red-600 hover:bg-red-700"
-                onClick={() => resetWallet(selectedUser?.profile?.user_id, '')}
-              >
-                <DollarSign className="h-4 w-4 mr-2" />
-                {text.resetWallet}
               </Button>
             )}
             <Button variant="outline" onClick={() => setShowDetailsDialog(false)}>

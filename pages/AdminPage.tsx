@@ -36,8 +36,6 @@ import { SEOActionPlan } from '../components/admin/SEOActionPlan';
 import { RobotsTxtFixer } from '../components/admin/RobotsTxtFixer';
 import KVStoreDiagnostic from '../components/admin/KVStoreDiagnostic';
 import { WithdrawalAdminPanel } from '../components/WithdrawalAdminPanel';
-import { WalletResetTool } from '../components/admin/WalletResetTool';
-import { RevenueResetTool } from '../components/admin/RevenueResetTool';
 import DataSyncDiagnostic from '../components/DataSyncDiagnostic';
 import { WismachionAdminPanel } from '../wismachion/admin/WismachionAdminPanel';
 import { Button } from '../components/ui/button';
@@ -425,16 +423,6 @@ export default function AdminPage() {
                 {t.tabs.revenue}
               </TabsTrigger>
             )}
-            {canViewTab('walletReset') && (
-              <TabsTrigger key="walletReset" value="walletReset" className="text-xs sm:text-sm text-red-600">
-                🗑️ Wallet Reset
-              </TabsTrigger>
-            )}
-            {canViewTab('revenueReset') && (
-              <TabsTrigger key="revenueReset" value="revenueReset" className="text-xs sm:text-sm text-orange-600">
-                🗑️ Revenue Reset
-              </TabsTrigger>
-            )}
             {canViewTab('bankAccounts') && (
               <TabsTrigger key="bankAccounts" value="bankAccounts" className="text-xs sm:text-sm">
                 {t.tabs.bankAccounts}
@@ -519,14 +507,6 @@ export default function AdminPage() {
 
             <TabsContent value="revenue" className="mt-0">
               <AdminRevenue />
-            </TabsContent>
-
-            <TabsContent value="walletReset" className="mt-0">
-              <WalletResetTool />
-            </TabsContent>
-
-            <TabsContent value="revenueReset" className="mt-0">
-              <RevenueResetTool />
             </TabsContent>
 
             <TabsContent value="bankAccounts" className="mt-0">
