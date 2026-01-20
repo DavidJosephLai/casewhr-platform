@@ -63,16 +63,20 @@ console.log('💳 [Wismachion Payments] Configuration:', {
 // Get PayPal Access Token
 async function getPayPalAccessToken(): Promise<string> {
   try {
-    // Debug: Check if credentials exist
-    const hasClientId = !!PAYPAL_CLIENT_ID && PAYPAL_CLIENT_ID.length > 0;
-    const hasSecret = !!PAYPAL_CLIENT_SECRET && PAYPAL_CLIENT_SECRET.length > 0;
+    // Debug: Check if credentials exist and clean them
+    const clientId = (PAYPAL_CLIENT_ID || '').trim();
+    const clientSecret = (PAYPAL_CLIENT_SECRET || '').trim();
+    
+    const hasClientId = !!clientId && clientId.length > 0;
+    const hasSecret = !!clientSecret && clientSecret.length > 0;
     
     console.log('[PayPal] Credential check:', {
       hasClientId,
       hasSecret,
-      clientIdLength: PAYPAL_CLIENT_ID?.length || 0,
-      secretLength: PAYPAL_CLIENT_SECRET?.length || 0,
-      clientIdPrefix: PAYPAL_CLIENT_ID ? PAYPAL_CLIENT_ID.substring(0, 10) : 'NONE',
+      clientIdLength: clientId.length,
+      secretLength: clientSecret.length,
+      clientIdPrefix: clientId ? clientId.substring(0, 10) : 'NONE',
+      secretPrefix: clientSecret ? clientSecret.substring(0, 10) : 'NONE',
       mode: PAYPAL_MODE,
       apiBase: PAYPAL_API_BASE
     });
@@ -81,31 +85,36 @@ async function getPayPalAccessToken(): Promise<string> {
       throw new Error('PayPal credentials not configured. Please set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET environment variables.');
     }
     
-    // Create Basic auth token - Use proper base64 encoding for Deno
-    const credentials = `${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`;
+    // Create Basic auth token
+    const credentials = `${clientId}:${clientSecret}`;
+    const auth = btoa(credentials);
     
-    // Use TextEncoder and btoa for proper encoding in Deno
-    const encoder = new TextEncoder();
-    const encodedData = encoder.encode(credentials);
-    let binary = '';
-    for (let i = 0; i < encodedData.length; i++) {
-      binary += String.fromCharCode(encodedData[i]);
-    }
-    const auth = btoa(binary);
-    
-    console.log('[PayPal] Requesting access token...', {
-      authHeaderLength: auth.length,
+    console.log('[PayPal] Auth preparation:', {
       credentialsLength: credentials.length,
-      url: `${PAYPAL_API_BASE}/v1/oauth2/token`
+      authHeaderLength: auth.length,
+      authPrefix: auth.substring(0, 20)
     });
     
-    const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
+    const requestUrl = `${PAYPAL_API_BASE}/v1/oauth2/token`;
+    const requestBody = 'grant_type=client_credentials';
+    
+    console.log('[PayPal] Making request:', {
+      url: requestUrl,
+      method: 'POST',
+      body: requestBody,
+      headers: {
+        'Authorization': `Basic ${auth.substring(0, 20)}...`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+    
+    const response = await fetch(requestUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Basic ${auth}`,
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: 'grant_type=client_credentials'
+      body: requestBody
     });
 
     const data = await response.json();
@@ -116,7 +125,12 @@ async function getPayPalAccessToken(): Promise<string> {
         statusText: response.statusText,
         error: data.error,
         error_description: data.error_description,
-        responseBody: data
+        responseBody: data,
+        requestDetails: {
+          url: requestUrl,
+          clientIdUsed: clientId.substring(0, 15) + '...',
+          secretUsed: clientSecret.substring(0, 10) + '...'
+        }
       });
       throw new Error(`PayPal authentication failed: ${data.error_description || data.error || 'Unknown error'}`);
     }
@@ -211,88 +225,121 @@ async function sendLicenseEmail(email: string, name: string, licenseKey: string,
 // ============================================
 
 // Configuration check endpoint
-wismachion.get('/config-check', async (c) => {
+wismachion.get('/config-check', (c) => {
   return c.json({
-    stripe: {
-      configured: !!STRIPE_SECRET_KEY,
-      key_length: STRIPE_SECRET_KEY?.length || 0
-    },
     paypal: {
-      configured: !!(PAYPAL_CLIENT_ID && PAYPAL_CLIENT_SECRET),
-      client_id_length: PAYPAL_CLIENT_ID?.length || 0,
-      client_secret_length: PAYPAL_CLIENT_SECRET?.length || 0,
+      client_id_length: PAYPAL_CLIENT_ID.length,
+      client_secret_length: PAYPAL_CLIENT_SECRET.length,
+      client_id_prefix: PAYPAL_CLIENT_ID.substring(0, 10),
+      secret_prefix: PAYPAL_CLIENT_SECRET.substring(0, 10),
       mode: PAYPAL_MODE,
-      api_base: PAYPAL_API_BASE
+      api_base: PAYPAL_API_BASE,
+      has_whitespace_in_id: PAYPAL_CLIENT_ID !== PAYPAL_CLIENT_ID.trim(),
+      has_whitespace_in_secret: PAYPAL_CLIENT_SECRET !== PAYPAL_CLIENT_SECRET.trim(),
+      ends_with_newline_id: PAYPAL_CLIENT_ID.endsWith('\n') || PAYPAL_CLIENT_ID.endsWith('\r'),
+      ends_with_newline_secret: PAYPAL_CLIENT_SECRET.endsWith('\n') || PAYPAL_CLIENT_SECRET.endsWith('\r')
     },
-    ecpay: {
-      configured: !!(ECPAY_MERCHANT_ID && ECPAY_HASH_KEY && ECPAY_HASH_IV),
-      merchant_id_length: ECPAY_MERCHANT_ID?.length || 0
+    stripe: {
+      configured: !!STRIPE_SECRET_KEY
     }
   });
 });
 
-// Test PayPal credentials
+// PayPal test endpoint
 wismachion.get('/test-paypal', async (c) => {
   try {
-    console.log('🧪 [Test] Testing PayPal credentials...');
-    
-    // Check if credentials exist
-    if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+    const token = await getPayPalAccessToken();
+    return c.json({ 
+      success: true, 
+      message: 'PayPal authentication successful',
+      details: {
+        tokenLength: token.length,
+        mode: PAYPAL_MODE,
+        api_base: PAYPAL_API_BASE
+      }
+    });
+  } catch (error: any) {
+    return c.json({ 
+      success: false, 
+      error: error.message,
+      details: {
+        clientIdPrefix: PAYPAL_CLIENT_ID.substring(0, 15),
+        secretPrefix: PAYPAL_CLIENT_SECRET.substring(0, 10),
+        clientIdLength: PAYPAL_CLIENT_ID.length,
+        secretLength: PAYPAL_CLIENT_SECRET.length,
+        mode: PAYPAL_MODE,
+        api_base: PAYPAL_API_BASE
+      }
+    }, 500);
+  }
+});
+
+// Advanced PayPal diagnostic
+wismachion.post('/paypal-diagnostic', async (c) => {
+  try {
+    const body = await c.req.json();
+    const testClientId = body.clientId?.trim() || PAYPAL_CLIENT_ID;
+    const testSecret = body.secret?.trim() || PAYPAL_CLIENT_SECRET;
+    const testMode = body.mode || PAYPAL_MODE;
+    const testApiBase = testMode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+
+    console.log('[PayPal Diagnostic] Testing credentials:', {
+      clientIdLength: testClientId.length,
+      secretLength: testSecret.length,
+      mode: testMode,
+      apiBase: testApiBase,
+      clientIdPrefix: testClientId.substring(0, 10),
+      secretPrefix: testSecret.substring(0, 10)
+    });
+
+    // Test authentication
+    const credentials = `${testClientId}:${testSecret}`;
+    const auth = btoa(credentials);
+
+    const response = await fetch(`${testApiBase}/v1/oauth2/token`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'grant_type=client_credentials'
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
       return c.json({
         success: false,
-        error: 'PayPal credentials not configured',
-        details: {
-          hasClientId: !!PAYPAL_CLIENT_ID,
-          hasSecret: !!PAYPAL_CLIENT_SECRET,
-          clientIdLength: PAYPAL_CLIENT_ID?.length || 0,
-          secretLength: PAYPAL_CLIENT_SECRET?.length || 0,
-          envVars: {
-            PAYPAL_CLIENT_ID_exists: !!Deno.env.get('PAYPAL_CLIENT_ID'),
-            PAYPAL_CLIENT_SECRET_exists: !!Deno.env.get('PAYPAL_CLIENT_SECRET'),
-            PAYPAL_MODE_value: Deno.env.get('PAYPAL_MODE')
-          }
+        status: response.status,
+        error: data.error,
+        error_description: data.error_description,
+        diagnosis: {
+          clientIdLength: testClientId.length,
+          secretLength: testSecret.length,
+          mode: testMode,
+          apiBase: testApiBase,
+          clientIdPrefix: testClientId.substring(0, 15),
+          secretPrefix: testSecret.substring(0, 10),
+          possibleIssues: [
+            testMode === 'live' ? 'Credentials might be from Sandbox environment' : 'Credentials might be from Live environment',
+            'Credentials might contain extra spaces or newlines',
+            'Credentials might be copied incorrectly',
+            'App might not be activated in PayPal Dashboard'
+          ]
         }
-      });
+      }, response.status);
     }
-    
-    // Try to get access token
-    try {
-      const token = await getPayPalAccessToken();
-      
-      return c.json({
-        success: true,
-        message: 'PayPal credentials are valid!',
-        details: {
-          mode: PAYPAL_MODE,
-          api_base: PAYPAL_API_BASE,
-          clientIdLength: PAYPAL_CLIENT_ID.length,
-          secretLength: PAYPAL_CLIENT_SECRET.length,
-          clientIdPrefix: PAYPAL_CLIENT_ID.substring(0, 10),
-          secretPrefix: PAYPAL_CLIENT_SECRET.substring(0, 10),
-          tokenReceived: !!token,
-          tokenLength: token.length
-        }
-      });
-    } catch (authError: any) {
-      return c.json({
-        success: false,
-        error: 'PayPal authentication failed',
-        message: authError.message,
-        details: {
-          mode: PAYPAL_MODE,
-          api_base: PAYPAL_API_BASE,
-          clientIdLength: PAYPAL_CLIENT_ID.length,
-          secretLength: PAYPAL_CLIENT_SECRET.length,
-          clientIdPrefix: PAYPAL_CLIENT_ID.substring(0, 10),
-          secretPrefix: PAYPAL_CLIENT_SECRET.substring(0, 10)
-        }
-      }, 401);
-    }
+
+    return c.json({
+      success: true,
+      message: 'Authentication successful!',
+      tokenLength: data.access_token.length,
+      mode: testMode
+    });
   } catch (error: any) {
     return c.json({
       success: false,
-      error: 'Test failed',
-      message: error.message
+      error: error.message
     }, 500);
   }
 });
@@ -956,5 +1003,188 @@ wismachion.post('/admin/generate-license', async (c) => {
     return c.json({ error: 'Failed to generate license' }, 500);
   }
 });
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🎁 FREE TRIAL (30 Days)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+wismachion.post('/make-server-215f78a5/wismachion/trial', async (c: any) => {
+  try {
+    const { email, name, company } = await c.req.json();
+    
+    console.log(`🎁 [Wismachion Trial] Request from: ${email}`);
+    
+    if (!email || !name) {
+      return c.json({ error: 'Email and name are required' }, 400);
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return c.json({ error: 'Invalid email format' }, 400);
+    }
+    
+    // Create trial license
+    try {
+      const licenseKey = await licenseService.createTrialLicense({
+        email,
+        name,
+        company: company || ''
+      });
+      
+      // Send trial license email
+      await sendTrialLicenseEmail(email, name, licenseKey);
+      
+      console.log(`✅ [Wismachion Trial] Trial license created: ${licenseKey}`);
+      
+      return c.json({ 
+        success: true, 
+        licenseKey,
+        message: 'Trial license created successfully! Check your email for details.',
+        trialDays: 30
+      });
+    } catch (error: any) {
+      console.error('❌ [Wismachion Trial] Error:', error);
+      
+      // Check if user already has trial
+      if (error.message.includes('already used a trial')) {
+        return c.json({ 
+          error: 'You have already used a trial license. Please purchase a license to continue.',
+          alreadyUsed: true 
+        }, 400);
+      }
+      
+      throw error;
+    }
+  } catch (error: any) {
+    console.error('❌ [Wismachion Trial] Error creating trial:', error);
+    return c.json({ error: error.message || 'Failed to create trial license' }, 500);
+  }
+});
+
+// Send trial license email
+async function sendTrialLicenseEmail(email: string, name: string, licenseKey: string) {
+  const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  
+  const subject = '🎁 Your PerfectComm 30-Day Free Trial License';
+  
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .license-box { background: white; border: 2px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center; }
+    .license-key { font-size: 24px; font-weight: bold; color: #667eea; letter-spacing: 2px; font-family: monospace; }
+    .features { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    .feature-item { padding: 10px 0; border-bottom: 1px solid #eee; }
+    .cta-button { display: inline-block; background: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+    .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+    .footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎁 Welcome to PerfectComm!</h1>
+      <p>Your 30-Day Free Trial Starts Now</p>
+    </div>
+    
+    <div class="content">
+      <p>Hi <strong>${name}</strong>,</p>
+      
+      <p>Thank you for choosing PerfectComm RS-232 Communication Software! We're excited to have you on board.</p>
+      
+      <div class="license-box">
+        <p style="margin: 0 0 10px 0; color: #666;">Your Trial License Key:</p>
+        <div class="license-key">${licenseKey}</div>
+        <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;">Valid until: ${expiryDate.toLocaleDateString()}</p>
+      </div>
+      
+      <div class="warning">
+        ⏰ <strong>Trial Period:</strong> 30 days from today<br>
+        📅 <strong>Expires on:</strong> ${expiryDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+      </div>
+      
+      <h3>📦 What's Included in Your Trial:</h3>
+      <div class="features">
+        <div class="feature-item">✅ Full RS-232 communication capabilities</div>
+        <div class="feature-item">✅ Protocol development tools</div>
+        <div class="feature-item">✅ Data logging and analysis</div>
+        <div class="feature-item">✅ Support for up to 4 COM ports</div>
+        <div class="feature-item">✅ Email support during trial</div>
+      </div>
+      
+      <h3>🚀 Getting Started:</h3>
+      <ol>
+        <li><strong>Download PerfectComm:</strong> Visit <a href="https://casewhr.com/?view=wismachion">casewhr.com/wismachion</a></li>
+        <li><strong>Install the software</strong> on your Windows machine</li>
+        <li><strong>Enter your license key</strong> when prompted</li>
+        <li><strong>Start testing</strong> your RS-232 communication!</li>
+      </ol>
+      
+      <div style="text-align: center;">
+        <a href="https://casewhr.com/?view=wismachion" class="cta-button">Download PerfectComm Now</a>
+      </div>
+      
+      <h3>💰 Upgrade Anytime:</h3>
+      <p>Love PerfectComm? Upgrade to a paid license before your trial ends:</p>
+      <ul>
+        <li><strong>Standard Edition:</strong> NT$3,000 (1-year license, 1 activation)</li>
+        <li><strong>Enterprise Edition:</strong> NT$6,000 (Lifetime license, 5 activations)</li>
+      </ul>
+      
+      <p style="margin-top: 30px;">Need help? Just reply to this email!</p>
+      
+      <p>Best regards,<br>
+      <strong>The Wismachion Team</strong></p>
+    </div>
+    
+    <div class="footer">
+      <p>This is an automated email from Wismachion PerfectComm License System.</p>
+      <p>© ${new Date().getFullYear()} Wismachion. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+  
+  // Send via Brevo
+  try {
+    const brevoApiKey = Deno.env.get('BREVO_REST_API_KEY');
+    if (!brevoApiKey) {
+      console.warn('⚠️ BREVO_REST_API_KEY not configured, skipping email');
+      return;
+    }
+    
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': brevoApiKey,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { name: 'Wismachion', email: 'noreply@casewhr.com' },
+        to: [{ email, name }],
+        subject,
+        htmlContent
+      })
+    });
+    
+    if (response.ok) {
+      console.log(`✅ Trial license email sent to: ${email}`);
+    } else {
+      const error = await response.text();
+      console.error('❌ Failed to send trial email:', error);
+    }
+  } catch (error) {
+    console.error('❌ Error sending trial email:', error);
+  }
+}
 
 export default wismachion;

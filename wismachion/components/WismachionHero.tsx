@@ -3,9 +3,10 @@ import { Download, Zap, Shield, Clock } from 'lucide-react';
 
 interface WismachionHeroProps {
   onGetStarted: () => void;
+  onFreeTrial?: () => void; // 🆕
 }
 
-export function WismachionHero({ onGetStarted }: WismachionHeroProps) {
+export function WismachionHero({ onGetStarted, onFreeTrial }: WismachionHeroProps) {
   return (
     <section className="py-20 bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600">
       <div className="container mx-auto px-4">
@@ -58,6 +59,7 @@ export function WismachionHero({ onGetStarted }: WismachionHeroProps) {
                 size="lg" 
                 variant="outline"
                 className="border-2 border-white text-white hover:bg-white/10 text-lg px-8"
+                onClick={onFreeTrial}
               >
                 Try Free Trial
               </Button>

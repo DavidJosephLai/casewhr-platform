@@ -1,7 +1,21 @@
 import * as kv from './kv_store.tsx';
 
 // License Key Generator
-export function generateLicenseKey(plan: 'standard' | 'enterprise'): string {
+export function generateLicenseKey(plan: 'standard' | 'enterprise' | 'trial'): string {
+  // 🆕 試用版授權格式
+  if (plan === 'trial') {
+    const prefix = 'PC-TRIAL';
+    const segments = [];
+    
+    for (let i = 0; i < 3; i++) {
+      const segment = Math.random().toString(36).substring(2, 6).toUpperCase();
+      segments.push(segment);
+    }
+    
+    return `${prefix}-${segments.join('-')}`;
+  }
+  
+  // 標準版和企業版授權
   const prefix = plan === 'standard' ? 'PC-STD' : 'PC-ENT';
   const segments = [];
   
@@ -11,6 +25,53 @@ export function generateLicenseKey(plan: 'standard' | 'enterprise'): string {
   }
   
   return `${prefix}-${segments.join('-')}`;
+}
+
+// 🆕 Create trial license (30 days free)
+export async function createTrialLicense(data: {
+  email: string;
+  name: string;
+  company?: string;
+}): Promise<string> {
+  // Check if user already has a trial license
+  const existingTrials = await kv.getByPrefix(`wismachion:customer:${data.email}:`);
+  const hasTrialBefore = existingTrials.some((key: any) => {
+    return key.includes('PC-TRIAL');
+  });
+  
+  if (hasTrialBefore) {
+    throw new Error('You have already used a trial license. Please purchase a license to continue using PerfectComm.');
+  }
+  
+  const licenseKey = generateLicenseKey('trial');
+  const now = new Date();
+  const expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+  
+  const license = {
+    licenseKey,
+    email: data.email,
+    name: data.name,
+    company: data.company || '',
+    plan: 'trial',
+    status: 'active',
+    createdAt: now.toISOString(),
+    expiryDate: expiryDate.toISOString(),
+    maxActivations: 1, // Trial limited to 1 activation
+    activations: [],
+    paymentMethod: 'trial',
+    transactionId: `trial_${Date.now()}`,
+    amount: 0,
+    currency: 'TWD',
+    isTrial: true,
+    trialDays: 30
+  };
+  
+  await kv.set(`wismachion:license:${licenseKey}`, license);
+  await kv.set(`wismachion:customer:${data.email}:${licenseKey}`, licenseKey);
+  
+  console.log(`🎁 [Wismachion Trial] Created trial license for ${data.email}: ${licenseKey}`);
+  
+  return licenseKey;
 }
 
 // Create new license
@@ -47,6 +108,28 @@ export async function createLicense(data: {
   
   await kv.set(`wismachion:license:${licenseKey}`, license);
   await kv.set(`wismachion:customer:${data.email}:${licenseKey}`, licenseKey);
+  
+  // 🆕 記錄收入到平台統計系統
+  const transactionId = `wismachion_${data.transactionId}_${Date.now()}`;
+  const transactionRecord = {
+    id: transactionId,
+    type: 'wismachion_revenue',
+    product: 'wismachion',
+    plan: data.plan,
+    amount: data.amount,
+    currency: data.currency,
+    payment_method: data.paymentMethod,
+    license_key: licenseKey,
+    customer_email: data.email,
+    customer_name: data.name,
+    transaction_id: data.transactionId,
+    created_at: new Date().toISOString(),
+    status: 'completed'
+  };
+  
+  await kv.set(`transaction_${transactionId}`, transactionRecord);
+  
+  console.log(`💰 [Wismachion Revenue] Recorded transaction: ${transactionId}, Amount: ${data.currency} ${data.amount}, Plan: ${data.plan}, Method: ${data.paymentMethod}`);
   
   return licenseKey;
 }

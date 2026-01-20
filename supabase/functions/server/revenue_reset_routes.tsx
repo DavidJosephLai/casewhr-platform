@@ -40,6 +40,11 @@ export function registerRevenueResetRoutes(app: any, supabase: any) {
         (t: any) => t.type === 'service_fee'
       );
 
+      // 🆕 Wismachion 收入
+      const wismachionTransactions = allTransactions.filter(
+        (t: any) => t.type === 'wismachion_revenue'
+      );
+
       const totalSubscriptionRevenue = subscriptionTransactions.reduce(
         (sum: number, t: any) => sum + (t.amount || 0),
         0
@@ -47,6 +52,16 @@ export function registerRevenueResetRoutes(app: any, supabase: any) {
 
       const totalServiceFeeRevenue = serviceFeeTransactions.reduce(
         (sum: number, t: any) => sum + (t.amount || 0),
+        0
+      );
+
+      // 🆕 計算 Wismachion 總收入
+      const totalWismachionRevenue = wismachionTransactions.reduce(
+        (sum: number, t: any) => {
+          // 統一換算成 USD
+          const amountInUSD = t.currency === 'TWD' ? t.amount / 30 : t.amount;
+          return sum + amountInUSD;
+        },
         0
       );
 
@@ -59,10 +74,12 @@ export function registerRevenueResetRoutes(app: any, supabase: any) {
       const summary = {
         total_subscription_revenue: totalSubscriptionRevenue,
         total_service_fee_revenue: totalServiceFeeRevenue,
-        total_revenue: totalSubscriptionRevenue + totalServiceFeeRevenue,
+        total_wismachion_revenue: totalWismachionRevenue, // 🆕
+        total_revenue: totalSubscriptionRevenue + totalServiceFeeRevenue + totalWismachionRevenue, // 🆕 加入 Wismachion
         total_subscription_transactions: subscriptionTransactions.length,
         total_service_fee_transactions: serviceFeeTransactions.length,
-        total_transactions: subscriptionTransactions.length + serviceFeeTransactions.length,
+        total_wismachion_transactions: wismachionTransactions.length, // 🆕
+        total_transactions: subscriptionTransactions.length + serviceFeeTransactions.length + wismachionTransactions.length,
         active_subscriptions: activeSubscriptions.length,
       };
 

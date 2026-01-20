@@ -8,14 +8,17 @@ import { CustomerPortal } from './components/CustomerPortal';
 import { WismachionFooter } from './components/WismachionFooter';
 import { PurchaseDialog } from './components/PurchaseDialog';
 import { LoginDialog } from './components/LoginDialog';
+import { FreeTrialDialog } from './components/FreeTrialDialog'; // 🆕
 import { PayPalTestPage } from './components/PayPalTestPage';
 import { HealthCheckTest } from './components/HealthCheckTest';
 import { SimpleHealthTest } from './components/SimpleHealthTest';
+import { PayPalDiagnostic } from './components/PayPalDiagnostic';
 
 export default function WismachionApp() {
-  const [currentView, setCurrentView] = useState<'home' | 'portal' | 'test' | 'health' | 'simple'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'portal' | 'test' | 'health' | 'simple' | 'diagnostic'>('home');
   const [showPurchase, setShowPurchase] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [showFreeTrial, setShowFreeTrial] = useState(false); // 🆕
   const [selectedPlan, setSelectedPlan] = useState<'standard' | 'enterprise' | null>(null);
   const [user, setUser] = useState<any>(null);
   
@@ -28,6 +31,8 @@ export default function WismachionApp() {
       setCurrentView('health');
     } else if (params.get('test') === 'simple') {
       setCurrentView('simple');
+    } else if (params.get('test') === 'diagnostic') {
+      setCurrentView('diagnostic');
     }
   }, []);
 
@@ -59,7 +64,10 @@ export default function WismachionApp() {
 
       {currentView === 'home' ? (
         <>
-          <WismachionHero onGetStarted={() => handlePurchase('standard')} />
+          <WismachionHero 
+            onGetStarted={() => handlePurchase('standard')} 
+            onFreeTrial={() => setShowFreeTrial(true)} 
+          />
           <ProductFeatures />
           <PricingPlans onSelectPlan={handlePurchase} />
           <WismachionFooter />
@@ -70,8 +78,10 @@ export default function WismachionApp() {
         <PayPalTestPage />
       ) : currentView === 'health' ? (
         <HealthCheckTest />
-      ) : (
+      ) : currentView === 'simple' ? (
         <SimpleHealthTest />
+      ) : (
+        <PayPalDiagnostic />
       )}
 
       <PurchaseDialog
@@ -88,6 +98,11 @@ export default function WismachionApp() {
           setCurrentView('portal');
           setShowLogin(false);
         }}
+      />
+
+      <FreeTrialDialog
+        open={showFreeTrial}
+        onClose={() => setShowFreeTrial(false)}
       />
     </div>
   );

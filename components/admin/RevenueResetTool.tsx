@@ -34,9 +34,11 @@ import { projectId, publicAnonKey } from '../../utils/supabase/info';
 interface RevenueSummary {
   total_subscription_revenue: number;
   total_service_fee_revenue: number;
+  total_wismachion_revenue: number; // 🆕
   total_revenue: number;
   total_subscription_transactions: number;
   total_service_fee_transactions: number;
+  total_wismachion_transactions: number; // 🆕
   total_transactions: number;
   active_subscriptions: number;
 }
@@ -296,6 +298,21 @@ export function RevenueResetTool() {
                     {summary.total_service_fee_transactions} {language === 'en' ? 'transactions' : '筆交易'}
                   </p>
                 </div>
+
+                <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Receipt className="h-5 w-5 text-orange-600" />
+                    <p className="text-sm text-gray-600">
+                      {language === 'en' ? 'Wismachion Revenue' : 'Wismachion收入'}
+                    </p>
+                  </div>
+                  <p className="text-2xl font-bold text-orange-600">
+                    ${summary.total_wismachion_revenue.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {summary.total_wismachion_transactions} {language === 'en' ? 'transactions' : '筆交易'}
+                  </p>
+                </div>
               </div>
 
               {/* Stats Grid */}
@@ -352,7 +369,7 @@ export function RevenueResetTool() {
                 <span className="font-bold">{lastResetResult.total_transactions_deleted}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">{language === 'en' ? 'Revenue Cleared:' : '清除收入：'}</span>
+                <span className="text-gray-600">{language === 'en' ? 'Revenue Cleared:' : '���除收入：'}</span>
                 <span className="font-bold">${lastResetResult.total_revenue_cleared.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
