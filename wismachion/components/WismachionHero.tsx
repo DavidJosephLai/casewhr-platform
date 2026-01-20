@@ -13,7 +13,7 @@ export function WismachionHero({ onGetStarted, onFreeTrial }: WismachionHeroProp
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
           <div className="text-white">
-            <div className="inline-block mb-4 px-4 py-2 bg-cyan-600 rounded-full text-sm font-medium border-2 border-cyan-400">
+            <div className="inline-block mb-4 px-4 py-2 bg-cyan-500/30 backdrop-blur-sm rounded-full text-sm font-medium border border-cyan-400/30">
               Professional RS-232 Communication Tool
             </div>
             
@@ -58,7 +58,7 @@ export function WismachionHero({ onGetStarted, onFreeTrial }: WismachionHeroProp
               <Button 
                 size="lg" 
                 variant="outline"
-                className="border-2 border-cyan-400 text-cyan-100 hover:bg-cyan-600 text-lg px-8"
+                className="border-2 border-cyan-400 text-cyan-100 hover:bg-cyan-500/20 text-lg px-8"
                 onClick={onFreeTrial}
               >
                 Try Free Trial
@@ -97,7 +97,7 @@ export function WismachionHero({ onGetStarted, onFreeTrial }: WismachionHeroProp
 
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
-    <div className="bg-blue-800 border-2 border-cyan-500 rounded-xl p-6 hover:bg-blue-700 hover:border-cyan-400 transition-all shadow-xl hover:shadow-2xl">
+    <div className="bg-blue-800/40 backdrop-blur-sm border border-cyan-400/30 rounded-xl p-6 hover:bg-blue-700/50 hover:border-cyan-400/50 transition-all shadow-lg">
       <div className="text-cyan-300 mb-3">{icon}</div>
       <h3 className="text-white font-semibold mb-1">{title}</h3>
       <p className="text-blue-200 text-sm">{description}</p>
