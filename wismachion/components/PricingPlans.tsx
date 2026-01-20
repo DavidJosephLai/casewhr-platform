@@ -17,7 +17,7 @@ export function PricingPlans({ onSelectPlan }: PricingPlansProps) {
       description: 'Perfect for individual developers and small teams',
       priceUSD: 100,
       priceTWD: 3000,
-      icon: <Star className="w-8 h-8 text-blue-600" />,
+      icon: <Star className="w-8 h-8 text-cyan-300" />,
       features: [
         'Single User License',
         'RS-232 Communication',
@@ -36,7 +36,7 @@ export function PricingPlans({ onSelectPlan }: PricingPlansProps) {
       description: 'Advanced features for professional teams',
       priceUSD: 200,
       priceTWD: 6000,
-      icon: <Building2 className="w-8 h-8 text-purple-600" />,
+      icon: <Building2 className="w-8 h-8 text-cyan-300" />,
       features: [
         'Multi-User License (up to 5)',
         'All Standard Features',

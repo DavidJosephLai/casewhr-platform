@@ -62,8 +62,8 @@ export function ProductFeatures() {
         </div>
 
         {/* Technical Specifications */}
-        <div className="mt-16 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-8">
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">Technical Specifications</h3>
+        <div className="mt-16 bg-blue-800/40 backdrop-blur-sm border-2 border-cyan-500 rounded-2xl p-8">
+          <h3 className="text-2xl font-bold text-white mb-6">Technical Specifications</h3>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <SpecItem label="Baud Rate" value="110 - 256000 bps" />
             <SpecItem label="Data Bits" value="5, 6, 7, 8 bits" />
@@ -83,8 +83,8 @@ export function ProductFeatures() {
 function SpecItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-sm text-gray-500 mb-1">{label}</div>
-      <div className="font-semibold text-gray-900">{value}</div>
+      <div className="text-sm text-cyan-300 mb-1">{label}</div>
+      <div className="font-semibold text-white">{value}</div>
     </div>
   );
 }
