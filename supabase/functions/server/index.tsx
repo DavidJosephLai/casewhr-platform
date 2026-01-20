@@ -13542,7 +13542,12 @@ app.get("/make-server-215f78a5/admin/users", async (c) => {
     const usersWithData = await Promise.all(
       allProfiles.map(async (profile: any) => {
         const wallet = await kv.get(`wallet_${profile.user_id}`);
-        const subscription = await kv.get(`subscription_${profile.user_id}`);
+        
+        // 🔧 Check both subscription formats (old: subscription:id, new: subscription_id)
+        let subscription = await kv.get(`subscription_${profile.user_id}`);
+        if (!subscription) {
+          subscription = await kv.get(`subscription:${profile.user_id}`);
+        }
         
         // 🔧 Convert account_type (string) to account_types (array) for frontend compatibility
         const accountTypes = profile.account_type 
@@ -13553,7 +13558,7 @@ app.get("/make-server-215f78a5/admin/users", async (c) => {
           ...profile,
           account_types: accountTypes,  // ✅ Ensure array format
           wallet_balance: wallet?.available_balance || 0,
-          subscription_tier: subscription?.tier || 'free',
+          subscription_tier: subscription?.tier || subscription?.plan || 'free',
           subscription_status: subscription?.status || 'inactive',
         };
       })
@@ -13588,14 +13593,19 @@ app.get("/make-server-215f78a5/admin/users/:userId", async (c) => {
 
     const userId = c.req.param('userId');
     
-    // Get user data
-    const [profile, wallet, subscription, projects, proposals] = await Promise.all([
-      kv.get(`profile_${userId}`),  // 統一使用下劃線格式
+    // Get user data - check both formats for profile and subscription
+    const [profileNew, profileOld, wallet, subscriptionNew, subscriptionOld, projects, proposals] = await Promise.all([
+      kv.get(`profile_${userId}`),  // New format
+      kv.get(`profile:${userId}`),  // Old format
       kv.get(`wallet_${userId}`),
-      kv.get(`subscription_${userId}`),
+      kv.get(`subscription_${userId}`),  // New format
+      kv.get(`subscription:${userId}`),  // Old format
       kv.get(`projects:user:${userId}`),
       kv.get(`proposals:user:${userId}`),
     ]);
+
+    const profile = profileNew || profileOld;
+    const subscription = subscriptionNew || subscriptionOld;
 
     if (!profile) {
       return c.json({ error: 'User not found' }, 404);
