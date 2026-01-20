@@ -11,7 +11,7 @@ interface WismachionHeaderProps {
 
 export function WismachionHeader({ user, onLogin, onLogout, onPortal, onHome }: WismachionHeaderProps) {
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-300 shadow-sm">
+    <header className="sticky top-0 z-50 bg-white backdrop-blur-md border-b-2 border-gray-400 shadow-md">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
