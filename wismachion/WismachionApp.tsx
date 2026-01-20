@@ -51,7 +51,7 @@ export default function WismachionApp() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <Toaster position="top-center" richColors />
       
       <WismachionHeader 
