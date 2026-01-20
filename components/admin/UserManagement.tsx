@@ -213,7 +213,7 @@ export function UserManagement() {
       add: '新增',
       cancel: '取消',
       deleteUser: '删除用户',
-      deleteUserConfirm: '确定要删除此用户吗？此操作无法撤销。',
+      deleteUserConfirm: '确定要删除此用���吗？此操作无法撤销。',
       password: '密码',
       resetWallet: '钱包归零',
       resetWalletConfirm: '确定要将此用户的钱包余额归零吗？操作无法撤销。',
@@ -355,13 +355,17 @@ export function UserManagement() {
   const getSubscriptionBadge = (tier: string) => {
     const colors: Record<string, string> = {
       free: 'bg-gray-100 text-gray-800',
+      starter: 'bg-green-100 text-green-800',
       professional: 'bg-blue-100 text-blue-800',
       enterprise: 'bg-purple-100 text-purple-800',
     };
 
+    // 支援 tier 或 plan 欄位，並處理未定義的值
+    const planName = tier || 'free';
+    
     return (
-      <Badge className={colors[tier] || colors.free}>
-        {tier.charAt(0).toUpperCase() + tier.slice(1)}
+      <Badge className={colors[planName.toLowerCase()] || colors.free}>
+        {planName.charAt(0).toUpperCase() + planName.slice(1)}
       </Badge>
     );
   };
