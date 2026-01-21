@@ -963,7 +963,7 @@ console.log('✅ [SERVER] Dynamic Sitemap APIs registered');
 // 🔗 Register Internal Link Management APIs
 app.get('/make-server-215f78a5/seo/internal-links', async (c) => {
   try {
-    const links = await internalLinkScanner.getSavedLinks();
+    const links = await internalLinkScanner.getInternalLinks();
     const opportunities = await internalLinkScanner.generateLinkOpportunities();
     
     return c.json({
@@ -1014,9 +1014,10 @@ app.post('/make-server-215f78a5/seo/check-links', async (c) => {
     
     console.log(`🔍 [SEO] Checking all links for: ${baseUrl}`);
     
-    const links = await internalLinkScanner.checkAllLinks(baseUrl);
+    const result = await internalLinkScanner.checkLinks(baseUrl);
+    const links = await internalLinkScanner.getInternalLinks();
     
-    return c.json({ links });
+    return c.json({ ...result, links });
   } catch (error: any) {
     console.error('❌ [SEO] Failed to check links:', error);
     return c.json({ error: error.message }, 500);
