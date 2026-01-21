@@ -979,12 +979,19 @@ app.get('/make-server-215f78a5/seo/internal-links', async (c) => {
 
 app.post('/make-server-215f78a5/seo/scan-website', async (c) => {
   try {
-    const { baseUrl } = await c.req.json();
-    const url = baseUrl || 'https://casewhr.com';
+    let baseUrl = 'https://casewhr.com';
     
-    console.log(`🔍 [SEO] Starting website scan: ${url}`);
+    // 安全地解析 JSON，如果沒有 body 則使用默認值
+    try {
+      const body = await c.req.json();
+      baseUrl = body.baseUrl || baseUrl;
+    } catch (e) {
+      console.log('🔍 [SEO] No body provided, using default URL');
+    }
     
-    const result = await internalLinkScanner.scanWebsite(url);
+    console.log(`🔍 [SEO] Starting website scan: ${baseUrl}`);
+    
+    const result = await internalLinkScanner.scanWebsite(baseUrl);
     
     return c.json(result);
   } catch (error: any) {
@@ -995,12 +1002,19 @@ app.post('/make-server-215f78a5/seo/scan-website', async (c) => {
 
 app.post('/make-server-215f78a5/seo/check-links', async (c) => {
   try {
-    const { baseUrl } = await c.req.json();
-    const url = baseUrl || 'https://casewhr.com';
+    let baseUrl = 'https://casewhr.com';
     
-    console.log(`🔍 [SEO] Checking all links for: ${url}`);
+    // 安全地解析 JSON，如果沒有 body 則使用默認值
+    try {
+      const body = await c.req.json();
+      baseUrl = body.baseUrl || baseUrl;
+    } catch (e) {
+      console.log('🔍 [SEO] No body provided, using default URL');
+    }
     
-    const links = await internalLinkScanner.checkAllLinks(url);
+    console.log(`🔍 [SEO] Checking all links for: ${baseUrl}`);
+    
+    const links = await internalLinkScanner.checkAllLinks(baseUrl);
     
     return c.json({ links });
   } catch (error: any) {
@@ -1011,12 +1025,21 @@ app.post('/make-server-215f78a5/seo/check-links', async (c) => {
 
 app.post('/make-server-215f78a5/seo/analyze-page', async (c) => {
   try {
-    const { url, baseUrl } = await c.req.json();
-    const base = baseUrl || 'https://casewhr.com';
+    let url = '/';
+    let baseUrl = 'https://casewhr.com';
+    
+    // 安全地解析 JSON，如果沒有 body 則使用默認值
+    try {
+      const body = await c.req.json();
+      url = body.url || url;
+      baseUrl = body.baseUrl || baseUrl;
+    } catch (e) {
+      console.log('📊 [SEO] No body provided, using default values');
+    }
     
     console.log(`📊 [SEO] Analyzing page: ${url}`);
     
-    const analysis = await internalLinkScanner.analyzePage(url, base);
+    const analysis = await internalLinkScanner.analyzePage(url, baseUrl);
     
     return c.json({ analysis });
   } catch (error: any) {
