@@ -126,7 +126,7 @@ const DEMO_POSTS: BlogPost[] = [
   },
 ];
 
-export function BlogListPage() {
+export default function BlogListPage() {
   const { language } = useLanguage();
   const { user } = useAuth();
   const [posts, setPosts] = useState<BlogPost[]>(DEMO_POSTS);
@@ -401,5 +401,3 @@ export function BlogListPage() {
     </div>
   );
 }
-
-export default BlogListPage;
