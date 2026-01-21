@@ -737,6 +737,56 @@ app.post('/make-server-215f78a5/debug/fix-subscription', async (c) => {
   }
 });
 
+// 🔍 診斷端點：列出所有 KV Store 中的用戶資料
+app.get('/make-server-215f78a5/debug/list-all-users', async (c) => {
+  try {
+    // 獲取所有 profile
+    const newFormatProfiles = await kv.getByPrefix('profile_') || [];
+    const oldFormatProfiles = await kv.getByPrefix('profile:') || [];
+    
+    // 獲取所有 subscription
+    const newFormatSubs = await kv.getByPrefix('subscription_') || [];
+    const oldFormatSubs = await kv.getByPrefix('subscription:') || [];
+    
+    // 從 Supabase Auth 獲取所有用戶
+    const { data: authData } = await supabase.auth.admin.listUsers();
+    const authUsers = authData?.users || [];
+    
+    return c.json({
+      kv_store: {
+        profiles_new_format: newFormatProfiles.length,
+        profiles_old_format: oldFormatProfiles.length,
+        subscriptions_new_format: newFormatSubs.length,
+        subscriptions_old_format: oldFormatSubs.length,
+        profile_samples: newFormatProfiles.slice(0, 3).map((p: any) => ({
+          user_id: p.user_id,
+          email: p.email,
+          membership_tier: p.membership_tier
+        })),
+        subscription_samples: newFormatSubs.slice(0, 3).map((s: any) => ({
+          user_id: s.user_id,
+          plan: s.plan,
+          tier: s.tier,
+          status: s.status
+        }))
+      },
+      supabase_auth: {
+        total_users: authUsers.length,
+        user_samples: authUsers.slice(0, 5).map((u: any) => ({
+          id: u.id,
+          email: u.email,
+          created_at: u.created_at
+        }))
+      },
+      diagnosis: {
+        message: '如果 KV Store 的用戶數量 < Supabase Auth 的用戶數量，代表某些真實用戶沒有建立 profile/subscription'
+      }
+    });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
 // Register Milestone Management APIs
 app.route('/make-server-215f78a5', milestoneRoutes);
 console.log('✅ [SERVER] Milestone management APIs registered');

@@ -356,10 +356,12 @@ export function UserManagement() {
     // 🔄 將所有方案統一映射到新版命名（free, pro, enterprise）
     const planName = (tier || 'free').toLowerCase();
     
-    // 舊版 → 新版映射
+    // 舊版 → 新版映射（完整版）
     const planMapping: Record<string, string> = {
-      'basic': 'pro',         // 舊版 basic 對應到 pro
-      'premium': 'enterprise', // 舊版 premium 對應到 enterprise
+      'basic': 'pro',              // 舊版 basic 對應到 pro
+      'premium': 'enterprise',     // 舊版 premium 對應到 enterprise
+      'starter': 'pro',            // starter 也對應到 pro
+      'professional': 'enterprise' // professional 對應到 enterprise
     };
     
     // 如果是舊版方案，轉換成新版
