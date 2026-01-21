@@ -18436,13 +18436,16 @@ app.post("/make-server-215f78a5/admin/initialize-data", async (c) => {
     console.log('✅ [Admin] Test data cleanup complete!');
     console.log('🚀 [Admin] Starting fresh data creation...');
 
-    // 創建測試用戶
+    // 創建測試用戶（包含新舊版訂閱方案）
     const testUsers = [
+      // 新版訂閱方案
       { name: '張小明', email: 'zhang@test.com', skills: ['網頁開發', '前端設計'], membership: 'free' },
-      { name: '李小華', email: 'li@test.com', skills: ['平面設計', 'UI/UX'], membership: 'basic' },
-      { name: '王大偉', email: 'wang@test.com', skills: ['數據分析', 'Python'], membership: 'premium' },
-      { name: 'John Smith', email: 'john@test.com', skills: ['Backend', 'Node.js'], membership: 'free' },
+      { name: '李小華', email: 'li@test.com', skills: ['平面設計', 'UI/UX'], membership: 'starter' },
+      { name: '王大偉', email: 'wang@test.com', skills: ['數據分析', 'Python'], membership: 'professional' },
+      { name: 'John Smith', email: 'john@test.com', skills: ['Backend', 'Node.js'], membership: 'enterprise' },
+      // 舊版訂閱方案（向後兼容）
       { name: 'Sarah Chen', email: 'sarah@test.com', skills: ['Marketing', 'Content'], membership: 'basic' },
+      { name: '林美麗', email: 'lin@test.com', skills: ['寫作', '編輯'], membership: 'premium' },
     ];
 
     const userIds: string[] = [];
