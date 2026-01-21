@@ -116,78 +116,7 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
 
   const t = content[language as keyof typeof content] || content['zh-TW'];
 
-  // 🔒 登入檢查
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-4">
-        <SEO 
-          title={`Blog - CaseWHR`}
-          description="Member login required to access blog content"
-          canonicalUrl="https://casewhr.com/blog"
-        />
-        
-        <div className="max-w-md w-full">
-          <Card className="p-6 sm:p-8 text-center shadow-2xl border-2">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-              <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
-            </div>
-            
-            <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              🔒 {t.loginRequired}
-            </h2>
-            
-            <p className="text-gray-600 mb-4 sm:mb-6 text-base sm:text-lg">
-              {t.loginMessage}
-            </p>
-            
-            <p className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8 bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-200">
-              💡 {t.loginHint}
-            </p>
-            
-            <div className="space-y-3">
-              <Button 
-                onClick={() => {
-                  console.log('🔐 [Blog] Opening login dialog...');
-                  window.dispatchEvent(new Event('openLoginDialog'));
-                }}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 sm:py-6 text-base sm:text-lg font-semibold"
-              >
-                {t.loginButton}
-              </Button>
-              
-              <Button 
-                onClick={() => {
-                  console.log('📝 [Blog] Opening signup dialog...');
-                  window.dispatchEvent(new CustomEvent('openAuthDialog', { detail: 'signup' }));
-                }}
-                variant="outline"
-                className="w-full py-4 sm:py-6 text-base sm:text-lg font-semibold border-2 hover:bg-gray-50"
-              >
-                {t.signupButton}
-              </Button>
-            </div>
-            
-            <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t">
-              <p className="text-xs text-gray-400">
-                {language === 'en' 
-                  ? 'Free to join • No credit card required' 
-                  : language === 'zh-CN'
-                  ? '免费注册 • 无需信用卡'
-                  : '免費註冊 • 無需信用卡'}
-              </p>
-            </div>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  useEffect(() => {
-    if (postSlug) {
-      loadPost(postSlug);
-    }
-  }, [postSlug]);
-
+  // 📦 定義所有函數（必須在 useEffect 之前）
   const loadPost = async (slug: string) => {
     setLoading(true);
     try {
@@ -259,12 +188,80 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
     window.open(urls[platform], '_blank', 'width=600,height=400');
   };
 
+  // ✅ 載入文章數據（在所有條件渲染之前）
+  useEffect(() => {
+    if (postSlug) {
+      loadPost(postSlug);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postSlug]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
           <p className="text-gray-600">{t.loading}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 🔒 登入檢查 - 只有會員可以閱讀文章詳情
+  if (!user) {
+    console.log('🔒 [BlogPostPage] User not logged in, showing login screen');
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <Card className="p-6 sm:p-8 text-center shadow-2xl border-2">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+              <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+            </div>
+            
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              🔒 {t.loginRequired}
+            </h2>
+            
+            <p className="text-gray-600 mb-4 sm:mb-6 text-base sm:text-lg">
+              {t.loginMessage}
+            </p>
+            
+            <p className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8 bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-200">
+              💡 {t.loginHint}
+            </p>
+            
+            <div className="space-y-3">
+              <Button 
+                onClick={() => {
+                  console.log('🔐 [BlogPost] Opening login dialog...');
+                  window.dispatchEvent(new Event('openLoginDialog'));
+                }}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 sm:py-6 text-base sm:text-lg font-semibold"
+              >
+                {t.loginButton}
+              </Button>
+              
+              <Button 
+                onClick={() => {
+                  console.log('📝 [BlogPost] Opening signup dialog...');
+                  window.dispatchEvent(new CustomEvent('openAuthDialog', { detail: 'signup' }));
+                }}
+                variant="outline"
+                className="w-full py-4 sm:py-6 text-base sm:text-lg font-semibold border-2 hover:bg-gray-50"
+              >
+                {t.signupButton}
+              </Button>
+              
+              <Button 
+                onClick={() => window.location.href = '/blog'}
+                variant="ghost"
+                className="w-full py-2 text-sm text-gray-600"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                {t.backToBlog}
+              </Button>
+            </div>
+          </Card>
         </div>
       </div>
     );
