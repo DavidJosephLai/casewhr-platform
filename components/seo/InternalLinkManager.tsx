@@ -74,6 +74,41 @@ export function InternalLinkManager() {
   const [filterType, setFilterType] = useState<string>('all');
   const [activeTab, setActiveTab] = useState('overview');
 
+  // 掃描網站
+  const scanWebsite = async () => {
+    setLoading(true);
+    toast.info('🔍 開始掃描網站...');
+    
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/seo/scan-website`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ baseUrl: 'https://casewhr.com' }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setLinks(data.links);
+        toast.success(`✅ 掃描完成！發現 ${data.progress.pagesScanned} 個頁面，${data.progress.linksFound} 個連結`);
+        await loadLinks(); // 重新載入資料
+      } else {
+        const error = await response.json();
+        toast.error(`掃描失敗: ${error.error || '未知錯誤'}`);
+      }
+    } catch (error) {
+      console.error('Failed to scan website:', error);
+      toast.error('掃描網站時發生錯誤');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const content = {
     en: {
       title: 'Internal Link Management',
@@ -272,6 +307,7 @@ export function InternalLinkManager() {
             'Authorization': `Bearer ${publicAnonKey}`,
             'Content-Type': 'application/json',
           },
+          body: JSON.stringify({ baseUrl: 'https://casewhr.com' }),
         }
       );
 
@@ -279,6 +315,9 @@ export function InternalLinkManager() {
         const data = await response.json();
         setLinks(data.links);
         toast.success(`✅ 已檢查 ${data.links.length} 個連結`);
+      } else {
+        const error = await response.json();
+        toast.error(`檢查失敗: ${error.error || '未知錯誤'}`);
       }
     } catch (error) {
       console.error('Failed to check links:', error);
@@ -362,6 +401,14 @@ export function InternalLinkManager() {
           <p className="text-gray-600">{t.subtitle}</p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            onClick={scanWebsite} 
+            disabled={loading} 
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+          >
+            <Search className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            🔍 掃描網站
+          </Button>
           <Button onClick={checkAllLinks} disabled={loading} variant="outline">
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             {t.checkLinks}
@@ -438,6 +485,16 @@ export function InternalLinkManager() {
 
         {/* 連結管理標籤 */}
         <TabsContent value="overview" className="space-y-4">
+          {/* 提示訊息 */}
+          {links.length === 5 && links[0]?.id === '1' && (
+            <Alert className="bg-blue-50 border-blue-200">
+              <Search className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                💡 <strong>目前顯示的是示範數據。</strong> 點擊右上角的 <strong className="text-blue-600">「🔍 掃描網站」</strong> 按鈕，系統將自動掃描 casewhr.com 並找出所有真實的內部連結！
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* 搜尋和篩選 */}
           <Card className="p-4">
             <div className="flex gap-4">
@@ -572,7 +629,7 @@ export function InternalLinkManager() {
           </div>
         </TabsContent>
 
-        {/* 頁面分析標籤 */}
+        {/* 頁面分析籤 */}
         <TabsContent value="analysis" className="space-y-4">
           <Card className="p-4">
             <div className="flex gap-2">
