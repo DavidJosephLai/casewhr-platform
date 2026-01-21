@@ -57,6 +57,14 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 🔍 DEBUG: 組件渲染日誌
+  console.log('🎨 [BlogPostPage] Component rendered:', {
+    user: user ? `${user.email} (ID: ${user.id})` : 'NULL',
+    slug,
+    loading,
+    hasPost: !!post
+  });
+
   // 從 URL 獲取 slug
   const postSlug = slug || window.location.pathname.split('/blog/')[1];
 
@@ -441,7 +449,7 @@ function getDemoPost(slug: string): BlogPost {
       title_cn: '如何撰写吸引客户的提案',
       excerpt: 'Learn the secrets to crafting proposals that win clients and projects.',
       excerpt_zh: '學習撰寫能贏得客戶和專案的提案技巧，提高接案成功率。',
-      excerpt_cn: '学��撰写能赢得客户和项目的提案技巧，提高接案成功率。',
+      excerpt_cn: '学撰写能赢得客户和项目的提案技巧，提高接案成功率。',
       content: `
         <h2>為什麼提案如此重要？</h2>
         <p>一份好的提案是您與客戶之間的第一次深度溝通。它不僅展示您的專業能力，更重要的是展現您對項目的理解和熱情。</p>
@@ -475,7 +483,7 @@ function getDemoPost(slug: string): BlogPost {
         <p>定價策略會直接影響成交率：</p>
         <ul>
           <li>💰 提供清晰的價格分項</li>
-          <li>📈 解釋���值而非只談價格</li>
+          <li>📈 解釋值而非只談價格</li>
           <li>🎁 考慮提供小優惠或增值服務</li>
         </ul>
         
@@ -589,7 +597,7 @@ function getDemoPost(slug: string): BlogPost {
 我曾為 [類似客戶] 完成 [類似項目]，結果是...
 
 【投資】
-總費用：[金額]
+總費���：[金額]
 包含：[詳細清單]
 
 期待與您合作！
