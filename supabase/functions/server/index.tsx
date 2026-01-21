@@ -39,6 +39,7 @@ import * as lineAuth from "./line-auth.tsx";
 import { logLineEnvStatus } from "./line_health_check.tsx";
 import { sitemapRouter } from "./sitemap.tsx";
 import wismachionRoutes from "./wismachion_routes.tsx";
+import * as internalLinkScanner from "./internal_link_scanner.tsx";
 
 console.log('🚀 [SERVER STARTUP] Edge Function v2.0.6 - LINE Auth Integration - Starting...');
 
@@ -958,6 +959,73 @@ console.log('✅ [SERVER] AI SEO APIs registered');
 // Register Dynamic Sitemap APIs
 app.route('/make-server-215f78a5/sitemap', sitemapRouter);
 console.log('✅ [SERVER] Dynamic Sitemap APIs registered');
+
+// 🔗 Register Internal Link Management APIs
+app.get('/make-server-215f78a5/seo/internal-links', async (c) => {
+  try {
+    const links = await internalLinkScanner.getSavedLinks();
+    const opportunities = await internalLinkScanner.generateLinkOpportunities();
+    
+    return c.json({
+      links,
+      opportunities,
+      lastUpdated: await kv.get('seo:internal_links_updated_at'),
+    });
+  } catch (error: any) {
+    console.error('❌ [SEO] Failed to get internal links:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+app.post('/make-server-215f78a5/seo/scan-website', async (c) => {
+  try {
+    const { baseUrl } = await c.req.json();
+    const url = baseUrl || 'https://casewhr.com';
+    
+    console.log(`🔍 [SEO] Starting website scan: ${url}`);
+    
+    const result = await internalLinkScanner.scanWebsite(url);
+    
+    return c.json(result);
+  } catch (error: any) {
+    console.error('❌ [SEO] Failed to scan website:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+app.post('/make-server-215f78a5/seo/check-links', async (c) => {
+  try {
+    const { baseUrl } = await c.req.json();
+    const url = baseUrl || 'https://casewhr.com';
+    
+    console.log(`🔍 [SEO] Checking all links for: ${url}`);
+    
+    const links = await internalLinkScanner.checkAllLinks(url);
+    
+    return c.json({ links });
+  } catch (error: any) {
+    console.error('❌ [SEO] Failed to check links:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+app.post('/make-server-215f78a5/seo/analyze-page', async (c) => {
+  try {
+    const { url, baseUrl } = await c.req.json();
+    const base = baseUrl || 'https://casewhr.com';
+    
+    console.log(`📊 [SEO] Analyzing page: ${url}`);
+    
+    const analysis = await internalLinkScanner.analyzePage(url, base);
+    
+    return c.json({ analysis });
+  } catch (error: any) {
+    console.error('❌ [SEO] Failed to analyze page:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+console.log('✅ [SERVER] Internal Link Management APIs registered');
 
 // 🧪 Test health endpoint BEFORE wismachion routes
 app.get('/make-server-215f78a5/wismachion/health-test', (c) => {
