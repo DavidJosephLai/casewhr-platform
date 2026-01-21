@@ -13660,7 +13660,16 @@ app.get("/make-server-215f78a5/admin/users", async (c) => {
         }
         
         // 🔧 訂閱等級優先順序：subscription.plan > subscription.tier > profile.membership_tier > 'free'
-        const subscriptionTier = subscription?.plan || subscription?.tier || profile.membership_tier || 'free';
+        let rawTier = subscription?.plan || subscription?.tier || profile.membership_tier || 'free';
+        
+        // 🔄 將舊版方案名稱映射到新版（basic → pro, premium → enterprise）
+        const tierMapping: Record<string, string> = {
+          'basic': 'pro',
+          'premium': 'enterprise',
+          'starter': 'pro',           // 如果有 starter 也映射到 pro
+          'professional': 'enterprise' // 如果有 professional 也映射到 enterprise
+        };
+        const subscriptionTier = tierMapping[rawTier.toLowerCase()] || rawTier;
         
         // 🔧 Convert account_type (string) to account_types (array) for frontend compatibility
         const accountTypes = profile.account_type 
