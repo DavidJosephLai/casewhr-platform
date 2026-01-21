@@ -13,9 +13,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.0.92
+// 🔥 Version marker to force cache invalidation - v2.0.93
 // 🎯 Feature: Remove login restriction from BlogListPage, add to BlogPostPage only
-console.log('🚀 [App v2.0.92] Feature: Blog list page is now public, login only required for reading posts');
+console.log('🚀 [App v2.0.93] Feature: Blog list page is now public, login only required for reading posts');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
@@ -87,6 +87,7 @@ const ApiDocumentation = lazy(() => import('./components/ApiDocumentation').then
 // 📝 Blog 頁面 - Lazy Load
 const BlogListPage = lazy(() => import('./components/BlogListPage'));
 const BlogPostPage = lazy(() => import('./components/BlogPostPage'));
+const BlogAdminPage = lazy(() => import('./components/BlogAdminPage'));
 
 // 🌍 公開 SEO 報告頁面
 const PublicSEOReport = lazy(() => import('./components/PublicSEOReport').then(module => ({ default: module.PublicSEOReport })));
@@ -273,6 +274,13 @@ function AppContent() {
       console.log('📝 [App] Blog list page detected');
       console.log('🔥🔥🔥 [App] Setting view to blog - NO REDIRECT TO POST PAGE!');
       setView('blog');
+      return;
+    }
+    
+    // 📝 檢查是否是 Blog 後台管理頁面
+    if (urlPath === '/blog/admin') {
+      console.log('🔧 [App] Blog admin page detected');
+      setView('blog-admin');
       return;
     }
     
@@ -891,6 +899,13 @@ function AppContent() {
           <SEO title="Blog Post" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
             <BlogPostPage />
+          </Suspense>
+        </div>
+      ) : view === 'blog-admin' ? (
+        <div className="pt-20">
+          <SEO title="Blog Admin" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <BlogAdminPage />
           </Suspense>
         </div>
       ) : (
