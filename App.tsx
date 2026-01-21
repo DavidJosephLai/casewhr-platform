@@ -13,9 +13,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.0.91
-// 🎯 Feature: Fix BlogListPage lazy loading import issue
-console.log('🚀 [App v2.0.91] Feature: Fix BlogListPage lazy loading import issue');
+// 🔥 Version marker to force cache invalidation - v2.0.92
+// 🎯 Feature: Remove login restriction from BlogListPage, add to BlogPostPage only
+console.log('🚀 [App v2.0.92] Feature: Blog list page is now public, login only required for reading posts');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
