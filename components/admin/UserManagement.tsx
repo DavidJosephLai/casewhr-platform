@@ -213,7 +213,7 @@ export function UserManagement() {
       add: '新增',
       cancel: '取消',
       deleteUser: '删除用户',
-      deleteUserConfirm: '确定要删除此用吗此操作无法撤销。',
+      deleteUserConfirm: '确定要删除此用吗��操作无法撤销。',
       password: '密码',
       resetWallet: '钱包归零',
       resetWalletConfirm: '确定要将此用户的钱包余额归零吗？操作无法撤销。',
@@ -353,25 +353,30 @@ export function UserManagement() {
   };
 
   const getSubscriptionBadge = (tier?: string) => {
-    // 🔄 支援新舊兩套方案命名系統
-    const planMapping: Record<string, { name: string; color: string }> = {
-      // 當前使用的方案（free, pro, enterprise）
-      free: { name: 'Free', color: 'bg-gray-100 text-gray-800' },
-      pro: { name: 'Pro', color: 'bg-blue-100 text-blue-800' },
-      enterprise: { name: 'Enterprise', color: 'bg-purple-100 text-purple-800' },
-      
-      // 舊版方案 (向後兼容，如有歷史數據)
-      basic: { name: 'Basic', color: 'bg-green-100 text-green-800' },
-      premium: { name: 'Premium', color: 'bg-blue-100 text-blue-800' },
-    };
-
-    // 支援 tier 或 plan 欄位，並處理未定義的值
+    // 🔄 將所有方案統一映射到新版命名（free, pro, enterprise）
     const planName = (tier || 'free').toLowerCase();
-    const plan = planMapping[planName] || planMapping.free;
+    
+    // 舊版 → 新版映射
+    const planMapping: Record<string, string> = {
+      'basic': 'pro',         // 舊版 basic 對應到 pro
+      'premium': 'enterprise', // 舊版 premium 對應到 enterprise
+    };
+    
+    // 如果是舊版方案，轉換成新版
+    const normalizedPlan = planMapping[planName] || planName;
+    
+    // 顯示邏輯（只有 3 個方案）
+    const displayConfig: Record<string, { name: string; color: string }> = {
+      'free': { name: 'Free', color: 'bg-gray-100 text-gray-800' },
+      'pro': { name: 'Pro', color: 'bg-blue-100 text-blue-800' },
+      'enterprise': { name: 'Enterprise', color: 'bg-purple-100 text-purple-800' },
+    };
+    
+    const config = displayConfig[normalizedPlan] || displayConfig.free;
     
     return (
-      <Badge className={plan.color}>
-        {plan.name}
+      <Badge className={config.color}>
+        {config.name}
       </Badge>
     );
   };
