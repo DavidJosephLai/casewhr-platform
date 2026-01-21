@@ -5236,38 +5236,45 @@ app.get("/make-server-215f78a5/profile/:userId", async (c) => {
       profile = null;
     }
 
-    // ✅ 修復：從 Supabase Auth 獲取正確的 email
+    // ✅ 修復：從 Supabase Auth 獲取正確的 email（僅限真實 UUID 用戶）
     if (profile) {
-      try {
-        const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
-        
-        if (!authError && authUser?.user?.email) {
-          const correctEmail = authUser.user.email;
+      // 檢查是否為有效的 UUID 格式（8-4-4-4-12 格式）
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+      
+      if (isUUID) {
+        try {
+          const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
           
-          // 如果 profile 中的 email 不正確，修正它
-          if (profile.email !== correctEmail) {
-            console.log('🔧 [GET /profile/:userId] Fixing incorrect email:', {
-              userId,
-              storedEmail: profile.email,
-              correctEmail,
-            });
+          if (!authError && authUser?.user?.email) {
+            const correctEmail = authUser.user.email;
             
-            profile.email = correctEmail;
-            
-            // 同步更新 KV store
-            try {
-              await kv.set(profileKeyUnderscore, profile);
-              console.log('✅ [GET /profile/:userId] Email corrected and saved');
-            } catch (saveError) {
-              console.error('⚠️ [GET /profile/:userId] Failed to save corrected email:', saveError);
+            // 如果 profile 中的 email 不正確，修正它
+            if (profile.email !== correctEmail) {
+              console.log('🔧 [GET /profile/:userId] Fixing incorrect email:', {
+                userId,
+                storedEmail: profile.email,
+                correctEmail,
+              });
+              
+              profile.email = correctEmail;
+              
+              // 同步更新 KV store
+              try {
+                await kv.set(profileKeyUnderscore, profile);
+                console.log('✅ [GET /profile/:userId] Email corrected and saved');
+              } catch (saveError) {
+                console.error('⚠️ [GET /profile/:userId] Failed to save corrected email:', saveError);
+              }
             }
+          } else {
+            console.warn('⚠️ [GET /profile/:userId] Could not fetch auth user:', authError?.message);
           }
-        } else {
-          console.warn('⚠️ [GET /profile/:userId] Could not fetch auth user:', authError?.message);
+        } catch (authCheckError) {
+          console.error('⚠️ [GET /profile/:userId] Error checking auth email:', authCheckError);
+          // 不影響返回，繼續使用現有的 profile
         }
-      } catch (authCheckError) {
-        console.error('⚠️ [GET /profile/:userId] Error checking auth email:', authCheckError);
-        // 不影響返回，繼續使用現有的 profile
+      } else {
+        console.log('ℹ️ [GET /profile/:userId] Non-UUID user (dev/test user), skipping auth email check');
       }
     }
 
