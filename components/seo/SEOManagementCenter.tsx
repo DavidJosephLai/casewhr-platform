@@ -29,6 +29,7 @@ import { useLanguage } from '../../lib/LanguageContext';
 import { toast } from 'sonner';
 import { KeywordMapVisualizer } from './KeywordMapVisualizer';
 import { SEOAnalyticsDashboard } from './SEOAnalyticsDashboard';
+import { InternalLinkManager } from './InternalLinkManager';
 
 interface KeywordCluster {
   mainKeyword: string;
@@ -182,7 +183,7 @@ export function SEOManagementCenter() {
       keywords: '個關鍵字',
       more: '更多',
       aiContentGeneration: 'AI 內容生成',
-      aiContentDesc: '系統將使用 AI 為每個關鍵字集群生成 SEO 優化的內容，包括標題、描述、段落、FAQ 等。',
+      aiContentDesc: '系統���使用 AI 為每個關鍵字集群生成 SEO 優化的內容，包括標題、描述、段落、FAQ 等。',
       batchGenerate: '批量生成 SEO 內容',
       batchGenerateDesc: '為前 5 個優先級最的關鍵字集群生成內容',
       generating: '生成中...',
@@ -709,10 +710,7 @@ export function SEOManagementCenter() {
 
           {/* Links Tab */}
           <TabsContent value="links">
-            <Card className="p-6">
-              <h3 className="text-xl font-bold mb-4">{content.internalLinksManagement}</h3>
-              <p className="text-gray-600">{content.internalLinksInDev}</p>
-            </Card>
+            <InternalLinkManager />
           </TabsContent>
 
           {/* Analytics Tab */}
