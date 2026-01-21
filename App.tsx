@@ -13,9 +13,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.0.90
-// 🎯 Feature: Add mandatory email input modal for LINE OAuth users
-console.log('🚀 [App v2.0.90] Feature: LINE OAuth email requirement enforcement');
+// 🔥 Version marker to force cache invalidation - v2.0.91
+// 🎯 Feature: Fix BlogListPage lazy loading import issue
+console.log('🚀 [App v2.0.91] Feature: Fix BlogListPage lazy loading import issue');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
