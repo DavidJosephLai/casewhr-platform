@@ -27,6 +27,7 @@ import {
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { useLanguage } from '../../lib/LanguageContext';
 import { toast } from 'sonner';
+import { KeywordMapVisualizer } from './KeywordMapVisualizer';
 
 interface KeywordCluster {
   mainKeyword: string;
@@ -253,6 +254,7 @@ export function SEOManagementCenter() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="overview">總覽</TabsTrigger>
+            <TabsTrigger value="keyword-map">關鍵字地圖</TabsTrigger>
             <TabsTrigger value="keywords">關鍵字研究</TabsTrigger>
             <TabsTrigger value="content">內容生成</TabsTrigger>
             <TabsTrigger value="links">內部連結</TabsTrigger>
@@ -339,6 +341,11 @@ export function SEOManagementCenter() {
                 </div>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Keyword Map Tab */}
+          <TabsContent value="keyword-map">
+            <KeywordMapVisualizer />
           </TabsContent>
 
           {/* Keywords Tab */}
