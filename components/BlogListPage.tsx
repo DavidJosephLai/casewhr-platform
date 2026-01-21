@@ -327,7 +327,11 @@ export default function BlogListPage() {
               <Card 
                 key={post.slug} 
                 className="overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
-                onClick={() => window.location.href = `/blog/${post.slug}`}
+                onClick={() => {
+                  console.log('🖱️ [BlogList] Card clicked! Navigating to:', `/blog/${post.slug}`);
+                  console.log('🖱️ [BlogList] Post:', post);
+                  window.location.href = `/blog/${post.slug}`;
+                }}
               >
                 {/* 封面圖片 */}
                 {post.coverImage && (
