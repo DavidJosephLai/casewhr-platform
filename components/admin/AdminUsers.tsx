@@ -228,23 +228,32 @@ export function AdminUsers() {
   };
 
   const handleViewProfile = async (userId: string) => {
+    console.log('🔵🔵🔵 [AdminUsers] ========== START handleViewProfile ==========');
     console.log('👤 [AdminUsers] Fetching profile for user:', userId);
+    console.log('🔑 [AdminUsers] Access Token:', accessToken ? '✅ 已提供' : '❌ 缺失');
+    
     setLoadingProfile(true);
     try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/profile/${userId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const url = `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/profile/${userId}`;
+      console.log('🌐 [AdminUsers] Request URL:', url);
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log('📡 [AdminUsers] Response status:', response.status);
+      console.log('📡 [AdminUsers] Response ok:', response.ok);
 
       if (response.ok) {
         const data = await response.json();
         const profile = data.profile;
         
+        console.log('✅ [AdminUsers] Raw response data:', data);
         console.log('✅ [AdminUsers] Profile fetched:', profile);
+        console.log('📧 [AdminUsers] Profile email:', profile.email);
+        console.log('👤 [AdminUsers] Profile user_id:', profile.user_id);
 
         // 轉換為 TalentDetailDialog 需要的格式
         // ⚠️ 修復：防止 bio 顯示 email 的錯誤
