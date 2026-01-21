@@ -244,28 +244,27 @@ export function AdminUsers() {
         const data = await response.json();
         const profile = data.profile;
         
-        console.log('✅ [AdminUsers] Profile fetched:', {
-          user_id: profile.user_id,
-          full_name: profile.full_name || profile.name,
-          email: profile.email,
-          job_title: profile.job_title
-        });
+        console.log('✅ [AdminUsers] Profile fetched:', profile);
 
         // 轉換為 TalentDetailDialog 需要的格式
+        // ⚠️ 修復：防止 bio 顯示 email 的錯誤
         const talentData = {
           id: profile.user_id,
           user_id: profile.user_id,
           email: profile.email,
           full_name: profile.full_name || profile.name || profile.email,
-          phone: profile.phone,
-          company: profile.company,
-          job_title: profile.job_title,
-          bio: profile.bio,
-          skills: profile.skills,
-          website: profile.website,
-          created_at: profile.created_at,
-          avatar_url: profile.avatar_url,
+          phone: profile.phone || '',
+          company: profile.company || '',
+          job_title: profile.job_title || '',
+          // ✅ 修復：如果 bio 等於 email，則設為空字串
+          bio: (profile.bio && profile.bio !== profile.email) ? profile.bio : '',
+          skills: profile.skills || [],
+          website: profile.website || '',
+          created_at: profile.created_at || new Date().toISOString(),
+          avatar_url: profile.avatar_url || '',
         };
+        
+        console.log('📤 [AdminUsers] Sending to TalentDetailDialog:', talentData);
 
         setSelectedUser(talentData);
         setDetailDialogOpen(true);
