@@ -271,7 +271,7 @@ function AppContent() {
     // 📝 檢查是否是 Blog 頁面
     if (urlPath === '/blog') {
       console.log('📝 [App] Blog list page detected');
-      console.log('🔥🔥🔥 [App] Setting view to "blog" - NO REDIRECT TO POST PAGE!');
+      console.log('🔥🔥🔥 [App] Setting view to blog - NO REDIRECT TO POST PAGE!');
       setView('blog');
       return;
     }
