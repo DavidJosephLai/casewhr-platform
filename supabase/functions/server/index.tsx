@@ -13549,6 +13549,9 @@ app.get("/make-server-215f78a5/admin/users", async (c) => {
           subscription = await kv.get(`subscription:${profile.user_id}`);
         }
         
+        // 🔧 訂閱等級優先順序：subscription.plan > subscription.tier > profile.membership_tier > 'free'
+        const subscriptionTier = subscription?.plan || subscription?.tier || profile.membership_tier || 'free';
+        
         // 🔧 Convert account_type (string) to account_types (array) for frontend compatibility
         const accountTypes = profile.account_type 
           ? [profile.account_type] 
@@ -13558,7 +13561,7 @@ app.get("/make-server-215f78a5/admin/users", async (c) => {
           ...profile,
           account_types: accountTypes,  // ✅ Ensure array format
           wallet_balance: wallet?.available_balance || 0,
-          subscription_tier: subscription?.tier || subscription?.plan || 'free',
+          subscription_tier: subscriptionTier,
           subscription_status: subscription?.status || 'inactive',
         };
       })
