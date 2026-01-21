@@ -5236,6 +5236,41 @@ app.get("/make-server-215f78a5/profile/:userId", async (c) => {
       profile = null;
     }
 
+    // ✅ 修復：從 Supabase Auth 獲取正確的 email
+    if (profile) {
+      try {
+        const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
+        
+        if (!authError && authUser?.user?.email) {
+          const correctEmail = authUser.user.email;
+          
+          // 如果 profile 中的 email 不正確，修正它
+          if (profile.email !== correctEmail) {
+            console.log('🔧 [GET /profile/:userId] Fixing incorrect email:', {
+              userId,
+              storedEmail: profile.email,
+              correctEmail,
+            });
+            
+            profile.email = correctEmail;
+            
+            // 同步更新 KV store
+            try {
+              await kv.set(profileKeyUnderscore, profile);
+              console.log('✅ [GET /profile/:userId] Email corrected and saved');
+            } catch (saveError) {
+              console.error('⚠️ [GET /profile/:userId] Failed to save corrected email:', saveError);
+            }
+          }
+        } else {
+          console.warn('⚠️ [GET /profile/:userId] Could not fetch auth user:', authError?.message);
+        }
+      } catch (authCheckError) {
+        console.error('⚠️ [GET /profile/:userId] Error checking auth email:', authCheckError);
+        // 不影響返回，繼續使用現有的 profile
+      }
+    }
+
     if (!profile) {
       console.log('⚠️ [GET /profile/:userId] Profile not found, returning null (frontend will use defaults)');
     }
