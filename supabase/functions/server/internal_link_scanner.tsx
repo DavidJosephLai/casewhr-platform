@@ -78,7 +78,6 @@ export async function scanWebsite(baseUrl: string): Promise<{
       '/talents',
       '/pricing',
       '/features',
-      '/blog',
       '/about',
       '/contact',
       '/login',
@@ -93,6 +92,8 @@ export async function scanWebsite(baseUrl: string): Promise<{
       '/faq',
       '/terms',
       '/privacy',
+      '/case-studies',
+      '/api-docs'
     ];
     
     console.log(`📋 [LINK SCANNER] Scanning ${knownRoutes.length} known routes...`);
@@ -104,7 +105,6 @@ export async function scanWebsite(baseUrl: string): Promise<{
       '/talents': ['/talents', '/projects', '/signup'],
       '/pricing': ['/features', '/signup', '/contact'],
       '/features': ['/pricing', '/signup'],
-      '/blog': ['/blog', '/projects', '/talents'],
       '/about': ['/contact', '/'],
       '/contact': ['/pricing', '/'],
       '/login': ['/signup', '/'],
@@ -325,10 +325,11 @@ export async function generateLinkOpportunities(): Promise<LinkOpportunity[]> {
   
   // 所有已知頁面
   const allPages = [
-    '/', '/projects', '/talents', '/pricing', '/features', '/blog',
-    '/about', '/contact', '/login', '/signup', '/dashboard',
+    '/', '/projects', '/talents', '/pricing', '/features', '/about', '/contact',
+    '/login', '/signup', '/dashboard',
     '/dashboard/projects', '/dashboard/payments', '/dashboard/messages',
-    '/dashboard/profile', '/admin', '/admin/seo', '/faq', '/terms', '/privacy'
+    '/dashboard/profile', '/admin', '/admin/seo', '/faq', '/terms', '/privacy',
+    '/case-studies', '/api-docs', '/blog'
   ];
   
   // 建立連結映射
@@ -353,41 +354,6 @@ export async function generateLinkOpportunities(): Promise<LinkOpportunity[]> {
     score: number;
   }> = [
     {
-      source: '/blog',
-      target: '/projects',
-      anchor: '瀏覽可用專案',
-      reason: '部落格讀者可能對實際專案機會感興趣',
-      score: 92
-    },
-    {
-      source: '/pricing',
-      target: '/talents',
-      anchor: '尋找專業人才',
-      reason: '企業方案用戶通常需要尋找人才',
-      score: 88
-    },
-    {
-      source: '/projects',
-      target: '/blog',
-      anchor: '接案技巧與指南',
-      reason: '專案瀏覽者可能需要相關的接案知識',
-      score: 85
-    },
-    {
-      source: '/talents',
-      target: '/blog',
-      anchor: '提升專業技能',
-      reason: '人才可以通過部落格學習提升技能的方法',
-      score: 83
-    },
-    {
-      source: '/features',
-      target: '/projects',
-      anchor: '查看專案實例',
-      reason: '功能介紹頁面應展示實際應用案例',
-      score: 90
-    },
-    {
       source: '/about',
       target: '/projects',
       anchor: '探索專案機會',
@@ -410,7 +376,7 @@ export async function generateLinkOpportunities(): Promise<LinkOpportunity[]> {
     },
     {
       source: '/dashboard',
-      target: '/blog',
+      target: '/about',
       anchor: '學習中心',
       reason: '儀表板用戶可以訪問學習資源',
       score: 80
@@ -523,7 +489,7 @@ function determineLinkTypeByRoute(source: string, target: string): InternalLink[
   }
   
   // 主導航
-  if (['/projects', '/talents', '/pricing', '/features', '/blog'].includes(target)) {
+  if (['/projects', '/talents', '/pricing', '/features', '/about'].includes(target)) {
     return 'navigation';
   }
   
@@ -545,7 +511,7 @@ function determinePriorityByRoute(source: string, target: string): InternalLink[
   }
   
   // 部落格和功能頁面中等
-  if (['/blog', '/features', '/about'].includes(target)) {
+  if (['/about', '/features', '/contact'].includes(target)) {
     return 'medium';
   }
   
@@ -562,7 +528,6 @@ function getAnchorTextForRoute(route: string): string {
     '/talents': '人才市場',
     '/pricing': '定價方案',
     '/features': '功能介紹',
-    '/blog': '部落格',
     '/about': '關於我們',
     '/contact': '聯絡我們',
     '/login': '登入',
@@ -577,6 +542,8 @@ function getAnchorTextForRoute(route: string): string {
     '/faq': '常見問題',
     '/terms': '服務條款',
     '/privacy': '隱私政策',
+    '/case-studies': '案例研究',
+    '/api-docs': 'API 文件',
   };
   
   return anchorTexts[route] || route;
@@ -586,11 +553,11 @@ function getAnchorTextForRoute(route: string): string {
  * 計算連結深度
  */
 function calculateLinkDepth(url: string): number {
-  // 首頁深度為 0
+  // 首頁深��為 0
   if (url === '/') return 0;
   
   // 主要頁面深度為 1
-  const mainPages = ['/projects', '/talents', '/pricing', '/features', '/blog', '/about', '/contact'];
+  const mainPages = ['/projects', '/talents', '/pricing', '/features', '/about', '/contact'];
   if (mainPages.includes(url)) return 1;
   
   // 儀表板頁面深度為 2

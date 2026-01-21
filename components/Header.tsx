@@ -350,6 +350,12 @@ export function Header() {
                 {t.nav.categories}
               </button>
               <button 
+                onClick={() => window.location.href = '/blog'} 
+                className="text-[#111827] hover:text-blue-600 transition-colors font-medium"
+              >
+                {language === 'en' ? 'Blog' : language === 'zh-CN' ? '博客' : '部落格'}
+              </button>
+              <button 
                 onClick={handleShowPricing} 
                 className="text-blue-600 hover:text-blue-700 transition-colors font-medium flex items-center gap-1"
               >

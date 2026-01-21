@@ -84,11 +84,18 @@ const CaseStudies = lazy(() => import('./components/CaseStudies'));
 const TermsOfServicePage = lazy(() => import('./components/TermsOfServicePage'));
 const ApiDocumentation = lazy(() => import('./components/ApiDocumentation').then(module => ({ default: module.ApiDocumentation })));
 
+// 📝 Blog 頁面 - Lazy Load
+const BlogListPage = lazy(() => import('./components/BlogListPage'));
+const BlogPostPage = lazy(() => import('./components/BlogPostPage'));
+
 // 🌍 公開 SEO 報告頁面
 const PublicSEOReport = lazy(() => import('./components/PublicSEOReport').then(module => ({ default: module.PublicSEOReport })));
 
-// 💼 Wismachion - License Management Platform
-const WismachionApp = lazy(() => import('./wismachion/WismachionApp'));
+// 🎯 SEO 管理中心
+const SEOManagementCenter = lazy(() => import('./components/seo/SEOManagementCenter'));
+
+// 💼 Wismachion - License Management Platform - ⚡ 直接導入以加快載入速度
+import WismachionApp from './wismachion/WismachionApp';
 
 // Loading fallback components - 🚀 優化：移除刺眼的藍色載入器
 function LoadingFallback() {
@@ -258,6 +265,20 @@ function AppContent() {
     if (urlPath.includes('/auth/callback')) {
       console.log('🔗 [App] OAuth callback detected');
       setView('auth-callback');
+      return;
+    }
+    
+    // 📝 檢查是否是 Blog 頁面
+    if (urlPath === '/blog') {
+      console.log('📝 [App] Blog list page detected');
+      setView('blog');
+      return;
+    }
+    
+    // 📝 檢查是否是 Blog 文章詳情頁
+    if (urlPath.startsWith('/blog/')) {
+      console.log('📝 [App] Blog post page detected');
+      setView('blog-post');
       return;
     }
     
@@ -789,6 +810,13 @@ function AppContent() {
             <AISEOManager />
           </Suspense>
         </div>
+      ) : view === 'seo-management' ? (
+        <div className="pt-20">
+          <SEO title="SEO Management Center" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <SEOManagementCenter />
+          </Suspense>
+        </div>
       ) : view === 'ai-seo-test' ? (
         <div className="pt-20">
           <SEO title="AI SEO Test Page" description="" keywords="" noindex />
@@ -847,6 +875,20 @@ function AppContent() {
           />
           <Suspense fallback={<PageLoadingFallback />}>
             <WismachionApp />
+          </Suspense>
+        </div>
+      ) : view === 'blog' ? (
+        <div className="pt-20">
+          <SEO title="Blog List" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <BlogListPage />
+          </Suspense>
+        </div>
+      ) : view === 'blog-post' ? (
+        <div className="pt-20">
+          <SEO title="Blog Post" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <BlogPostPage />
           </Suspense>
         </div>
       ) : (

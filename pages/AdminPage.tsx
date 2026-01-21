@@ -39,6 +39,7 @@ import { WithdrawalAdminPanel } from '../components/WithdrawalAdminPanel';
 import DataSyncDiagnostic from '../components/DataSyncDiagnostic';
 import { WismachionAdminPanel } from '../wismachion/admin/WismachionAdminPanel';
 import { SEOManagementCenter } from '../components/seo/SEOManagementCenter';
+import BlogManagementPage from '../components/BlogManagementPage';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Shield, Crown, UserCog, Eye, LogOut, Loader2 } from 'lucide-react';
@@ -84,24 +85,26 @@ export default function AdminPage() {
       },
       tabs: {
         dashboard: 'Dashboard',
-        users: 'Users',
-        projects: 'Projects',
-        withdrawals: 'Withdrawals',
+        users: 'User Management',
+        projects: 'Project Management',
+        withdrawals: 'Withdrawal Management',
         kyc: 'KYC Verification',
-        transactions: 'Transactions',
+        transactions: 'Transaction History',
         revenue: 'Platform Revenue',
-        memberships: 'Memberships',
+        memberships: 'Membership Management',
         bankAccounts: 'Bank Accounts',
-        invoices: 'Invoices',
-        emailSender: 'Send Email',
+        ecpayPayments: 'ECPay Payments',
+        invoices: 'E-Invoice',
+        emailSender: '💌 EMAIL 💌',
         settings: 'Settings',
-        messages: 'Messages',
+        messages: 'Message Monitoring',
         administrators: 'Administrators',
         paymentManager: 'Payment Manager',
         seoTools: 'AI SEO',
-        sitemap: 'Sitemap',
+        sitemap: 'Sitemap Generator',
         dataSync: 'Data Sync',
-        wismachion: 'Wismachion',
+        wismachion: 'Wismachion License',
+        blog: 'Blog Management',
       },
     },
     'zh-TW': {
@@ -136,6 +139,7 @@ export default function AdminPage() {
         sitemap: 'Sitemap 生成',
         dataSync: '數據同步',
         wismachion: 'Wismachion 授權',
+        blog: 'Blog 管理',
       },
     },
     'zh-CN': {
@@ -170,6 +174,7 @@ export default function AdminPage() {
         sitemap: 'Sitemap 生成',
         dataSync: '数据同步',
         wismachion: 'Wismachion 授权',
+        blog: 'Blog 管理',
       },
     }
   };
@@ -464,6 +469,11 @@ export default function AdminPage() {
                 {t.tabs.wismachion}
               </TabsTrigger>
             )}
+            {canViewTab('blog') && (
+              <TabsTrigger key="blog" value="blog" className="text-xs sm:text-sm">
+                {t.tabs.blog}
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <div className="mt-6">
@@ -600,6 +610,10 @@ export default function AdminPage() {
 
             <TabsContent value="wismachion" className="mt-0">
               <WismachionAdminPanel />
+            </TabsContent>
+
+            <TabsContent value="blog" className="mt-0">
+              <BlogManagementPage />
             </TabsContent>
           </div>
         </Tabs>

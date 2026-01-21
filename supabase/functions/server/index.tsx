@@ -1051,6 +1051,120 @@ app.post('/make-server-215f78a5/seo/analyze-page', async (c) => {
 
 console.log('✅ [SERVER] Internal Link Management APIs registered');
 
+// 📝 Blog Posts API
+app.get('/make-server-215f78a5/blog/posts', async (c) => {
+  try {
+    const posts = await kv.getByPrefix('blog_post_');
+    return c.json({ posts: posts.map(item => item.value) });
+  } catch (error: any) {
+    console.error('❌ [BLOG] Failed to load posts:', error);
+    return c.json({ error: error.message, posts: [] }, 500);
+  }
+});
+
+app.get('/make-server-215f78a5/blog/posts/:slug', async (c) => {
+  try {
+    const slug = c.req.param('slug');
+    const post = await kv.get(`blog_post_${slug}`);
+    
+    if (!post) {
+      return c.json({ error: 'Post not found' }, 404);
+    }
+    
+    // 獲取相關文章（同類別的其他文章）
+    const allPosts = await kv.getByPrefix('blog_post_');
+    const relatedPosts = allPosts
+      .map(item => item.value)
+      .filter((p: any) => p.slug !== slug && p.category === post.category)
+      .slice(0, 3);
+    
+    return c.json({ post, relatedPosts });
+  } catch (error: any) {
+    console.error('❌ [BLOG] Failed to load post:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+app.post('/make-server-215f78a5/blog/posts/:slug/view', async (c) => {
+  try {
+    const slug = c.req.param('slug');
+    const post = await kv.get(`blog_post_${slug}`);
+    
+    if (post) {
+      post.views = (post.views || 0) + 1;
+      await kv.set(`blog_post_${slug}`, post);
+    }
+    
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('❌ [BLOG] Failed to increment views:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 📝 Create/Update Blog Post (Admin Only)
+app.post('/make-server-215f78a5/blog/posts', async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { user, error: authError } = await getUserFromToken(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+    
+    // 檢查是否為管理員
+    const profile = await kv.get(`profile_${user.id}`);
+    if (!profile?.isAdmin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const post = await c.req.json();
+    
+    // 驗證必填欄位
+    if (!post.slug || !post.title) {
+      return c.json({ error: 'Slug and title are required' }, 400);
+    }
+    
+    // 儲存文章
+    await kv.set(`blog_post_${post.slug}`, post);
+    
+    console.log(`✅ [BLOG] Post saved: ${post.slug}`);
+    return c.json({ success: true, post });
+  } catch (error: any) {
+    console.error('❌ [BLOG] Failed to save post:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 🗑️ Delete Blog Post (Admin Only)
+app.delete('/make-server-215f78a5/blog/posts/:slug', async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { user, error: authError } = await getUserFromToken(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+    
+    // 檢查是否為管理員
+    const profile = await kv.get(`profile_${user.id}`);
+    if (!profile?.isAdmin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+    
+    const slug = c.req.param('slug');
+    await kv.del(`blog_post_${slug}`);
+    
+    console.log(`✅ [BLOG] Post deleted: ${slug}`);
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('❌ [BLOG] Failed to delete post:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+console.log('✅ [SERVER] Blog APIs registered');
+
 // 🧪 Test health endpoint BEFORE wismachion routes
 app.get('/make-server-215f78a5/wismachion/health-test', (c) => {
   console.log('🩺 [HEALTH-TEST] Direct health-test endpoint hit!');
