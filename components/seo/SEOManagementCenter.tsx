@@ -717,16 +717,28 @@ export function SEOManagementCenter() {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics">
-            {/* 🔥🔥🔥 VERSION 3.0 - TIMESTAMP: 2026-01-21-17:30:00 🔥🔥🔥 */}
-            <div className="mb-4 p-6 bg-gradient-to-r from-green-400 to-blue-500 border-4 border-yellow-400 rounded-xl shadow-2xl animate-pulse">
-              <p className="text-white font-black text-2xl text-center drop-shadow-lg">
-                🎉🎉🎉 新版本 v3.0 已成功載入！🎉🎉🎉
+            {/* 🔥🔥🔥 VERSION 3.1 - FORCE UPDATE - TIMESTAMP: {new Date().toISOString()} 🔥🔥🔥 */}
+            <div className="mb-6 p-10 bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 border-8 border-purple-600 rounded-3xl shadow-2xl">
+              <h1 className="text-white font-black text-5xl text-center drop-shadow-2xl mb-6 animate-bounce">
+                ⚡⚡⚡ 新版本 v3.1 強制更新成功！⚡⚡⚡
+              </h1>
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 mb-4">
+                <p className="text-white text-center text-3xl font-bold">
+                  載入時間: {new Date().toLocaleString('zh-TW', { 
+                    year: 'numeric', 
+                    month: '2-digit', 
+                    day: '2-digit', 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit' 
+                  })}
+                </p>
+              </div>
+              <p className="text-yellow-100 text-center text-2xl font-black animate-pulse">
+                隨機ID: {Math.random().toString(36).substring(2, 15)}
               </p>
-              <p className="text-white text-center mt-2 text-lg font-bold">
-                載入時間: {new Date().toISOString()}
-              </p>
-              <p className="text-yellow-200 text-center mt-1 text-sm font-semibold">
-                如果您還看到灰色"開發中"訊息，請按 Ctrl+Shift+R 強制重新整理
+              <p className="text-white text-center mt-4 text-lg font-semibold">
+                如果您還看到「分析功能正在開發中...」，請完全關閉瀏覽器後重新開啟！
               </p>
             </div>
             <SEOAnalyticsDashboard />

@@ -539,17 +539,27 @@ export default function AdminPage() {
 
             <TabsContent value="seoTools" className="mt-0">
               <div className="space-y-6">
-                {/* 🔥🔥🔥 VERSION CHECK BANNER - 2026-01-21 17:40:00 */}
-                <div className="p-8 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 border-8 border-blue-600 rounded-2xl shadow-2xl animate-pulse">
-                  <h1 className="text-white font-black text-4xl text-center drop-shadow-2xl mb-4">
-                    🚀🚀🚀 ADMIN PAGE v{Math.random().toString(36).substring(7)} 🚀🚀🚀
-                  </h1>
-                  <p className="text-white text-center text-2xl font-bold">
-                    當前時間: {new Date().toLocaleString('zh-TW')}
-                  </p>
-                  <p className="text-yellow-200 text-center text-xl font-semibold mt-2">
-                    如果您看到這個彩虹橫幅，代表 AdminPage.tsx 已更新！
-                  </p>
+                {/* 🔥🔥🔥 VERSION CHECK BANNER v3.1 - FORCE UPDATE - 2026-01-21 17:45:00 */}
+                <div className="p-10 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 border-8 border-yellow-400 rounded-3xl shadow-2xl">
+                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 mb-6">
+                    <h1 className="text-white font-black text-6xl text-center drop-shadow-2xl mb-4 animate-pulse">
+                      🎊🎊🎊 ADMIN PAGE v3.1 🎊🎊🎊
+                    </h1>
+                    <p className="text-yellow-200 text-center text-3xl font-bold mb-2">
+                      強制更新ID: {Math.random().toString(36).substring(2, 11).toUpperCase()}
+                    </p>
+                    <p className="text-white text-center text-2xl font-semibold">
+                      時間戳記: {Date.now()}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-xl p-6">
+                    <p className="text-center text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 animate-pulse">
+                      ✨ 如果您看到這個橫幅，代表 AdminPage.tsx 已成功更新到 v3.1！✨
+                    </p>
+                    <p className="text-center text-gray-600 mt-3 text-lg">
+                      下方應該會看到「SEO 管理中心」的紫色版本橫幅 + 粉紅色閃爍橫幅
+                    </p>
+                  </div>
                 </div>
 
                 {/* 🎯 新的 SEO 管理中心 - 包含關鍵字地圖 */}
