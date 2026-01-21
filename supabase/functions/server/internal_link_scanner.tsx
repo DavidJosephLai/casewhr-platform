@@ -490,14 +490,16 @@ async function saveLinksToDatabase(links: InternalLink[]): Promise<void> {
   console.log(`💾 [LINK SCANNER] Saving ${links.length} links to database...`);
   
   try {
-    // 批量儲存
-    const kvPairs: { [key: string]: any } = {};
+    // 批量儲存 - mset 需要兩個陣列：keys 和 values
+    const keys: string[] = [];
+    const values: any[] = [];
     
     for (const link of links) {
-      kvPairs[`internal_link_${link.id}`] = link;
+      keys.push(`internal_link_${link.id}`);
+      values.push(link);
     }
     
-    await kv.mset(kvPairs);
+    await kv.mset(keys, values);
     
     console.log(`✅ [LINK SCANNER] Successfully saved ${links.length} links`);
   } catch (error: any) {
