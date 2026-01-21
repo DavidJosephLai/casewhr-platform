@@ -271,6 +271,7 @@ function AppContent() {
     // 📝 檢查是否是 Blog 頁面
     if (urlPath === '/blog') {
       console.log('📝 [App] Blog list page detected');
+      console.log('🔥🔥🔥 [App] Setting view to "blog" - NO REDIRECT TO POST PAGE!');
       setView('blog');
       return;
     }
@@ -278,6 +279,7 @@ function AppContent() {
     // 📝 檢查是否是 Blog 文章詳情頁
     if (urlPath.startsWith('/blog/')) {
       console.log('📝 [App] Blog post page detected');
+      console.log('🔥 [App] URL:', urlPath);
       setView('blog-post');
       return;
     }
