@@ -562,42 +562,24 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
     try {
       const { projectId, publicAnonKey } = await import('../utils/supabase/info.tsx');
       
-      // Upload directly to Supabase Storage
-      const bucketName = 'make-215f78a5-avatars';
-      const fileName = `${user.id}/${Date.now()}-${file.name}`;
+      // ❌ 改用後端上傳，因為前端無法直接上傳到 private bucket
+      const formData = new FormData();
+      formData.append('avatar', file);
       
-      // Upload to Supabase Storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from(bucketName)
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: true
-        });
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(fileName);
-
-      // Update profile with new avatar URL via backend
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/profile/${user.id}/avatar`,
         {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${accessToken || publicAnonKey}`,
-            'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ avatar_url: publicUrl }),
+          body: formData,
         }
       );
 
       if (!response.ok) {
-        throw new Error('Failed to update profile with avatar URL');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload avatar');
       }
 
       const data = await response.json();

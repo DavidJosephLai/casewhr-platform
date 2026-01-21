@@ -5391,41 +5391,106 @@ app.post("/make-server-215f78a5/profile/:userId/avatar", async (c) => {
       return c.json({ error: 'Unauthorized' }, 403);
     }
     
-    // Get avatar URL from request body (already uploaded to Supabase Storage by frontend)
-    const body = await c.req.json();
-    const avatarUrl = body.avatar_url;
+    // 🔥 處理 FormData 文件上傳
+    const contentType = c.req.header('Content-Type') || '';
     
-    if (!avatarUrl) {
-      return c.json({ error: 'No avatar URL provided' }, 400);
+    if (contentType.includes('multipart/form-data')) {
+      // 從 FormData 接收文件
+      const formData = await c.req.formData();
+      const file = formData.get('avatar');
+      
+      if (!file || !(file instanceof File)) {
+        return c.json({ error: 'No avatar file provided' }, 400);
+      }
+      
+      // 上傳到 Supabase Storage
+      const bucketName = AVATARS_BUCKET;
+      const fileName = `${userId}/${Date.now()}-${file.name}`;
+      
+      const fileBuffer = await file.arrayBuffer();
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, fileBuffer, {
+          contentType: file.type,
+          cacheControl: '3600',
+          upsert: true
+        });
+      
+      if (uploadError) {
+        console.error('❌ [Avatar Upload] Storage upload failed:', uploadError);
+        return c.json({ error: `Upload failed: ${uploadError.message}` }, 500);
+      }
+      
+      // 獲取公開 URL
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(fileName);
+      
+      // 更新 profile
+      const profileKey = `profile_${userId}`;
+      const profile = await kv.get(profileKey);
+      
+      if (!profile) {
+        return c.json({ error: 'Profile not found' }, 404);
+      }
+      
+      profile.avatar_url = publicUrl;
+      profile.updated_at = new Date().toISOString();
+      
+      await kv.set(profileKey, profile);
+      
+      // 同時更新舊格式
+      const profileKeyColon = `profile:${userId}`;
+      const oldProfile = await kv.get(profileKeyColon);
+      if (oldProfile) {
+        oldProfile.avatar_url = publicUrl;
+        oldProfile.updated_at = new Date().toISOString();
+        await kv.set(profileKeyColon, oldProfile);
+      }
+      
+      return c.json({ 
+        success: true, 
+        avatar_url: publicUrl,
+        message: 'Avatar uploaded successfully'
+      });
+    } else {
+      // 向後兼容：接收已上傳的 avatar_url
+      const body = await c.req.json();
+      const avatarUrl = body.avatar_url;
+      
+      if (!avatarUrl) {
+        return c.json({ error: 'No avatar URL provided' }, 400);
+      }
+      
+      // Update profile with avatar URL - using underscore format (統一格式)
+      const profileKey = `profile_${userId}`;
+      const profile = await kv.get(profileKey);
+      
+      if (!profile) {
+        return c.json({ error: 'Profile not found' }, 404);
+      }
+      
+      profile.avatar_url = avatarUrl;
+      profile.updated_at = new Date().toISOString();
+      
+      await kv.set(profileKey, profile);
+      
+      // Also update in old format for backwards compatibility
+      const profileKeyColon = `profile:${userId}`;
+      const oldProfile = await kv.get(profileKeyColon);
+      if (oldProfile) {
+        oldProfile.avatar_url = avatarUrl;
+        oldProfile.updated_at = new Date().toISOString();
+        await kv.set(profileKeyColon, oldProfile);
+      }
+      
+      return c.json({ 
+        success: true, 
+        avatar_url: avatarUrl,
+        message: 'Avatar updated successfully'
+      });
     }
-    
-    // Update profile with avatar URL - using underscore format (統一格式)
-    const profileKey = `profile_${userId}`;
-    const profile = await kv.get(profileKey);
-    
-    if (!profile) {
-      return c.json({ error: 'Profile not found' }, 404);
-    }
-    
-    profile.avatar_url = avatarUrl;
-    profile.updated_at = new Date().toISOString();
-    
-    await kv.set(profileKey, profile);
-    
-    // Also update in old format for backwards compatibility
-    const profileKeyColon = `profile:${userId}`;
-    const oldProfile = await kv.get(profileKeyColon);
-    if (oldProfile) {
-      oldProfile.avatar_url = avatarUrl;
-      oldProfile.updated_at = new Date().toISOString();
-      await kv.set(profileKeyColon, oldProfile);
-    }
-    
-    return c.json({ 
-      success: true, 
-      avatar_url: avatarUrl,
-      message: 'Avatar updated successfully'
-    });
   } catch (error) {
     console.error('Error updating avatar:', error);
     return c.json({ error: 'Failed to update avatar' }, 500);
