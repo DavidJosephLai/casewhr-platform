@@ -38,6 +38,7 @@ import KVStoreDiagnostic from '../components/admin/KVStoreDiagnostic';
 import { WithdrawalAdminPanel } from '../components/WithdrawalAdminPanel';
 import DataSyncDiagnostic from '../components/DataSyncDiagnostic';
 import { WismachionAdminPanel } from '../wismachion/admin/WismachionAdminPanel';
+import { SEOManagementCenter } from '../components/seo/SEOManagementCenter';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Shield, Crown, UserCog, Eye, LogOut, Loader2 } from 'lucide-react';
@@ -538,6 +539,10 @@ export default function AdminPage() {
 
             <TabsContent value="seoTools" className="mt-0">
               <div className="space-y-6">
+                {/* 🎯 新的 SEO 管理中心 - 包含關鍵字地圖 */}
+                <SEOManagementCenter />
+                
+                {/* 📊 舊的 SEO 工具（保留向後兼容） */}
                 <AdminAISEO />
                 <AdminAISEOReports />
                 <AdvancedAISEOConsole />
