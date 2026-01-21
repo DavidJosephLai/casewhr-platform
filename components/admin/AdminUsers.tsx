@@ -3,7 +3,7 @@ import { useLanguage } from '../../lib/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { projectId } from '../../utils/supabase/info';
 import { toast } from 'sonner';
-import { AdminLevel } from '../../config/admin';
+import { AdminLevel, isSuperAdmin } from '../../config/admin';
 import { TalentDetailDialog } from '../TalentDetailDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -36,7 +36,7 @@ interface UserData {
 
 export function AdminUsers() {
   const { language } = useLanguage();
-  const { accessToken } = useAuth();
+  const { user, accessToken } = useAuth();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserData[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -58,7 +58,19 @@ export function AdminUsers() {
   const canEdit = adminLevel === AdminLevel.SUPER_ADMIN || adminLevel === AdminLevel.ADMIN;
   const canDelete = adminLevel === AdminLevel.SUPER_ADMIN;
   const canBan = canEdit;
+  
+  // 🔍 檢查是否為超級管理員（用於顯示修復按鈕）
+  const userIsSuperAdmin = isSuperAdmin(user?.email);
 
+  // 🐛 強制調試：輸出用戶信息和權限檢查
+  console.log('='.repeat(60));
+  console.log('🔍 [AdminUsers] 權限檢查:');
+  console.log('  - user object:', user);
+  console.log('  - user.email:', user?.email);
+  console.log('  - userIsSuperAdmin:', userIsSuperAdmin);
+  console.log('  - isSuperAdmin function result:', isSuperAdmin(user?.email));
+  console.log('='.repeat(60));
+  
   const content = {
     en: {
       title: 'User Management',
@@ -351,9 +363,9 @@ export function AdminUsers() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Search */}
-          <div className="mb-6">
-            <div className="relative">
+          {/* Search and Fix Button */}
+          <div className="mb-6 flex items-center gap-3">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 type="text"
@@ -363,6 +375,40 @@ export function AdminUsers() {
                 className="pl-10"
               />
             </div>
+            {userIsSuperAdmin && (
+              <Button 
+                variant="outline" 
+                onClick={async () => {
+                  if (!confirm('確定要為所有用戶創建缺失的 wallet 和 subscription 嗎？\n\nThis will create missing wallets and subscriptions for all users.')) return;
+                  
+                  try {
+                    const response = await fetch(
+                      `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/debug/fix-all-users`,
+                      {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${accessToken}`
+                        }
+                      }
+                    );
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                      toast.success(`✅ 修復完成！創建了 ${result.results.wallets_created} 個錢包、${result.results.subscriptions_created} 個訂閱`);
+                      fetchUsers(); // 重新載入用戶列表
+                    } else {
+                      toast.error('❌ 修復失敗: ' + result.error);
+                    }
+                  } catch (error: any) {
+                    toast.error('❌ 修復失敗: ' + error.message);
+                  }
+                }}
+                className="whitespace-nowrap"
+              >
+                🔧 {language === 'en' ? 'Fix All Users' : '修復所有用戶'}
+              </Button>
+            )}
           </div>
 
           {/* Users Table */}
