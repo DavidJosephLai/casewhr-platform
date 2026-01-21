@@ -787,6 +787,114 @@ app.get('/make-server-215f78a5/debug/list-all-users', async (c) => {
   }
 });
 
+// 🔧 批量修復端點：為所有現有用戶創建缺失的 wallet 和 subscription
+app.post('/make-server-215f78a5/debug/fix-all-users', async (c) => {
+  try {
+    console.log('🔧 [批量修復] 開始修復所有用戶資料...');
+    
+    // 從 Supabase Auth 獲取所有用戶
+    const { data: authData } = await supabase.auth.admin.listUsers();
+    const authUsers = authData?.users || [];
+    
+    console.log(`📊 [批量修復] 找到 ${authUsers.length} 個 Auth 用戶`);
+    
+    const results = {
+      total_users: authUsers.length,
+      profiles_created: 0,
+      wallets_created: 0,
+      subscriptions_created: 0,
+      errors: [] as string[],
+    };
+    
+    // 逐一檢查並修復每個用戶
+    for (const authUser of authUsers) {
+      const userId = authUser.id;
+      const email = authUser.email || '';
+      const name = authUser.user_metadata?.name || authUser.user_metadata?.full_name || '';
+      
+      try {
+        // 1️⃣ 檢查並創建 Profile
+        let profile = await kv.get(`profile_${userId}`);
+        if (!profile) {
+          profile = await kv.get(`profile:${userId}`); // 檢查舊格式
+        }
+        
+        if (!profile) {
+          console.log(`📝 [批量修復] 為用戶 ${email} 創建 profile...`);
+          const newProfile = {
+            user_id: userId,
+            email: email,
+            full_name: name,
+            account_type: 'client',
+            created_at: authUser.created_at,
+            updated_at: new Date().toISOString(),
+          };
+          await kv.set(`profile_${userId}`, newProfile);
+          results.profiles_created++;
+        }
+        
+        // 2️⃣ 檢查並創建 Wallet
+        let wallet = await kv.get(`wallet_${userId}`);
+        if (!wallet) {
+          wallet = await kv.get(`wallet:${userId}`); // 檢查舊格式
+        }
+        
+        if (!wallet) {
+          console.log(`💰 [批量修復] 為用戶 ${email} 創建 wallet...`);
+          const newWallet = {
+            user_id: userId,
+            available_balance: 0,
+            pending_balance: 0,
+            total_deposited: 0,
+            total_withdrawn: 0,
+            created_at: authUser.created_at,
+            updated_at: new Date().toISOString(),
+          };
+          await kv.set(`wallet_${userId}`, newWallet);
+          results.wallets_created++;
+        }
+        
+        // 3️⃣ 檢查並創建 Subscription
+        let subscription = await kv.get(`subscription_${userId}`);
+        if (!subscription) {
+          subscription = await kv.get(`subscription:${userId}`); // 檢查舊格式
+        }
+        
+        if (!subscription) {
+          console.log(`📋 [批量修復] 為用戶 ${email} 創建 subscription (free)...`);
+          const newSubscription = {
+            user_id: userId,
+            plan: 'free',
+            tier: 'free',
+            status: 'active',
+            created_at: authUser.created_at,
+            updated_at: new Date().toISOString(),
+          };
+          await kv.set(`subscription_${userId}`, newSubscription);
+          results.subscriptions_created++;
+        }
+        
+      } catch (userError: any) {
+        const errorMsg = `Failed to fix user ${email}: ${userError.message}`;
+        console.error(`❌ [批量修復] ${errorMsg}`);
+        results.errors.push(errorMsg);
+      }
+    }
+    
+    console.log('✅ [批量修復] 完成！結果:', results);
+    
+    return c.json({
+      success: true,
+      message: '批量修復完成',
+      results
+    });
+    
+  } catch (error: any) {
+    console.error('❌ [批量修復] 致命錯誤:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
 // Register Milestone Management APIs
 app.route('/make-server-215f78a5', milestoneRoutes);
 console.log('✅ [SERVER] Milestone management APIs registered');
@@ -4978,6 +5086,45 @@ app.post("/make-server-215f78a5/signup", async (c) => {
         error: kvError,
       });
       // Continue anyway - profile can be created later
+    }
+      
+    // 💰 Create wallet for new user (統一格式：wallet_userId)
+    const walletKey = `wallet_${userId}`;
+    const wallet = {
+      user_id: userId,
+      available_balance: 0,
+      pending_balance: 0,
+      total_deposited: 0,
+      total_withdrawn: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    
+    console.log('💰 [Signup] Creating wallet in KV store:', { userId });
+    try {
+      await kv.set(walletKey, wallet);
+      console.log('✅ [Signup] Wallet created successfully');
+    } catch (kvError: any) {
+      console.error('❌ [Signup] Failed to save wallet to KV:', kvError?.message);
+    }
+    
+    // 📋 Create subscription for new user (統一格式：subscription_userId)
+    const subscriptionKey = `subscription_${userId}`;
+    const subscription = {
+      user_id: userId,
+      plan: 'free',           // 新用戶默認 free 方案
+      tier: 'free',           // 同時設置 tier 字段以確保兼容性
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    
+    console.log('📋 [Signup] Creating subscription in KV store:', { userId, plan: 'free' });
+    try {
+      await kv.set(subscriptionKey, subscription);
+      console.log('✅ [Signup] Subscription created successfully');
+    } catch (kvError: any) {
+      console.error('❌ [Signup] Failed to save subscription to KV:', kvError?.message);
     }
       
     // 🎉 發送歡迎郵件給新用戶
