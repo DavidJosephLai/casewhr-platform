@@ -64,6 +64,192 @@ export function KeywordMapVisualizer() {
   const [filterPageType, setFilterPageType] = useState<string>('all');
   const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
 
+  // 🌍 多語言文案
+  const t = {
+    en: {
+      title: 'Keyword Map',
+      subtitle: 'Visualize keyword and page mapping strategy',
+      reload: 'Reload',
+      regenerate: 'Regenerate',
+      exportCSV: 'Export CSV',
+      totalKeywords: 'Total Keywords',
+      targetPages: 'Target Pages',
+      monthlySearch: 'Monthly Search',
+      avgDifficulty: 'Avg Difficulty',
+      primaryKeywords: 'Primary Keywords',
+      contentGenerated: 'Content Generated',
+      searchPlaceholder: 'Search keywords or URLs...',
+      searchLabel: 'Search Keywords or URLs',
+      priorityLabel: 'Priority',
+      pageTypeLabel: 'Page Type',
+      all: 'All',
+      high: 'High',
+      medium: 'Medium',
+      low: 'Low',
+      home: 'Home',
+      service: 'Service',
+      location: 'Location',
+      blog: 'Blog',
+      landing: 'Landing',
+      filterUrl: 'Filter URL',
+      clear: 'Clear',
+      byUrl: 'By URL',
+      byKeyword: 'By Keyword',
+      byPriority: 'By Priority',
+      primaryKeyword: 'Primary Keyword',
+      keywords: 'keywords',
+      monthly: 'monthly',
+      showAll: 'Show All',
+      viewOnly: 'View Only',
+      more: 'more',
+      primary: 'Primary',
+      difficulty: 'Difficulty',
+      highPriority: 'High Priority',
+      mediumPriority: 'Medium Priority',
+      lowPriority: 'Low Priority',
+      noResults: 'No keyword mappings found',
+      loading: 'Loading keyword map...',
+      confirmRegenerate: 'Are you sure you want to regenerate the keyword map? This will overwrite existing mappings.',
+      generating: 'Generating keyword map...',
+      generated: '✅ Generated {count} keyword mappings!',
+      failedToLoad: 'Failed to load keyword map',
+      failedToGenerate: 'Failed to generate keyword map',
+      exported: 'Keyword map exported!',
+      csvHeaders: {
+        keyword: 'Keyword',
+        targetUrl: 'Target URL',
+        pageType: 'Page Type',
+        searchVolume: 'Search Volume',
+        difficulty: 'Difficulty',
+        priority: 'Priority',
+        status: 'Status',
+        primary: 'Primary Keyword'
+      }
+    },
+    'zh-TW': {
+      title: '關鍵字地圖',
+      subtitle: '視覺化呈現關鍵字與頁面的映射策略',
+      reload: '重新載入',
+      regenerate: '重新生成',
+      exportCSV: '匯出 CSV',
+      totalKeywords: '總關鍵字',
+      targetPages: '目標頁面',
+      monthlySearch: '月搜尋量',
+      avgDifficulty: '平均難度',
+      primaryKeywords: '主要關鍵字',
+      contentGenerated: '已生成內容',
+      searchPlaceholder: '輸入關鍵字或網址...',
+      searchLabel: '搜尋關鍵字或網址',
+      priorityLabel: '優先級',
+      pageTypeLabel: '頁面類型',
+      all: '全部',
+      high: '高',
+      medium: '中',
+      low: '低',
+      home: '首頁',
+      service: '服務',
+      location: '地區',
+      blog: '部落格',
+      landing: '著陸頁',
+      filterUrl: '過濾網址',
+      clear: '清除',
+      byUrl: '依網址分組',
+      byKeyword: '依關鍵字列表',
+      byPriority: '依優先級',
+      primaryKeyword: '主要關鍵字',
+      keywords: '個關鍵字',
+      monthly: '月搜尋',
+      showAll: '顯示全部',
+      viewOnly: '只看此頁',
+      more: '更多',
+      primary: '主要',
+      difficulty: '難度',
+      highPriority: '高優先級',
+      mediumPriority: '中優先級',
+      lowPriority: '低優先級',
+      noResults: '沒有找到符合條件的關鍵字映射',
+      loading: '載入關鍵字地圖...',
+      confirmRegenerate: '確定要重新生成關鍵字地圖嗎？這將覆蓋現有的映射。',
+      generating: '正在生成關鍵字地圖...',
+      generated: '✅ 已生成 {count} 個關鍵字映射！',
+      failedToLoad: '無法載入關鍵字地圖',
+      failedToGenerate: '生成關鍵字地圖失敗',
+      exported: '關鍵字地圖已匯出！',
+      csvHeaders: {
+        keyword: '關鍵字',
+        targetUrl: '目標網址',
+        pageType: '頁面類型',
+        searchVolume: '搜尋量',
+        difficulty: '難度',
+        priority: '優先級',
+        status: '狀態',
+        primary: '主要關鍵字'
+      }
+    },
+    'zh-CN': {
+      title: '关键字地图',
+      subtitle: '可视化呈现关键字与页面的映射策略',
+      reload: '重新加载',
+      regenerate: '重新生成',
+      exportCSV: '导出 CSV',
+      totalKeywords: '总关键字',
+      targetPages: '目标页面',
+      monthlySearch: '月搜索量',
+      avgDifficulty: '平均难度',
+      primaryKeywords: '主要关键字',
+      contentGenerated: '已生成内容',
+      searchPlaceholder: '输入关键字或网址...',
+      searchLabel: '搜索关键字或网址',
+      priorityLabel: '优先级',
+      pageTypeLabel: '页面类型',
+      all: '全部',
+      high: '高',
+      medium: '中',
+      low: '低',
+      home: '首页',
+      service: '服务',
+      location: '地区',
+      blog: '博客',
+      landing: '着陆页',
+      filterUrl: '过滤网址',
+      clear: '清除',
+      byUrl: '按网址分组',
+      byKeyword: '按关键字列表',
+      byPriority: '按优先级',
+      primaryKeyword: '主要关键字',
+      keywords: '个关键字',
+      monthly: '月搜索',
+      showAll: '显示全部',
+      viewOnly: '只看此页',
+      more: '更多',
+      primary: '主要',
+      difficulty: '难度',
+      highPriority: '高优先级',
+      mediumPriority: '中优先级',
+      lowPriority: '低优先级',
+      noResults: '没有找到符合条件的关键字映射',
+      loading: '加载关键字地图...',
+      confirmRegenerate: '确定要重新生成关键字地图吗？这将覆盖现有的映射。',
+      generating: '正在生成关键字地图...',
+      generated: '✅ 已生成 {count} 个关键字映射！',
+      failedToLoad: '无法加载关键字地图',
+      failedToGenerate: '生成关键字地图失败',
+      exported: '关键字地图已导出！',
+      csvHeaders: {
+        keyword: '关键字',
+        targetUrl: '目标网址',
+        pageType: '页面类型',
+        searchVolume: '搜索量',
+        difficulty: '难度',
+        priority: '优先级',
+        status: '状态',
+        primary: '主要关键字'
+      }
+    }
+  };
+
+  const content = t[language as keyof typeof t] || t['zh-TW'];
+
   useEffect(() => {
     loadKeywordMap();
   }, [language]);
@@ -90,20 +276,20 @@ export function KeywordMapVisualizer() {
       console.log('✅ [Keyword Map] Loaded:', data.data.stats);
     } catch (error: any) {
       console.error('Failed to load keyword map:', error);
-      toast.error('無法載入關鍵字地圖');
+      toast.error(content.failedToLoad);
     } finally {
       setLoading(false);
     }
   };
 
   const regenerateMap = async () => {
-    if (!confirm('確定要重新生成關鍵字地圖嗎？這將覆蓋現有的映射。')) {
+    if (!confirm(content.confirmRegenerate)) {
       return;
     }
 
     try {
       setLoading(true);
-      toast.info('正在生成關鍵字地圖...');
+      toast.info(content.generating);
       
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/seo/keyword-map/generate?language=${language}`,
@@ -120,10 +306,10 @@ export function KeywordMapVisualizer() {
       setMappings(data.data.map.mappings);
       setStats(data.data.stats);
       
-      toast.success(`✅ 已生成 ${data.data.stats.totalKeywords} 個關鍵字映射！`);
+      toast.success(content.generated.replace('{count}', data.data.stats.totalKeywords.toString()));
     } catch (error: any) {
       console.error('Failed to generate keyword map:', error);
-      toast.error('生成關鍵字地圖失敗');
+      toast.error(content.failedToGenerate);
     } finally {
       setLoading(false);
     }
@@ -131,7 +317,16 @@ export function KeywordMapVisualizer() {
 
   const exportToCSV = () => {
     const csv = [
-      ['關鍵字', '目標網址', '頁面類型', '搜尋量', '難度', '優先級', '狀態', '主要關鍵字'].join(','),
+      [
+        content.csvHeaders.keyword, 
+        content.csvHeaders.targetUrl, 
+        content.csvHeaders.pageType, 
+        content.csvHeaders.searchVolume, 
+        content.csvHeaders.difficulty, 
+        content.csvHeaders.priority, 
+        content.csvHeaders.status, 
+        content.csvHeaders.primary
+      ].join(','),
       ...filteredMappings.map(m => 
         [
           m.keyword,
@@ -152,7 +347,7 @@ export function KeywordMapVisualizer() {
     link.download = `keyword-map-${language}-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
 
-    toast.success('關鍵字地圖已匯出！');
+    toast.success(content.exported);
   };
 
   const filteredMappings = mappings.filter(m => {
@@ -192,7 +387,7 @@ export function KeywordMapVisualizer() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">載入關鍵字地圖...</p>
+          <p className="text-gray-600">{content.loading}</p>
         </div>
       </div>
     );
@@ -203,8 +398,8 @@ export function KeywordMapVisualizer() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">關鍵字地圖</h2>
-          <p className="text-gray-600">視覺化呈現關鍵字與頁面的映射策略</p>
+          <h2 className="text-2xl font-bold text-gray-900">{content.title}</h2>
+          <p className="text-gray-600">{content.subtitle}</p>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -214,7 +409,7 @@ export function KeywordMapVisualizer() {
             disabled={loading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            重新載入
+            {content.reload}
           </Button>
           <Button 
             variant="outline" 
@@ -223,7 +418,7 @@ export function KeywordMapVisualizer() {
             disabled={loading}
           >
             <Target className="h-4 w-4 mr-2" />
-            重新生成
+            {content.regenerate}
           </Button>
           <Button 
             variant="outline" 
@@ -232,7 +427,7 @@ export function KeywordMapVisualizer() {
             disabled={!mappings.length}
           >
             <Download className="h-4 w-4 mr-2" />
-            匯出 CSV
+            {content.exportCSV}
           </Button>
         </div>
       </div>
@@ -241,34 +436,34 @@ export function KeywordMapVisualizer() {
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           <Card className="p-4">
-            <div className="text-sm text-gray-600 mb-1">總關鍵字</div>
+            <div className="text-sm text-gray-600 mb-1">{content.totalKeywords}</div>
             <div className="text-2xl font-bold text-gray-900">{stats.totalKeywords}</div>
           </Card>
           
           <Card className="p-4">
-            <div className="text-sm text-gray-600 mb-1">目標頁面</div>
+            <div className="text-sm text-gray-600 mb-1">{content.targetPages}</div>
             <div className="text-2xl font-bold text-gray-900">{stats.totalPages}</div>
           </Card>
           
           <Card className="p-4">
-            <div className="text-sm text-gray-600 mb-1">月搜尋量</div>
+            <div className="text-sm text-gray-600 mb-1">{content.monthlySearch}</div>
             <div className="text-2xl font-bold text-gray-900">
               {(stats.totalSearchVolume / 1000).toFixed(0)}K
             </div>
           </Card>
           
           <Card className="p-4">
-            <div className="text-sm text-gray-600 mb-1">平均難度</div>
+            <div className="text-sm text-gray-600 mb-1">{content.avgDifficulty}</div>
             <div className="text-2xl font-bold text-gray-900">{stats.avgDifficulty}</div>
           </Card>
           
           <Card className="p-4">
-            <div className="text-sm text-gray-600 mb-1">主要關鍵字</div>
+            <div className="text-sm text-gray-600 mb-1">{content.primaryKeywords}</div>
             <div className="text-2xl font-bold text-gray-900">{stats.primaryKeywords}</div>
           </Card>
           
           <Card className="p-4">
-            <div className="text-sm text-gray-600 mb-1">已生成內容</div>
+            <div className="text-sm text-gray-600 mb-1">{content.contentGenerated}</div>
             <div className="text-2xl font-bold text-gray-900">{stats.contentGenerated}</div>
           </Card>
         </div>
@@ -278,11 +473,11 @@ export function KeywordMapVisualizer() {
       <Card className="p-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="md:col-span-2">
-            <label className="text-sm font-medium mb-2 block">搜尋關鍵字或網址</label>
+            <label className="text-sm font-medium mb-2 block">{content.searchLabel}</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="輸入關鍵字或網址..."
+                placeholder={content.searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -291,32 +486,32 @@ export function KeywordMapVisualizer() {
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-2 block">優先級</label>
+            <label className="text-sm font-medium mb-2 block">{content.priorityLabel}</label>
             <select
               value={filterPriority}
               onChange={(e) => setFilterPriority(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
-              <option value="all">全部</option>
-              <option value="high">高</option>
-              <option value="medium">中</option>
-              <option value="low">低</option>
+              <option value="all">{content.all}</option>
+              <option value="high">{content.high}</option>
+              <option value="medium">{content.medium}</option>
+              <option value="low">{content.low}</option>
             </select>
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-2 block">頁面類型</label>
+            <label className="text-sm font-medium mb-2 block">{content.pageTypeLabel}</label>
             <select
               value={filterPageType}
               onChange={(e) => setFilterPageType(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
             >
-              <option value="all">全部</option>
-              <option value="home">首頁</option>
-              <option value="service">服務</option>
-              <option value="location">地區</option>
-              <option value="blog">部落格</option>
-              <option value="landing">著陸頁</option>
+              <option value="all">{content.all}</option>
+              <option value="home">{content.home}</option>
+              <option value="service">{content.service}</option>
+              <option value="location">{content.location}</option>
+              <option value="blog">{content.blog}</option>
+              <option value="landing">{content.landing}</option>
             </select>
           </div>
         </div>
@@ -325,14 +520,14 @@ export function KeywordMapVisualizer() {
           <div className="mt-4 flex items-center gap-2">
             <Badge variant="outline" className="text-sm">
               <Filter className="h-3 w-3 mr-1" />
-              過濾網址: {selectedUrl}
+              {content.filterUrl}: {selectedUrl}
             </Badge>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSelectedUrl(null)}
             >
-              清除
+              {content.clear}
             </Button>
           </div>
         )}
@@ -341,9 +536,9 @@ export function KeywordMapVisualizer() {
       {/* Results */}
       <Tabs defaultValue="by-url">
         <TabsList>
-          <TabsTrigger value="by-url">依網址分組</TabsTrigger>
-          <TabsTrigger value="by-keyword">依關鍵字列表</TabsTrigger>
-          <TabsTrigger value="by-priority">依優先級</TabsTrigger>
+          <TabsTrigger value="by-url">{content.byUrl}</TabsTrigger>
+          <TabsTrigger value="by-keyword">{content.byKeyword}</TabsTrigger>
+          <TabsTrigger value="by-priority">{content.byPriority}</TabsTrigger>
         </TabsList>
 
         {/* By URL */}
@@ -375,18 +570,18 @@ export function KeywordMapVisualizer() {
                         
                         {primaryKw && (
                           <div className="text-sm text-gray-600 mb-2">
-                            <span className="font-medium">主要關鍵字:</span> {primaryKw.keyword}
+                            <span className="font-medium">{content.primaryKeyword}:</span> {primaryKw.keyword}
                           </div>
                         )}
                         
                         <div className="flex items-center gap-4 text-sm text-gray-600">
                           <span className="flex items-center gap-1">
                             <Target className="h-4 w-4" />
-                            {keywords.length} 個關鍵字
+                            {keywords.length} {content.keywords}
                           </span>
                           <span className="flex items-center gap-1">
                             <TrendingUp className="h-4 w-4" />
-                            {totalVolume.toLocaleString()} 月搜尋
+                            {totalVolume.toLocaleString()} {content.monthly}
                           </span>
                         </div>
                       </div>
@@ -397,7 +592,7 @@ export function KeywordMapVisualizer() {
                       size="sm"
                       onClick={() => setSelectedUrl(url === selectedUrl ? null : url)}
                     >
-                      {url === selectedUrl ? '顯示全部' : '只看此頁'}
+                      {url === selectedUrl ? content.showAll : content.viewOnly}
                     </Button>
                   </div>
 
@@ -413,7 +608,7 @@ export function KeywordMapVisualizer() {
                     ))}
                     {keywords.length > 10 && (
                       <Badge variant="outline">
-                        +{keywords.length - 10} 更多
+                        +{keywords.length - 10} {content.more}
                       </Badge>
                     )}
                   </div>
@@ -435,7 +630,7 @@ export function KeywordMapVisualizer() {
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-medium">{mapping.keyword}</span>
                       {mapping.primaryKeyword && (
-                        <Badge variant="default" className="text-xs">主要</Badge>
+                        <Badge variant="default" className="text-xs">{content.primary}</Badge>
                       )}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -447,7 +642,7 @@ export function KeywordMapVisualizer() {
                         <TrendingUp className="h-3 w-3" />
                         {mapping.searchVolume.toLocaleString()}
                       </span>
-                      <span>難度: {mapping.difficulty}</span>
+                      <span>{content.difficulty}: {mapping.difficulty}</span>
                     </div>
                   </div>
                   
@@ -469,14 +664,18 @@ export function KeywordMapVisualizer() {
             const priorityMappings = filteredMappings.filter(m => m.priority === priority);
             if (priorityMappings.length === 0) return null;
 
+            const priorityLabel = priority === 'high' ? content.highPriority : 
+                                 priority === 'medium' ? content.mediumPriority : 
+                                 content.lowPriority;
+
             return (
               <Card key={priority} className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold capitalize">
-                    {priority === 'high' ? '高優先級' : priority === 'medium' ? '中優先級' : '低優先級'}
+                  <h3 className="text-lg font-semibold">
+                    {priorityLabel}
                   </h3>
                   <Badge variant="outline">
-                    {priorityMappings.length} 個關鍵字
+                    {priorityMappings.length} {content.keywords}
                   </Badge>
                 </div>
                 
@@ -491,7 +690,7 @@ export function KeywordMapVisualizer() {
                       <div className="flex items-center gap-2 text-xs text-gray-500">
                         <span>{mapping.searchVolume.toLocaleString()}</span>
                         <span>•</span>
-                        <span>難度 {mapping.difficulty}</span>
+                        <span>{content.difficulty} {mapping.difficulty}</span>
                       </div>
                     </div>
                   ))}
@@ -506,7 +705,7 @@ export function KeywordMapVisualizer() {
       {filteredMappings.length === 0 && (
         <Card className="p-12 text-center">
           <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">沒有找到符合條件的關鍵字映射</p>
+          <p className="text-gray-600">{content.noResults}</p>
         </Card>
       )}
     </div>
