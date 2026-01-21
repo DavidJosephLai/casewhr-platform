@@ -62,6 +62,7 @@ interface PageAnalysis {
   brokenLinks: number;
   linkDepth: number;
   pageAuthority: number;
+  recommendations?: string[];
 }
 
 export function InternalLinkManager() {
@@ -73,6 +74,7 @@ export function InternalLinkManager() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [activeTab, setActiveTab] = useState('overview');
+  const [analyzeUrl, setAnalyzeUrl] = useState('');
 
   // 掃描網站
   const scanWebsite = async () => {
@@ -632,15 +634,41 @@ export function InternalLinkManager() {
         {/* 頁面分析籤 */}
         <TabsContent value="analysis" className="space-y-4">
           <Card className="p-4">
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-4">
               <Input
-                placeholder="輸入要分析的頁面 URL..."
+                placeholder="輸入要分析的頁面 URL（例如：/projects 或 /dashboard）..."
+                value={analyzeUrl}
+                onChange={(e) => setAnalyzeUrl(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && analyzeUrl) {
+                    analyzePage(analyzeUrl);
+                  }
+                }}
                 className="flex-1"
               />
-              <Button onClick={() => analyzePage('/projects')}>
+              <Button 
+                onClick={() => analyzeUrl && analyzePage(analyzeUrl)} 
+                disabled={loading || !analyzeUrl}
+              >
                 <Search className="w-4 h-4 mr-2" />
                 {t.analyze}
               </Button>
+            </div>
+            
+            {/* 快速分析按鈕 */}
+            <div className="flex gap-2 flex-wrap">
+              <p className="text-sm text-gray-600 w-full mb-2">💡 快速分析：</p>
+              {['/projects', '/talents', '/pricing', '/dashboard', '/blog'].map((url) => (
+                <Button
+                  key={url}
+                  size="sm"
+                  variant="outline"
+                  onClick={() => analyzePage(url)}
+                  disabled={loading}
+                >
+                  {url}
+                </Button>
+              ))}
             </div>
           </Card>
 
@@ -648,13 +676,25 @@ export function InternalLinkManager() {
             {pageAnalyses.length === 0 ? (
               <Card className="p-12 text-center text-gray-500">
                 <Globe className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <p>輸入 URL 開始分析頁面的內部連結結構</p>
+                <p className="mb-2">輸入 URL 開始分析頁面的內部連結結構</p>
+                <p className="text-sm text-gray-400">例如：/projects、/talents、/dashboard</p>
               </Card>
             ) : (
               pageAnalyses.map((analysis, idx) => (
                 <Card key={idx} className="p-6">
-                  <h3 className="font-bold text-lg mb-4">{analysis.url}</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-lg">{analysis.url}</h3>
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      onClick={() => setPageAnalyses(prev => prev.filter((_, i) => i !== idx))}
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </Button>
+                  </div>
+                  
+                  {/* 指標卡片 */}
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                     <div>
                       <p className="text-sm text-gray-600">{t.internalLinksCount}</p>
                       <p className="text-2xl font-bold text-blue-600">{analysis.internalLinks}</p>
@@ -676,6 +716,24 @@ export function InternalLinkManager() {
                       <p className="text-2xl font-bold text-purple-600">{analysis.pageAuthority}</p>
                     </div>
                   </div>
+                  
+                  {/* 優化建議 */}
+                  {analysis.recommendations && analysis.recommendations.length > 0 && (
+                    <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <h4 className="font-semibold text-amber-900 mb-2 flex items-center gap-2">
+                        <Zap className="w-4 h-4" />
+                        💡 優化建議
+                      </h4>
+                      <ul className="space-y-2">
+                        {analysis.recommendations.map((rec, recIdx) => (
+                          <li key={recIdx} className="text-sm text-amber-800 flex items-start gap-2">
+                            <span className="text-amber-600 mt-0.5">•</span>
+                            <span>{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </Card>
               ))
             )}
