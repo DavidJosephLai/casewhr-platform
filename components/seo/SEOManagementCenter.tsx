@@ -71,6 +71,8 @@ export function SEOManagementCenter() {
   useEffect(() => {
     console.log('🔥🔥🔥 SEOManagementCenter v3.0 已載入！時間:', new Date().toISOString());
     console.log('🔥🔥🔥 如果您看到這個訊息，代表新版組件已經載入！');
+    console.log('🔥🔥🔥 BUILD TIMESTAMP:', '2026-01-21T17:35:00.000Z');
+    console.log('🔥🔥🔥 RANDOM ID:', Math.random());
   }, []);
 
   // 🌍 多語言文案
@@ -182,7 +184,7 @@ export function SEOManagementCenter() {
       aiContentGeneration: 'AI 內容生成',
       aiContentDesc: '系統將使用 AI 為每個關鍵字集群生成 SEO 優化的內容，包括標題、描述、段落、FAQ 等。',
       batchGenerate: '批量生成 SEO 內容',
-      batchGenerateDesc: '為前 5 個優先級最���的關鍵字集群生成內容',
+      batchGenerateDesc: '為前 5 個優先級最的關鍵字集群生成內容',
       generating: '生成中...',
       startGenerate: '開始生成',
       tip: '提示',
@@ -410,6 +412,13 @@ export function SEOManagementCenter() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
+        {/* 🔥🔥🔥 VERSION BANNER - 頁面頂部版本標記 */}
+        <div className="mb-4 p-3 bg-gradient-to-r from-purple-500 to-pink-500 border-2 border-white rounded-lg shadow-lg">
+          <p className="text-white font-bold text-center text-sm">
+            ⚡ SEO 管理中心 v3.0.{Math.floor(Date.now() / 1000)} - 最後更新: {new Date().toLocaleString('zh-TW')}
+          </p>
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
