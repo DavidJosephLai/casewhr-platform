@@ -669,7 +669,73 @@ app.get('/make-server-215f78a5/debug/subscription-by-email', async (c) => {
   }
 });
 
-
+// 🔧 修復端點：直接設定用戶的訂閱等級
+app.post('/make-server-215f78a5/debug/fix-subscription', async (c) => {
+  try {
+    const { email, tier } = await c.req.json();
+    
+    if (!email || !tier) {
+      return c.json({ error: 'Missing email or tier parameter' }, 400);
+    }
+    
+    // 驗證 tier 是否合法
+    const validTiers = ['free', 'pro', 'enterprise'];
+    if (!validTiers.includes(tier)) {
+      return c.json({ error: `Invalid tier. Must be one of: ${validTiers.join(', ')}` }, 400);
+    }
+    
+    // 從 Supabase Auth 查找用戶
+    const { data: authData } = await supabase.auth.admin.listUsers();
+    const authUser = authData?.users?.find(u => u.email === email);
+    
+    if (!authUser) {
+      return c.json({ error: 'User not found in auth system' }, 404);
+    }
+    
+    const userId = authUser.id;
+    
+    // 讀取現有的 subscription 和 profile（新舊格式都讀取）
+    const subscription_new = await kv.get(`subscription_${userId}`) || {};
+    const subscription_old = await kv.get(`subscription:${userId}`) || {};
+    const profile_new = await kv.get(`profile_${userId}`) || {};
+    const profile_old = await kv.get(`profile:${userId}`) || {};
+    
+    // 更新訂閱資料（兩種格式都更新）
+    const updatedSubscription = {
+      ...subscription_new,
+      plan: tier,
+      tier: tier,
+      status: 'active',
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`subscription_${userId}`, updatedSubscription);
+    await kv.set(`subscription:${userId}`, updatedSubscription);
+    
+    // 更新 profile 的 membership_tier（兩種格式都更新）
+    const profile = profile_new || profile_old || {};
+    const updatedProfile = {
+      ...profile,
+      membership_tier: tier,
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`profile_${userId}`, updatedProfile);
+    await kv.set(`profile:${userId}`, updatedProfile);
+    
+    return c.json({
+      success: true,
+      message: `Successfully updated ${email} to ${tier}`,
+      userId,
+      updated_data: {
+        subscription: updatedSubscription,
+        profile: updatedProfile
+      }
+    });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
 
 // Register Milestone Management APIs
 app.route('/make-server-215f78a5', milestoneRoutes);

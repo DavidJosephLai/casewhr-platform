@@ -213,7 +213,7 @@ export function UserManagement() {
       add: '新增',
       cancel: '取消',
       deleteUser: '删除用户',
-      deleteUserConfirm: '确定要删除此用吗��操作无法撤销。',
+      deleteUserConfirm: '确定要删除此用吗操作无法撤销。',
       password: '密码',
       resetWallet: '钱包归零',
       resetWalletConfirm: '确定要将此用户的钱包余额归零吗？操作无法撤销。',
@@ -494,6 +494,10 @@ export function UserManagement() {
                       </TableCell>
                       <TableCell>
                         {getSubscriptionBadge(user.subscription_tier)}
+                        {/* 🐛 調試：顯示原始值 */}
+                        <span className="text-xs text-gray-400 ml-2">
+                          (原始: {user.subscription_tier || 'null'})
+                        </span>
                       </TableCell>
                       <TableCell>
                         {user.status === 'suspended' ? (
