@@ -28,6 +28,7 @@ import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { useLanguage } from '../../lib/LanguageContext';
 import { toast } from 'sonner';
 import { KeywordMapVisualizer } from './KeywordMapVisualizer';
+import { SEOAnalyticsDashboard } from './SEOAnalyticsDashboard';
 
 interface KeywordCluster {
   mainKeyword: string;
@@ -248,7 +249,7 @@ export function SEOManagementCenter() {
       generating: '生成中...',
       startGenerate: '开始生成',
       tip: '提示',
-      tipDesc: '生成的内容会自动包含：Schema 标记、内部链接、FAQ、关键字优化等 SEO 最佳实践。',
+      tipDesc: '生成的内容会自动包含：Schema 标记、内部链接、FAQ、���键字优化等 SEO 最佳实践。',
       internalLinksManagement: '内部链接管理',
       internalLinksInDev: '内部链接系统正在开发中...',
       seoAnalytics: 'SEO 分析报告',
@@ -701,10 +702,7 @@ export function SEOManagementCenter() {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics">
-            <Card className="p-6">
-              <h3 className="text-xl font-bold mb-4">{content.seoAnalytics}</h3>
-              <p className="text-gray-600">{content.analyticsInDev}</p>
-            </Card>
+            <SEOAnalyticsDashboard />
           </TabsContent>
         </Tabs>
       </div>
