@@ -13991,6 +13991,7 @@ app.get("/make-server-215f78a5/admin/users", async (c) => {
         
         return {
           ...profile,
+          id: profile.user_id,  // ✅ 確保 id 欄位正確對應到 user_id
           account_types: accountTypes,  // ✅ Ensure array format
           wallet_balance: wallet?.available_balance || 0,
           subscription_tier: subscriptionTier,
