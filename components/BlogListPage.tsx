@@ -10,9 +10,7 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { Search, Calendar, Clock, Tag, ArrowRight, BookOpen, TrendingUp, User, Lock } from 'lucide-react';
-import { SEO } from './SEO';
 
 interface BlogPost {
   slug: string;
@@ -22,26 +20,118 @@ interface BlogPost {
   excerpt: string;
   excerpt_zh: string;
   excerpt_cn: string;
-  content: string;
-  content_zh: string;
-  content_cn: string;
   category: string;
   tags: string[];
   author: string;
   coverImage: string;
   publishedAt: string;
   readTime: number;
-  views: number;
 }
+
+// 示範數據
+const DEMO_POSTS: BlogPost[] = [
+  {
+    slug: 'how-to-write-winning-proposals',
+    title: 'How to Write Winning Proposals',
+    title_zh: '如何撰寫吸引客戶的提案',
+    title_cn: '如何撰写吸引客户的提案',
+    excerpt: 'Learn the secrets to crafting proposals that win clients and projects.',
+    excerpt_zh: '學習撰寫能贏得客戶和專案的提案技巧，提高接案成功率。',
+    excerpt_cn: '学习撰写能赢得客户和项目的提案技巧，提高接案成功率。',
+    category: 'freelancer-tips',
+    tags: ['提案', '接案技巧', '文案'],
+    author: 'CaseWHR Team',
+    coverImage: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80',
+    publishedAt: '2026-01-20',
+    readTime: 8,
+  },
+  {
+    slug: 'pricing-strategies-for-freelancers',
+    title: 'Pricing Strategies for Freelancers',
+    title_zh: '接案者定價策略完整指南',
+    title_cn: '接案者定价策略完整指南',
+    excerpt: 'Master the art of pricing your services to maximize earnings.',
+    excerpt_zh: '掌握服務定價的藝術，最大化您的收入。包含市場分析和實用技巧。',
+    excerpt_cn: '掌握服务定价的艺术，最大化您的收入。包含市场分析和实用技巧。',
+    category: 'freelancer-tips',
+    tags: ['定價', '收入', '策略'],
+    author: 'David Lai',
+    coverImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&q=80',
+    publishedAt: '2026-01-18',
+    readTime: 10,
+  },
+  {
+    slug: 'how-to-choose-right-freelancer',
+    title: 'How to Choose the Right Freelancer',
+    title_zh: '如何選擇最適合的接案者',
+    title_cn: '如何选择最适合的接案者',
+    excerpt: 'A comprehensive guide for clients to find and hire the perfect talent.',
+    excerpt_zh: '為客戶提供完整的指南，幫助您找到並聘用完美的人才。',
+    excerpt_cn: '为客户提供完整的指南，帮助您找到并聘用完美的人才。',
+    category: 'client-guide',
+    tags: ['招聘', '發案', '人才'],
+    author: 'CaseWHR Team',
+    coverImage: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80',
+    publishedAt: '2026-01-15',
+    readTime: 7,
+  },
+  {
+    slug: 'platform-milestone-payment-guide',
+    title: 'Milestone Payment System Guide',
+    title_zh: '里程碑付款系統完整說明',
+    title_cn: '里程碑付款系统完整说明',
+    excerpt: 'Understand how milestone payments protect both clients and freelancers.',
+    excerpt_zh: '了解里程碑付款系統如何保護客戶和接案者雙方的權益。',
+    excerpt_cn: '了解里程碑付款系统如何保护客户和接案者双方的权益。',
+    category: 'platform-guide',
+    tags: ['付款', '里程碑', '教學'],
+    author: 'Support Team',
+    coverImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80',
+    publishedAt: '2026-01-12',
+    readTime: 6,
+  },
+  {
+    slug: '2026-freelance-trends',
+    title: '2026 Freelance Market Trends',
+    title_zh: '2026 年自由工作者市場趨勢報告',
+    title_cn: '2026 年自由工作者市场趋势报告',
+    excerpt: 'Discover the latest trends shaping the freelance industry in 2026.',
+    excerpt_zh: '探索 2026 年塑造自由工作者行業的最新趨勢和機遇。',
+    excerpt_cn: '探索 2026 年塑造自由工作者行业的最新趋势和机遇。',
+    category: 'industry-insights',
+    tags: ['趨勢', '市場分析', '2026'],
+    author: 'Research Team',
+    coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80',
+    publishedAt: '2026-01-10',
+    readTime: 12,
+  },
+  {
+    slug: 'designer-success-story',
+    title: "From Zero to $10K: A Designer's Journey",
+    title_zh: '從零到月入 10 萬：設計師的成功故事',
+    title_cn: '从零到月入 10 万：设计师的成功故事',
+    excerpt: 'How one designer built a thriving freelance business on CaseWHR.',
+    excerpt_zh: '一位設計師如何在 CaseWHR 平台上建立蓬勃發展的接案事業。',
+    excerpt_cn: '一位设计师如何在 CaseWHR 平台上建立蓬勃发展的接案事业。',
+    category: 'success-stories',
+    tags: ['成功案例', '設計師', '激勵'],
+    author: 'Maria Chen',
+    coverImage: 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=800&q=80',
+    publishedAt: '2026-01-08',
+    readTime: 9,
+  },
+];
 
 export function BlogListPage() {
   const { language } = useLanguage();
   const { user } = useAuth();
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<BlogPost[]>(DEMO_POSTS);
+  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>(DEMO_POSTS);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  console.log('🔍 [BlogListPage] Rendering - user:', user?.email, 'posts:', posts.length);
 
   const content = {
     en: {
@@ -56,10 +146,8 @@ export function BlogListPage() {
       successStories: 'Success Stories',
       readMore: 'Read More',
       minRead: 'min read',
-      views: 'views',
       noResults: 'No articles found',
       featured: 'Featured',
-      latest: 'Latest Articles',
       loginRequired: 'Member Login Required',
       loginMessage: 'Please log in to access our exclusive blog content',
       loginButton: 'Login',
@@ -78,15 +166,13 @@ export function BlogListPage() {
       successStories: '成功案例',
       readMore: '閱讀更多',
       minRead: '分鐘閱讀',
-      views: '次瀏覽',
       noResults: '找不到相關文章',
       featured: '精選文章',
-      latest: '最新文章',
       loginRequired: '需要會員登入',
       loginMessage: '請登入以閱讀我們的專屬部落格內容',
       loginButton: '立即登入',
       signupButton: '註冊帳號',
-      loginHint: '加入 CaseWHR 閰讀優質文章，並與頂尖專業人士連結',
+      loginHint: '加入 CaseWHR 閱讀優質文章，並與頂尖專業人士連結',
     },
     'zh-CN': {
       title: '博客',
@@ -100,10 +186,8 @@ export function BlogListPage() {
       successStories: '成功案例',
       readMore: '阅读更多',
       minRead: '分钟阅读',
-      views: '次浏览',
       noResults: '找不到相关文章',
       featured: '精选文章',
-      latest: '最新文章',
       loginRequired: '需要会员登录',
       loginMessage: '请登录以阅读我们的专属博客内容',
       loginButton: '立即登录',
@@ -114,16 +198,20 @@ export function BlogListPage() {
 
   const t = content[language as keyof typeof content] || content['zh-TW'];
 
+  const categories = [
+    { id: 'all', label: t.allCategories, icon: BookOpen },
+    { id: 'freelancer-tips', label: t.freelancerTips, icon: TrendingUp },
+    { id: 'client-guide', label: t.clientGuide, icon: User },
+    { id: 'platform-guide', label: t.platformGuide, icon: BookOpen },
+    { id: 'industry-insights', label: t.industryInsights, icon: TrendingUp },
+    { id: 'success-stories', label: t.successStories, icon: TrendingUp },
+  ];
+
   // 🔒 登入檢查
   if (!user) {
+    console.log('🔒 [BlogListPage] User not logged in, showing login screen');
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-4">
-        <SEO 
-          title={`${t.title} - CaseWHR`}
-          description={t.subtitle}
-          canonicalUrl="https://casewhr.com/blog"
-        />
-        
         <div className="max-w-md w-full">
           <Card className="p-6 sm:p-8 text-center shadow-2xl border-2">
             <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
@@ -180,23 +268,10 @@ export function BlogListPage() {
     );
   }
 
-  const categories = [
-    { id: 'all', label: t.allCategories, icon: BookOpen },
-    { id: 'freelancer-tips', label: t.freelancerTips, icon: TrendingUp },
-    { id: 'client-guide', label: t.clientGuide, icon: User },
-    { id: 'platform-guide', label: t.platformGuide, icon: BookOpen },
-    { id: 'industry-insights', label: t.industryInsights, icon: TrendingUp },
-    { id: 'success-stories', label: t.successStories, icon: TrendingUp },
-  ];
-
-  // 載入文章
-  useEffect(() => {
-    loadPosts();
-  }, []);
-
   // 搜尋和篩選
   useEffect(() => {
-    let filtered = posts;
+    console.log('🔍 [BlogListPage] Filtering - category:', selectedCategory, 'search:', searchTerm);
+    let filtered = [...posts];
 
     // 分類篩選
     if (selectedCategory !== 'all') {
@@ -213,37 +288,9 @@ export function BlogListPage() {
       });
     }
 
+    console.log('✅ [BlogListPage] Filtered posts:', filtered.length);
     setFilteredPosts(filtered);
   }, [posts, searchTerm, selectedCategory, language]);
-
-  const loadPosts = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/blog/posts`,
-        {
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        // 如果 API 返回的 posts 是空數組或不存在，使用示範數據
-        const apiPosts = data.posts || [];
-        setPosts(apiPosts.length > 0 ? apiPosts : getDemoPosts());
-      } else {
-        setPosts(getDemoPosts());
-      }
-    } catch (error) {
-      console.error('Failed to load blog posts:', error);
-      setPosts(getDemoPosts());
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getLocalizedField = (post: BlogPost, field: 'title' | 'excerpt') => {
     if (language === 'en') return post[field];
@@ -262,14 +309,10 @@ export function BlogListPage() {
     return colors[category] || 'bg-gray-100 text-gray-700 border-gray-200';
   };
 
+  console.log('📊 [BlogListPage] Rendering content - filteredPosts:', filteredPosts.length);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      <SEO 
-        title={`${t.title} - CaseWHR`}
-        description={t.subtitle}
-        canonicalUrl="https://casewhr.com/blog"
-      />
-
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white py-16">
         <div className="container mx-auto px-4">
@@ -411,126 +454,6 @@ export function BlogListPage() {
       </div>
     </div>
   );
-}
-
-// 示範數據
-function getDemoPosts(): BlogPost[] {
-  return [
-    {
-      slug: 'how-to-write-winning-proposals',
-      title: 'How to Write Winning Proposals',
-      title_zh: '如何撰寫吸引客戶的提案',
-      title_cn: '如何撰写吸引客户的提案',
-      excerpt: 'Learn the secrets to crafting proposals that win clients and projects.',
-      excerpt_zh: '學習撰寫能贏得客戶和專案的提案技巧，提高接案成功率。',
-      excerpt_cn: '学习撰写能赢得客户和项目的提案技巧，提高接案成功率。',
-      content: '',
-      content_zh: '',
-      content_cn: '',
-      category: 'freelancer-tips',
-      tags: ['提案', '接案技巧', '文案'],
-      author: 'CaseWHR Team',
-      coverImage: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80',
-      publishedAt: '2026-01-20',
-      readTime: 8,
-      views: 1234,
-    },
-    {
-      slug: 'pricing-strategies-for-freelancers',
-      title: 'Pricing Strategies for Freelancers',
-      title_zh: '接案者定價策略完整指南',
-      title_cn: '接案者定价策略完整指南',
-      excerpt: 'Master the art of pricing your services to maximize earnings.',
-      excerpt_zh: '掌握服務定價的藝術，最大化您的收入。包含市場分析和實用技巧。',
-      excerpt_cn: '掌握服务定价的艺术，最大化您的收入。包含市场分析和实用技巧。',
-      content: '',
-      content_zh: '',
-      content_cn: '',
-      category: 'freelancer-tips',
-      tags: ['定價', '收入', '策略'],
-      author: 'David Lai',
-      coverImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&q=80',
-      publishedAt: '2026-01-18',
-      readTime: 10,
-      views: 987,
-    },
-    {
-      slug: 'how-to-choose-right-freelancer',
-      title: 'How to Choose the Right Freelancer',
-      title_zh: '如何選擇最適合的接案者',
-      title_cn: '如何选择最适合的接案者',
-      excerpt: 'A comprehensive guide for clients to find and hire the perfect talent.',
-      excerpt_zh: '為客戶提供完整的指南，幫助您找到並聘用完美的人才。',
-      excerpt_cn: '为客户提供完整的指南，帮助您找到并聘用完美的人才。',
-      content: '',
-      content_zh: '',
-      content_cn: '',
-      category: 'client-guide',
-      tags: ['招聘', '發案', '人才'],
-      author: 'CaseWHR Team',
-      coverImage: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80',
-      publishedAt: '2026-01-15',
-      readTime: 7,
-      views: 756,
-    },
-    {
-      slug: 'platform-milestone-payment-guide',
-      title: 'Milestone Payment System Guide',
-      title_zh: '里程碑付款系統完整說明',
-      title_cn: '里程碑付款系统完整说明',
-      excerpt: 'Understand how milestone payments protect both clients and freelancers.',
-      excerpt_zh: '了解里程碑付款系統如何保護客戶和接案者雙方的權益。',
-      excerpt_cn: '了解里程碑付款系统如何保护客户和接案者双方的权益。',
-      content: '',
-      content_zh: '',
-      content_cn: '',
-      category: 'platform-guide',
-      tags: ['付款', '里程碑', '教學'],
-      author: 'Support Team',
-      coverImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80',
-      publishedAt: '2026-01-12',
-      readTime: 6,
-      views: 654,
-    },
-    {
-      slug: '2026-freelance-trends',
-      title: '2026 Freelance Market Trends',
-      title_zh: '2026 年自由工作者市場趨勢報告',
-      title_cn: '2026 年自由工作者市场趋势报告',
-      excerpt: 'Discover the latest trends shaping the freelance industry in 2026.',
-      excerpt_zh: '探索 2026 年塑造自由工作者行業的最新趨勢和機遇。',
-      excerpt_cn: '探索 2026 年塑造自由工作者行业的最新趋势和机遇。',
-      content: '',
-      content_zh: '',
-      content_cn: '',
-      category: 'industry-insights',
-      tags: ['趨勢', '市場分析', '2026'],
-      author: 'Research Team',
-      coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80',
-      publishedAt: '2026-01-10',
-      readTime: 12,
-      views: 2341,
-    },
-    {
-      slug: 'designer-success-story',
-      title: 'From Zero to $10K: A Designer\'s Journey',
-      title_zh: '從零到月入 10 萬：設計師的成功故事',
-      title_cn: '从零到月入 10 万：设计师的成功故事',
-      excerpt: 'How one designer built a thriving freelance business on CaseWHR.',
-      excerpt_zh: '一位設計師如何在 CaseWHR 平台上建立蓬勃發展的接案事業。',
-      excerpt_cn: '一位设计师如何在 CaseWHR 平台上建立蓬勃发展的接案事业。',
-      content: '',
-      content_zh: '',
-      content_cn: '',
-      category: 'success-stories',
-      tags: ['成功案例', '設計師', '激勵'],
-      author: 'Maria Chen',
-      coverImage: 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=800&q=80',
-      publishedAt: '2026-01-08',
-      readTime: 9,
-      views: 1876,
-    },
-  ];
 }
 
 export default BlogListPage;
