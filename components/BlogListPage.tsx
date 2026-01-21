@@ -86,7 +86,7 @@ export function BlogListPage() {
       loginMessage: '請登入以閱讀我們的專屬部落格內容',
       loginButton: '立即登入',
       signupButton: '註冊帳號',
-      loginHint: '加入 CaseWHR 閰讀優質文章，並與頂尖專業人士連結',
+      loginHint: '加入 CaseWHR 閱讀優質文章，並與頂尖專業人士連結',
     },
     'zh-CN': {
       title: '博客',
