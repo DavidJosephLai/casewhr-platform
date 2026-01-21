@@ -114,7 +114,7 @@ export function AdminUsers() {
       actions: '操作',
       client: '客戶',
       freelancer: '自由工作者',
-      viewProfile: '查看資��',
+      viewProfile: '查看資',
       ban: '封禁',
       unban: '解封',
       banned: '已封禁',
@@ -380,40 +380,6 @@ export function AdminUsers() {
                 className="pl-10"
               />
             </div>
-            {userIsSuperAdmin && (
-              <Button 
-                variant="outline" 
-                onClick={async () => {
-                  if (!confirm('確定要為所有用戶創建缺失的 wallet 和 subscription 嗎？\n\nThis will create missing wallets and subscriptions for all users.')) return;
-                  
-                  try {
-                    const response = await fetch(
-                      `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/debug/fix-all-users`,
-                      {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${accessToken}`
-                        }
-                      }
-                    );
-                    
-                    const result = await response.json();
-                    if (result.success) {
-                      toast.success(`✅ 修復完成！創建了 ${result.results.wallets_created} 個錢包、${result.results.subscriptions_created} 個訂閱`);
-                      fetchUsers(); // 重新載入用戶列表
-                    } else {
-                      toast.error('❌ 修復失敗: ' + result.error);
-                    }
-                  } catch (error: any) {
-                    toast.error('❌ 修復失敗: ' + error.message);
-                  }
-                }}
-                className="whitespace-nowrap"
-              >
-                🔧 {language === 'en' ? 'Fix All Users' : '修復所有用戶'}
-              </Button>
-            )}
           </div>
 
           {/* Users Table */}
