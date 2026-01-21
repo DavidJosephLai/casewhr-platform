@@ -117,49 +117,55 @@ export function BlogListPage() {
   // 🔒 登入檢查
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-4">
         <SEO 
           title={`${t.title} - CaseWHR`}
           description={t.subtitle}
           canonicalUrl="https://casewhr.com/blog"
         />
         
-        <div className="max-w-md w-full mx-4">
-          <Card className="p-8 text-center shadow-2xl border-2">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Lock className="w-10 h-10 text-white" />
+        <div className="max-w-md w-full">
+          <Card className="p-6 sm:p-8 text-center shadow-2xl border-2">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+              <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
             </div>
             
-            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               🔒 {t.loginRequired}
             </h2>
             
-            <p className="text-gray-600 mb-6 text-lg">
+            <p className="text-gray-600 mb-4 sm:mb-6 text-base sm:text-lg">
               {t.loginMessage}
             </p>
             
-            <p className="text-sm text-gray-500 mb-8 bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <p className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8 bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-200">
               💡 {t.loginHint}
             </p>
             
             <div className="space-y-3">
               <Button 
-                onClick={() => window.location.href = '/login'}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-6 text-lg font-semibold"
+                onClick={() => {
+                  console.log('🔐 [Blog] Opening login dialog...');
+                  window.dispatchEvent(new Event('openLoginDialog'));
+                }}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 sm:py-6 text-base sm:text-lg font-semibold"
               >
                 {t.loginButton}
               </Button>
               
               <Button 
-                onClick={() => window.location.href = '/signup'}
+                onClick={() => {
+                  console.log('📝 [Blog] Opening signup dialog...');
+                  window.dispatchEvent(new CustomEvent('openAuthDialog', { detail: 'signup' }));
+                }}
                 variant="outline"
-                className="w-full py-6 text-lg font-semibold border-2 hover:bg-gray-50"
+                className="w-full py-4 sm:py-6 text-base sm:text-lg font-semibold border-2 hover:bg-gray-50"
               >
                 {t.signupButton}
               </Button>
             </div>
             
-            <div className="mt-8 pt-6 border-t">
+            <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t">
               <p className="text-xs text-gray-400">
                 {language === 'en' 
                   ? 'Free to join • No credit card required' 
@@ -412,7 +418,7 @@ function getDemoPosts(): BlogPost[] {
     {
       slug: 'how-to-write-winning-proposals',
       title: 'How to Write Winning Proposals',
-      title_zh: '如何撰寫吸引客戶的提案',
+      title_zh: '��何撰寫吸引客戶的提案',
       title_cn: '如何撰写吸引客户的提案',
       excerpt: 'Learn the secrets to crafting proposals that win clients and projects.',
       excerpt_zh: '學習撰寫能贏得客戶和專案的提案技巧，提高接案成功率。',
