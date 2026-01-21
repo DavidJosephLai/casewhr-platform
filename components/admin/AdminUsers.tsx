@@ -29,6 +29,10 @@ interface UserData {
   name?: string;
   user_type?: 'client' | 'freelancer';
   membership_tier?: 'free' | 'basic' | 'premium';
+  subscription_tier?: string; // ✅ 新增：從後端獲取的訂閱等級
+  subscription_status?: string; // ✅ 新增：訂閱狀態
+  wallet_balance?: number; // ✅ 新增：錢包餘額
+  account_types?: string[]; // ✅ 新增：帳號類型（陣列格式）
   banned?: boolean;
   is_banned?: boolean;
   created_at?: string;
@@ -110,7 +114,7 @@ export function AdminUsers() {
       actions: '操作',
       client: '客戶',
       freelancer: '自由工作者',
-      viewProfile: '查看資料',
+      viewProfile: '查看資��',
       ban: '封禁',
       unban: '解封',
       banned: '已封禁',
@@ -182,6 +186,7 @@ export function AdminUsers() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ [AdminUsers] 獲取用戶數據:', data.users);
         setUsers(data.users || []);
       }
     } catch (error) {
@@ -466,9 +471,16 @@ export function AdminUsers() {
                         </Badge>
                       </td>
                       <td className="py-3 px-4">
-                        <Badge variant="secondary" className="text-xs">
-                          {user.membership_tier || 'Free'}
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant="secondary" className="text-xs w-fit">
+                            {user.subscription_tier || user.membership_tier || 'free'}
+                          </Badge>
+                          {user.wallet_balance !== undefined && (
+                            <span className="text-xs text-gray-500">
+                              💰 NT$ {user.wallet_balance.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3 px-4">
                         {user.is_banned ? (
