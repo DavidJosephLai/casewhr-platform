@@ -539,6 +539,19 @@ export default function AdminPage() {
 
             <TabsContent value="seoTools" className="mt-0">
               <div className="space-y-6">
+                {/* 🔥🔥🔥 VERSION CHECK BANNER - 2026-01-21 17:40:00 */}
+                <div className="p-8 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 border-8 border-blue-600 rounded-2xl shadow-2xl animate-pulse">
+                  <h1 className="text-white font-black text-4xl text-center drop-shadow-2xl mb-4">
+                    🚀🚀🚀 ADMIN PAGE v{Math.random().toString(36).substring(7)} 🚀🚀🚀
+                  </h1>
+                  <p className="text-white text-center text-2xl font-bold">
+                    當前時間: {new Date().toLocaleString('zh-TW')}
+                  </p>
+                  <p className="text-yellow-200 text-center text-xl font-semibold mt-2">
+                    如果您看到這個彩虹橫幅，代表 AdminPage.tsx 已更新！
+                  </p>
+                </div>
+
                 {/* 🎯 新的 SEO 管理中心 - 包含關鍵字地圖 */}
                 <SEOManagementCenter />
                 
