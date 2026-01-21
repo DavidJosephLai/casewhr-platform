@@ -418,7 +418,7 @@ function getDemoPosts(): BlogPost[] {
     {
       slug: 'how-to-write-winning-proposals',
       title: 'How to Write Winning Proposals',
-      title_zh: '��何撰寫吸引客戶的提案',
+      title_zh: '如何撰寫吸引客戶的提案',
       title_cn: '如何撰写吸引客户的提案',
       excerpt: 'Learn the secrets to crafting proposals that win clients and projects.',
       excerpt_zh: '學習撰寫能贏得客戶和專案的提案技巧，提高接案成功率。',
