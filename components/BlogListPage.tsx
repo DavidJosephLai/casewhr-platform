@@ -86,7 +86,7 @@ export function BlogListPage() {
       loginMessage: '請登入以閱讀我們的專屬部落格內容',
       loginButton: '立即登入',
       signupButton: '註冊帳號',
-      loginHint: '加入 CaseWHR 閱讀優質文章，並與頂尖專業人士連結',
+      loginHint: '加入 CaseWHR 閰讀優質文章，並與頂尖專業人士連結',
     },
     'zh-CN': {
       title: '博客',
@@ -231,7 +231,9 @@ export function BlogListPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setPosts(data.posts || getDemoPosts());
+        // 如果 API 返回的 posts 是空數組或不存在，使用示範數據
+        const apiPosts = data.posts || [];
+        setPosts(apiPosts.length > 0 ? apiPosts : getDemoPosts());
       } else {
         setPosts(getDemoPosts());
       }
