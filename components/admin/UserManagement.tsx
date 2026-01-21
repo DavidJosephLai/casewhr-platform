@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../lib/LanguageContext';
-import { isSuperAdmin, getAdminLevel } from '../../config/admin';
+import { isSuperAdmin, getAdminLevel, AdminLevel } from '../../config/admin';
 import { projectId } from '../../utils/supabase/info';
 import adminApi from '../../lib/adminApi'; // ✅ Import the new admin API client
 import { Button } from '../ui/button';
@@ -90,7 +90,7 @@ export function UserManagement() {
 
   const userIsSuperAdmin = isSuperAdmin(user?.email);
   const userAdminLevel = getAdminLevel(user?.email);
-  const canAddDeleteUsers = userAdminLevel === 'SUPER_ADMIN' || userAdminLevel === 'ADMIN';
+  const canAddDeleteUsers = userAdminLevel === AdminLevel.SUPER_ADMIN || userAdminLevel === AdminLevel.ADMIN;
   const canModifyUsers = userAdminLevel !== null; // All admin levels can view and suspend
 
   const t = {
