@@ -18490,6 +18490,32 @@ app.post("/make-server-215f78a5/admin/initialize-data", async (c) => {
       // Use consistent key format 'wallet:userId'
         console.log(`  💰 Setting wallet:${userId}`);
         await kv.set(`wallet:${userId}`, wallet);
+        
+        // 🎁 為部分測試用戶添加訂閱（模擬真實購買情況）
+        if (userData.membership === 'basic' || userData.membership === 'premium') {
+          // 舊版方案對應到新版方案
+          const planMap: Record<string, 'pro' | 'enterprise'> = {
+            'basic': 'pro',
+            'premium': 'enterprise'
+          };
+          const newPlan = planMap[userData.membership] || 'pro';
+          
+          const subscription = {
+            user_id: userId,
+            plan: newPlan,  // ✅ 使用新版方案名稱 (pro, enterprise)
+            billingCycle: 'monthly',
+            status: 'active',
+            start_date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), // 15天前開始
+            end_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(), // 15天後到期
+            auto_renew: true,
+            last_payment_date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+            next_billing_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+          };
+          
+          console.log(`  🎫 Setting subscription_${userId} with plan: ${newPlan}`);
+          await kv.set(`subscription_${userId}`, subscription);
+        }
+        
         created.users++;
         console.log(`  ✅ User created: ${userData.name}`);
       } catch (userError) {
