@@ -127,6 +127,9 @@ const DEMO_POSTS: BlogPost[] = [
 ];
 
 export default function BlogListPage() {
+  // 🔥 立即執行的日誌 - 確認組件渲染
+  console.log('🔥🔥🔥 [BlogListPage] FUNCTION CALLED! Component is rendering!');
+  
   const { language } = useLanguage();
   const { user } = useAuth();
   const [posts, setPosts] = useState<BlogPost[]>(DEMO_POSTS);
