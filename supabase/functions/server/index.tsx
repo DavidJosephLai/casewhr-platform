@@ -561,6 +561,116 @@ app.get('/make-server-215f78a5/debug/transfer-records/:userId', async (c) => {
   }
 });
 
+// 🐛 診斷路由：查看用戶訂閱資料（檢查為什麼顯示錯誤）
+app.get('/make-server-215f78a5/debug/subscription/:userId', async (c) => {
+  try {
+    const userId = c.req.param('userId');
+    
+    // 檢查兩種格式的訂閱記錄
+    const subscription_new = await kv.get(`subscription_${userId}`);
+    const subscription_old = await kv.get(`subscription:${userId}`);
+    
+    // 檢查 profile
+    const profile_new = await kv.get(`profile_${userId}`);
+    const profile_old = await kv.get(`profile:${userId}`);
+    
+    // 計算最終顯示的等級（按照 API 邏輯）
+    const subscription = subscription_new || subscription_old;
+    const profile = profile_new || profile_old;
+    const finalTier = subscription?.plan || subscription?.tier || profile?.membership_tier || 'free';
+    
+    return c.json({
+      userId,
+      subscription_formats: {
+        new_format: subscription_new ? '✅ 存在' : '❌ 不存在',
+        old_format: subscription_old ? '✅ 存在' : '❌ 不存在',
+      },
+      subscription_data: {
+        new_format: subscription_new,
+        old_format: subscription_old,
+      },
+      profile_formats: {
+        new_format: profile_new ? '✅ 存在' : '❌ 不存在',
+        old_format: profile_old ? '✅ 存在' : '❌ 不存在',
+      },
+      profile_membership_tier: profile?.membership_tier,
+      calculated_tier: finalTier,
+      priority_explanation: {
+        step1: `subscription.plan = ${subscription?.plan || 'null'}`,
+        step2: `subscription.tier = ${subscription?.tier || 'null'}`,
+        step3: `profile.membership_tier = ${profile?.membership_tier || 'null'}`,
+        step4: `default = 'free'`,
+        result: finalTier
+      }
+    });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 🐛 診斷路由：通過 email 查看訂閱資料
+app.get('/make-server-215f78a5/debug/subscription-by-email', async (c) => {
+  try {
+    const email = c.req.query('email');
+    if (!email) {
+      return c.json({ error: 'Missing email parameter' }, 400);
+    }
+    
+    // 從 Supabase Auth 查找用戶
+    const { data: authData } = await supabase.auth.admin.listUsers();
+    const authUser = authData?.users?.find(u => u.email === email);
+    
+    if (!authUser) {
+      return c.json({ error: 'User not found in auth system' }, 404);
+    }
+    
+    const userId = authUser.id;
+    
+    // 檢查兩種格式的訂閱記錄
+    const subscription_new = await kv.get(`subscription_${userId}`);
+    const subscription_old = await kv.get(`subscription:${userId}`);
+    
+    // 檢查 profile
+    const profile_new = await kv.get(`profile_${userId}`);
+    const profile_old = await kv.get(`profile:${userId}`);
+    
+    // 計算最終顯示的等級（按照 API 邏輯）
+    const subscription = subscription_new || subscription_old;
+    const profile = profile_new || profile_old;
+    const finalTier = subscription?.plan || subscription?.tier || profile?.membership_tier || 'free';
+    
+    return c.json({
+      email,
+      userId,
+      subscription_formats: {
+        new_format: subscription_new ? '✅ 存在' : '❌ 不存在',
+        old_format: subscription_old ? '✅ 存在' : '❌ 不存在',
+      },
+      subscription_data: {
+        new_format: subscription_new,
+        old_format: subscription_old,
+      },
+      profile_formats: {
+        new_format: profile_new ? '✅ 存在' : '❌ 不存在',
+        old_format: profile_old ? '✅ 存在' : '❌ 不存在',
+      },
+      profile_membership_tier: profile?.membership_tier,
+      calculated_tier: finalTier,
+      priority_explanation: {
+        step1: `subscription.plan = ${subscription?.plan || 'null'}`,
+        step2: `subscription.tier = ${subscription?.tier || 'null'}`,
+        step3: `profile.membership_tier = ${profile?.membership_tier || 'null'}`,
+        step4: `default = 'free'`,
+        result: finalTier
+      }
+    });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+
+
 // Register Milestone Management APIs
 app.route('/make-server-215f78a5', milestoneRoutes);
 console.log('✅ [SERVER] Milestone management APIs registered');
@@ -18487,9 +18597,9 @@ app.post("/make-server-215f78a5/admin/initialize-data", async (c) => {
         updated_at: new Date().toISOString(),
       };
       
-      // Use consistent key format 'wallet:userId'
-        console.log(`  💰 Setting wallet:${userId}`);
-        await kv.set(`wallet:${userId}`, wallet);
+      // Use consistent key format 'wallet_userId' (新格式)
+        console.log(`  💰 Setting wallet_${userId}`);
+        await kv.set(`wallet_${userId}`, wallet);
         
         // 🎁 為部分測試用戶添加訂閱（模擬真實購買情況）
         if (userData.membership === 'basic' || userData.membership === 'premium') {
