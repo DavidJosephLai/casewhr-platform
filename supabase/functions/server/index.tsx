@@ -5195,6 +5195,10 @@ app.get("/make-server-215f78a5/profile/:userId", async (c) => {
     }
 
     console.log('📥 [GET /profile/:userId] Fetching profile for user:', userId);
+    console.log('🔑 [GET /profile/:userId] Will search for keys:', {
+      underscore: `profile_${userId}`,
+      colon: `profile:${userId}`
+    });
 
     // Try both key formats (underscore is new standard, colon is legacy)
     const profileKeyUnderscore = `profile_${userId}`;
@@ -5207,6 +5211,8 @@ app.get("/make-server-215f78a5/profile/:userId", async (c) => {
       
       if (profile) {
         console.log('✅ [GET /profile/:userId] Profile found in NEW format (underscore)', {
+          key: profileKeyUnderscore,
+          user_id: profile.user_id,
           name: profile.name,
           email: profile.email,
           is_client: profile.is_client,
@@ -5219,6 +5225,8 @@ app.get("/make-server-215f78a5/profile/:userId", async (c) => {
         // If found in legacy format, migrate to new format
         if (profile) {
           console.log('📦 [GET /profile/:userId] Profile found in OLD format (colon), migrating...', {
+            key: profileKeyColon,
+            user_id: profile.user_id,
             name: profile.name,
             email: profile.email
           });
