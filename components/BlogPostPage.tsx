@@ -8,6 +8,7 @@ import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { useLanguage } from '../lib/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { 
   ArrowLeft, 
@@ -20,7 +21,8 @@ import {
   Linkedin,
   Eye,
   User,
-  BookOpen
+  BookOpen,
+  Lock
 } from 'lucide-react';
 import { SEO } from './SEO';
 
@@ -50,6 +52,7 @@ interface BlogPostPageProps {
 
 export function BlogPostPage({ slug }: BlogPostPageProps) {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,6 +72,11 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
       tags: 'Tags',
       notFound: 'Article not found',
       loading: 'Loading...',
+      loginRequired: 'Member Login Required',
+      loginMessage: 'Please log in to read this article',
+      loginButton: 'Login',
+      signupButton: 'Sign Up',
+      loginHint: 'Join CaseWHR to access exclusive content',
     },
     'zh-TW': {
       backToBlog: '返回部落格',
@@ -81,6 +89,11 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
       tags: '標籤',
       notFound: '找不到文章',
       loading: '載入中...',
+      loginRequired: '需要會員登入',
+      loginMessage: '請登入以閱讀此文章',
+      loginButton: '立即登入',
+      signupButton: '註冊帳號',
+      loginHint: '加入 CaseWHR 存取專屬內容',
     },
     'zh-CN': {
       backToBlog: '返回博客',
@@ -93,10 +106,75 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
       tags: '标签',
       notFound: '找不到文章',
       loading: '载入中...',
+      loginRequired: '需要会员登录',
+      loginMessage: '请登录以阅读此文章',
+      loginButton: '立即登录',
+      signupButton: '注册账号',
+      loginHint: '加入 CaseWHR 访问专属内容',
     },
   };
 
   const t = content[language as keyof typeof content] || content['zh-TW'];
+
+  // 🔒 登入檢查
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
+        <SEO 
+          title={`Blog - CaseWHR`}
+          description="Member login required to access blog content"
+          canonicalUrl="https://casewhr.com/blog"
+        />
+        
+        <div className="max-w-md w-full mx-4">
+          <Card className="p-8 text-center shadow-2xl border-2">
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-10 h-10 text-white" />
+            </div>
+            
+            <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              🔒 {t.loginRequired}
+            </h2>
+            
+            <p className="text-gray-600 mb-6 text-lg">
+              {t.loginMessage}
+            </p>
+            
+            <p className="text-sm text-gray-500 mb-8 bg-blue-50 p-4 rounded-lg border border-blue-200">
+              💡 {t.loginHint}
+            </p>
+            
+            <div className="space-y-3">
+              <Button 
+                onClick={() => window.location.href = '/login'}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-6 text-lg font-semibold"
+              >
+                {t.loginButton}
+              </Button>
+              
+              <Button 
+                onClick={() => window.location.href = '/signup'}
+                variant="outline"
+                className="w-full py-6 text-lg font-semibold border-2 hover:bg-gray-50"
+              >
+                {t.signupButton}
+              </Button>
+            </div>
+            
+            <div className="mt-8 pt-6 border-t">
+              <p className="text-xs text-gray-400">
+                {language === 'en' 
+                  ? 'Free to join • No credit card required' 
+                  : language === 'zh-CN'
+                  ? '免费注册 • 无需信用卡'
+                  : '免費註冊 • 無需信用卡'}
+              </p>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     if (postSlug) {
