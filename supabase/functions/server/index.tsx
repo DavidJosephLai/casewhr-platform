@@ -21185,6 +21185,18 @@ registerRevenueResetRoutes(app, supabase);
 import { registerWhitepaperRoutes } from './whitepaper_routes.tsx';
 registerWhitepaperRoutes(app);
 
+// ============= SEO CONTENT GENERATION ROUTES =============
+import { registerSEOContentRoutes } from './seo_content_service.tsx';
+registerSEOContentRoutes(app);
+
+// ============= SEO KEYWORDS ROUTES =============
+import { registerKeywordRoutes } from './seo_keywords_service.tsx';
+registerKeywordRoutes(app);
+
+// ============= SEO KEYWORD MAP ROUTES =============
+import { registerKeywordMapRoutes } from './seo_keyword_map_service.tsx';
+registerKeywordMapRoutes(app);
+
 console.log('🎉 [SERVER] All routes registered, starting server...');
 
 // 禁用 JWT 验证（允许匿名访问测试端点）

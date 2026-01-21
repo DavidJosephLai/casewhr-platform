@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Shield, Database, Users, Settings, Sparkles } from 'lucide-react';
+import { Shield, Database, Users, Settings, Sparkles, TrendingUp } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { DiagnosticPanel } from './DiagnosticPanel';
 import { AdminUserManagement } from './AdminUserManagement';
 import { AdminAISEO } from './admin/AdminAISEO';
 import { AvatarUploadDiagnostic } from './admin/AvatarUploadDiagnostic';
+import { SEOManagementCenter } from './seo/SEOManagementCenter';
 import { isAdmin as checkIsAdmin } from '../lib/adminConfig';
 
 export function AdminPanel() {
@@ -28,6 +29,7 @@ export function AdminPanel() {
       users: 'Users',
       settings: 'Settings',
       aiSeo: 'AI SEO',
+      seoManagement: 'SEO Management',
     },
     'zh-TW': {
       title: '管理後台',
@@ -39,6 +41,7 @@ export function AdminPanel() {
       users: '用戶管理',
       settings: '設定',
       aiSeo: 'AI SEO',
+      seoManagement: 'SEO 管理',
     },
     'zh-CN': {
       title: '管理后台',
@@ -50,6 +53,7 @@ export function AdminPanel() {
       users: '用户管理',
       settings: '设置',
       aiSeo: 'AI SEO',
+      seoManagement: 'SEO 管理',
     },
   };
 
@@ -96,7 +100,7 @@ export function AdminPanel() {
 
       {/* Admin Tabs */}
       <Tabs defaultValue="database" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
+        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
           <TabsTrigger value="database" className="gap-2">
             <Database className="h-4 w-4" />
             {t.database}
@@ -112,6 +116,10 @@ export function AdminPanel() {
           <TabsTrigger value="aiseo" className="gap-2">
             <Sparkles className="h-4 w-4" />
             {t.aiSeo}
+          </TabsTrigger>
+          <TabsTrigger value="seo-management" className="gap-2">
+            <TrendingUp className="h-4 w-4" />
+            {t.seoManagement}
           </TabsTrigger>
           <TabsTrigger value="settings" className="gap-2" disabled>
             <Settings className="h-4 w-4" />
@@ -141,6 +149,10 @@ export function AdminPanel() {
 
         <TabsContent value="aiseo" className="space-y-6">
           <AdminAISEO />
+        </TabsContent>
+
+        <TabsContent value="seo-management" className="space-y-6">
+          <SEOManagementCenter />
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
