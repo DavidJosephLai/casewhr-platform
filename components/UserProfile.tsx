@@ -238,7 +238,7 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
     setLoading(true);
     try {
       const { projectId, publicAnonKey } = await import('../utils/supabase/info.tsx');
-      console.log('📥 [UserProfile] Loading profile for user:', user.id);
+      console.log(' [UserProfile] Loading profile for user:', user.id);
       
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/profile/${user.id}`,
@@ -613,9 +613,14 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
 
   if (!user) return null;
 
+  console.log('🔍 [UserProfile] Rendering with props:', { open, user: user?.email });
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      console.log('🔍 [UserProfile] Dialog onOpenChange called:', newOpen);
+      onOpenChange(newOpen);
+    }}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto" style={{ zIndex: 9999 }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />

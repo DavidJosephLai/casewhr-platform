@@ -381,7 +381,11 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
                   </p>
                   <Button 
                     size="sm" 
-                    onClick={() => setShowProfileDialog(true)}
+                    onClick={() => {
+                      console.log('🔧 [Dashboard] Complete Profile button clicked');
+                      console.log('🔧 [Dashboard] Setting showProfileDialog to true');
+                      setShowProfileDialog(true);
+                    }}
                     className="bg-yellow-600 hover:bg-yellow-700"
                   >
                     {language === 'en' ? 'Complete Profile' : '完成個人資料'}
