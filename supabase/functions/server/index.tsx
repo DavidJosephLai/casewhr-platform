@@ -742,12 +742,12 @@ app.post('/make-server-215f78a5/debug/fix-subscription', async (c) => {
 app.get('/make-server-215f78a5/debug/list-all-users', async (c) => {
   try {
     // 獲取所有 profile
-    const newFormatProfiles = await kv.getByPrefix('profile_') || [];
-    const oldFormatProfiles = await kv.getByPrefix('profile:') || [];
+    const newFormatProfiles = (await kv.getByPrefix('profile_') || []).map(item => item.value);
+    const oldFormatProfiles = (await kv.getByPrefix('profile:') || []).map(item => item.value);
     
     // 獲取所有 subscription
-    const newFormatSubs = await kv.getByPrefix('subscription_') || [];
-    const oldFormatSubs = await kv.getByPrefix('subscription:') || [];
+    const newFormatSubs = (await kv.getByPrefix('subscription_') || []).map(item => item.value);
+    const oldFormatSubs = (await kv.getByPrefix('subscription:') || []).map(item => item.value);
     
     // 從 Supabase Auth 獲取所有用戶
     const { data: authData } = await supabase.auth.admin.listUsers();
@@ -1054,8 +1054,8 @@ console.log('✅ [SERVER] Internal Link Management APIs registered');
 // 📝 Blog Posts API
 app.get('/make-server-215f78a5/blog/posts', async (c) => {
   try {
-    const posts = await kv.getByPrefix('blog_post_');
-    return c.json({ posts: posts.map(item => item.value) });
+    const posts = (await kv.getByPrefix('blog_post_')).map(item => item.value);
+    return c.json({ posts: posts });
   } catch (error: any) {
     console.error('❌ [BLOG] Failed to load posts:', error);
     return c.json({ error: error.message, posts: [] }, 500);
@@ -1072,7 +1072,7 @@ app.get('/make-server-215f78a5/blog/posts/:slug', async (c) => {
     }
     
     // 獲取相關文章（同類別的其他文章）
-    const allPosts = await kv.getByPrefix('blog_post_');
+    const allPosts = (await kv.getByPrefix('blog_post_')).map(item => item.value);
     const relatedPosts = allPosts
       .map(item => item.value)
       .filter((p: any) => p.slug !== slug && p.category === post.category)
@@ -2202,8 +2202,8 @@ app.post("/make-server-215f78a5/diagnose-user-email", async (c) => {
     console.log(`🔍 [Diagnose] Searching for user with email: ${userEmail}`);
 
     // 搜索所有 profile，找到匹��的 email (both formats)
-    const newFormatProfiles = await kv.getByPrefix('profile_') || [];
-    const oldFormatProfiles = await kv.getByPrefix('profile:') || [];
+    const newFormatProfiles = (await kv.getByPrefix('profile_') || []).map(item => item.value);
+    const oldFormatProfiles = (await kv.getByPrefix('profile:') || []).map(item => item.value);
     const allProfiles = [...newFormatProfiles, ...oldFormatProfiles];
     console.log(`🔍 [Diagnose] Found ${allProfiles.length} profiles (new: ${newFormatProfiles.length}, old: ${oldFormatProfiles.length})`);
 
@@ -2214,7 +2214,7 @@ app.post("/make-server-215f78a5/diagnose-user-email", async (c) => {
       if (profile && profile.email === userEmail) {
         matchedProfile = profile;
         // 從 profile key 中提取 user_id
-        const profiles = await kv.getByPrefix('profile_');
+        const profiles = (await kv.getByPrefix('profile_')).map(item => item.value);
         for (let i = 0; i < profiles.length; i++) {
           if (profiles[i] === profile) {
             // 這個需要找到對應的key
@@ -4184,7 +4184,7 @@ app.post("/make-server-215f78a5/reviews/submit", async (c) => {
 
     // Update recipient's average rating
     try {
-      const recipientReviews = await kv.getByPrefix(`review:${project_id}:`) || [];
+      const recipientReviews = (await kv.getByPrefix(`review:${project_id}:`) || []).map(item => item.value);
       const filteredReviews = recipientReviews.filter((r: any) => r.recipient_id === recipient_id);
       const allRecipientReviews = Array.isArray(filteredReviews) && filteredReviews.length > 0
         ? await kv.mget(filteredReviews.map((r: any) => `review:${r.id}`))
@@ -4350,7 +4350,7 @@ app.get("/make-server-215f78a5/reviews/project/:project_id", async (c) => {
     // Get all reviews for this project with error handling
     let allReviews: any[] = [];
     try {
-      const reviewData = await kv.getByPrefix(`review:${projectId}:`);
+      const reviewData = (await kv.getByPrefix(`review:${projectId}:`)).map(item => item.value);
       allReviews = Array.isArray(reviewData) ? reviewData : [];
       console.log(`✅ [Reviews] Found ${allReviews.length} reviews for project`);
     } catch (error) {
@@ -5521,11 +5521,11 @@ app.get("/make-server-215f78a5/profiles/freelancers", async (c) => {
     console.log('📥 [GET /profiles/freelancers] Request received');
     
     // Get all profiles using prefix search (new format: underscore)
-    const newFormatProfiles = await kv.getByPrefix('profile_') || [];
+    const newFormatProfiles = (await kv.getByPrefix('profile_') || []).map(item => item.value);
     console.log('📥 [GET /profiles/freelancers] New format profiles found:', newFormatProfiles.length);
     
     // Also get old format profiles for backward compatibility
-    const oldFormatProfiles = await kv.getByPrefix('profile:') || [];
+    const oldFormatProfiles = (await kv.getByPrefix('profile:') || []).map(item => item.value);
     console.log('📥 [GET /profiles/freelancers] Old format profiles found:', oldFormatProfiles.length);
     
     // Combine both formats, preferring new format if duplicate user_id exists
@@ -5549,7 +5549,7 @@ app.get("/make-server-215f78a5/profiles/freelancers", async (c) => {
     console.log('📥 [GET /profiles/freelancers] Total unique profiles:', allProfiles.length);
     
     // Get all subscriptions to add plan info to profiles
-    const allSubscriptions = await kv.getByPrefix('subscription_') || [];
+    const allSubscriptions = (await kv.getByPrefix('subscription_') || []).map(item => item.value);
     
     // Create a map of user_id -> subscription_plan
     const subscriptionMap = new Map();
@@ -5962,7 +5962,7 @@ app.get("/make-server-215f78a5/kv/search", async (c) => {
     const prefix = c.req.query('prefix') || '';
     console.log(`🔍 [KV Search] Searching with prefix: ${prefix}`);
     
-    const results = await kv.getByPrefix(prefix) || [];
+    const results = (await kv.getByPrefix(prefix) || []).map(item => ({ key: item.key, value: item.value }));
     console.log(`✅ [KV Search] Found ${results.length} results`);
     
     return c.json({ 
@@ -6825,7 +6825,7 @@ app.get("/make-server-215f78a5/payment-methods/:userId", async (c) => {
     }
 
     // Get all payment methods for this user
-    const paymentMethods = await kv.getByPrefix(`payment_method_${userId}_`) || [];
+    const paymentMethods = (await kv.getByPrefix(`payment_method_${userId}_`) || []).map(item => item.value);
     
     // Sort by default first, then by created date
     paymentMethods.sort((a, b) => {
@@ -6886,7 +6886,7 @@ app.post("/make-server-215f78a5/payment-methods", async (c) => {
     }
 
     // Check if this is the first payment method
-    const existingMethods = await kv.getByPrefix(`payment_method_${user.id}_`) || [];
+    const existingMethods = (await kv.getByPrefix(`payment_method_${user.id}_`) || []).map(item => item.value);
     const isFirstMethod = existingMethods.length === 0;
 
     // Create payment method
@@ -6974,7 +6974,7 @@ app.post("/make-server-215f78a5/payment-methods/:methodId/set-default", async (c
     }
 
     // Get all payment methods for this user
-    const allMethods = await kv.getByPrefix(`payment_method_${user.id}_`) || [];
+    const allMethods = (await kv.getByPrefix(`payment_method_${user.id}_`) || []).map(item => item.value);
 
     // Update all methods
     for (const method of allMethods) {
@@ -7023,7 +7023,7 @@ app.delete("/make-server-215f78a5/payment-methods/:methodId", async (c) => {
 
     // If this was the default, set another one as default
     if (wasDefault) {
-      const remainingMethods = await kv.getByPrefix(`payment_method_${user.id}_`) || [];
+      const remainingMethods = (await kv.getByPrefix(`payment_method_${user.id}_`) || []).map(item => item.value);
       if (remainingMethods.length > 0) {
         remainingMethods[0].is_default = true;
         remainingMethods[0].updated_at = new Date().toISOString();
@@ -7064,7 +7064,7 @@ app.get("/make-server-215f78a5/transactions", async (c) => {
     // Get all transactions for this user
     let allTransactions;
     try {
-      allTransactions = await kv.getByPrefix('transaction_');
+      allTransactions = (await kv.getByPrefix('transaction_')).map(item => item.value);
       console.log(`📊 [Transactions] getByPrefix returned:`, typeof allTransactions, Array.isArray(allTransactions));
     } catch (kvError) {
       console.error('❌ [Transactions] KV error:', kvError);
@@ -7147,7 +7147,7 @@ app.get("/make-server-215f78a5/transactions/stats/summary", async (c) => {
     }
 
     // Get all transactions for this user
-    const allTransactions = await kv.getByPrefix('transaction_') || [];
+    const allTransactions = (await kv.getByPrefix('transaction_') || []).map(item => item.value);
     const userTransactions = allTransactions.filter(
       (tx: any) => tx.user_id === user.id
     );
@@ -7275,7 +7275,7 @@ app.get("/make-server-215f78a5/invoices", async (c) => {
     // Get all invoices for this user
     let allInvoices;
     try {
-      allInvoices = await kv.getByPrefix('invoice_');
+      allInvoices = (await kv.getByPrefix('invoice_')).map(item => item.value);
       console.log(`📊 [Invoices] getByPrefix returned:`, typeof allInvoices, Array.isArray(allInvoices));
     } catch (kvError) {
       console.error('❌ [Invoices] KV error:', kvError);
@@ -7332,7 +7332,7 @@ app.get("/make-server-215f78a5/invoices/stats", async (c) => {
     // Get all invoices for this user
     let allInvoices;
     try {
-      allInvoices = await kv.getByPrefix('invoice_');
+      allInvoices = (await kv.getByPrefix('invoice_')).map(item => item.value);
     } catch (kvError) {
       console.error('❌ [Invoice Stats] KV error:', kvError);
       allInvoices = [];
@@ -7971,7 +7971,7 @@ app.post("/make-server-215f78a5/notifications/check-renewals", async (c) => {
     console.log('🔔 Starting renewal check...');
     
     // Get all subscriptions
-    const allSubscriptions = await kv.getByPrefix('subscription_') || [];
+    const allSubscriptions = (await kv.getByPrefix('subscription_') || []).map(item => item.value);
     const now = new Date();
     const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
     
@@ -8072,7 +8072,7 @@ app.post("/make-server-215f78a5/subscription/process-renewals", async (c) => {
     console.log('💳 Starting subscription renewal processing...');
     
     const now = new Date();
-    const allSubscriptions = await kv.getByPrefix('subscription_') || [];
+    const allSubscriptions = (await kv.getByPrefix('subscription_') || []).map(item => item.value);
     
     let renewed = 0;
     let downgraded = 0;
@@ -8097,8 +8097,8 @@ app.post("/make-server-215f78a5/subscription/process-renewals", async (c) => {
           if (!userId) {
             // subscriptions are stored as subscription_${userId}
             // we need to find the corresponding user (both profile formats)
-            const newFormatProfiles = await kv.getByPrefix('profile_') || [];
-            const oldFormatProfiles = await kv.getByPrefix('profile:') || [];
+            const newFormatProfiles = (await kv.getByPrefix('profile_') || []).map(item => item.value);
+            const oldFormatProfiles = (await kv.getByPrefix('profile:') || []).map(item => item.value);
             const allProfiles = [...newFormatProfiles, ...oldFormatProfiles];
             for (const prof of allProfiles) {
               const subKey = `subscription_${prof.user_id}`;
@@ -8368,7 +8368,7 @@ app.post("/make-server-215f78a5/notifications/check-low-balance", async (c) => {
   try {
     console.log('🔔 Starting low balance check...');
     
-    const allWallets = await kv.getByPrefix('wallet_') || [];
+    const allWallets = (await kv.getByPrefix('wallet_') || []).map(item => item.value);
     const threshold = 50; // Alert when balance is below $50
     
     let emailsSent = 0;
@@ -8473,8 +8473,8 @@ app.get("/make-server-215f78a5/payment/escrow/project/:projectId", async (c) => 
     console.log('📦 [Escrow] Fetching escrow for project:', projectId);
 
     // Get all escrows and find the one for this project
-    const allEscrowsColon = await kv.getByPrefix('escrow:') || [];
-    const allEscrowsUnderscore = await kv.getByPrefix('escrow_') || [];
+    const allEscrowsColon = (await kv.getByPrefix('escrow:') || []).map(item => item.value);
+    const allEscrowsUnderscore = (await kv.getByPrefix('escrow_') || []).map(item => item.value);
     const allEscrows = [...allEscrowsColon, ...allEscrowsUnderscore];
     
     const escrow = allEscrows.find((e: any) => e.project_id === projectId);
@@ -8536,8 +8536,8 @@ app.post("/make-server-215f78a5/payment/escrow/release", async (c) => {
     }
 
     // Get escrow
-    const allEscrowsColon = await kv.getByPrefix('escrow:') || [];
-    const allEscrowsUnderscore = await kv.getByPrefix('escrow_') || [];
+    const allEscrowsColon = (await kv.getByPrefix('escrow:') || []).map(item => item.value);
+    const allEscrowsUnderscore = (await kv.getByPrefix('escrow_') || []).map(item => item.value);
     const allEscrows = [...allEscrowsColon, ...allEscrowsUnderscore];
     
     const escrow = allEscrows.find((e: any) => e.project_id === project_id);
@@ -8790,8 +8790,8 @@ app.get("/make-server-215f78a5/analytics/advanced", async (c) => {
     }
 
     // Get all projects for this user
-    const allProjectsColon = await kv.getByPrefix('project:') || [];
-    const allProjectsUnderscore = await kv.getByPrefix('project_') || [];
+    const allProjectsColon = (await kv.getByPrefix('project:') || []).map(item => item.value);
+    const allProjectsUnderscore = (await kv.getByPrefix('project_') || []).map(item => item.value);
     const allProjects = [...allProjectsColon, ...allProjectsUnderscore];
     
     const userProjects = allProjects.filter((p: any) => 
@@ -8799,8 +8799,8 @@ app.get("/make-server-215f78a5/analytics/advanced", async (c) => {
     );
 
     // Get all transactions for this user
-    const allTransactionsColon = await kv.getByPrefix('transaction:') || [];
-    const allTransactionsUnderscore = await kv.getByPrefix('transaction_') || [];
+    const allTransactionsColon = (await kv.getByPrefix('transaction:') || []).map(item => item.value);
+    const allTransactionsUnderscore = (await kv.getByPrefix('transaction_') || []).map(item => item.value);
     const allTransactions = [...allTransactionsColon, ...allTransactionsUnderscore];
     
     const userTransactions = allTransactions.filter((t: any) => 
@@ -8975,7 +8975,7 @@ app.get("/make-server-215f78a5/team/members", async (c) => {
     }
 
     // Get team members for this user's organization - using only colon prefix to avoid duplicates
-    const allTeamMembers = await kv.getByPrefix('team_member:') || [];
+    const allTeamMembers = (await kv.getByPrefix('team_member:') || []).map(item => item.value);
     
     const teamMembers = allTeamMembers.filter((m: any) => m.organization_owner_id === user.id);
 
@@ -9055,7 +9055,7 @@ app.post("/make-server-215f78a5/team/invite", async (c) => {
     }
 
     // Check if member already exists - using only colon prefix
-    const allTeamMembers = await kv.getByPrefix('team_member:') || [];
+    const allTeamMembers = (await kv.getByPrefix('team_member:') || []).map(item => item.value);
     
     const existingMember = allTeamMembers.find((m: any) => 
       m.organization_owner_id === user.id && m.email === email
@@ -9248,7 +9248,7 @@ app.get("/make-server-215f78a5/team/debug/invitation/:inviteId", async (c) => {
     console.log('🔍 [DEBUG] Invitation data:', invitation);
     
     // Also check all team members to see what's in the database
-    const allTeamMembers = await kv.getByPrefix('team_member:') || [];
+    const allTeamMembers = (await kv.getByPrefix('team_member:') || []).map(item => item.value);
     console.log('🔍 [DEBUG] Total team members in database:', allTeamMembers.length);
     
     // Find any invitations with similar IDs
@@ -9347,7 +9347,7 @@ app.get("/make-server-215f78a5/team/test/list-all-invitations", async (c) => {
     console.log('🧪 [TEST] Listing all team invitations...');
     console.log('🧪 [TEST] SUPABASE_SERVICE_ROLE_KEY exists:', !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'));
     
-    const allTeamMembers = await kv.getByPrefix('team_member:') || [];
+    const allTeamMembers = (await kv.getByPrefix('team_member:') || []).map(item => item.value);
     
     console.log('🧪 [TEST] Found team members:', allTeamMembers.length);
     
@@ -9424,7 +9424,7 @@ app.post("/make-server-215f78a5/team/accept-invitation/:inviteId", async (c) => 
           
           // Try to find any enterprise user as organization owner
           console.log('🔍 [Accept Invitation] Searching for enterprise subscription owners...');
-          const allSubscriptions = await kv.getByPrefix('subscription_') || [];
+          const allSubscriptions = (await kv.getByPrefix('subscription_') || []).map(item => item.value);
           let organizationOwnerId: string | null = null;
           
           for (const sub of allSubscriptions) {
@@ -9472,7 +9472,7 @@ app.post("/make-server-215f78a5/team/accept-invitation/:inviteId", async (c) => 
       console.error('❌ [Accept Invitation] Invitation not found and could not be rebuilt');
       
       // Debug: Check if any invitations exist
-      const allInvites = await kv.getByPrefix('team_member:') || [];
+      const allInvites = (await kv.getByPrefix('team_member:') || []).map(item => item.value);
       console.log('🔍 [Accept Invitation] Total invitations in database:', allInvites.length);
       console.log('🔍 [Accept Invitation] All invitation IDs:', allInvites.map((i: any) => i.id));
       
@@ -9611,7 +9611,7 @@ app.get("/make-server-215f78a5/team/my-invitations", async (c) => {
     }
 
     // Get all team member records - using only colon prefix to avoid duplicates
-    const allTeamMembers = await kv.getByPrefix('team_member:') || [];
+    const allTeamMembers = (await kv.getByPrefix('team_member:') || []).map(item => item.value);
 
     // Filter invitations for this user's email that are pending
     const myInvitations = allTeamMembers.filter((m: any) => 
@@ -9886,8 +9886,8 @@ app.get("/make-server-215f78a5/account-manager", async (c) => {
     const manager = await kv.get(`account_manager:${assignment.manager_id}`);
 
     // Get contact history
-    const allContactsColon = await kv.getByPrefix('account_manager_contact:') || [];
-    const allContactsUnderscore = await kv.getByPrefix('account_manager_contact_') || [];
+    const allContactsColon = (await kv.getByPrefix('account_manager_contact:') || []).map(item => item.value);
+    const allContactsUnderscore = (await kv.getByPrefix('account_manager_contact_') || []).map(item => item.value);
     const allContacts = [...allContactsColon, ...allContactsUnderscore];
     
     const contactHistory = allContacts
@@ -9991,8 +9991,8 @@ app.get("/make-server-215f78a5/api-keys", async (c) => {
     }
 
     // Get API keys for this user
-    const allKeysColon = await kv.getByPrefix('api_key:') || [];
-    const allKeysUnderscore = await kv.getByPrefix('api_key_') || [];
+    const allKeysColon = (await kv.getByPrefix('api_key:') || []).map(item => item.value);
+    const allKeysUnderscore = (await kv.getByPrefix('api_key_') || []).map(item => item.value);
     const allKeys = [...allKeysColon, ...allKeysUnderscore];
     
     const userKeys = allKeys
@@ -10208,8 +10208,8 @@ app.get("/api/v1/projects", async (c) => {
     }
 
     // Get user's projects
-    const allProjectsColon = await kv.getByPrefix('project:') || [];
-    const allProjectsUnderscore = await kv.getByPrefix('project_') || [];
+    const allProjectsColon = (await kv.getByPrefix('project:') || []).map(item => item.value);
+    const allProjectsUnderscore = (await kv.getByPrefix('project_') || []).map(item => item.value);
     const allProjects = [...allProjectsColon, ...allProjectsUnderscore];
     
     const userProjects = allProjects.filter((p: any) => p.user_id === auth.userId);
@@ -10383,8 +10383,8 @@ app.get("/api/v1/proposals", async (c) => {
     const status = c.req.query('status');
 
     // Get user's proposals
-    const allProposalsColon = await kv.getByPrefix('proposal:') || [];
-    const allProposalsUnderscore = await kv.getByPrefix('proposal_') || [];
+    const allProposalsColon = (await kv.getByPrefix('proposal:') || []).map(item => item.value);
+    const allProposalsUnderscore = (await kv.getByPrefix('proposal_') || []).map(item => item.value);
     const allProposals = [...allProposalsColon, ...allProposalsUnderscore];
     
     let userProposals = allProposals.filter((p: any) => p.freelancer_id === auth.userId);
@@ -11061,8 +11061,8 @@ app.get("/make-server-215f78a5/support/tickets", async (c) => {
     }
 
     // Get all tickets for this user
-    const allTicketsColon = await kv.getByPrefix('support_ticket:') || [];
-    const allTicketsUnderscore = await kv.getByPrefix('support_ticket_') || [];
+    const allTicketsColon = (await kv.getByPrefix('support_ticket:') || []).map(item => item.value);
+    const allTicketsUnderscore = (await kv.getByPrefix('support_ticket_') || []).map(item => item.value);
     const allTickets = [...allTicketsColon, ...allTicketsUnderscore];
     
     const userTickets = allTickets
@@ -11212,8 +11212,8 @@ app.get("/make-server-215f78a5/support/tickets/:ticketId/replies", async (c) => 
     }
 
     // Get all replies for this ticket
-    const allRepliesColon = await kv.getByPrefix(`ticket_reply:${ticketId}:`) || [];
-    const allRepliesUnderscore = await kv.getByPrefix(`ticket_reply_${ticketId}_`) || [];
+    const allRepliesColon = (await kv.getByPrefix(`ticket_reply:${ticketId}:`) || []).map(item => item.value);
+    const allRepliesUnderscore = (await kv.getByPrefix(`ticket_reply_${ticketId}_`) || []).map(item => item.value);
     const allReplies = [...allRepliesColon, ...allRepliesUnderscore];
     
     const sortedReplies = allReplies.sort((a: any, b: any) => 
@@ -11317,7 +11317,7 @@ app.get("/make-server-215f78a5/webhooks", async (c) => {
     }
 
     // Get webhooks
-    const allWebhooks = await kv.getByPrefix(`webhook:${user.id}:`) || [];
+    const allWebhooks = (await kv.getByPrefix(`webhook:${user.id}:`) || []).map(item => item.value);
     
     return c.json({ webhooks: allWebhooks });
   } catch (error) {
@@ -11547,7 +11547,7 @@ async function deliverWebhookWithRetry(webhook: any, payload: any, maxRetries = 
 // Enhanced webhook trigger with retry
 async function triggerWebhooksWithRetry(userId: string, event: string, data: any) {
   try {
-    const allWebhooks = await kv.getByPrefix(`webhook:${userId}:`) || [];
+    const allWebhooks = (await kv.getByPrefix(`webhook:${userId}:`) || []).map(item => item.value);
     const activeWebhooks = allWebhooks.filter((w: any) => 
       w.status === 'active' && w.events.includes(event)
     );
@@ -11611,7 +11611,7 @@ app.get("/make-server-215f78a5/chats", async (c) => {
     }
 
     // Get user's chats
-    const allChats = await kv.getByPrefix(`chat:${user.id}:`) || [];
+    const allChats = (await kv.getByPrefix(`chat:${user.id}:`) || []).map(item => item.value);
     
     // Sort by last message time
     const sortedChats = allChats.sort((a: any, b: any) => {
@@ -11659,7 +11659,7 @@ app.get("/make-server-215f78a5/chats/:chatId/messages", async (c) => {
     }
 
     // Get messages
-    const allMessages = await kv.getByPrefix(`chat_message:${chatId}:`) || [];
+    const allMessages = (await kv.getByPrefix(`chat_message:${chatId}:`) || []).map(item => item.value);
     
     // Sort by created_at
     const sortedMessages = allMessages.sort((a: any, b: any) => 
@@ -11830,7 +11830,7 @@ app.post("/make-server-215f78a5/chats/:chatId/read", async (c) => {
     }
 
     // Mark all messages as read
-    const allMessages = await kv.getByPrefix(`chat_message:${chatId}:`) || [];
+    const allMessages = (await kv.getByPrefix(`chat_message:${chatId}:`) || []).map(item => item.value);
     
     for (const message of allMessages) {
       if (message.sender_id !== user.id && !message.read) {
@@ -11892,7 +11892,7 @@ app.post("/make-server-215f78a5/chats", async (c) => {
     }
 
     // Check if chat already exists
-    const existingChats = await kv.getByPrefix(`chat:${user.id}:`) || [];
+    const existingChats = (await kv.getByPrefix(`chat:${user.id}:`) || []).map(item => item.value);
     const existingChat = existingChats.find((c: any) => c.recipient_id === recipient_id);
 
     if (existingChat) {
@@ -11973,8 +11973,8 @@ app.get("/make-server-215f78a5/sla/metrics", async (c) => {
     }
 
     // Get all tickets (try both key formats)
-    const allTicketsColon = await kv.getByPrefix('support_ticket:') || [];
-    const allTicketsUnderscore = await kv.getByPrefix('support_ticket_') || [];
+    const allTicketsColon = (await kv.getByPrefix('support_ticket:') || []).map(item => item.value);
+    const allTicketsUnderscore = (await kv.getByPrefix('support_ticket_') || []).map(item => item.value);
     const allTickets = [...allTicketsColon, ...allTicketsUnderscore]
       .filter((t: any) => t.user_id === user.id);
     
@@ -12858,7 +12858,7 @@ app.get("/make-server-215f78a5/bank-accounts/:userId", async (c) => {
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
-    const bankAccounts = await kv.getByPrefix(`bank_account_${userId}_`) || [];
+    const bankAccounts = (await kv.getByPrefix(`bank_account_${userId}_`) || []).map(item => item.value);
     
     bankAccounts.sort((a, b) => {
       if (a.is_default && !b.is_default) return -1;
@@ -12924,7 +12924,7 @@ app.post("/make-server-215f78a5/bank-accounts", async (c) => {
       }
     }
 
-    const existingAccounts = await kv.getByPrefix(`bank_account_${user.id}_`) || [];
+    const existingAccounts = (await kv.getByPrefix(`bank_account_${user.id}_`) || []).map(item => item.value);
     const isFirstAccount = existingAccounts.length === 0;
 
     const accountId = `bank_account_${user.id}_${Date.now()}`;
@@ -13008,7 +13008,7 @@ app.post("/make-server-215f78a5/bank-accounts/:accountId/set-default", async (c)
       return c.json({ error: 'Bank account not found' }, 404);
     }
 
-    const allAccounts = await kv.getByPrefix(`bank_account_${user.id}_`) || [];
+    const allAccounts = (await kv.getByPrefix(`bank_account_${user.id}_`) || []).map(item => item.value);
 
     for (const account of allAccounts) {
       account.is_default = account.id === accountId;
@@ -13049,7 +13049,7 @@ app.delete("/make-server-215f78a5/bank-accounts/:accountId", async (c) => {
     await kv.del(accountId);
 
     if (bankAccount.is_default) {
-      const remainingAccounts = await kv.getByPrefix(`bank_account_${user.id}_`) || [];
+      const remainingAccounts = (await kv.getByPrefix(`bank_account_${user.id}_`) || []).map(item => item.value);
       if (remainingAccounts.length > 0) {
         remainingAccounts[0].is_default = true;
         remainingAccounts[0].updated_at = new Date().toISOString();
@@ -13176,7 +13176,7 @@ app.get("/make-server-215f78a5/withdrawals", async (c) => {
 
     let allWithdrawals;
     try {
-      allWithdrawals = await kv.getByPrefix('withdrawal_');
+      allWithdrawals = (await kv.getByPrefix('withdrawal_')).map(item => item.value);
       console.log(`📊 [Withdrawals] getByPrefix returned:`, typeof allWithdrawals, Array.isArray(allWithdrawals));
     } catch (kvError) {
       console.error('❌ [Withdrawals] KV error:', kvError);
@@ -13340,7 +13340,7 @@ app.post("/make-server-215f78a5/withdrawals/:id/approve", async (c) => {
     }
 
     // Update transaction status
-    const allTransactions = await kv.getByPrefix('transaction_') || [];
+    const allTransactions = (await kv.getByPrefix('transaction_') || []).map(item => item.value);
     const transaction = allTransactions.find((t: any) => t.reference_id === withdrawalId);
     if (transaction) {
       transaction.status = 'completed';
@@ -13399,7 +13399,7 @@ app.post("/make-server-215f78a5/withdrawals/:id/reject", async (c) => {
       await kv.set(walletKey, wallet);
     }
 
-    const allTransactions = await kv.getByPrefix('transaction_') || [];
+    const allTransactions = (await kv.getByPrefix('transaction_') || []).map(item => item.value);
     const transaction = allTransactions.find((t: any) => t.reference_id === withdrawalId);
     if (transaction) {
       transaction.status = 'failed';
@@ -13545,7 +13545,7 @@ app.post("/make-server-215f78a5/admin/setup-special-users", async (c) => {
     const now = new Date();
 
     // Get all profiles to find user IDs
-    const allProfiles = await kv.getByPrefix('profile_') || [];
+    const allProfiles = (await kv.getByPrefix('profile_') || []).map(item => item.value);
     
     for (const email of specialEmails) {
       // Find user profile by email
@@ -13727,7 +13727,7 @@ app.post("/make-server-215f78a5/public/initialize-special-users", async (c) => {
     const now = new Date();
 
     // Get all profiles to find user IDs
-    const allProfiles = await kv.getByPrefix('profile_') || [];
+    const allProfiles = (await kv.getByPrefix('profile_') || []).map(item => item.value);
     
     for (const email of specialEmails) {
       // Find user profile by email
@@ -14008,8 +14008,8 @@ app.get("/make-server-215f78a5/admin/withdrawals/all", async (c) => {
     console.log('🔍 [Admin/Withdrawals] Fetching all withdrawals...');
 
     // Get all withdrawals - support both colon and underscore formats
-    const allWithdrawalsColon = await kv.getByPrefix('withdrawal:') || [];
-    const allWithdrawalsUnderscore = await kv.getByPrefix('withdrawal_') || [];
+    const allWithdrawalsColon = (await kv.getByPrefix('withdrawal:') || []).map(item => item.value);
+    const allWithdrawalsUnderscore = (await kv.getByPrefix('withdrawal_') || []).map(item => item.value);
     
     console.log(`📊 [Admin/Withdrawals] Found ${allWithdrawalsColon.length} with 'withdrawal:' prefix`);
     console.log(`📊 [Admin/Withdrawals] Found ${allWithdrawalsUnderscore.length} with 'withdrawal_' prefix`);
@@ -14117,8 +14117,8 @@ app.get("/make-server-215f78a5/admin/withdrawals", async (c) => {
     }
 
     // Get all withdrawals - support both colon and underscore formats
-    const allWithdrawalsColon = await kv.getByPrefix('withdrawal:') || [];
-    const allWithdrawalsUnderscore = await kv.getByPrefix('withdrawal_') || [];
+    const allWithdrawalsColon = (await kv.getByPrefix('withdrawal:') || []).map(item => item.value);
+    const allWithdrawalsUnderscore = (await kv.getByPrefix('withdrawal_') || []).map(item => item.value);
     
     console.log(`📊 [Admin/Withdrawals-Alias] Found ${allWithdrawalsColon.length} with 'withdrawal:' prefix`);
     console.log(`📊 [Admin/Withdrawals-Alias] Found ${allWithdrawalsUnderscore.length} with 'withdrawal_' prefix`);
@@ -14229,8 +14229,8 @@ app.get("/make-server-215f78a5/admin/users", async (c) => {
     }
 
     // Get all profiles (both formats)
-    const newFormatProfiles = await kv.getByPrefix('profile_') || [];
-    const oldFormatProfiles = await kv.getByPrefix('profile:') || [];
+    const newFormatProfiles = (await kv.getByPrefix('profile_') || []).map(item => item.value);
+    const oldFormatProfiles = (await kv.getByPrefix('profile:') || []).map(item => item.value);
     
     // Combine and deduplicate by user_id, preferring new format
     const profileMap = new Map();
@@ -14329,7 +14329,7 @@ app.get("/make-server-215f78a5/admin/users/:userId", async (c) => {
     }
 
     // Get transactions
-    const allTransactions = await kv.getByPrefix('transaction_') || [];
+    const allTransactions = (await kv.getByPrefix('transaction_') || []).map(item => item.value);
     const userTransactions = allTransactions
       .filter((t: any) => t.user_id === userId)
       .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -14481,8 +14481,8 @@ app.post("/make-server-215f78a5/admin/admins", async (c) => {
     }
 
     // Find user by email - 搜索兩種格式的鍵
-    const profilesColon = await kv.getByPrefix('profile:');
-    const profilesUnderscore = await kv.getByPrefix('profile_');
+    const profilesColon = (await kv.getByPrefix('profile:')).map(item => item.value);
+    const profilesUnderscore = (await kv.getByPrefix('profile_')).map(item => item.value);
     const allProfiles = [...profilesColon, ...profilesUnderscore];
     
     // 使用 email 去重
@@ -14564,8 +14564,8 @@ app.get("/make-server-215f78a5/admin/debug-profile/:email", async (c) => {
     console.log(`🔍 [Debug] Checking profile for email: ${targetEmail}`);
 
     // Search in both formats
-    const profilesColon = await kv.getByPrefix('profile:');
-    const profilesUnderscore = await kv.getByPrefix('profile_');
+    const profilesColon = (await kv.getByPrefix('profile:')).map(item => item.value);
+    const profilesUnderscore = (await kv.getByPrefix('profile_')).map(item => item.value);
     
     const profileColon = profilesColon.find((p: any) => p.email === targetEmail);
     const profileUnderscore = profilesUnderscore.find((p: any) => p.email === targetEmail);
@@ -14998,36 +14998,36 @@ app.get("/make-server-215f78a5/admin/stats", async (c) => {
       });
     };
     
-    const allUsersColon = await kv.getByPrefix('profile:') || [];
-    const allUsersUnderscore = await kv.getByPrefix('profile_') || [];
+    const allUsersColon = (await kv.getByPrefix('profile:') || []).map(item => item.value);
+    const allUsersUnderscore = (await kv.getByPrefix('profile_') || []).map(item => item.value);
     const allUsers = deduplicateById([...allUsersColon, ...allUsersUnderscore]);
     
-    const allProjectsColon = await kv.getByPrefix('project:') || [];
-    const allProjectsUnderscore = await kv.getByPrefix('project_') || [];
+    const allProjectsColon = (await kv.getByPrefix('project:') || []).map(item => item.value);
+    const allProjectsUnderscore = (await kv.getByPrefix('project_') || []).map(item => item.value);
     const allProjects = deduplicateById([...allProjectsColon, ...allProjectsUnderscore]);
     
-    const allWalletsColon = await kv.getByPrefix('wallet:') || [];
-    const allWalletsUnderscore = await kv.getByPrefix('wallet_') || [];
+    const allWalletsColon = (await kv.getByPrefix('wallet:') || []).map(item => item.value);
+    const allWalletsUnderscore = (await kv.getByPrefix('wallet_') || []).map(item => item.value);
     const allWallets = deduplicateById([...allWalletsColon, ...allWalletsUnderscore]);
     
-    const allWithdrawalsColon = await kv.getByPrefix('withdrawal:') || [];
-    const allWithdrawalsUnderscore = await kv.getByPrefix('withdrawal_') || [];
+    const allWithdrawalsColon = (await kv.getByPrefix('withdrawal:') || []).map(item => item.value);
+    const allWithdrawalsUnderscore = (await kv.getByPrefix('withdrawal_') || []).map(item => item.value);
     const allWithdrawals = deduplicateById([...allWithdrawalsColon, ...allWithdrawalsUnderscore]);
     
-    const allMessagesColon = await kv.getByPrefix('message:') || [];
-    const allMessagesUnderscore = await kv.getByPrefix('message_') || [];
+    const allMessagesColon = (await kv.getByPrefix('message:') || []).map(item => item.value);
+    const allMessagesUnderscore = (await kv.getByPrefix('message_') || []).map(item => item.value);
     const allMessages = deduplicateById([...allMessagesColon, ...allMessagesUnderscore]);
     
-    const allTransactionsColon = await kv.getByPrefix('transaction:') || [];
-    const allTransactionsUnderscore = await kv.getByPrefix('transaction_') || [];
+    const allTransactionsColon = (await kv.getByPrefix('transaction:') || []).map(item => item.value);
+    const allTransactionsUnderscore = (await kv.getByPrefix('transaction_') || []).map(item => item.value);
     const allTransactions = deduplicateById([...allTransactionsColon, ...allTransactionsUnderscore]);
     
-    const allMilestonesColon = await kv.getByPrefix('milestone:') || [];
-    const allMilestonesUnderscore = await kv.getByPrefix('milestone_') || [];
+    const allMilestonesColon = (await kv.getByPrefix('milestone:') || []).map(item => item.value);
+    const allMilestonesUnderscore = (await kv.getByPrefix('milestone_') || []).map(item => item.value);
     const allMilestones = deduplicateById([...allMilestonesColon, ...allMilestonesUnderscore]);
     
-    const allReviewsColon = await kv.getByPrefix('review:') || [];
-    const allReviewsUnderscore = await kv.getByPrefix('review_') || [];
+    const allReviewsColon = (await kv.getByPrefix('review:') || []).map(item => item.value);
+    const allReviewsUnderscore = (await kv.getByPrefix('review_') || []).map(item => item.value);
     const allReviews = deduplicateById([...allReviewsColon, ...allReviewsUnderscore]);
 
     console.log('📊 [Stats] Counts:', {
@@ -15083,8 +15083,8 @@ app.get("/make-server-215f78a5/admin/stats", async (c) => {
       .reduce((sum: number, t: any) => sum + (t.platform_fee || t.service_fee || 0), 0);
     
     // 2. 訂閱收入
-    const allSubscriptionsColon = await kv.getByPrefix('subscription:') || [];
-    const allSubscriptionsUnderscore = await kv.getByPrefix('subscription_') || [];
+    const allSubscriptionsColon = (await kv.getByPrefix('subscription:') || []).map(item => item.value);
+    const allSubscriptionsUnderscore = (await kv.getByPrefix('subscription_') || []).map(item => item.value);
     const allSubscriptions = deduplicateById([...allSubscriptionsColon, ...allSubscriptionsUnderscore]);
     
     const subscriptionRevenue = allSubscriptions
@@ -15202,8 +15202,8 @@ app.get("/make-server-215f78a5/admin/revenue", async (c) => {
       });
     };
     
-    const allTransactionsColon = await kv.getByPrefix('transaction:') || [];
-    const allTransactionsUnderscore = await kv.getByPrefix('transaction_') || [];
+    const allTransactionsColon = (await kv.getByPrefix('transaction:') || []).map(item => item.value);
+    const allTransactionsUnderscore = (await kv.getByPrefix('transaction_') || []).map(item => item.value);
     const allTransactions = deduplicateById([...allTransactionsColon, ...allTransactionsUnderscore]);
 
     console.log('📊 [Revenue API] Total transactions:', allTransactions.length);
@@ -15587,7 +15587,7 @@ app.post("/make-server-215f78a5/admin/get-user-by-email", async (c) => {
     }
 
     // Search for user profile by email
-    const allProfiles = await kv.getByPrefix('user_profile_');
+    const allProfiles = (await kv.getByPrefix('user_profile_')).map(item => item.value);
     const userProfile = allProfiles.find(profile => 
       profile && profile.email && profile.email.toLowerCase() === email.toLowerCase()
     );
@@ -15647,7 +15647,7 @@ app.post("/make-server-215f78a5/admin/rebuild-project-index", async (c) => {
     console.log('🔄 [Admin] Starting project index rebuild...');
     
     // Get all keys with prefix 'project:' from KV store
-    const allProjectKeys = await kv.getByPrefix('project:');
+    const allProjectKeys = (await kv.getByPrefix('project:')).map(item => item.value);
     console.log(`📊 [Admin] Found ${allProjectKeys.length} project keys in KV store`);
     
     // Extract project IDs and projects
@@ -18794,7 +18794,7 @@ app.get("/make-server-215f78a5/users/available-for-chat", async (c) => {
     const userProjectMap = new Map<string, { projectId: string; projectTitle: string }>();
 
     // Source 1: Get all projects where the user is involved (as owner or freelancer)
-    const allProjects = await kv.getByPrefix('project_');
+    const allProjects = (await kv.getByPrefix('project_')).map(item => item.value);
     const userProjects = allProjects.filter((p: any) => {
       const ownerId = getProjectOwnerId(p);
       return ownerId === user.id || p.assigned_freelancer_id === user.id;
@@ -18829,7 +18829,7 @@ app.get("/make-server-215f78a5/users/available-for-chat", async (c) => {
 
     // Source 2: Get all proposals on user's projects (if user is a client)
     if (!isCurrentUserFreelancer) {
-      const allProposals = await kv.getByPrefix('proposal_');
+      const allProposals = (await kv.getByPrefix('proposal_')).map(item => item.value);
       const userProjectIds = userProjects.map((p: any) => p.id);
       
       const relevantProposals = allProposals.filter((proposal: any) => 
@@ -18856,7 +18856,7 @@ app.get("/make-server-215f78a5/users/available-for-chat", async (c) => {
 
     // Source 3: Get all projects where user has submitted proposals (if user is a freelancer)
     if (isCurrentUserFreelancer) {
-      const allProposals = await kv.getByPrefix('proposal_');
+      const allProposals = (await kv.getByPrefix('proposal_')).map(item => item.value);
       const userProposals = allProposals.filter((proposal: any) => 
         proposal.user_id === user.id
       );
@@ -18930,7 +18930,7 @@ app.get("/make-server-215f78a5/users/available-for-chat", async (c) => {
     console.log('👥 [Available Users] Unique users found:', userIds.size);
 
     // Source 5: Get users from existing conversations
-    const allConversations = await kv.getByPrefix('conversation:');
+    const allConversations = (await kv.getByPrefix('conversation:')).map(item => item.value);
     const userConversations = allConversations.filter((conv: any) => 
       conv.participants?.client_id === user.id || conv.participants?.freelancer_id === user.id
     );
@@ -19099,49 +19099,49 @@ app.post("/make-server-215f78a5/admin/initialize-data", async (c) => {
     console.log('🧹 [Admin] Cleaning up all existing test data...');
     
     // Clean test profiles
-    const testProfiles = await kv.getByPrefix('profile_test_') || [];
+    const testProfiles = (await kv.getByPrefix('profile_test_') || []).map(item => item.value);
     for (const profile of testProfiles) {
       await kv.del(`profile_${profile.id}`);
     }
     console.log(`🧹 Deleted ${testProfiles.length} test profiles`);
     
     // Clean test wallets
-    const testWallets = await kv.getByPrefix('wallet:test_') || [];
+    const testWallets = (await kv.getByPrefix('wallet:test_') || []).map(item => item.value);
     for (const wallet of testWallets) {
       await kv.del(`wallet:${wallet.user_id}`);
     }
     console.log(`🧹 Deleted ${testWallets.length} test wallets`);
     
     // Clean test projects
-    const testProjects = await kv.getByPrefix('project:test_') || [];
+    const testProjects = (await kv.getByPrefix('project:test_') || []).map(item => item.value);
     for (const project of testProjects) {
       await kv.del(`project:${project.id}`);
     }
     console.log(`🧹 Deleted ${testProjects.length} test projects`);
     
     // Clean test milestones
-    const testMilestones = await kv.getByPrefix('milestone:test_') || [];
+    const testMilestones = (await kv.getByPrefix('milestone:test_') || []).map(item => item.value);
     for (const milestone of testMilestones) {
       await kv.del(`milestone:${milestone.id}`);
     }
     console.log(`🧹 Deleted ${testMilestones.length} test milestones`);
     
     // Clean test transactions
-    const testTransactions = await kv.getByPrefix('transaction:test_') || [];
+    const testTransactions = (await kv.getByPrefix('transaction:test_') || []).map(item => item.value);
     for (const tx of testTransactions) {
       await kv.del(`transaction:${tx.id}`);
     }
     console.log(`🧹 Deleted ${testTransactions.length} test transactions`);
     
     // Clean test reviews
-    const testReviews = await kv.getByPrefix('review:test_') || [];
+    const testReviews = (await kv.getByPrefix('review:test_') || []).map(item => item.value);
     for (const review of testReviews) {
       await kv.del(`review:${review.id}`);
     }
     console.log(`🧹 Deleted ${testReviews.length} test reviews`);
     
     // Clean test messages
-    const testMessages = await kv.getByPrefix('message:test_') || [];
+    const testMessages = (await kv.getByPrefix('message:test_') || []).map(item => item.value);
     for (const msg of testMessages) {
       await kv.del(`message:${msg.id}`);
     }
@@ -19402,7 +19402,7 @@ app.post("/make-server-215f78a5/admin/initialize-data", async (c) => {
     
     // 🧹 First, delete all existing test withdrawals to avoid duplicates
     console.log('🧹 [Admin] Cleaning up existing test withdrawals...');
-    const existingWithdrawals = await kv.getByPrefix('withdrawal:test_withdrawal_') || [];
+    const existingWithdrawals = (await kv.getByPrefix('withdrawal:test_withdrawal_') || []).map(item => item.value);
     for (const withdrawal of existingWithdrawals) {
       await kv.del(`withdrawal:${withdrawal.id}`);
     }
@@ -19455,7 +19455,7 @@ app.post("/make-server-215f78a5/admin/initialize-data", async (c) => {
     console.log('📊 [Admin] Summary:', created);
 
     // Verify data was saved
-    const verification = await kv.getByPrefix('project:');
+    const verification = (await kv.getByPrefix('project:')).map(item => item.value);
     console.log(`🔍 [Admin] Verification: Found ${verification.length} projects in database`);
 
     return c.json({ 
@@ -20263,19 +20263,20 @@ app.get("/make-server-215f78a5/ai-seo/reports", async (c) => {
     console.log('📋 [AI SEO] Fetching all reports...');
     
     // 使用 getByPrefix 獲取所有報告
-    const allReports = await kv.getByPrefix('ai_seo_report:');
+    const allReports = (await kv.getByPrefix('ai_seo_report:')).map(item => item.value);
     
     console.log(`📊 [AI SEO] Raw reports count: ${allReports?.length || 0}`);
     
     // 解析並排序報告（最新的在前）
     const reports = allReports
-      .map((report, index) => {
+      .map((item, index) => {
         try {
-          const parsed = JSON.parse(report);
-          console.log(`✅ [AI SEO] Parsed report ${index + 1}:`, parsed.id);
-          return parsed;
+          // item is already the JSON string value, need to parse it
+          const report = typeof item === 'string' ? JSON.parse(item) : item;
+          console.log(`✅ [AI SEO] Loaded report ${index + 1}:`, report?.id);
+          return report;
         } catch (e) {
-          console.error(`❌ [AI SEO] Failed to parse report ${index + 1}:`, e);
+          console.error(`❌ [AI SEO] Failed to load report ${index + 1}:`, e);
           return null;
         }
       })
@@ -20605,7 +20606,7 @@ app.get("/make-server-215f78a5/ai-content/list", async (c) => {
   try {
     console.log('📋 [AI Content] Fetching all generated content...');
     
-    const allContent = await kv.getByPrefix('ai_content:');
+    const allContent = (await kv.getByPrefix('ai_content:')).map(item => item.value);
     
     const contents = allContent
       .map((item: string) => {
@@ -20705,7 +20706,7 @@ app.get("/make-server-215f78a5/check-team-member", async (c) => {
     console.log('🔍 [Check Team Member] Checking membership for user:', user.email);
 
     // Check if user is a team member
-    const allTeamMembers = await kv.getByPrefix('team_member:') || [];
+    const allTeamMembers = (await kv.getByPrefix('team_member:') || []).map(item => item.value);
     console.log('🔍 [Check Team Member] Total team members found:', allTeamMembers.length);
     
     const memberRecord = allTeamMembers.find((m: any) => 
@@ -20780,7 +20781,7 @@ app.post('/make-server-215f78a5/deliverables/check-expiring-files', async (c) =>
     console.log('🔍 [Cron] Checking for expiring deliverable files...');
 
     // 獲取所有專案的交付物
-    const allProjects = await kv.getByPrefix('project:');
+    const allProjects = (await kv.getByPrefix('project:')).map(item => item.value);
     let emailsSent = 0;
     let filesChecked = 0;
 
@@ -21211,7 +21212,7 @@ app.get("/make-server-215f78a5/admin/kyc/all", async (c) => {
       return c.json({ error: 'Admin access required' }, 403);
     }
 
-    const allKYC = await kv.getByPrefix('kyc_');
+    const allKYC = (await kv.getByPrefix('kyc_')).map(item => item.value);
     const kycList = (allKYC || [])
       .filter((k: any) => k && k.status !== 'not_started')
       .sort((a: any, b: any) => {
@@ -21250,7 +21251,7 @@ app.get("/make-server-215f78a5/admin/kyc/pending-count", async (c) => {
       return c.json({ error: 'Admin access required' }, 403);
     }
 
-    const allKYC = await kv.getByPrefix('kyc_');
+    const allKYC = (await kv.getByPrefix('kyc_')).map(item => item.value);
     const pendingCount = (allKYC || [])
       .filter((k: any) => k && k.status === 'pending')
       .length;
