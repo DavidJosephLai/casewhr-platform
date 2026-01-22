@@ -99,7 +99,7 @@ const DEMO_POSTS: BlogPost[] = [
     slug: '2026-freelance-trends',
     title: '2026 Freelance Market Trends',
     title_zh: '2026 年自由工作者市場趨勢報告',
-    title_cn: '2026 年自由作者市场���告',
+    title_cn: '2026 年自由作者市场告',
     excerpt: 'Discover the latest trends shaping the freelance industry in 2026.',
     excerpt_zh: '探索 2026 年塑造自由工作者行業的最新趨勢和機遇。',
     excerpt_cn: '探索 2026 年塑造自由工作者行业的最新趋势和机遇。',
@@ -198,7 +198,7 @@ export function BlogListPage() {
       loginMessage: '请登录以阅读我们的专属博客内容',
       loginButton: '立即登录',
       signupButton: '注册账号',
-      loginHint: '加入 CaseWHR 阅读优质文章，并与顶尖专业人士连结',
+      loginHint: '加�� CaseWHR 阅读优质文章，并与顶尖专业人士连结',
     },
   };
 
@@ -444,7 +444,7 @@ export function BlogListPage() {
                 window.dispatchEvent(new CustomEvent('showDashboard'));
               } else {
                 console.log('✍️ [BlogList] Navigating to Create Post');
-                window.location.href = '/blog/admin';
+                window.location.href = '/blog/admin?action=new';
               }
             }}
             size="lg"
