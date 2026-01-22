@@ -528,18 +528,18 @@ export function BlogManagementPage() {
       </div>
 
       {/* Editor Dialog */}
-      <Dialog open={isEditorOpen && editingPost !== null} onOpenChange={setIsEditorOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingPost?.slug?.startsWith('new-post-') ? t.newPost : t.edit}
-            </DialogTitle>
-            <DialogDescription>
-              {language === 'en' ? 'Edit post content in multiple languages' : '編輯多語言文章內容'}
-            </DialogDescription>
-          </DialogHeader>
+      {isEditorOpen && editingPost && (
+        <Dialog open={true} onOpenChange={setIsEditorOpen}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingPost.slug.startsWith('new-post-') ? t.newPost : t.edit}
+              </DialogTitle>
+              <DialogDescription>
+                {language === 'en' ? 'Edit post content in multiple languages' : '編輯多語言文章內容'}
+              </DialogDescription>
+            </DialogHeader>
 
-          {editingPost && (
             <div className="space-y-6">
               {/* Basic Info */}
               <div className="grid grid-cols-2 gap-4">
@@ -721,20 +721,20 @@ export function BlogManagementPage() {
                 </TabsContent>
               </Tabs>
             </div>
-          )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditorOpen(false)} disabled={saving}>
-              <X className="w-4 h-4 mr-2" />
-              {t.cancel}
-            </Button>
-            <Button onClick={handleSavePost} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
-              <Save className="w-4 h-4 mr-2" />
-              {saving ? (language === 'en' ? 'Saving...' : '儲存中...') : t.save}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditorOpen(false)} disabled={saving}>
+                <X className="w-4 h-4 mr-2" />
+                {t.cancel}
+              </Button>
+              <Button onClick={handleSavePost} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+                <Save className="w-4 h-4 mr-2" />
+                {saving ? (language === 'en' ? 'Saving...' : '儲存中...') : t.save}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
