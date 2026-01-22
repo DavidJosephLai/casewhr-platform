@@ -336,6 +336,9 @@ export default function BlogListPage() {
                   console.log('🖱️ [BlogList] Post:', post);
                   window.location.href = `/blog/${post.slug}`;
                 }}
+                onMouseEnter={() => {
+                  alert('🐭 滑鼠移入卡片！slug: ' + post.slug);
+                }}
               >
                 {/* 封面圖片 */}
                 {post.coverImage && (
