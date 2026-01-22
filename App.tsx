@@ -87,7 +87,7 @@ const ApiDocumentation = lazy(() => import('./components/ApiDocumentation').then
 // 📝 Blog 頁面 - Lazy Load
 const BlogListPage = lazy(() => import('./components/BlogListPage'));
 // 🔥 臨時改為直接導入以調試問題
-import BlogPostPage from './components/BlogPostPage';
+import { BlogPostPage } from './components/BlogPostPage';
 const BlogManagementPage = lazy(() => import('./components/BlogManagementPage'));
 
 // 🌍 公開 SEO 報告頁面
@@ -899,9 +899,7 @@ function AppContent() {
         <div className="pt-20">
           <SEO title="Blog Post" description="" keywords="" noindex />
           <ErrorBoundary>
-            <Suspense fallback={<PageLoadingFallback />}>
-              <BlogPostPage />
-            </Suspense>
+            <BlogPostPage />
           </ErrorBoundary>
         </div>
       ) : view === 'blog-admin' ? (
