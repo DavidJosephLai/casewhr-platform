@@ -352,7 +352,20 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
               {language === 'en' ? 'View Plans' : '查看方案'}
             </Button>
             
-            <Button variant="outline" onClick={() => setShowProfileDialog(true)}>
+            <Button 
+              variant="outline" 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔧 [Dashboard] Edit Profile button clicked');
+                console.log('🔧 [Dashboard] Current showProfileDialog:', showProfileDialog);
+                console.log('🔧 [Dashboard] Setting showProfileDialog to true');
+                setShowProfileDialog(true);
+                setTimeout(() => {
+                  console.log('🔧 [Dashboard] After timeout, showProfileDialog should be:', true);
+                }, 100);
+              }}
+            >
               <UserCircle className="h-4 w-4 mr-2" />
               {language === 'en' ? 'Edit Profile' : '編輯個人資料'}
             </Button>
