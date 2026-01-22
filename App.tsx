@@ -284,6 +284,19 @@ function AppContent() {
     // 📝 檢查是否是 Blog 後台管理頁面
     if (urlPath === '/blog/admin') {
       console.log('🔧 [App] Blog admin page detected');
+      
+      // 🔐 檢查用戶是否登入，未登入則引導登入
+      if (!user) {
+        console.log('🔐 [App] Blog admin requires login, redirecting to home with login prompt');
+        setView('home');
+        window.history.pushState({}, '', '/'); // 將 URL 改回首頁
+        // 延遲觸發登入對話框，確保頁面已切換
+        setTimeout(() => {
+          window.dispatchEvent(new Event('showDashboard'));
+        }, 100);
+        return;
+      }
+      
       setView('blog-admin');
       return;
     }
@@ -402,7 +415,7 @@ function AppContent() {
           const data = await response.json();
           console.log('✅ [LINE Callback] Token exchange successful:', data);
           
-          // 檢查是否需要提示用戶��新 email
+          // 檢查是否需要提示用戶新 email
           if (data.needsEmailUpdate) {
             console.log('⚠️ [LINE Callback] User needs to update email');
             // 設定 LINE User ID 並顯示 Email Modal
