@@ -285,16 +285,11 @@ function AppContent() {
     if (urlPath === '/blog/admin') {
       console.log('🔧 [App] Blog admin page detected');
       
-      // 🔐 檢查用戶是否登入，未登入則引導登入
+      // 🔐 檢查用戶是否登入，未登入則引導回 Blog 列表頁
       if (!user) {
         console.log('🔐 [App] Blog admin requires login, redirecting to blog list');
-        // 阻止進入後台，停留在列表頁
-        window.history.replaceState({}, '', '/blog');
-        setView('blog');
-        // 延遲打開登入對話框，避免在頁面切換時觸發
-        setTimeout(() => {
-          window.dispatchEvent(new Event('openLoginDialog'));
-        }, 100);
+        // 直接跳轉回 Blog 列表頁（不打開登入對話框，因為已經在 BlogListPage 處理了）
+        window.location.replace('/blog');
         return;
       }
       

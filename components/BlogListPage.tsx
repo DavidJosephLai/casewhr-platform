@@ -432,8 +432,10 @@ export function BlogListPage() {
           <Button
             onClick={() => {
               if (!user) {
-                console.log('🔐 [BlogList] User not logged in, opening login dialog');
-                // 直接打開登入對話框（不跳轉頁面，不顯示 alert）
+                console.log('🔐 [BlogList] User not logged in, saving target action and opening login dialog');
+                // 保存目標動作到 sessionStorage
+                sessionStorage.setItem('pendingAction', 'createBlogPost');
+                // 直接打開登入對話框
                 window.dispatchEvent(new Event('openLoginDialog'));
               } else {
                 console.log('✍️ [BlogList] Navigating to Create Post');

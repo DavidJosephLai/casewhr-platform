@@ -294,6 +294,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccessToken(access_token);
     if (signedInUser) {
       loadProfile(signedInUser.id);
+      
+      // 🔥 檢查是否有待處理的動作
+      const pendingAction = sessionStorage.getItem('pendingAction');
+      if (pendingAction) {
+        console.log('✅ [AuthContext] Login successful, executing pending action:', pendingAction);
+        sessionStorage.removeItem('pendingAction');
+        
+        // 延遲執行，確保登入狀態已完全更新
+        setTimeout(() => {
+          if (pendingAction === 'createBlogPost') {
+            console.log('🚀 [AuthContext] Redirecting to blog editor...');
+            window.location.href = '/blog/admin?action=new';
+          }
+        }, 500);
+      }
     }
   }, [loadProfile]);
 
