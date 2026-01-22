@@ -63,18 +63,22 @@ export class ErrorBoundary extends Component<Props, State> {
               We're sorry, but something unexpected happened. Please try refreshing the page.
             </p>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="bg-gray-100 rounded-lg p-4 mb-6 text-left">
-                <p className="text-sm font-medium text-gray-900 mb-2">Error Details:</p>
-                <p className="text-xs text-gray-700 font-mono whitespace-pre-wrap break-all">
+            {/* 🔥 強制顯示開發模式錯誤訊息 */}
+            {this.state.error && (
+              <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 mb-6 text-left">
+                <p className="text-sm font-bold text-red-900 mb-2">🔥 Error Details:</p>
+                <p className="text-xs text-red-800 font-mono whitespace-pre-wrap break-all mb-2">
                   {this.state.error.toString()}
                 </p>
+                <p className="text-xs text-red-700 font-mono whitespace-pre-wrap break-all">
+                  {this.state.error.stack}
+                </p>
                 {this.state.errorInfo && (
-                  <details className="mt-2">
-                    <summary className="text-xs text-gray-600 cursor-pointer hover:text-gray-900">
-                      Component Stack
+                  <details className="mt-2" open>
+                    <summary className="text-xs text-red-600 cursor-pointer hover:text-red-900 font-bold">
+                      📍 Component Stack
                     </summary>
-                    <pre className="text-xs text-gray-700 mt-2 whitespace-pre-wrap break-all">
+                    <pre className="text-xs text-red-700 mt-2 whitespace-pre-wrap break-all">
                       {this.state.errorInfo.componentStack}
                     </pre>
                   </details>

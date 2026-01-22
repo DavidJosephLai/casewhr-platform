@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useMemo, useCallback, useEffect } from 'react';
 
-type ViewType = 'home' | 'dashboard' | 'pricing' | 'admin' | 'brevo-test' | 'email-test' | 'env-check' | 'email-management' | 'email-integration' | 'stripe-env-check' | 'accept-invitation' | 'auth-callback' | 'reset-password' | 'auth-verify' | 'privacy-policy' | 'cookies-policy' | 'disclaimer' | 'about' | 'cases' | 'terms-of-service' | 'google-dns-verifier' | 'sla-documentation' | 'api-documentation' | 'auth-diagnostic' | 'simple-login-test' | 'figma-env-diagnostic' | 'ecpay-diagnostic' | 'google-oauth-test' | 'ai-seo' | 'ai-seo-test' | 'public-seo-report' | 'ai-seo-diagnostic' | 'keyword-research-test' | 'keyword-deployment-check' | 'openai-key-guide' | 'data-sync-diagnostic' | 'deep-data-diagnostic' | 'transfer-debug' | 'seo-content' | 'wismachion';
+type ViewType = 'home' | 'dashboard' | 'pricing' | 'admin' | 'brevo-test' | 'email-test' | 'env-check' | 'email-management' | 'email-integration' | 'stripe-env-check' | 'accept-invitation' | 'auth-callback' | 'reset-password' | 'auth-verify' | 'privacy-policy' | 'cookies-policy' | 'disclaimer' | 'about' | 'cases' | 'terms-of-service' | 'google-dns-verifier' | 'sla-documentation' | 'api-documentation' | 'auth-diagnostic' | 'simple-login-test' | 'figma-env-diagnostic' | 'ecpay-diagnostic' | 'google-oauth-test' | 'ai-seo' | 'ai-seo-test' | 'public-seo-report' | 'ai-seo-diagnostic' | 'keyword-research-test' | 'keyword-deployment-check' | 'openai-key-guide' | 'data-sync-diagnostic' | 'deep-data-diagnostic' | 'transfer-debug' | 'seo-content' | 'wismachion' | 'blog' | 'blog-post' | 'blog-admin';
 
 interface ViewContextType {
   view: ViewType;
@@ -52,7 +52,7 @@ export function ViewProvider({ children }: { children: ReactNode }) {
           'ai-seo', 'ai-seo-test', 'public-seo-report', 'ai-seo-diagnostic',
           'keyword-research-test', 'keyword-deployment-check', 'openai-key-guide',
           'data-sync-diagnostic', 'deep-data-diagnostic', 'transfer-debug',
-          'seo-content', 'wismachion'
+          'seo-content', 'wismachion', 'blog', 'blog-post', 'blog-admin'
         ];
         
         if (validViews.includes(viewParam as ViewType)) {
@@ -140,6 +140,9 @@ export function ViewProvider({ children }: { children: ReactNode }) {
         'deep-data-diagnostic': 'deep-data-diagnostic',
         'transfer-debug': 'transfer-debug',
         'wismachion': 'wismachion',
+        'blog': 'blog',
+        'blog-post': 'blog-post',
+        'blog-admin': 'blog-admin',
       };
       
       if (hash && hashToView[hash]) {
