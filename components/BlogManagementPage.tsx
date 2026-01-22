@@ -322,7 +322,7 @@ export function BlogManagementPage() {
         }
       );
 
-      if (response.ok) {
+      if (response && response.ok) {
         toast.success(t.deleteSuccess);
         loadPosts();
       } else {
@@ -357,7 +357,7 @@ export function BlogManagementPage() {
         }
       );
 
-      if (response.ok) {
+      if (response && response.ok) {
         toast.success(t.success);
         setIsEditorOpen(false);
         setEditingPost(null);
