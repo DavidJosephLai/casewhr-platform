@@ -260,11 +260,11 @@ export function BlogManagementPage() {
         }
       );
 
-      if (response.ok) {
+      if (response && response.ok) {
         const data = await response.json();
         setPosts(data.posts || []);
       } else {
-        console.warn('[BlogManagement] Failed to load posts:', response.status);
+        console.warn('[BlogManagement] Failed to load posts:', response?.status || 'No response');
         setPosts([]);
       }
     } catch (error) {
