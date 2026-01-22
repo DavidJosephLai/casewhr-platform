@@ -84,8 +84,8 @@ const CaseStudies = lazy(() => import('./components/CaseStudies'));
 const TermsOfServicePage = lazy(() => import('./components/TermsOfServicePage'));
 const ApiDocumentation = lazy(() => import('./components/ApiDocumentation').then(module => ({ default: module.ApiDocumentation })));
 
-// 📝 Blog 頁面 - Lazy Load
-const BlogListPage = lazy(() => import('./components/BlogListPage'));
+// 📝 Blog 頁面 - 🔥 臨時改為直接導入以調試問題
+import BlogListPage from './components/BlogListPage';
 // 🔥 臨時改為直接導入以調試問題
 import { BlogPostPage } from './components/BlogPostPage';
 const BlogManagementPage = lazy(() => import('./components/BlogManagementPage'));
@@ -274,7 +274,9 @@ function AppContent() {
     if (urlPath === '/blog') {
       console.log('📝 [App] Blog list page detected');
       console.log('🔥🔥🔥 [App] Setting view to blog - NO REDIRECT TO POST PAGE!');
+      console.log('🔥🔥🔥 [App] Current view before setView:', view);
       setView('blog');
+      console.log('🔥🔥🔥 [App] setView(blog) called!');
       return;
     }
     
@@ -293,7 +295,7 @@ function AppContent() {
       return;
     }
     
-    // 檢查是否是團隊邀連結
+    // 查是否是團隊邀連結
     if (urlPath.includes('/team/accept-invitation') || urlParams.get('id')) {
       console.log('📧 [App] Team invitation link detected');
       setView('accept-invitation');
