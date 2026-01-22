@@ -88,7 +88,7 @@ const ApiDocumentation = lazy(() => import('./components/ApiDocumentation').then
 const BlogListPage = lazy(() => import('./components/BlogListPage'));
 // 🔥 臨時改為直接導入以調試問題
 import BlogPostPage from './components/BlogPostPage';
-const BlogAdminPage = lazy(() => import('./components/BlogAdminPage'));
+const BlogManagementPage = lazy(() => import('./components/BlogManagementPage'));
 
 // 🌍 公開 SEO 報告頁面
 const PublicSEOReport = lazy(() => import('./components/PublicSEOReport').then(module => ({ default: module.PublicSEOReport })));
@@ -908,7 +908,7 @@ function AppContent() {
         <div className="pt-20">
           <SEO title="Blog Admin" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
-            <BlogAdminPage />
+            <BlogManagementPage />
           </Suspense>
         </div>
       ) : (
