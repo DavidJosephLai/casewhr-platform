@@ -899,7 +899,9 @@ function AppContent() {
         <div className="pt-20">
           <SEO title="Blog Post" description="" keywords="" noindex />
           <ErrorBoundary>
-            <BlogPostPage />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <BlogPostPage />
+            </Suspense>
           </ErrorBoundary>
         </div>
       ) : view === 'blog-admin' ? (
