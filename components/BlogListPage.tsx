@@ -12,6 +12,7 @@ import { Badge } from './ui/badge';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useView } from '../contexts/ViewContext';
+import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { Search, Calendar, Clock, Tag, ArrowRight, BookOpen, TrendingUp, User, Lock } from 'lucide-react';
 
 // 🔥 強制版本檢查 - v2.0.93
@@ -31,6 +32,7 @@ interface BlogPost {
   coverImage: string;
   publishedAt: string;
   readTime: number;
+  status: string; // 新增狀態欄位
 }
 
 // 示範數據
@@ -49,6 +51,7 @@ const DEMO_POSTS: BlogPost[] = [
     coverImage: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80',
     publishedAt: '2026-01-20',
     readTime: 8,
+    status: 'published', // 新增狀態
   },
   {
     slug: 'pricing-strategies-for-freelancers',
@@ -64,6 +67,7 @@ const DEMO_POSTS: BlogPost[] = [
     coverImage: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&q=80',
     publishedAt: '2026-01-18',
     readTime: 10,
+    status: 'published', // 新增狀態
   },
   {
     slug: 'how-to-choose-right-freelancer',
@@ -79,6 +83,7 @@ const DEMO_POSTS: BlogPost[] = [
     coverImage: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80',
     publishedAt: '2026-01-15',
     readTime: 7,
+    status: 'published', // 新增狀態
   },
   {
     slug: 'platform-milestone-payment-guide',
@@ -94,6 +99,7 @@ const DEMO_POSTS: BlogPost[] = [
     coverImage: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80',
     publishedAt: '2026-01-12',
     readTime: 6,
+    status: 'published', // 新增狀態
   },
   {
     slug: '2026-freelance-trends',
@@ -109,6 +115,7 @@ const DEMO_POSTS: BlogPost[] = [
     coverImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80',
     publishedAt: '2026-01-10',
     readTime: 12,
+    status: 'published', // 新增狀態
   },
   {
     slug: 'designer-success-story',
@@ -124,6 +131,7 @@ const DEMO_POSTS: BlogPost[] = [
     coverImage: 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=800&q=80',
     publishedAt: '2026-01-08',
     readTime: 9,
+    status: 'published', // 新增狀態
   },
 ];
 
@@ -216,11 +224,51 @@ export function BlogListPage() {
   // 🔓 移除登入限制 - Blog 列表頁面開放給所有人瀏覽
   // 登入限制已移至 BlogPostPage（文章詳情頁）
 
-  // 🔥 載入示範數據
+  // 🔥 載入真實數據從 API
   useEffect(() => {
-    console.log('📥 [BlogListPage] Loading demo posts...');
-    setPosts(DEMO_POSTS);
-    console.log('✅ [BlogListPage] Demo posts loaded:', DEMO_POSTS.length);
+    const loadPosts = async () => {
+      setLoading(true);
+      try {
+        console.log('📥 [BlogListPage] Loading posts from API...');
+        const response = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/blog/posts`,
+          {
+            headers: {
+              'Authorization': `Bearer ${publicAnonKey}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ [BlogListPage] Posts loaded from API:', data.posts?.length || 0);
+          
+          // 只顯示已發布的文章（published）
+          const publishedPosts = (data.posts || []).filter((post: BlogPost) => post.status === 'published');
+          console.log('📌 [BlogListPage] Published posts:', publishedPosts.length);
+          
+          // 如果 API 沒有數據，則使用示範數據
+          if (publishedPosts.length === 0) {
+            console.log('⚠️ [BlogListPage] No published posts found, using demo data');
+            setPosts(DEMO_POSTS);
+          } else {
+            setPosts(publishedPosts);
+          }
+        } else {
+          console.warn('⚠️ [BlogListPage] API failed, using demo data');
+          setPosts(DEMO_POSTS);
+        }
+      } catch (error) {
+        console.error('❌ [BlogListPage] Failed to load posts:', error);
+        // 載入失敗時使用示範數據
+        setPosts(DEMO_POSTS);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPosts();
   }, []);
 
   // 分類篩選
