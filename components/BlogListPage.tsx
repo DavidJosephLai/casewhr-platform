@@ -13,7 +13,7 @@ import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useView } from '../contexts/ViewContext';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
-import { Search, Calendar, Clock, Tag, ArrowRight, BookOpen, TrendingUp, User, Lock } from 'lucide-react';
+import { Search, Calendar, Clock, Tag, ArrowRight, BookOpen, TrendingUp, User, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // 🔥 強制版本檢查 - v2.0.93
 console.log('🔥🔥🔥 [BlogListPage v2.0.93] FILE LOADED - NO LOGIN RESTRICTION! 🔥🔥🔥');
@@ -144,6 +144,10 @@ export function BlogListPage() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  
+  // 🔥 分頁狀態
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 9; // 每頁 9 篇文章（3x3 網格）
 
   console.log('🔍 [BlogListPage] Rendering - user:', user?.email, 'posts:', posts.length);
 
@@ -293,6 +297,9 @@ export function BlogListPage() {
 
     console.log('✅ [BlogListPage] Filtered posts:', filtered.length);
     setFilteredPosts(filtered);
+    
+    // 🔥 切換分類或搜尋時，自動回到第一頁
+    setCurrentPage(1);
   }, [posts, searchTerm, selectedCategory, language]);
 
   const getLocalizedField = (post: BlogPost, field: 'title' | 'excerpt') => {
@@ -380,7 +387,7 @@ export function BlogListPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPosts.map((post, index) => (
+            {filteredPosts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage).map((post, index) => (
               <Card 
                 key={post.slug} 
                 className="overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
@@ -456,6 +463,44 @@ export function BlogListPage() {
                 </div>
               </Card>
             ))}
+          </div>
+        )}
+        
+        {/* 📄 分頁控制 */}
+        {!loading && filteredPosts.length > postsPerPage && (
+          <div className="mt-12 flex justify-center items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="px-4"
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              {language === 'en' ? 'Previous' : language === 'zh-CN' ? '上一页' : '上一頁'}
+            </Button>
+            
+            <div className="flex gap-2">
+              {Array.from({ length: Math.ceil(filteredPosts.length / postsPerPage) }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  variant={currentPage === page ? 'default' : 'outline'}
+                  onClick={() => setCurrentPage(page)}
+                  className="w-10 h-10 p-0"
+                >
+                  {page}
+                </Button>
+              ))}
+            </div>
+            
+            <Button
+              variant="outline"
+              onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredPosts.length / postsPerPage), prev + 1))}
+              disabled={currentPage >= Math.ceil(filteredPosts.length / postsPerPage)}
+              className="px-4"
+            >
+              {language === 'en' ? 'Next' : language === 'zh-CN' ? '下一页' : '下一頁'}
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
           </div>
         )}
         
