@@ -1102,7 +1102,7 @@ app.post('/make-server-215f78a5/blog/posts/:slug/view', async (c) => {
   }
 });
 
-// 📝 Create/Update Blog Post (Admin Only)
+// 📝 Create/Update Blog Post (All logged-in users)
 app.post('/make-server-215f78a5/blog/posts', async (c) => {
   try {
     const accessToken = c.req.header('Authorization')?.split(' ')[1];
@@ -1112,12 +1112,6 @@ app.post('/make-server-215f78a5/blog/posts', async (c) => {
       return c.json({ error: 'Unauthorized' }, 401);
     }
     
-    // 檢查是否為管理員
-    const profile = await kv.get(`profile_${user.id}`);
-    if (!profile?.isAdmin) {
-      return c.json({ error: 'Admin access required' }, 403);
-    }
-    
     const post = await c.req.json();
     
     // 驗證必填欄位
@@ -1125,10 +1119,24 @@ app.post('/make-server-215f78a5/blog/posts', async (c) => {
       return c.json({ error: 'Slug and title are required' }, 400);
     }
     
+    // 🔥 檢查權限：只能編輯自己的文章，除非是超級管理員
+    const existingPost = await kv.get(`blog_post_${post.slug}`);
+    const isSuperAdmin = user.email === 'davidlai234@hotmail.com';
+    
+    if (existingPost && existingPost.authorEmail !== user.email && !isSuperAdmin) {
+      return c.json({ error: 'You can only edit your own posts' }, 403);
+    }
+    
+    // 設置作者資訊
+    if (!existingPost) {
+      post.author = user.email || 'Anonymous';
+      post.authorEmail = user.email;
+    }
+    
     // 儲存文章
     await kv.set(`blog_post_${post.slug}`, post);
     
-    console.log(`✅ [BLOG] Post saved: ${post.slug}`);
+    console.log(`✅ [BLOG] Post saved: ${post.slug} by ${user.email}`);
     return c.json({ success: true, post });
   } catch (error: any) {
     console.error('❌ [BLOG] Failed to save post:', error);
@@ -1136,7 +1144,7 @@ app.post('/make-server-215f78a5/blog/posts', async (c) => {
   }
 });
 
-// 🗑️ Delete Blog Post (Admin Only)
+// 🗑️ Delete Blog Post (User can delete own posts)
 app.delete('/make-server-215f78a5/blog/posts/:slug', async (c) => {
   try {
     const accessToken = c.req.header('Authorization')?.split(' ')[1];
@@ -1146,16 +1154,18 @@ app.delete('/make-server-215f78a5/blog/posts/:slug', async (c) => {
       return c.json({ error: 'Unauthorized' }, 401);
     }
     
-    // 檢查是否為管理員
-    const profile = await kv.get(`profile_${user.id}`);
-    if (!profile?.isAdmin) {
-      return c.json({ error: 'Admin access required' }, 403);
+    const slug = c.req.param('slug');
+    const post = await kv.get(`blog_post_${slug}`);
+    
+    // 🔥 檢查權限：只能刪除自己的文章，除非是超級管理員
+    const isSuperAdmin = user.email === 'davidlai234@hotmail.com';
+    if (post && post.authorEmail !== user.email && !isSuperAdmin) {
+      return c.json({ error: 'You can only delete your own posts' }, 403);
     }
     
-    const slug = c.req.param('slug');
     await kv.del(`blog_post_${slug}`);
     
-    console.log(`✅ [BLOG] Post deleted: ${slug}`);
+    console.log(`✅ [BLOG] Post deleted: ${slug} by ${user.email}`);
     return c.json({ success: true });
   } catch (error: any) {
     console.error('❌ [BLOG] Failed to delete post:', error);

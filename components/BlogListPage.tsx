@@ -99,7 +99,7 @@ const DEMO_POSTS: BlogPost[] = [
     slug: '2026-freelance-trends',
     title: '2026 Freelance Market Trends',
     title_zh: '2026 年自由工作者市場趨勢報告',
-    title_cn: '2026 年自由��作者市场趋势报告',
+    title_cn: '2026 年自由作者市场���报告',
     excerpt: 'Discover the latest trends shaping the freelance industry in 2026.',
     excerpt_zh: '探索 2026 年塑造自由工作者行業的最新趨勢和機遇。',
     excerpt_cn: '探索 2026 年塑造自由工作者行业的最新趋势和机遇。',
@@ -408,6 +408,39 @@ export function BlogListPage() {
                 </div>
               </Card>
             ))}
+          </div>
+        )}
+        
+        {/* 🔧 Blog 管理按鈕 - 僅超級管理員可見 */}
+        {user?.email === 'davidlai234@hotmail.com' && (
+          <div className="mt-12 text-center">
+            <Button
+              onClick={() => {
+                console.log('🔧 [BlogList] Navigating to Blog Admin');
+                window.location.href = '/blog/admin';
+              }}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <Lock className="w-5 h-5 mr-2" />
+              {language === 'en' ? 'Blog Management' : language === 'zh-CN' ? '博客管理' : 'Blog 管理'}
+            </Button>
+          </div>
+        )}
+        
+        {/* ✍️ 發布文章按鈕 - 所有登入用戶可見 */}
+        {user && (
+          <div className={user?.email === 'davidlai234@hotmail.com' ? 'mt-4 text-center' : 'mt-12 text-center'}>
+            <Button
+              onClick={() => {
+                console.log('✍️ [BlogList] Navigating to Create Post');
+                window.location.href = '/blog/admin';
+              }}
+              size="lg"
+              className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white px-10 py-4 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 text-lg font-semibold"
+            >
+              <BookOpen className="w-5 h-5 mr-2" />
+              {language === 'en' ? '✍️ Write an Article' : language === 'zh-CN' ? '✍️ 发布文章' : '✍️ 發布文章'}
+            </Button>
           </div>
         )}
       </div>

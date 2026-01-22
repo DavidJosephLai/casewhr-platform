@@ -1,6 +1,8 @@
 /**
  * 📝 Blog 管理頁面
- * 完整的 CMS 系統 - 管理員專用
+ * 完整的 CMS 系統 - 所有登入用戶可發布文章
+ * ✅ 用戶可以發布/編輯自己的文章
+ * 🔐 超級管理員可以管理所有文章
  */
 
 import React, { useState, useEffect } from 'react';
