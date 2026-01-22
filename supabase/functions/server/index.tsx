@@ -1074,7 +1074,6 @@ app.get('/make-server-215f78a5/blog/posts/:slug', async (c) => {
     // 獲取相關文章（同類別的其他文章）
     const allPosts = (await kv.getByPrefix('blog_post_')).map(item => item.value);
     const relatedPosts = allPosts
-      .map(item => item.value)
       .filter((p: any) => p.slug !== slug && p.category === post.category)
       .slice(0, 3);
     
