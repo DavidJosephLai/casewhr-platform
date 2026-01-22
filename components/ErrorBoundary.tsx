@@ -31,11 +31,6 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('❌❌❌ [ErrorBoundary] Component stack:', errorInfo.componentStack);
     console.error('❌❌❌ [ErrorBoundary] Error toString:', error.toString());
     
-    // 強制輸出到 alert（用於極端調試）
-    if (typeof window !== 'undefined') {
-      window.alert(`ERROR CAUGHT: ${error.message}\n\nCheck console for details.`);
-    }
-    
     this.setState({
       error,
       errorInfo,

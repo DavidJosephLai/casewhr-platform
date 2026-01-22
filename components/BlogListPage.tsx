@@ -11,6 +11,7 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useView } from '../contexts/ViewContext';
 import { Search, Calendar, Clock, Tag, ArrowRight, BookOpen, TrendingUp, User, Lock } from 'lucide-react';
 
 // 🔥 強制版本檢查 - v2.0.93
@@ -40,7 +41,7 @@ const DEMO_POSTS: BlogPost[] = [
     title_zh: '如何撰寫吸引客戶的提案',
     title_cn: '如何撰写吸引客户的提案',
     excerpt: 'Learn the secrets to crafting proposals that win clients and projects.',
-    excerpt_zh: '學習撰寫能贏得客戶和專案的提案技巧，提高接案成功率。',
+    excerpt_zh: '學���撰寫能贏得客戶和專案的提案技巧，提高接案成功率。',
     excerpt_cn: '学习撰写能赢得客户和项目的提案技巧，提高接案成功率。',
     category: 'freelancer-tips',
     tags: ['提案', '接案技巧', '文案'],
@@ -126,14 +127,12 @@ const DEMO_POSTS: BlogPost[] = [
   },
 ];
 
-export default function BlogListPage() {
-  // 🔥 立即執行的日誌 - 確認組件渲染
-  console.log('🔥🔥🔥 [BlogListPage] FUNCTION CALLED! Component is rendering!');
-  
+export function BlogListPage() {
   const { language } = useLanguage();
   const { user } = useAuth();
-  const [posts, setPosts] = useState<BlogPost[]>(DEMO_POSTS);
-  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>(DEMO_POSTS);
+  const { setView, setManualOverride } = useView();
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -216,6 +215,13 @@ export default function BlogListPage() {
 
   // 🔓 移除登入限制 - Blog 列表頁面開放給所有人瀏覽
   // 登入限制已移至 BlogPostPage（文章詳情頁）
+
+  // 🔥 載入示範數據
+  useEffect(() => {
+    console.log('📥 [BlogListPage] Loading demo posts...');
+    setPosts(DEMO_POSTS);
+    console.log('✅ [BlogListPage] Demo posts loaded:', DEMO_POSTS.length);
+  }, []);
 
   // 分類篩選
   useEffect(() => {
@@ -333,7 +339,10 @@ export default function BlogListPage() {
                 onClick={() => {
                   console.log('🖱️ [BlogList] Card clicked! Navigating to:', `/blog/${post.slug}`);
                   console.log('🖱️ [BlogList] Post:', post);
-                  window.location.href = `/blog/${post.slug}`;
+                  // 🔧 使用 ViewContext 和 URL 更新，而不是完整頁面重載
+                  window.history.pushState({}, '', `/blog/${post.slug}`);
+                  setManualOverride(true);
+                  setView('blog-post');
                 }}
               >
                 {/* 封面圖片 */}
