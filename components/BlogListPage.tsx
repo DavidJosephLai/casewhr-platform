@@ -331,13 +331,9 @@ export default function BlogListPage() {
                 key={post.slug} 
                 className="overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
                 onClick={() => {
-                  alert('🖱️ 卡片被點擊了！slug: ' + post.slug);
                   console.log('🖱️ [BlogList] Card clicked! Navigating to:', `/blog/${post.slug}`);
                   console.log('🖱️ [BlogList] Post:', post);
                   window.location.href = `/blog/${post.slug}`;
-                }}
-                onMouseEnter={() => {
-                  alert('🐭 滑鼠移入卡片！slug: ' + post.slug);
                 }}
               >
                 {/* 封面圖片 */}
