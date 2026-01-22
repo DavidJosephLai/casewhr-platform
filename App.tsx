@@ -1,3 +1,5 @@
+import './utils/globalFetchInterceptor';
+
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { LanguageProvider, useLanguage } from './lib/LanguageContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -12,14 +14,10 @@ import { Toaster, toast } from 'sonner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
-import { setupGlobalFetchInterceptor } from './utils/globalFetchInterceptor';
 
-// 🛡️ Install global fetch interceptor to prevent null response errors
-setupGlobalFetchInterceptor();
-
-// 🔥 Version marker to force cache invalidation - v2.0.94
-// 🎯 Feature: Global fetch interceptor to prevent null response errors
-console.log('🚀 [App v2.0.94] Feature: Global fetch interceptor installed');
+// 🔥 Version marker to force cache invalidation - v2.0.95
+// 🎯 Feature: Global fetch interceptor installed at module level
+console.log('🚀 [App v2.0.95] Feature: Global fetch interceptor installed at import time');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
