@@ -99,7 +99,7 @@ const DEMO_POSTS: BlogPost[] = [
     slug: '2026-freelance-trends',
     title: '2026 Freelance Market Trends',
     title_zh: '2026 年自由工作者市場趨勢報告',
-    title_cn: '2026 年自由工作者市场趋势报告',
+    title_cn: '2026 年���由工作者市场趋势报告',
     excerpt: 'Discover the latest trends shaping the freelance industry in 2026.',
     excerpt_zh: '探索 2026 年塑造自由工作者行業的最新趨勢和機遇。',
     excerpt_cn: '探索 2026 年塑造自由工作者行业的最新趋势和机遇。',
@@ -339,10 +339,10 @@ export function BlogListPage() {
                 onClick={() => {
                   console.log('🖱️ [BlogList] Card clicked! Navigating to:', `/blog/${post.slug}`);
                   console.log('🖱️ [BlogList] Post:', post);
-                  // 🔧 使用 ViewContext 和 URL 更新，而不是完整頁面重載
-                  window.history.pushState({}, '', `/blog/${post.slug}`);
+                  // 🔧 先設置 manual override，再更新 URL 和 view
                   setManualOverride(true);
                   setView('blog-post');
+                  window.history.pushState({}, '', `/blog/${post.slug}`);
                 }}
               >
                 {/* 封面圖片 */}
