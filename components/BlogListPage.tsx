@@ -41,7 +41,7 @@ const DEMO_POSTS: BlogPost[] = [
     title_zh: '如何撰寫吸引客戶的提案',
     title_cn: '如何撰写吸引客户的提案',
     excerpt: 'Learn the secrets to crafting proposals that win clients and projects.',
-    excerpt_zh: '學���撰寫能贏得客戶和專案的提案技巧，提高接案成功率。',
+    excerpt_zh: '學撰寫能贏得客戶和專案的提案技巧，提高接案成功率。',
     excerpt_cn: '学习撰写能赢得客户和项目的提案技巧，提高接案成功率。',
     category: 'freelancer-tips',
     tags: ['提案', '接案技巧', '文案'],
@@ -417,3 +417,6 @@ export function BlogListPage() {
     </div>
   );
 }
+
+// 🔥 Default export for lazy loading
+export default BlogListPage;
