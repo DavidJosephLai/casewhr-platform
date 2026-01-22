@@ -3,7 +3,53 @@
   <head>
     <meta charset="UTF-8" />
     
-    <!-- 🔄 Domain Redirect Script - Must be first! -->
+    <!-- 🛡️ Global Fetch Interceptor - Must be FIRST before any other scripts! -->
+    <script>
+      // 🛡️ Install global fetch interceptor immediately
+      (function() {
+        console.log('🛡️ [HTML] Installing global fetch interceptor...');
+        
+        const originalFetch = window.fetch;
+        
+        window.fetch = async function(...args) {
+          try {
+            console.log('🌐 [Fetch Interceptor] Request:', args[0]);
+            
+            const response = await originalFetch.apply(this, args);
+            
+            if (response === null || response === undefined) {
+              console.error('❌ [Fetch Interceptor] Response is null for:', args[0]);
+              return new Response(
+                JSON.stringify({ error: 'Response is null' }), 
+                {
+                  status: 0,
+                  statusText: 'Network Error',
+                  headers: new Headers({ 'Content-Type': 'application/json' })
+                }
+              );
+            }
+            
+            console.log('✅ [Fetch Interceptor] Response:', response.status, args[0]);
+            return response;
+            
+          } catch (error) {
+            console.error('❌ [Fetch Interceptor] Error:', error, 'for:', args[0]);
+            return new Response(
+              JSON.stringify({ error: error.message || 'Network error' }), 
+              {
+                status: 0,
+                statusText: 'Network Error',
+                headers: new Headers({ 'Content-Type': 'application/json' })
+              }
+            );
+          }
+        };
+        
+        console.log('🛡️ [HTML] Global fetch interceptor installed!');
+      })();
+    </script>
+    
+    <!-- 🔄 Domain Redirect Script -->
     <script>
       // 🎯 立即執行域名檢測和重定向
       (function() {
@@ -191,7 +237,7 @@
           
           <p style="font-size: 14px; margin: 20px 0 0 0; opacity: 0.7; max-width: 500px;">
             此網站需要啟用 JavaScript 才能正常運作。<br>
-            請在瀏覽器���定中啟用 JavaScript。
+            請在瀏覽器定中啟用 JavaScript。
           </p>
         </div>
       </noscript>
