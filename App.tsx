@@ -285,13 +285,8 @@ function AppContent() {
     if (urlPath === '/blog/admin') {
       console.log('🔧 [App] Blog admin page detected');
       
-      // 🔐 檢查用戶是否登入，未登入則引導回 Blog 列表頁
-      if (!user) {
-        console.log('🔐 [App] Blog admin requires login, redirecting to blog list');
-        // 直接跳轉回 Blog 列表頁（不打開登入對話框，因為已經在 BlogListPage 處理了）
-        window.location.replace('/blog');
-        return;
-      }
+      // 🔐 暫時移除登入檢查，讓 BlogManagementPage 自己處理
+      // 因為登入後狀態更新需要時間
       
       setView('blog-admin');
       return;
@@ -553,7 +548,7 @@ function AppContent() {
         toast.success(
           language === 'en'
             ? '🎉 Payment successful! Your wallet has been updated.'
-            : '🎉 付款成功！您的錢包已更新。',
+            : '🎉 ��款成功！您的錢包已更新。',
           { duration: 5000 }
         );
         // 清除 URL 參數

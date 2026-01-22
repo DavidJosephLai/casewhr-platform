@@ -93,11 +93,10 @@ export function BlogManagementPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
     
+    console.log('🔍 [BlogManagement] Checking URL params:', { action, user: !!user, isEditorOpen, editingPost: !!editingPost });
+    
     if (action === 'new' && !isEditorOpen && !editingPost && user) {
       console.log('🆕 [BlogManagement] Auto-creating new post from URL parameter');
-      
-      // 清除 URL 參數（先清除，避免重複觸發）
-      window.history.replaceState({}, '', '/blog/admin');
       
       // 延遲一點點，確保狀態更新完成
       setTimeout(() => {
@@ -126,9 +125,12 @@ export function BlogManagementPage() {
         console.log('✅ [BlogManagement] New post created:', newPost);
         setEditingPost(newPost);
         setIsEditorOpen(true);
+        
+        // 🔥 在打開編輯器後才清除 URL 參數
+        window.history.replaceState({}, '', '/blog/admin');
       }, 100);
     }
-  }, [user]); // 🔥 只依賴 user，避免循環
+  }, [user, isEditorOpen, editingPost]); // 🔥 增加依賴項，確保狀態同步
 
   const content = {
     en: {
