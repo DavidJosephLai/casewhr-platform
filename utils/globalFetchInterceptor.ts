@@ -1,10 +1,20 @@
 /**
  * 🛡️ Global Fetch Interceptor
- * Prevents "Cannot read properties of null (reading 'status')" errors
+ * Prevents "Cannot read properties of null (reading 'status')
+
+" errors
  * by wrapping all fetch calls with proper error handling
  */
 
+let isInstalled = false;
+
 export function setupGlobalFetchInterceptor() {
+  // Prevent multiple installations
+  if (isInstalled) {
+    console.log('🛡️ [Global Fetch Interceptor] Already installed, skipping...');
+    return;
+  }
+  
   // Save the original fetch
   const originalFetch = window.fetch;
 
@@ -55,5 +65,11 @@ export function setupGlobalFetchInterceptor() {
     }
   };
 
+  isInstalled = true;
   console.log('🛡️ [Global Fetch Interceptor] Installed successfully');
+}
+
+// 🚀 Auto-install when this module is imported
+if (typeof window !== 'undefined') {
+  setupGlobalFetchInterceptor();
 }
