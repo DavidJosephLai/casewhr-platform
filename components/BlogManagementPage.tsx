@@ -88,6 +88,44 @@ export function BlogManagementPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // 🔥 檢查 URL 參數，如果是新建文章，自動打開編輯器
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+    
+    if (action === 'new' && !isEditorOpen && !editingPost && user) {
+      console.log('🆕 [BlogManagement] Auto-creating new post from URL parameter');
+      
+      // 直接建立新文章
+      const newPost: BlogPost = {
+        slug: `new-post-${Date.now()}`,
+        title: '',
+        title_zh: '',
+        title_cn: '',
+        excerpt: '',
+        excerpt_zh: '',
+        excerpt_cn: '',
+        content: '',
+        content_zh: '',
+        content_cn: '',
+        category: 'freelancer-tips',
+        tags: [],
+        author: user?.email || 'Admin',
+        coverImage: '',
+        publishedAt: new Date().toISOString().split('T')[0],
+        readTime: 5,
+        views: 0,
+        status: 'draft',
+      };
+      
+      setEditingPost(newPost);
+      setIsEditorOpen(true);
+      
+      // 清除 URL 參數
+      window.history.replaceState({}, '', '/blog/admin');
+    }
+  }, [user]);
+
   const content = {
     en: {
       title: 'Blog Management',
