@@ -96,36 +96,39 @@ export function BlogManagementPage() {
     if (action === 'new' && !isEditorOpen && !editingPost && user) {
       console.log('🆕 [BlogManagement] Auto-creating new post from URL parameter');
       
-      // 直接建立新文章
-      const newPost: BlogPost = {
-        slug: `new-post-${Date.now()}`,
-        title: '',
-        title_zh: '',
-        title_cn: '',
-        excerpt: '',
-        excerpt_zh: '',
-        excerpt_cn: '',
-        content: '',
-        content_zh: '',
-        content_cn: '',
-        category: 'freelancer-tips',
-        tags: [],
-        author: user?.email || 'Admin',
-        coverImage: '',
-        publishedAt: new Date().toISOString().split('T')[0],
-        readTime: 5,
-        views: 0,
-        status: 'draft',
-      };
-      
-      console.log('✅ [BlogManagement] New post created:', newPost);
-      setEditingPost(newPost);
-      setIsEditorOpen(true);
-      
-      // 清除 URL 參數
+      // 清除 URL 參數（先清除，避免重複觸發）
       window.history.replaceState({}, '', '/blog/admin');
+      
+      // 延遲一點點，確保狀態更新完成
+      setTimeout(() => {
+        // 直接建立新文章
+        const newPost: BlogPost = {
+          slug: `new-post-${Date.now()}`,
+          title: '',
+          title_zh: '',
+          title_cn: '',
+          excerpt: '',
+          excerpt_zh: '',
+          excerpt_cn: '',
+          content: '',
+          content_zh: '',
+          content_cn: '',
+          category: 'freelancer-tips',
+          tags: [],
+          author: user?.email || 'Admin',
+          coverImage: '',
+          publishedAt: new Date().toISOString().split('T')[0],
+          readTime: 5,
+          views: 0,
+          status: 'draft',
+        };
+        
+        console.log('✅ [BlogManagement] New post created:', newPost);
+        setEditingPost(newPost);
+        setIsEditorOpen(true);
+      }, 100);
     }
-  }, [user, isEditorOpen, editingPost]); // 🔥 添加依賴以確保正確觸發
+  }, [user]); // 🔥 只依賴 user，避免循環
 
   const content = {
     en: {
