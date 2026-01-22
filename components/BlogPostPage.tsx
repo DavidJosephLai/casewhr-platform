@@ -57,9 +57,12 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 從 URL 獲取 slug（更安全的方式）
-  const getSlugFromUrl = () => {
+  // 從 URL 獲取 slug（使用 useMemo 確保只在客戶端執行）
+  const postSlug = React.useMemo(() => {
+    if (slug) return slug;
+    
     try {
+      if (typeof window === 'undefined') return null;
       const pathname = window.location.pathname;
       const match = pathname.match(/\/blog\/(.+)/);
       return match ? match[1] : null;
@@ -67,9 +70,7 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
       console.error('❌ [BlogPostPage] Error getting slug from URL:', error);
       return null;
     }
-  };
-
-  const postSlug = slug || getSlugFromUrl();
+  }, [slug]);
 
   // 🔍 DEBUG: 組件渲染日誌
   console.log('🎨 [BlogPostPage] Component rendered:', {
