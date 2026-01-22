@@ -92,7 +92,16 @@ export function AuthDialogs({
       
       // 🔥 檢查是否有登錄後需要執行的動作
       const postLoginAction = sessionStorage.getItem('postLoginAction');
+      const pendingAction = sessionStorage.getItem('pendingAction');
       console.log('🔥 [AuthDialogs] Post-login action:', postLoginAction);
+      console.log('🔥 [AuthDialogs] Pending action:', pendingAction);
+      
+      // 🎯 如果有 pendingAction（例如發布 Blog），不要跳轉到 Dashboard
+      if (pendingAction) {
+        console.log('✅ [AuthDialogs] Pending action detected, skipping dashboard redirect');
+        // AuthContext 會處理跳轉，這裡什麼都不做
+        return;
+      }
       
       if (postLoginAction === 'openPostProject') {
         // 清除動作標記
