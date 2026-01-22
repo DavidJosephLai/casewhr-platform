@@ -17,16 +17,27 @@
             
             const response = await originalFetch.apply(this, args);
             
+            // ✅ Check if response is null or undefined
             if (response === null || response === undefined) {
               console.error('❌ [Fetch Interceptor] Response is null for:', args[0]);
-              return new Response(
-                JSON.stringify({ error: 'Response is null' }), 
+              
+              // 🛡️ Return a complete mock Response object with all properties
+              const mockResponse = new Response(
+                JSON.stringify({ error: 'Response is null', posts: [] }), 
                 {
-                  status: 0,
-                  statusText: 'Network Error',
+                  status: 500,
+                  statusText: 'Internal Server Error',
                   headers: new Headers({ 'Content-Type': 'application/json' })
                 }
               );
+              
+              // Add ok property
+              Object.defineProperty(mockResponse, 'ok', {
+                value: false,
+                writable: false
+              });
+              
+              return mockResponse;
             }
             
             console.log('✅ [Fetch Interceptor] Response:', response.status, args[0]);
@@ -34,14 +45,24 @@
             
           } catch (error) {
             console.error('❌ [Fetch Interceptor] Error:', error, 'for:', args[0]);
-            return new Response(
-              JSON.stringify({ error: error.message || 'Network error' }), 
+            
+            // 🛡️ Return a complete mock Response object for errors
+            const mockResponse = new Response(
+              JSON.stringify({ error: error.message || 'Network error', posts: [] }), 
               {
                 status: 0,
                 statusText: 'Network Error',
                 headers: new Headers({ 'Content-Type': 'application/json' })
               }
             );
+            
+            // Add ok property
+            Object.defineProperty(mockResponse, 'ok', {
+              value: false,
+              writable: false
+            });
+            
+            return mockResponse;
           }
         };
         
