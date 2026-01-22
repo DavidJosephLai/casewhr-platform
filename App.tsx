@@ -570,6 +570,14 @@ function AppContent() {
     const handleShowDashboard = (e: Event) => {
       const customEvent = e as CustomEvent;
       console.log('📱 [App] showDashboard event received:', customEvent.detail);
+      
+      // 🔥 FIX: 如果當前在 Blog 文章頁面，不要跳轉到 dashboard
+      const currentPath = window.location.pathname;
+      if (currentPath.startsWith('/blog/') && currentPath !== '/blog/admin') {
+        console.log('🚫 [App] Ignoring showDashboard - user is reading a blog post');
+        return;
+      }
+      
       setView('dashboard');
       if (customEvent.detail?.tab) {
         setDashboardTab(customEvent.detail.tab);
