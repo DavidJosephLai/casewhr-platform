@@ -3,7 +3,7 @@
  * 顯示單篇部落格文章的完整內容
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -57,8 +57,32 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 從 URL 獲取 slug
-  const postSlug = slug || window.location.pathname.split('/blog/')[1];
+  // 🔥 TEST: 強制拋出錯誤以測試 ErrorBoundary
+  throw new Error('🧪 TEST ERROR: This is a test error to verify ErrorBoundary is working!');
+
+  // 從 URL 獲取 slug（使用 useMemo 確保只在客戶端執行）
+  const postSlug = useMemo(() => {
+    if (slug) return slug;
+    
+    try {
+      if (typeof window === 'undefined') return null;
+      const pathname = window.location.pathname;
+      const match = pathname.match(/\/blog\/(.+)/);
+      return match ? match[1] : null;
+    } catch (error) {
+      console.error('❌ [BlogPostPage] Error getting slug from URL:', error);
+      return null;
+    }
+  }, [slug]);
+
+  // 🔍 DEBUG: 組件渲染日誌
+  console.log('🎨 [BlogPostPage] Component rendered:', {
+    user: user ? `${user.email} (ID: ${user.id})` : 'NULL',
+    slug,
+    postSlug,
+    loading,
+    hasPost: !!post
+  });
 
   const content = {
     en: {
@@ -115,6 +139,91 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
   };
 
   const t = content[language as keyof typeof content] || content['zh-TW'];
+
+  // 📦 定義所有函數（必須在 useEffect 之前）
+  const loadPost = async (slug: string) => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/blog/posts/${slug}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setPost(data.post);
+        setRelatedPosts(data.relatedPosts || []);
+        
+        // 增加瀏覽次數
+        incrementViews(slug);
+      } else {
+        // 使用示範數據
+        const demoPost = getDemoPost(slug);
+        setPost(demoPost);
+        setRelatedPosts(getRelatedDemoPosts(demoPost.category));
+      }
+    } catch (error) {
+      console.error('Failed to load blog post:', error);
+      const demoPost = getDemoPost(slug);
+      setPost(demoPost);
+      setRelatedPosts(getRelatedDemoPosts(demoPost.category));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const incrementViews = async (slug: string) => {
+    try {
+      await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/blog/posts/${slug}/view`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`,
+          },
+        }
+      );
+    } catch (error) {
+      console.error('Failed to increment views:', error);
+    }
+  };
+
+  const getLocalizedField = (post: BlogPost, field: 'title' | 'excerpt' | 'content') => {
+    if (language === 'en') return post[field];
+    if (language === 'zh-CN') return post[`${field}_cn`] || post[`${field}_zh`] || post[field];
+    return post[`${field}_zh`] || post[field];
+  };
+
+  const shareOnSocial = (platform: 'facebook' | 'twitter' | 'linkedin') => {
+    const url = window.location.href;
+    const title = post ? getLocalizedField(post, 'title') : '';
+    
+    const urls = {
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+    };
+
+    window.open(urls[platform], '_blank', 'width=600,height=400');
+  };
+
+  // ✅ 載入文章數據（在所有條件渲染之前）
+  useEffect(() => {
+    console.log('🔍 [BlogPostPage] useEffect triggered:', { postSlug, user: !!user, loading });
+    if (postSlug && user) {
+      console.log('📥 [BlogPostPage] Loading post:', postSlug);
+      loadPost(postSlug);
+    } else if (postSlug && !user) {
+      console.log('🔒 [BlogPostPage] User not logged in, stopping loading');
+      setLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postSlug, user]);
 
   if (loading) {
     return (
@@ -186,83 +295,6 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
       </div>
     );
   }
-
-  useEffect(() => {
-    if (postSlug) {
-      loadPost(postSlug);
-    }
-  }, [postSlug]);
-
-  const loadPost = async (slug: string) => {
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/blog/posts/${slug}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setPost(data.post);
-        setRelatedPosts(data.relatedPosts || []);
-        
-        // 增加瀏覽次數
-        incrementViews(slug);
-      } else {
-        // 使用示範數據
-        const demoPost = getDemoPost(slug);
-        setPost(demoPost);
-        setRelatedPosts(getRelatedDemoPosts(demoPost.category));
-      }
-    } catch (error) {
-      console.error('Failed to load blog post:', error);
-      const demoPost = getDemoPost(slug);
-      setPost(demoPost);
-      setRelatedPosts(getRelatedDemoPosts(demoPost.category));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const incrementViews = async (slug: string) => {
-    try {
-      await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/blog/posts/${slug}/view`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
-          },
-        }
-      );
-    } catch (error) {
-      console.error('Failed to increment views:', error);
-    }
-  };
-
-  const getLocalizedField = (post: BlogPost, field: 'title' | 'excerpt' | 'content') => {
-    if (language === 'en') return post[field];
-    if (language === 'zh-CN') return post[`${field}_cn`] || post[`${field}_zh`] || post[field];
-    return post[`${field}_zh`] || post[field];
-  };
-
-  const shareOnSocial = (platform: 'facebook' | 'twitter' | 'linkedin') => {
-    const url = window.location.href;
-    const title = post ? getLocalizedField(post, 'title') : '';
-    
-    const urls = {
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-      twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`,
-      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
-    };
-
-    window.open(urls[platform], '_blank', 'width=600,height=400');
-  };
 
   if (!post) {
     return (
@@ -433,7 +465,7 @@ function getDemoPost(slug: string): BlogPost {
       title_cn: '如何撰写吸引客户的提案',
       excerpt: 'Learn the secrets to crafting proposals that win clients and projects.',
       excerpt_zh: '學習撰寫能贏得客戶和專案的提案技巧，提高接案成功率。',
-      excerpt_cn: '学习撰写能赢得客户和项目的提案技巧，提高接案成功率。',
+      excerpt_cn: '学撰写能赢得客户和项目的提案技巧，提高接案成功率。',
       content: `
         <h2>為什麼提案如此重要？</h2>
         <p>一份好的提案是您與客戶之間的第一次深度溝通。它不僅展示您的專業能力，更重要的是展現您對項目的理解和熱情。</p>
@@ -443,7 +475,7 @@ function getDemoPost(slug: string): BlogPost {
         <p>避免使用範本式的開場。花時間研究客戶的需求，並在開場就展現您的理解：</p>
         <ul>
           <li>✅ 提及客戶公司的具體細節</li>
-          <li>✅ 展示您對行業的了解</li>
+          <li>✅ 展示您對行��的了解</li>
           <li>✅ 說明為什麼您是最佳人選</li>
         </ul>
         
@@ -467,7 +499,7 @@ function getDemoPost(slug: string): BlogPost {
         <p>定價策略會直接影響成交率：</p>
         <ul>
           <li>💰 提供清晰的價格分項</li>
-          <li>📈 解釋價值而非只談價格</li>
+          <li>📈 解釋值而非只談價格</li>
           <li>🎁 考慮提供小優惠或增值服務</li>
         </ul>
         
@@ -581,7 +613,7 @@ function getDemoPost(slug: string): BlogPost {
 我曾為 [類似客戶] 完成 [類似項目]，結果是...
 
 【投資】
-總費用：[金額]
+總費：[金額]
 包含：[詳細清單]
 
 期待與您合作！
