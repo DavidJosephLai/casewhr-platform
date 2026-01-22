@@ -88,7 +88,8 @@ const ApiDocumentation = lazy(() => import('./components/ApiDocumentation').then
 import BlogListPage from './components/BlogListPage';
 // 🔥 臨時改為直接導入以調試問題
 import { BlogPostPage } from './components/BlogPostPage';
-const BlogManagementPage = lazy(() => import('./components/BlogManagementPage'));
+// 🔥 臨時改為直接導入以調試問題
+import BlogManagementPage from './components/BlogManagementPage';
 
 // 🌍 公開 SEO 報告頁面
 const PublicSEOReport = lazy(() => import('./components/PublicSEOReport').then(module => ({ default: module.PublicSEOReport })));
@@ -401,7 +402,7 @@ function AppContent() {
           const data = await response.json();
           console.log('✅ [LINE Callback] Token exchange successful:', data);
           
-          // 檢查是否需要提示用戶更新 email
+          // 檢查是否需要提示用戶��新 email
           if (data.needsEmailUpdate) {
             console.log('⚠️ [LINE Callback] User needs to update email');
             // 設定 LINE User ID 並顯示 Email Modal
@@ -917,9 +918,7 @@ function AppContent() {
       ) : view === 'blog-admin' ? (
         <div className="pt-20">
           <SEO title="Blog Admin" description="" keywords="" noindex />
-          <Suspense fallback={<PageLoadingFallback />}>
-            <BlogManagementPage />
-          </Suspense>
+          <BlogManagementPage />
         </div>
       ) : (
         <>
