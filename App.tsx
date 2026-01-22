@@ -76,6 +76,7 @@ const KeywordDeploymentCheck = lazy(() => import('./components/KeywordDeployment
 const OpenAIKeyGuide = lazy(() => import('./components/OpenAIKeyGuide'));
 const DataSyncDiagnostic = lazy(() => import('./components/DataSyncDiagnostic'));
 const DeepDataDiagnostic = lazy(() => import('./components/DeepDataDiagnostic'));
+const FetchInterceptorTest = lazy(() => import('./components/FetchInterceptorTest'));
 
 // 📄 內容頁面 - Lazy Load（SEO 相關頁面）
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
@@ -892,6 +893,13 @@ function AppContent() {
           <SEO title="Deep Data Diagnostic" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
             <DeepDataDiagnostic />
+          </Suspense>
+        </div>
+      ) : view === 'fetch-interceptor-test' ? (
+        <div className="pt-20">
+          <SEO title="Fetch Interceptor Test" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <FetchInterceptorTest />
           </Suspense>
         </div>
       ) : view === 'wismachion' ? (

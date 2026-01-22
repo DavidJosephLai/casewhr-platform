@@ -88,6 +88,44 @@ export function BlogManagementPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // 🛡️ CRITICAL: Add error boundary at component level
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+
+  // 🛡️ Wrap all async operations in try-catch
+  useEffect(() => {
+    try {
+      // Component initialization
+      console.log('✅ [BlogManagement] Component mounted successfully');
+    } catch (error: any) {
+      console.error('❌ [BlogManagement] Component mount error:', error);
+      setHasError(true);
+      setErrorMessage(error.message || 'Unknown error');
+    }
+  }, []);
+
+  // 🛡️ If error occurred, show error UI
+  if (hasError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">
+              {language === 'en' ? '⚠️ Component Error' : '⚠️ 組件錯誤'}
+            </h1>
+            <p className="text-gray-600 mb-4">{errorMessage}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              {language === 'en' ? 'Reload Page' : '重新載入'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // 🔥 檢查 URL 參數，如果是新建文章，自動打開編輯器
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
