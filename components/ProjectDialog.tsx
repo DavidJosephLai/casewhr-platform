@@ -125,8 +125,8 @@ export function ProjectDialog({ project, open, onOpenChange, onUpdate }: Project
       } else {
         const errorData = await response.json();
         console.error('❌ [ProjectDialog] Fetch deliverables error:', {
-          status: response.status,
-          statusText: response.statusText,
+          status: response?.status || 'No response',
+          statusText: response?.statusText || 'No response',
           error: errorData,
           projectId: project.id,
         });

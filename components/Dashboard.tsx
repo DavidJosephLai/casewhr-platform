@@ -233,7 +233,7 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
         20000 // timeout - increased to 20 seconds
       );
 
-      if (response.ok) {
+      if (response && response.ok) {
         const data = await parseJsonResponse(response);
         console.log('[Dashboard] Stats loaded successfully:', data);
         setStats(data);
@@ -242,7 +242,7 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
         if ((data as any).error) {
           console.warn('[Dashboard] Partial data loaded:', (data as any).error);
         }
-      } else {
+      } else if (response) {
         const errorData = await parseJsonResponse(response).catch(() => ({ error: 'Unknown error' }));
         console.error('[Dashboard] Error response:', response.status, errorData);
         

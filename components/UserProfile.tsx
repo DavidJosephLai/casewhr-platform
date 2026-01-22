@@ -61,6 +61,11 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
   });
   const [uploading, setUploading] = useState(false);
 
+  // 🔍 Debug: Log when open prop changes
+  useEffect(() => {
+    console.log('🔍 [UserProfile] open prop changed:', open);
+  }, [open]);
+
   const translations = {
     en: {
       title: "My Profile",
@@ -310,8 +315,8 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.error('❌ [UserProfile] Failed to load profile:', {
-          status: response.status,
-          statusText: response.statusText,
+          status: response?.status || 'No response',
+          statusText: response?.statusText || 'No response',
           error: errorData
         });
         
