@@ -211,16 +211,17 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
 
   // ✅ 載入文章數據（在所有條件渲染之前）
   useEffect(() => {
-    console.log('🔍 [BlogPostPage] useEffect triggered:', { postSlug, user: !!user, loading });
-    if (postSlug && user) {
+    const userId = user?.id || null;
+    console.log('🔍 [BlogPostPage] useEffect triggered:', { postSlug, userId, loading });
+    if (postSlug && userId) {
       console.log('📥 [BlogPostPage] Loading post:', postSlug);
       loadPost(postSlug);
-    } else if (postSlug && !user) {
+    } else if (postSlug && !userId) {
       console.log('🔒 [BlogPostPage] User not logged in, stopping loading');
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [postSlug, user]);
+  }, [postSlug, user?.id]);
 
   if (loading) {
     return (
@@ -472,7 +473,7 @@ function getDemoPost(slug: string): BlogPost {
         <p>避免使用範本式的開場。花時間研究客戶的需求，並在開場就展現您的理解：</p>
         <ul>
           <li>✅ 提及客戶公司的具體細節</li>
-          <li>✅ 展示您對行業的了解</li>
+          <li>✅ 展示您對行的了解</li>
           <li>✅ 說明為什麼您是最佳人選</li>
         </ul>
         
