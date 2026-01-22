@@ -3,7 +3,7 @@
  * 顯示單篇部落格文章的完整內容
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -58,7 +58,7 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
   const [loading, setLoading] = useState(true);
 
   // 從 URL 獲取 slug（使用 useMemo 確保只在客戶端執行）
-  const postSlug = React.useMemo(() => {
+  const postSlug = useMemo(() => {
     if (slug) return slug;
     
     try {
