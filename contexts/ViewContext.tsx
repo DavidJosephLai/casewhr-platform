@@ -101,6 +101,28 @@ export function ViewProvider({ children }: { children: ReactNode }) {
         return;
       }
       
+      // 📝 檢查 Blog 路由
+      if (pathname === '/blog') {
+        console.log('✅ [ViewContext] Blog list page detected, switching view');
+        setView('blog');
+        setManualOverride(true);
+        return;
+      }
+      
+      if (pathname.startsWith('/blog/') && pathname !== '/blog/admin') {
+        console.log('✅ [ViewContext] Blog post page detected, switching view');
+        setView('blog-post');
+        setManualOverride(true);
+        return;
+      }
+      
+      if (pathname === '/blog/admin') {
+        console.log('✅ [ViewContext] Blog admin page detected, switching view');
+        setView('blog-admin');
+        setManualOverride(true);
+        return;
+      }
+      
       // 根據 hash 設置對應的 view
       const hashToView: Record<string, ViewType> = {
         'email-management': 'email-management',
