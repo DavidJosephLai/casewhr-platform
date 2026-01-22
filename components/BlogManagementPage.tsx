@@ -232,9 +232,16 @@ export function BlogManagementPage() {
 
   useEffect(() => {
     loadPosts();
-  }, []);
+  }, [accessToken]); // 🔥 當 accessToken 改變時重新載入
 
   const loadPosts = async () => {
+    // 🔥 如果沒有 accessToken，跳過載入
+    if (!accessToken) {
+      console.log('⏳ [BlogManagement] Waiting for access token...');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await fetch(
@@ -251,11 +258,13 @@ export function BlogManagementPage() {
         const data = await response.json();
         setPosts(data.posts || []);
       } else {
+        console.warn('[BlogManagement] Failed to load posts:', response.status);
         setPosts([]);
       }
     } catch (error) {
-      console.error('Failed to load blog posts:', error);
-      toast.error(t.error);
+      console.error('❌ [BlogManagement] Failed to load blog posts:', error);
+      // 不顯示錯誤訊息，只是設置空陣列
+      setPosts([]);
     } finally {
       setLoading(false);
     }
