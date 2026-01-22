@@ -250,6 +250,9 @@ export function BlogManagementPage() {
 
     setLoading(true);
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/blog/posts`,
         {
@@ -257,8 +260,14 @@ export function BlogManagementPage() {
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
+          signal: controller.signal,
         }
-      );
+      ).catch((error) => {
+        console.error('❌ [BlogManagement] Fetch failed:', error);
+        return null; // Return null instead of throwing
+      });
+
+      clearTimeout(timeoutId);
 
       if (response && response.ok) {
         const data = await response.json();
@@ -320,7 +329,10 @@ export function BlogManagementPage() {
             'Authorization': `Bearer ${accessToken}`,
           },
         }
-      );
+      ).catch((error) => {
+        console.error('❌ [BlogManagement] Delete fetch failed:', error);
+        return null;
+      });
 
       if (response && response.ok) {
         toast.success(t.deleteSuccess);
@@ -355,16 +367,21 @@ export function BlogManagementPage() {
           },
           body: JSON.stringify(editingPost),
         }
-      );
+      ).catch((error) => {
+        console.error('❌ [BlogManagement] Save fetch failed:', error);
+        return null;
+      });
 
       if (response && response.ok) {
         toast.success(t.success);
         setIsEditorOpen(false);
         setEditingPost(null);
         loadPosts();
-      } else {
-        const error = await response.json();
+      } else if (response) {
+        const error = await response.json().catch(() => ({ message: 'Unknown error' }));
         toast.error(error.message || t.error);
+      } else {
+        toast.error(t.error);
       }
     } catch (error) {
       console.error('Failed to save post:', error);
