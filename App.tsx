@@ -12,10 +12,14 @@ import { Toaster, toast } from 'sonner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
+import { setupGlobalFetchInterceptor } from './utils/globalFetchInterceptor';
 
-// 🔥 Version marker to force cache invalidation - v2.0.93
-// 🎯 Feature: Remove login restriction from BlogListPage, add to BlogPostPage only
-console.log('🚀 [App v2.0.93] Feature: Blog list page is now public, login only required for reading posts');
+// 🛡️ Install global fetch interceptor to prevent null response errors
+setupGlobalFetchInterceptor();
+
+// 🔥 Version marker to force cache invalidation - v2.0.94
+// 🎯 Feature: Global fetch interceptor to prevent null response errors
+console.log('🚀 [App v2.0.94] Feature: Global fetch interceptor installed');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
@@ -548,7 +552,7 @@ function AppContent() {
         toast.success(
           language === 'en'
             ? '🎉 Payment successful! Your wallet has been updated.'
-            : '🎉 ��款成功！您的錢包已更新。',
+            : '🎉 款成功！您的錢包已更新。',
           { duration: 5000 }
         );
         // 清除 URL 參數
