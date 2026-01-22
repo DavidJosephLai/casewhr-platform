@@ -106,14 +106,17 @@ const AIChatbot: React.FC<AIChatbotProps> = ({
             'Authorization': `Bearer ${publicAnonKey}`
           }
         }
-      );
+      ).catch((error) => {
+        console.error('❌ [AIChatbot] Failed to load suggestions:', error);
+        return null;
+      });
 
-      if (response.ok) {
+      if (response && response.ok) {
         const data = await response.json();
         setSuggestions(data.suggestions || []);
       }
     } catch (error) {
-      console.error('Failed to load suggestions:', error);
+      console.error('Failed to load chatbot suggestions:', error);
     }
   };
 
@@ -156,9 +159,12 @@ const AIChatbot: React.FC<AIChatbotProps> = ({
             userId
           })
         }
-      );
+      ).catch((error) => {
+        console.error('❌ [AIChatbot] Chat request failed:', error);
+        return null;
+      });
 
-      if (!response.ok) {
+      if (!response || !response.ok) {
         throw new Error('Failed to get response');
       }
 
