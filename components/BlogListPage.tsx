@@ -198,7 +198,7 @@ export function BlogListPage() {
       loginMessage: '请登录以阅读我们的专属博客内容',
       loginButton: '立即登录',
       signupButton: '注册账号',
-      loginHint: '加�� CaseWHR 阅读优质文章，并与顶尖专业人士连结',
+      loginHint: '加 CaseWHR 阅读优质文章，并与顶尖专业人士连结',
     },
   };
 
@@ -432,16 +432,9 @@ export function BlogListPage() {
           <Button
             onClick={() => {
               if (!user) {
-                console.log('🔐 [BlogList] User not logged in, showing login prompt');
-                // 引導用戶登入
-                const message = language === 'en' 
-                  ? 'Please log in to write an article' 
-                  : language === 'zh-CN' 
-                  ? '请先登录以发布文章' 
-                  : '請先登入以發布文章';
-                alert(message);
-                // 跳轉到登入（這裡會觸發 showDashboard 來顯示登入表單）
-                window.dispatchEvent(new CustomEvent('showDashboard'));
+                console.log('🔐 [BlogList] User not logged in, opening login dialog');
+                // 直接打開登入對話框（不跳轉頁面，不顯示 alert）
+                window.dispatchEvent(new Event('openLoginDialog'));
               } else {
                 console.log('✍️ [BlogList] Navigating to Create Post');
                 window.location.href = '/blog/admin?action=new';

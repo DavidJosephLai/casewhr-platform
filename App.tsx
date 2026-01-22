@@ -287,12 +287,14 @@ function AppContent() {
       
       // 🔐 檢查用戶是否登入，未登入則引導登入
       if (!user) {
-        console.log('🔐 [App] Blog admin requires login, opening login dialog');
-        // 觸發登入對話框（不改變頁面）
-        window.dispatchEvent(new Event('openLoginDialog'));
-        // 將 URL 改回 /blog（保持在 Blog 頁面）
-        window.history.pushState({}, '', '/blog');
+        console.log('🔐 [App] Blog admin requires login, redirecting to blog list');
+        // 阻止進入後台，停留在列表頁
+        window.history.replaceState({}, '', '/blog');
         setView('blog');
+        // 延遲打開登入對話框，避免在頁面切換時觸發
+        setTimeout(() => {
+          window.dispatchEvent(new Event('openLoginDialog'));
+        }, 100);
         return;
       }
       
@@ -510,7 +512,7 @@ function AppContent() {
               toast.success(
                 language === 'en'
                   ? `🎉 Payment successful! $${data.amount?.toLocaleString() || '?'} added to your wallet.\n\n📄 E-invoice will be issued within 24 hours.\n🔍 Check at: Ministry of Finance E-Invoice Platform\nhttps://www.einvoice.nat.gov.tw/`
-                  : `🎉 付款成功！已將 $${data.amount?.toLocaleString() || '?'} 加入您的錢包。\n\n📄 電子發票將於 24 小時內開立\n🔍 查詢請至：財政部電���發票整合服務平台\nhttps://www.einvoice.nat.gov.tw/`,
+                  : `🎉 付款成功！已將 $${data.amount?.toLocaleString() || '?'} 加入您的錢包。\n\n📄 電子發票將於 24 小時內開立\n🔍 查詢請至：財政部電發票整合服務平台\nhttps://www.einvoice.nat.gov.tw/`,
                 { duration: 8000 }
               );
               
