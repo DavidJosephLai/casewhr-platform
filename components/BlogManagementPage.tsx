@@ -118,13 +118,14 @@ export function BlogManagementPage() {
         status: 'draft',
       };
       
+      console.log('✅ [BlogManagement] New post created:', newPost);
       setEditingPost(newPost);
       setIsEditorOpen(true);
       
       // 清除 URL 參數
       window.history.replaceState({}, '', '/blog/admin');
     }
-  }, [user]);
+  }, [user, isEditorOpen, editingPost]); // 🔥 添加依賴以確保正確觸發
 
   const content = {
     en: {
@@ -524,7 +525,7 @@ export function BlogManagementPage() {
       </div>
 
       {/* Editor Dialog */}
-      <Dialog open={isEditorOpen} onOpenChange={setIsEditorOpen}>
+      <Dialog open={isEditorOpen && editingPost !== null} onOpenChange={setIsEditorOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
