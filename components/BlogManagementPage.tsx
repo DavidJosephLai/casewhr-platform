@@ -295,8 +295,10 @@ export function BlogManagementPage() {
       views: 0,
       status: 'draft',
     };
+    console.log('✅ [BlogManagement] Creating new post:', newPost);
     setEditingPost(newPost);
-    setIsEditorOpen(true);
+    // 延遲打開對話框，確保 state 更新完成
+    setTimeout(() => setIsEditorOpen(true), 50);
   };
 
   const handleEditPost = (post: BlogPost) => {
@@ -623,7 +625,7 @@ export function BlogManagementPage() {
               </div>
 
               {/* Multi-language Content */}
-              <Tabs defaultValue="en" className="w-full">
+              <Tabs key={editingPost.slug} defaultValue="en" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="en">🇺🇸 English</TabsTrigger>
                   <TabsTrigger value="zh-TW">🇹🇼 繁體中文</TabsTrigger>
