@@ -5,9 +5,12 @@ import { projectId, publicAnonKey } from '../utils/supabase/info';
 
 interface SEOReport {
   id: string;
-  keyword: string;
-  created_at: string;
-  data?: any;
+  url: string;
+  title: string;
+  description: string;
+  keywords: string[];
+  generatedAt: string;
+  customKeywords?: string | null;
 }
 
 export function LatestSEOReports() {
@@ -22,7 +25,7 @@ export function LatestSEOReports() {
   const fetchLatestReports = async () => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/seo/reports`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ai-seo/reports`,
         {
           headers: {
             'Authorization': `Bearer ${publicAnonKey}`,
@@ -32,8 +35,10 @@ export function LatestSEOReports() {
 
       if (response.ok) {
         const data = await response.json();
+        // 從 API 返回的 data.reports 中提取報告列表
+        const reportsList = data.reports || [];
         // 只显示最新的 6 个报告
-        setReports(data.slice(0, 6));
+        setReports(reportsList.slice(0, 6));
       }
     } catch (error) {
       console.error('❌ [LatestSEOReports] Error fetching reports:', error);
@@ -52,17 +57,21 @@ export function LatestSEOReports() {
   };
 
   const getReportTitle = (report: SEOReport) => {
-    if (report.data?.analysis?.title) {
-      return report.data.analysis.title;
-    }
-    return report.keyword;
+    return report.title || report.url || 'SEO Report';
   };
 
   const getReportDescription = (report: SEOReport) => {
-    if (report.data?.analysis?.description) {
-      return report.data.analysis.description;
+    return report.description || '';
+  };
+
+  const getMainKeyword = (report: SEOReport) => {
+    if (report.customKeywords) {
+      return report.customKeywords;
     }
-    return '';
+    if (report.keywords && report.keywords.length > 0) {
+      return report.keywords[0];
+    }
+    return 'SEO Analysis';
   };
 
   if (loading || reports.length === 0) {
@@ -140,7 +149,7 @@ export function LatestSEOReports() {
                 {/* 关键词标签 */}
                 <div className="flex flex-wrap gap-2 mb-4">
                   <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
-                    🎯 {report.keyword}
+                    🎯 {getMainKeyword(report)}
                   </span>
                 </div>
 
@@ -148,7 +157,7 @@ export function LatestSEOReports() {
                 <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                   <div className="flex items-center gap-2 text-gray-500 text-sm">
                     <Calendar className="w-4 h-4" />
-                    <span>{formatDate(report.created_at)}</span>
+                    <span>{formatDate(report.generatedAt)}</span>
                   </div>
                   <span className="text-blue-600 font-medium text-sm group-hover:gap-2 inline-flex items-center gap-1 transition-all">
                     {t.viewReport}

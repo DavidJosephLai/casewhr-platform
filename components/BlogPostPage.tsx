@@ -57,16 +57,28 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 從 URL 獲取 slug（更安全的方式）
+  const getSlugFromUrl = () => {
+    try {
+      const pathname = window.location.pathname;
+      const match = pathname.match(/\/blog\/(.+)/);
+      return match ? match[1] : null;
+    } catch (error) {
+      console.error('❌ [BlogPostPage] Error getting slug from URL:', error);
+      return null;
+    }
+  };
+
+  const postSlug = slug || getSlugFromUrl();
+
   // 🔍 DEBUG: 組件渲染日誌
   console.log('🎨 [BlogPostPage] Component rendered:', {
     user: user ? `${user.email} (ID: ${user.id})` : 'NULL',
     slug,
+    postSlug,
     loading,
     hasPost: !!post
   });
-
-  // 從 URL 獲取 slug
-  const postSlug = slug || window.location.pathname.split('/blog/')[1];
 
   const content = {
     en: {
@@ -597,7 +609,7 @@ function getDemoPost(slug: string): BlogPost {
 我曾為 [類似客戶] 完成 [類似項目]，結果是...
 
 【投資】
-總費���：[金額]
+總費：[金額]
 包含：[詳細清單]
 
 期待與您合作！
