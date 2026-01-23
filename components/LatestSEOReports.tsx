@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '../lib/LanguageContext';
+import { useAuth } from '../contexts/AuthContext'; // ✅ 引入認證上下文
+import { isAnyAdmin } from '../config/admin'; // ✅ 引入管理員檢查
 import { FileText, TrendingUp, Calendar, ExternalLink } from 'lucide-react';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 
@@ -15,8 +17,12 @@ interface SEOReport {
 
 export function LatestSEOReports() {
   const { language } = useLanguage();
+  const { user, profile } = useAuth(); // ✅ 獲取用戶資訊
   const [reports, setReports] = useState<SEOReport[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // ✅ 檢查是否為管理員
+  const isAdmin = user && isAnyAdmin(user?.email, profile);
 
   useEffect(() => {
     fetchLatestReports();
@@ -169,8 +175,8 @@ export function LatestSEOReports() {
           ))}
         </div>
 
-        {/* 查看更多按钮 */}
-        {reports.length >= 6 && (
+        {/* 查看更多按钮 - ✅ 只對管理員顯示 */}
+        {isAdmin && reports.length >= 6 && (
           <div className="text-center mt-12">
             <a
               href="/#ai-seo"
