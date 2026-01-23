@@ -259,17 +259,15 @@ export function BlogListPage() {
           const publishedPosts = (data.posts || []).filter((post: BlogPost) => post.status === 'published');
           console.log('✅ [BlogListPage] Published posts:', publishedPosts.length);
           
-          // 如果 API 沒有數據，則使用示範數據
-          if (publishedPosts.length === 0) {
-            console.log('⚠️ [BlogListPage] No published posts found, using demo data');
-            setPosts(DEMO_POSTS);
-          } else {
-            setPosts(publishedPosts);
-          }
+          // 🔥 合併 API 數據和示範數據，同時顯示兩者
+          const allPosts = [...publishedPosts, ...DEMO_POSTS];
+          console.log('✅ [BlogListPage] Total posts (API + Demo):', allPosts.length);
+          setPosts(allPosts);
         } else {
           const errorData = await response.text();
           console.warn('⚠️ [BlogListPage] API failed with status:', response.status);
           console.warn('⚠️ [BlogListPage] Error response:', errorData);
+          // API 失敗時使用示範數據
           setPosts(DEMO_POSTS);
         }
       } catch (error) {
