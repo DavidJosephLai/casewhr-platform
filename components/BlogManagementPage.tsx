@@ -87,6 +87,10 @@ export function BlogManagementPage() {
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // 🎨 新增：範本和預設圖片狀態
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [showImagePicker, setShowImagePicker] = useState(false);
 
   // 🛡️ CRITICAL: Add error boundary at component level
   const [hasError, setHasError] = useState(false);
@@ -665,11 +669,65 @@ export function BlogManagementPage() {
 
               <div>
                 <label className="text-sm font-medium mb-2 block">{t.coverImage}</label>
-                <Input
-                  value={editingPost.coverImage}
-                  onChange={(e) => setEditingPost({ ...editingPost, coverImage: e.target.value })}
-                  placeholder="https://..."
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={editingPost.coverImage}
+                    onChange={(e) => setEditingPost({ ...editingPost, coverImage: e.target.value })}
+                    placeholder="https://..."
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowImagePicker(!showImagePicker)}
+                    className="shrink-0"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {language === 'en' ? 'Gallery' : language === 'zh-CN' ? '图库' : '圖庫'}
+                  </Button>
+                </div>
+                
+                {/* 🎨 預設圖片選擇器 */}
+                {showImagePicker && (
+                  <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+                    <h4 className="font-semibold mb-3">
+                      {language === 'en' ? '📸 Choose Cover Image' : language === 'zh-CN' ? '📸 选择封面图片' : '📸 選擇封面圖片'}
+                    </h4>
+                    <div className="grid grid-cols-4 gap-3 max-h-64 overflow-y-auto">
+                      {[
+                        { url: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800', label: 'Team Work', category: 'freelancer-tips' },
+                        { url: 'https://images.unsplash.com/photo-1556761175-4b46a572b786?w=800', label: 'Office', category: 'freelancer-tips' },
+                        { url: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800', label: 'Business Meeting', category: 'client-guide' },
+                        { url: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800', label: 'Strategy', category: 'industry-insights' },
+                        { url: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800', label: 'Analytics', category: 'industry-insights' },
+                        { url: 'https://images.unsplash.com/photo-1551836022-4c4c79ecde51?w=800', label: 'Remote Work', category: 'freelancer-tips' },
+                        { url: 'https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800', label: 'Success', category: 'success-stories' },
+                        { url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800', label: 'Platform', category: 'platform-guide' },
+                        { url: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800', label: 'Technology', category: 'platform-guide' },
+                        { url: 'https://images.unsplash.com/photo-1531973576160-7125cd663d86?w=800', label: 'Growth', category: 'success-stories' },
+                        { url: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800', label: 'Freelancer', category: 'freelancer-tips' },
+                        { url: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800', label: 'Client', category: 'client-guide' },
+                      ].map((img, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setEditingPost({ ...editingPost, coverImage: img.url });
+                            setShowImagePicker(false);
+                          }}
+                          className={`relative aspect-video rounded overflow-hidden border-2 transition-all hover:scale-105 ${
+                            editingPost.coverImage === img.url ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
+                          }`}
+                        >
+                          <img src={img.url} alt={img.label} className="w-full h-full object-cover" />
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1 text-center">
+                            {img.label}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
