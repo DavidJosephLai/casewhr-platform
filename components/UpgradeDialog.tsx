@@ -34,12 +34,12 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
   // ⭐ 三幣價格系統（與 PricingPage.tsx 和後端一致）
   const planPrices = {
     pro: {
-      monthly: { USD: 9.9, TWD: 300, CNY: 70 },
-      yearly: { USD: 95, TWD: 2880, CNY: 670 }
+      monthly: { USD: 15, TWD: 480, CNY: 110 },
+      yearly: { USD: 150, TWD: 4680, CNY: 1090 }
     },
     enterprise: {
-      monthly: { USD: 29, TWD: 900, CNY: 205 },
-      yearly: { USD: 278, TWD: 8640, CNY: 1970 }
+      monthly: { USD: 45, TWD: 1400, CNY: 325 },
+      yearly: { USD: 450, TWD: 14040, CNY: 3250 }
     }
   };
 

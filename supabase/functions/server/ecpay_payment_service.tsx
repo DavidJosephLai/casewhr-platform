@@ -413,16 +413,16 @@ async function processSubscription(payment: ECPayPayment): Promise<{ success: bo
     let plan = 'free';
     let duration = 'monthly';
     
-    if (payment.amount_twd === 300 || payment.amount_usd === 9.9) {
+    if (payment.amount_twd === 480 || payment.amount_usd === 15) {
       plan = 'professional';
       duration = 'monthly';
-    } else if (payment.amount_twd === 3000 || payment.amount_usd === 99) {
+    } else if (payment.amount_twd === 4680 || payment.amount_usd === 150) {
       plan = 'professional';
       duration = 'yearly';
-    } else if (payment.amount_twd === 900 || payment.amount_usd === 29) {
+    } else if (payment.amount_twd === 1400 || payment.amount_usd === 45) {
       plan = 'enterprise';
       duration = 'monthly';
-    } else if (payment.amount_twd === 9000 || payment.amount_usd === 290) {
+    } else if (payment.amount_twd === 14040 || payment.amount_usd === 450) {
       plan = 'enterprise';
       duration = 'yearly';
     }
@@ -1264,7 +1264,7 @@ export function registerECPayRoutes(app: any) {
     }
   });
 
-  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━���━━━━━━━━━━
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━��━━━━━━━━━━━━━━━━━━━━━━���━━━━━━━━━━
   // 🚀 Query ECPay order status (for testing environment auto-confirmation)
   // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   app.post('/make-server-215f78a5/ecpay/query-order', async (c: Context) => {
