@@ -1054,7 +1054,15 @@ console.log('✅ [SERVER] Internal Link Management APIs registered');
 // 📝 Blog Posts API
 app.get('/make-server-215f78a5/blog/posts', async (c) => {
   try {
-    const posts = (await kv.getByPrefix('blog_post_')).map(item => item.value);
+    console.log('📥 [BLOG API] Loading all posts...');
+    const allItems = await kv.getByPrefix('blog_post_');
+    console.log('📋 [BLOG API] Raw items from KV:', allItems.length);
+    console.log('📋 [BLOG API] Raw items data:', JSON.stringify(allItems, null, 2));
+    
+    const posts = allItems.map(item => item.value);
+    console.log('✅ [BLOG API] Returning posts:', posts.length);
+    console.log('📋 [BLOG API] Posts data:', JSON.stringify(posts, null, 2));
+    
     return c.json({ posts: posts });
   } catch (error: any) {
     console.error('❌ [BLOG] Failed to load posts:', error);

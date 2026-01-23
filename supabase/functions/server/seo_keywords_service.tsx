@@ -29,6 +29,60 @@ interface KeywordCluster {
 export function generateServiceKeywords(language: string = 'zh-TW'): KeywordData[] {
   const keywords: KeywordData[] = [];
 
+  // 🔥 核心基礎關鍵字 - 高搜索量、高優先級
+  const coreKeywords = {
+    'zh-TW': [
+      { keyword: '接案', volume: 12000, difficulty: 45, url: '/' },
+      { keyword: '發案', volume: 8500, difficulty: 42, url: '/' },
+      { keyword: '外包', volume: 15000, difficulty: 55, url: '/' },
+      { keyword: '自由工作者', volume: 9500, difficulty: 48, url: '/' },
+      { keyword: '接案平台', volume: 6800, difficulty: 50, url: '/' },
+      { keyword: '外包平台', volume: 7200, difficulty: 52, url: '/' },
+      { keyword: '遠端工作', volume: 11000, difficulty: 47, url: '/remote-work' },
+      { keyword: '線上接案', volume: 5500, difficulty: 43, url: '/' },
+      { keyword: '專案外包', volume: 4900, difficulty: 46, url: '/' },
+      { keyword: '自由職業', volume: 8800, difficulty: 44, url: '/' },
+    ],
+    'zh-CN': [
+      { keyword: '接案', volume: 10000, difficulty: 43, url: '/' },
+      { keyword: '发案', volume: 7000, difficulty: 40, url: '/' },
+      { keyword: '外包', volume: 18000, difficulty: 58, url: '/' },
+      { keyword: '自由职业者', volume: 12000, difficulty: 50, url: '/' },
+      { keyword: '接案平台', volume: 5500, difficulty: 48, url: '/' },
+      { keyword: '外包平台', volume: 8000, difficulty: 54, url: '/' },
+      { keyword: '远程工作', volume: 13000, difficulty: 49, url: '/remote-work' },
+      { keyword: '在线接案', volume: 4800, difficulty: 42, url: '/' },
+      { keyword: '项目外包', volume: 6200, difficulty: 47, url: '/' },
+      { keyword: '自由职业', volume: 9500, difficulty: 45, url: '/' },
+    ],
+    'en': [
+      { keyword: 'freelance', volume: 45000, difficulty: 65, url: '/' },
+      { keyword: 'freelancer', volume: 38000, difficulty: 62, url: '/' },
+      { keyword: 'outsource', volume: 28000, difficulty: 60, url: '/' },
+      { keyword: 'freelance platform', volume: 15000, difficulty: 58, url: '/' },
+      { keyword: 'outsourcing platform', volume: 12000, difficulty: 56, url: '/' },
+      { keyword: 'remote work', volume: 52000, difficulty: 68, url: '/remote-work' },
+      { keyword: 'gig economy', volume: 18000, difficulty: 55, url: '/' },
+      { keyword: 'independent contractor', volume: 9500, difficulty: 53, url: '/' },
+      { keyword: 'freelance marketplace', volume: 11000, difficulty: 57, url: '/' },
+      { keyword: 'online freelance', volume: 8800, difficulty: 54, url: '/' },
+    ]
+  };
+
+  // 添加核心關鍵字
+  const currentCoreKeywords = coreKeywords[language as keyof typeof coreKeywords] || coreKeywords['en'];
+  currentCoreKeywords.forEach(core => {
+    keywords.push({
+      keyword: core.keyword,
+      searchVolume: core.volume,
+      difficulty: core.difficulty,
+      opportunity: 95, // 核心關鍵字優先級最高
+      intent: 'transactional',
+      relatedKeywords: [],
+      targetUrl: core.url
+    });
+  });
+
   const services = [
     { en: 'web development', zh: '網站開發', zhCN: '网站开发' },
     { en: 'mobile app', zh: '移動應用開發', zhCN: '移动应用开发' },
