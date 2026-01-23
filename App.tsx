@@ -76,7 +76,7 @@ const KeywordDeploymentCheck = lazy(() => import('./components/KeywordDeployment
 const OpenAIKeyGuide = lazy(() => import('./components/OpenAIKeyGuide'));
 const DataSyncDiagnostic = lazy(() => import('./components/DataSyncDiagnostic'));
 const DeepDataDiagnostic = lazy(() => import('./components/DeepDataDiagnostic'));
-const FetchInterceptorTest = lazy(() => import('./components/FetchInterceptorTest'));
+// const FetchInterceptorTest = lazy(() => import('./components/FetchInterceptorTest')); // ❌ Removed - component doesn't exist
 
 // 📄 內容頁面 - Lazy Load（SEO 相關頁面）
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
@@ -179,7 +179,7 @@ function AppContent() {
     }
   }, [user]);
   
-  // 🔥 NEW: 監聽自定義導航事件（例如從錢包餘額不足對話框觸發）
+  // 🔥 NEW: 監聽自定義��航事件（例如從錢包餘額不足對話框觸發）
   useEffect(() => {
     const handleNavigate = (event: any) => {
       const targetView = event.detail?.view;
@@ -893,13 +893,6 @@ function AppContent() {
           <SEO title="Deep Data Diagnostic" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
             <DeepDataDiagnostic />
-          </Suspense>
-        </div>
-      ) : view === 'fetch-interceptor-test' ? (
-        <div className="pt-20">
-          <SEO title="Fetch Interceptor Test" description="" keywords="" noindex />
-          <Suspense fallback={<PageLoadingFallback />}>
-            <FetchInterceptorTest />
           </Suspense>
         </div>
       ) : view === 'wismachion' ? (
