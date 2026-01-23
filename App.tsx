@@ -914,12 +914,15 @@ function AppContent() {
           </Suspense>
         </div>
       ) : view === 'blog' ? (
-        <div className="pt-20">
-          <SEO title="Blog List" description="" keywords="" noindex />
-          <Suspense fallback={<PageLoadingFallback />}>
-            <BlogListPage />
-          </Suspense>
-        </div>
+        <>
+          {console.log('🔥🔥🔥 [App.tsx] Rendering BlogListPage! view =', view)}
+          <div className="pt-20">
+            <SEO title="Blog List" description="" keywords="" noindex />
+            <Suspense fallback={<PageLoadingFallback />}>
+              <BlogListPage />
+            </Suspense>
+          </div>
+        </>
       ) : view === 'blog-post' ? (
         <div className="pt-20">
           <SEO title="Blog Post" description="" keywords="" noindex />
