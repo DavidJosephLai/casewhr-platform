@@ -247,10 +247,16 @@ export function BlogListPage() {
         if (response.ok) {
           const data = await response.json();
           console.log('✅ [BlogListPage] Posts loaded from API:', data.posts?.length || 0);
+          console.log('📋 [BlogListPage] Raw posts data:', data.posts);
           
           // 只顯示已發布的文章（published）
           const publishedPosts = (data.posts || []).filter((post: BlogPost) => post.status === 'published');
           console.log('📌 [BlogListPage] Published posts:', publishedPosts.length);
+          console.log('📋 [BlogListPage] Published posts data:', publishedPosts);
+          
+          // 檢查草稿數量
+          const draftPosts = (data.posts || []).filter((post: BlogPost) => post.status === 'draft');
+          console.log('📝 [BlogListPage] Draft posts:', draftPosts.length);
           
           // 如果 API 沒有數據，則使用示範數據
           if (publishedPosts.length === 0) {
@@ -321,6 +327,23 @@ export function BlogListPage() {
 
   console.log('📊 [BlogListPage] Rendering content - filteredPosts:', filteredPosts.length);
 
+  // 🔥 計算分頁資訊
+  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+  const startIndex = (currentPage - 1) * postsPerPage;
+  const endIndex = currentPage * postsPerPage;
+  const currentPagePosts = filteredPosts.slice(startIndex, endIndex);
+  
+  console.log('📄 [BlogListPage] Pagination Info:', {
+    totalPosts: filteredPosts.length,
+    totalPages,
+    currentPage,
+    postsPerPage,
+    startIndex,
+    endIndex,
+    currentPagePosts: currentPagePosts.length,
+    showPagination: filteredPosts.length > postsPerPage
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* Hero Section */}
@@ -387,7 +410,7 @@ export function BlogListPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPosts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage).map((post, index) => (
+            {currentPagePosts.map((post, index) => (
               <Card 
                 key={post.slug} 
                 className="overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
@@ -480,7 +503,7 @@ export function BlogListPage() {
             </Button>
             
             <div className="flex gap-2">
-              {Array.from({ length: Math.ceil(filteredPosts.length / postsPerPage) }, (_, i) => i + 1).map((page) => (
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <Button
                   key={page}
                   variant={currentPage === page ? 'default' : 'outline'}
@@ -494,8 +517,8 @@ export function BlogListPage() {
             
             <Button
               variant="outline"
-              onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filteredPosts.length / postsPerPage), prev + 1))}
-              disabled={currentPage >= Math.ceil(filteredPosts.length / postsPerPage)}
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage >= totalPages}
               className="px-4"
             >
               {language === 'en' ? 'Next' : language === 'zh-CN' ? '下一页' : '下一頁'}

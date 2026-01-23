@@ -47,14 +47,19 @@ export function ReviewList({ userId }: ReviewListProps) {
         }
       );
 
-      const data = await response.json();
-
       if (response.ok) {
+        const data = await response.json();
         // Handle both successful response and graceful error fallback
         setReviews(data.reviews || []);
         setAverageRating(data.average_rating || 0);
       } else {
-        console.warn("Failed to fetch reviews, using empty state:", data.error);
+        // Try to parse error message, but handle parsing failures gracefully
+        try {
+          const data = await response.json();
+          console.warn("Failed to fetch reviews, using empty state:", data.error);
+        } catch {
+          console.warn("Failed to fetch reviews, status:", response.status);
+        }
         setReviews([]);
         setAverageRating(0);
       }

@@ -30,14 +30,15 @@ export function setupGlobalFetchInterceptor() {
         console.error('❌ [Global Fetch Interceptor] Response is null/undefined for:', args[0]);
         
         // Return a fake Response object to prevent null errors
+        // Use 503 (Service Unavailable) instead of 0
         return new Response(
           JSON.stringify({ 
             error: 'Network request returned null',
             url: args[0]
           }), 
           {
-            status: 0,
-            statusText: 'Network Error',
+            status: 503,
+            statusText: 'Service Unavailable',
             headers: new Headers({ 'Content-Type': 'application/json' }),
           }
         );
@@ -50,6 +51,7 @@ export function setupGlobalFetchInterceptor() {
       console.error('❌ [Global Fetch Interceptor] Caught error:', error, 'for:', args[0]);
       
       // Return a fake Response object instead of throwing
+      // Use 503 (Service Unavailable) instead of 0
       return new Response(
         JSON.stringify({ 
           error: error.message || 'Network request failed',
@@ -57,8 +59,8 @@ export function setupGlobalFetchInterceptor() {
           url: args[0]
         }), 
         {
-          status: 0,
-          statusText: error.name || 'Network Error',
+          status: 503,
+          statusText: error.name || 'Service Unavailable',
           headers: new Headers({ 'Content-Type': 'application/json' }),
         }
       );
