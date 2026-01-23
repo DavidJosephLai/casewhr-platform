@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { useView } from '../contexts/ViewContext';
 import { useAuth } from '../contexts/AuthContext';
-import { isAdmin } from '../lib/adminConfig';
+import { isAnyAdmin } from '../config/admin'; // ✅ 使用統一的管理員配置
 
 /**
  * AI SEO 浮動按鈕
@@ -10,11 +10,11 @@ import { isAdmin } from '../lib/adminConfig';
  */
 export function AISEOFloatingButton() {
   const { setView } = useView();
-  const { user } = useAuth();
+  const { user, profile } = useAuth(); // ✅ 同時獲取 user 和 profile
   const [isHovered, setIsHovered] = useState(false);
 
-  // 只顯示給管理員
-  if (!isAdmin(user?.email)) {
+  // ✅ 只顯示給已登入的管理員
+  if (!user || !isAnyAdmin(user?.email, profile)) {
     return null;
   }
 
