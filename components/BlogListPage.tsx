@@ -147,7 +147,7 @@ export function BlogListPage() {
   
   // 🔥 分頁狀態
   const [currentPage, setCurrentPage] = useState(1);
-  const postsPerPage = 9; // 每頁 9 篇文章（3x3 網格）
+  const postsPerPage = 50; // 🔥 增加到每頁 50 篇文章，確保顯示所有內容
 
   console.log('🔍 [BlogListPage] Rendering - user:', user?.email, 'posts:', posts.length);
 
