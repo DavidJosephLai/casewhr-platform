@@ -137,6 +137,40 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
 
   const t = content[language as keyof typeof content] || content['zh-TW'];
 
+  // 📝 格式化內容 - 將純文字轉換為 HTML，保留段落
+  const formatContent = (content: string): string => {
+    if (!content) return '';
+    
+    // 🔍 檢查是否已經包含 HTML 標籤
+    const hasHtmlTags = /<[a-z][\s\S]*>/i.test(content);
+    
+    if (hasHtmlTags) {
+      // 已經是 HTML 格式，直接返回
+      return content;
+    }
+    
+    // 純文字格式，需要轉換
+    // 1. 將雙換行轉換為段落 <p>
+    // 2. 將單換行轉換為 <br>
+    return content
+      .split('\n\n')
+      .map(paragraph => {
+        if (paragraph.trim()) {
+          // 處理段落內的單換行
+          const formattedParagraph = paragraph
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line)
+            .join('<br>');
+          
+          return `<p class="mb-4">${formattedParagraph}</p>`;
+        }
+        return '';
+      })
+      .filter(p => p)
+      .join('\n');
+  };
+
   // 📦 定義所有函數（必須在 useEffect 之前）
   const loadPost = async (slug: string) => {
     setLoading(true);
@@ -398,7 +432,7 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
           <Card className="p-8 mb-8">
             <div 
               className="prose prose-lg max-w-none"
-              dangerouslySetInnerHTML={{ __html: getLocalizedField(post, 'content') }}
+              dangerouslySetInnerHTML={{ __html: formatContent(getLocalizedField(post, 'content')) }}
             />
           </Card>
 
@@ -529,7 +563,7 @@ function getDemoPost(slug: string): BlogPost {
 - 第3-4週：...
 
 【相關經驗】
-我曾為 [類似客戶] 完成 [類似項目]，結果是...
+我曾為 [類似客戶] 完成 [類似項目]，���果是...
 
 【投資】
 總費用：[金額]
@@ -608,7 +642,7 @@ function getDemoPost(slug: string): BlogPost {
 - 第3-4週：...
 
 【相關經驗】
-我曾為 [類似客戶] 完成 [類似項目]，結果是...
+我曾為 [類似客戶] ��成 [類似項目]，結果是...
 
 【投資】
 總費：[金額]
