@@ -14,9 +14,9 @@ export function PopularServices() {
         'zh-CN': "网站开发"
       },
       startingPrice: {
-        en: "From $500",
-        'zh-TW': "NT$15,000 起",
-        'zh-CN': "¥3,500 起"
+        en: "From $800",
+        'zh-TW': "NT$25,000 起",
+        'zh-CN': "¥5,500 起"
       },
       projects: 3241,
       color: "from-blue-500 to-blue-600",
@@ -31,9 +31,9 @@ export function PopularServices() {
         'zh-CN': "UI/UX 设计"
       },
       startingPrice: {
-        en: "From $300",
-        'zh-TW': "NT$9,000 起",
-        'zh-CN': "¥2,100 起"
+        en: "From $500",
+        'zh-TW': "NT$15,000 起",
+        'zh-CN': "¥3,500 起"
       },
       projects: 2873,
       color: "from-purple-500 to-purple-600",
@@ -48,9 +48,9 @@ export function PopularServices() {
         'zh-CN': "视频剪辑"
       },
       startingPrice: {
-        en: "From $200",
-        'zh-TW': "NT$6,000 起",
-        'zh-CN': "¥1,400 起"
+        en: "From $350",
+        'zh-TW': "NT$10,000 起",
+        'zh-CN': "¥2,300 起"
       },
       projects: 1956,
       color: "from-red-500 to-red-600",
@@ -65,9 +65,9 @@ export function PopularServices() {
         'zh-CN': "数字营销"
       },
       startingPrice: {
-        en: "From $400",
-        'zh-TW': "NT$12,000 起",
-        'zh-CN': "¥2,800 起"
+        en: "From $650",
+        'zh-TW': "NT$20,000 起",
+        'zh-CN': "¥4,600 起"
       },
       projects: 2134,
       color: "from-green-500 to-green-600",
@@ -82,9 +82,9 @@ export function PopularServices() {
         'zh-CN': "数据分析"
       },
       startingPrice: {
-        en: "From $600",
-        'zh-TW': "NT$18,000 起",
-        'zh-CN': "¥4,200 起"
+        en: "From $1,000",
+        'zh-TW': "NT$30,000 起",
+        'zh-CN': "¥7,000 起"
       },
       projects: 1423,
       color: "from-orange-500 to-orange-600",
@@ -99,9 +99,9 @@ export function PopularServices() {
         'zh-CN': "SEO 优化"
       },
       startingPrice: {
-        en: "From $350",
-        'zh-TW': "NT$10,500 起",
-        'zh-CN': "¥2,450 起"
+        en: "From $600",
+        'zh-TW': "NT$18,000 起",
+        'zh-CN': "¥4,200 起"
       },
       projects: 1789,
       color: "from-teal-500 to-teal-600",
@@ -116,9 +116,9 @@ export function PopularServices() {
         'zh-CN': "APP 开发"
       },
       startingPrice: {
-        en: "From $800",
-        'zh-TW': "NT$24,000 起",
-        'zh-CN': "¥5,600 起"
+        en: "From $1,300",
+        'zh-TW': "NT$40,000 起",
+        'zh-CN': "¥9,300 起"
       },
       projects: 2456,
       color: "from-indigo-500 to-indigo-600",
@@ -133,9 +133,9 @@ export function PopularServices() {
         'zh-CN': "后端 API"
       },
       startingPrice: {
-        en: "From $700",
-        'zh-TW': "NT$21,000 起",
-        'zh-CN': "¥4,900 起"
+        en: "From $1,150",
+        'zh-TW': "NT$35,000 起",
+        'zh-CN': "¥8,000 起"
       },
       projects: 1634,
       color: "from-pink-500 to-pink-600",

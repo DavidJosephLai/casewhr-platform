@@ -6188,12 +6188,12 @@ app.post("/make-server-215f78a5/subscription/upgrade", async (c) => {
     // ⭐ 三幣價格系統（與前端 PricingPage.tsx 完全一致）
     const planPrices = {
       pro: {
-        monthly: { USD: 9.9, TWD: 300, CNY: 70 },
-        yearly: { USD: 95, TWD: 2880, CNY: 670 }
+        monthly: { USD: 15, TWD: 480, CNY: 110 },
+        yearly: { USD: 150, TWD: 4680, CNY: 1090 }
       },
       enterprise: {
-        monthly: { USD: 29, TWD: 900, CNY: 205 },
-        yearly: { USD: 278, TWD: 8640, CNY: 1970 }
+        monthly: { USD: 45, TWD: 1400, CNY: 325 },
+        yearly: { USD: 450, TWD: 14040, CNY: 3250 }
       }
     };
 
@@ -8024,7 +8024,7 @@ app.post("/make-server-215f78a5/notifications/check-renewals", async (c) => {
           const wallet = await kv.get(walletKey);
           
           const balance = wallet?.available_balance || 0;
-          const planPrices = { pro: 29, enterprise: 99 };
+          const planPrices = { pro: 45, enterprise: 150 };
           const amount = planPrices[sub.plan as keyof typeof planPrices] || 0;
 
           // Send renewal reminder email
@@ -8143,8 +8143,8 @@ app.post("/make-server-215f78a5/subscription/process-renewals", async (c) => {
 
           // Calculate renewal amount
           const planPrices = { 
-            pro: subscription.billingCycle === 'yearly' ? 290 : 29,
-            enterprise: subscription.billingCycle === 'yearly' ? 990 : 99 
+            pro: subscription.billingCycle === 'yearly' ? 450 : 45,
+            enterprise: subscription.billingCycle === 'yearly' ? 1400 : 140 
           };
           const amount = planPrices[subscription.plan as keyof typeof planPrices] || 0;
 
