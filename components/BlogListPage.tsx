@@ -13,7 +13,7 @@ import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useView } from '../contexts/ViewContext';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
-import { Search, Calendar, Clock, Tag, ArrowRight, BookOpen, TrendingUp, User, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Calendar, Clock, Tag, ArrowRight, BookOpen, TrendingUp, User, Lock, ChevronLeft, ChevronRight, Edit } from 'lucide-react';
 
 // 🔥 強制版本檢查 - v2.0.93
 console.log('🔥🔥🔥 [BlogListPage v2.0.93] FILE LOADED - NO LOGIN RESTRICTION! 🔥🔥🔥');
@@ -529,23 +529,33 @@ export function BlogListPage() {
         )}
         
         {/* 🔧 Blog 管理按鈕 - 僅超級管理員可見 */}
-        {user?.email === 'davidlai234@hotmail.com' && (
+        {(() => {
+          const SUPER_ADMINS = ['davidlai234@hotmail.com', 'davidlai117@yahoo.com.tw'];
+          const isSuperAdmin = user?.email && SUPER_ADMINS.includes(user.email);
+          return isSuperAdmin;
+        })() && (
           <div className="mt-12 text-center">
             <Button
               onClick={() => {
                 console.log('🔧 [BlogList] Navigating to Blog Admin');
                 window.location.href = '/blog/admin';
               }}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+              variant="outline"
+              size="lg"
+              className="border-2 border-purple-600 text-purple-600 hover:bg-purple-50"
             >
-              <Lock className="w-5 h-5 mr-2" />
-              {language === 'en' ? 'Blog Management' : language === 'zh-CN' ? '博客管理' : 'Blog 管理'}
+              <Edit className="w-5 h-5 mr-2" />
+              {language === 'en' ? '🔧 Blog Management (Admin)' : '🔧 Blog 管理（管理員）'}
             </Button>
           </div>
         )}
         
         {/* ✍️ 發布文章按鈕 - 所有訪客可見，未登入會引導登入 */}
-        <div className={user?.email === 'davidlai234@hotmail.com' ? 'mt-4 text-center' : 'mt-12 text-center'}>
+        <div className={(() => {
+          const SUPER_ADMINS = ['davidlai234@hotmail.com', 'davidlai117@yahoo.com.tw'];
+          const isSuperAdmin = user?.email && SUPER_ADMINS.includes(user.email);
+          return isSuperAdmin ? 'mt-4 text-center' : 'mt-12 text-center';
+        })()}>
           <Button
             onClick={() => {
               if (!user) {

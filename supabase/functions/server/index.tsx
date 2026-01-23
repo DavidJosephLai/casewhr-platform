@@ -1128,7 +1128,8 @@ app.post('/make-server-215f78a5/blog/posts', async (c) => {
     
     // 🔥 檢查權限：只能編輯自己的文章，除非是超級管理員
     const existingPost = await kv.get(`blog_post_${post.slug}`);
-    const isSuperAdmin = user.email === 'davidlai234@hotmail.com';
+    const SUPER_ADMINS = ['davidlai234@hotmail.com', 'davidlai117@yahoo.com.tw'];
+    const isSuperAdmin = user.email && SUPER_ADMINS.includes(user.email);
     
     if (existingPost && existingPost.authorEmail !== user.email && !isSuperAdmin) {
       return c.json({ error: 'You can only edit your own posts' }, 403);
@@ -1170,7 +1171,8 @@ app.delete('/make-server-215f78a5/blog/posts/:slug', async (c) => {
     const post = await kv.get(`blog_post_${slug}`);
     
     // 🔥 檢查權限：只能刪除自己的文章，除非是超級管理員
-    const isSuperAdmin = user.email === 'davidlai234@hotmail.com';
+    const SUPER_ADMINS = ['davidlai234@hotmail.com', 'davidlai117@yahoo.com.tw'];
+    const isSuperAdmin = user.email && SUPER_ADMINS.includes(user.email);
     if (post && post.authorEmail !== user.email && !isSuperAdmin) {
       return c.json({ error: 'You can only delete your own posts' }, 403);
     }

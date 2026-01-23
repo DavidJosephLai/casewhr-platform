@@ -316,7 +316,8 @@ export function BlogManagementPage() {
       if (response && response.ok) {
         const data = await response.json();
         // 🔒 權限控制：只顯示用戶自己的文章，除非是超級管理員
-        const isSuperAdmin = user?.email === 'davidlai234@hotmail.com';
+        const SUPER_ADMINS = ['davidlai234@hotmail.com', 'davidlai117@yahoo.com.tw'];
+        const isSuperAdmin = user?.email && SUPER_ADMINS.includes(user.email);
         const allPosts = data.posts || [];
         
         if (isSuperAdmin) {
