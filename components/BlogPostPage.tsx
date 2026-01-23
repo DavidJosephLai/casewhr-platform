@@ -25,6 +25,7 @@ import {
   Lock
 } from 'lucide-react';
 import { SEO } from './SEO';
+import { ArticleTopAd, ArticleMiddleAd, ArticleBottomAd } from './AdSenseAd'; // ✅ 引入廣告組件
 
 interface BlogPost {
   slug: string;
@@ -428,6 +429,9 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
             </div>
           </div>
 
+          {/* 💰 廣告位置 1: 文章頂部 */}
+          <ArticleTopAd />
+
           {/* 文章內容 */}
           <Card className="p-8 mb-8">
             <div 
@@ -435,6 +439,9 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
               dangerouslySetInnerHTML={{ __html: formatContent(getLocalizedField(post, 'content')) }}
             />
           </Card>
+
+          {/* 💰 廣告位置 2: 文章中間 */}
+          <ArticleMiddleAd />
 
           {/* 標籤 */}
           {post.tags && post.tags.length > 0 && (
@@ -449,6 +456,9 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
               </div>
             </div>
           )}
+
+          {/* 💰 廣告位置 3: 文章底部 */}
+          <ArticleBottomAd />
 
           {/* 相關文章 */}
           {relatedPosts.length > 0 && (
@@ -550,7 +560,7 @@ function getDemoPost(slug: string): BlogPost {
         <pre>
 親愛的 [客戶名稱]，
 
-我注意到您的 [項目名稱] 需要 [具體服務]。作為在 [領域] 有 X 年經驗的專業人士，我相信我能為您提供卓越的解決方案。
+我注意到您的 [項目名稱] 需要 [具體服��]。作為在 [領域] 有 X 年經驗的專業人士，我相信我能為您提供卓越的解決方案。
 
 【理解需求】
 根據您的描述，我了解到...
@@ -563,7 +573,7 @@ function getDemoPost(slug: string): BlogPost {
 - 第3-4週：...
 
 【相關經驗】
-我曾為 [類似客戶] 完成 [類似項目]，���果是...
+我曾為 [類似客戶] 完成 [類似項目]，果是...
 
 【投資】
 總費用：[金額]
@@ -642,7 +652,7 @@ function getDemoPost(slug: string): BlogPost {
 - 第3-4週：...
 
 【相關經驗】
-我曾為 [類似客戶] ��成 [類似項目]，結果是...
+我曾為 [類似客戶] 成 [類似項目]，結果是...
 
 【投資】
 總費：[金額]
