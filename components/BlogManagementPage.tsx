@@ -70,6 +70,7 @@ interface BlogPost {
   category: string;
   tags: string[];
   author: string;
+  authorEmail?: string; // 🔒 用於權限檢查
   coverImage: string;
   publishedAt: string;
   readTime: number;
@@ -157,6 +158,7 @@ export function BlogManagementPage() {
           category: 'freelancer-tips',
           tags: [],
           author: user?.email || 'Admin',
+          authorEmail: user?.email, // 🔒 用於權限檢查
           coverImage: '',
           publishedAt: new Date().toISOString().split('T')[0],
           readTime: 5,
@@ -313,7 +315,22 @@ export function BlogManagementPage() {
 
       if (response && response.ok) {
         const data = await response.json();
-        setPosts(data.posts || []);
+        // 🔒 權限控制：只顯示用戶自己的文章，除非是超級管理員
+        const isSuperAdmin = user?.email === 'davidlai234@hotmail.com';
+        const allPosts = data.posts || [];
+        
+        if (isSuperAdmin) {
+          // 超級管理員可以看到所有文章
+          console.log('👑 [BlogManagement] Super admin - showing all posts:', allPosts.length);
+          setPosts(allPosts);
+        } else {
+          // 一般用戶只能看到自己的文章
+          const userPosts = allPosts.filter((post: BlogPost) => 
+            post.author === user?.email || post.authorEmail === user?.email
+          );
+          console.log(`🔒 [BlogManagement] Regular user ${user?.email} - showing only own posts:`, userPosts.length, 'of', allPosts.length);
+          setPosts(userPosts);
+        }
       } else {
         console.warn('[BlogManagement] Failed to load posts:', response?.status || 'No response');
         setPosts([]);
@@ -342,6 +359,7 @@ export function BlogManagementPage() {
       category: 'freelancer-tips',
       tags: [],
       author: user?.email || 'Admin',
+      authorEmail: user?.email, // 🔒 用於權限檢查
       coverImage: '',
       publishedAt: new Date().toISOString().split('T')[0],
       readTime: 5,

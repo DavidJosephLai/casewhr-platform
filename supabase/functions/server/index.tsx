@@ -1136,8 +1136,13 @@ app.post('/make-server-215f78a5/blog/posts', async (c) => {
     
     // 設置作者資訊
     if (!existingPost) {
+      // 新文章：設置作者
       post.author = user.email || 'Anonymous';
       post.authorEmail = user.email;
+    } else {
+      // 編輯現有文章：保留原作者資訊
+      post.author = existingPost.author;
+      post.authorEmail = existingPost.authorEmail;
     }
     
     // 儲存文章
