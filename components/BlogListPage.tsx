@@ -234,15 +234,21 @@ export function BlogListPage() {
       setLoading(true);
       try {
         console.log('📥 [BlogListPage] Loading posts from API...');
-        const response = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/blog/posts`,
-          {
-            headers: {
-              'Authorization': `Bearer ${publicAnonKey}`,
-              'Content-Type': 'application/json',
-            },
-          }
-        );
+        console.log('🔑 [BlogListPage] projectId:', projectId);
+        console.log('🔑 [BlogListPage] publicAnonKey:', publicAnonKey ? `${publicAnonKey.substring(0, 20)}...` : 'NOT SET');
+        
+        const apiUrl = `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/blog/posts`;
+        console.log('🌐 [BlogListPage] API URL:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        console.log('📡 [BlogListPage] Response status:', response.status);
+        console.log('📡 [BlogListPage] Response ok:', response.ok);
 
         if (response.ok) {
           const data = await response.json();
@@ -251,12 +257,7 @@ export function BlogListPage() {
           
           // 只顯示已發布的文章（published）
           const publishedPosts = (data.posts || []).filter((post: BlogPost) => post.status === 'published');
-          console.log('📌 [BlogListPage] Published posts:', publishedPosts.length);
-          console.log('📋 [BlogListPage] Published posts data:', publishedPosts);
-          
-          // 檢查草稿數量
-          const draftPosts = (data.posts || []).filter((post: BlogPost) => post.status === 'draft');
-          console.log('📝 [BlogListPage] Draft posts:', draftPosts.length);
+          console.log('✅ [BlogListPage] Published posts:', publishedPosts.length);
           
           // 如果 API 沒有數據，則使用示範數據
           if (publishedPosts.length === 0) {
@@ -266,7 +267,9 @@ export function BlogListPage() {
             setPosts(publishedPosts);
           }
         } else {
-          console.warn('⚠️ [BlogListPage] API failed, using demo data');
+          const errorData = await response.text();
+          console.warn('⚠️ [BlogListPage] API failed with status:', response.status);
+          console.warn('⚠️ [BlogListPage] Error response:', errorData);
           setPosts(DEMO_POSTS);
         }
       } catch (error) {
