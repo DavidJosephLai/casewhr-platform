@@ -248,8 +248,25 @@ export function generateLongTailKeywords(language: string = 'zh-TW'): KeywordDat
 export function clusterKeywords(keywords: KeywordData[]): KeywordCluster[] {
   const clusters: Map<string, KeywordData[]> = new Map();
 
-  keywords.forEach(kw => {
-    const mainKeyword = kw.keyword.split(' ')[0] + ' ' + kw.keyword.split(' ')[1];
+  // 🔥 第一步：識別核心關鍵字（opportunity >= 95 的為核心關鍵字）
+  const coreKeywords = keywords.filter(kw => kw.opportunity >= 95);
+  const otherKeywords = keywords.filter(kw => kw.opportunity < 95);
+
+  // 🔥 為核心關鍵字創建獨立集群（每個核心關鍵字一個集群）
+  coreKeywords.forEach(kw => {
+    const mainKeyword = kw.keyword;
+    if (!clusters.has(mainKeyword)) {
+      clusters.set(mainKeyword, []);
+    }
+    clusters.get(mainKeyword)!.push(kw);
+  });
+
+  // 為其他關鍵字按照前兩個詞分組
+  otherKeywords.forEach(kw => {
+    const words = kw.keyword.split(' ');
+    const mainKeyword = words.length > 1 
+      ? words[0] + ' ' + words[1]
+      : words[0];
     
     if (!clusters.has(mainKeyword)) {
       clusters.set(mainKeyword, []);
@@ -260,7 +277,11 @@ export function clusterKeywords(keywords: KeywordData[]): KeywordCluster[] {
   return Array.from(clusters.entries()).map(([mainKeyword, keywords]) => {
     const totalSearchVolume = keywords.reduce((sum, kw) => sum + kw.searchVolume, 0);
     const avgDifficulty = keywords.reduce((sum, kw) => sum + kw.difficulty, 0) / keywords.length;
-    const priority = calculatePriority(totalSearchVolume, avgDifficulty);
+    const avgOpportunity = keywords.reduce((sum, kw) => sum + kw.opportunity, 0) / keywords.length;
+    
+    // 🔥 核心關鍵字集群給予額外優先級加成
+    const isCoreCluster = keywords.some(kw => kw.opportunity >= 95);
+    const priority = calculatePriority(totalSearchVolume, avgDifficulty, avgOpportunity, isCoreCluster);
 
     return {
       mainKeyword,
@@ -269,17 +290,36 @@ export function clusterKeywords(keywords: KeywordData[]): KeywordCluster[] {
       avgDifficulty,
       priority
     };
-  }).sort((a, b) => b.priority - a.priority);
+  }).sort((a, b) => b.priority - a.priority); // 按優先級降序排列
 }
 
 /**
  * 計算關鍵字優先級
  */
-function calculatePriority(searchVolume: number, difficulty: number): number {
-  // 優先級 = (搜尋量 / 100) / (難度 / 10)
-  const volumeScore = Math.min(searchVolume / 100, 10);
+function calculatePriority(
+  searchVolume: number, 
+  difficulty: number, 
+  opportunity: number,
+  isCoreCluster: boolean = false
+): number {
+  // 基礎分數：搜尋量分數
+  const volumeScore = Math.min(searchVolume / 1000, 10);
+  
+  // 難度分數（難度越低越好）
   const difficultyScore = Math.max(10 - difficulty / 10, 1);
-  return Math.round((volumeScore * difficultyScore) * 10) / 10;
+  
+  // 機會分數
+  const opportunityScore = opportunity / 10;
+  
+  // 綜合優先級 = (搜尋量分數 × 機會分數) / 難度分數
+  let priority = (volumeScore * opportunityScore) / Math.max(difficultyScore, 0.5);
+  
+  // 🔥 核心關鍵字集群額外加成 +50
+  if (isCoreCluster) {
+    priority += 50;
+  }
+  
+  return Math.round(priority * 10) / 10;
 }
 
 /**
