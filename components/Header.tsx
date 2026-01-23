@@ -474,7 +474,7 @@ export function Header() {
                       <span>{language === 'en' ? 'Upgrade' : '升級'}</span>
                     </Button>
                   )}
-                  {/* 🛡️ 管理員按鈕 - 僅管理員可見，含待審核 KYC 徽章 */}
+                  {/* 🛡️ 管理員按鈕 - 僅管理員���見，含待審核 KYC 徽章 */}
                   {isAdmin && (
                     <Button
                       variant="ghost"
@@ -565,7 +565,7 @@ export function Header() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setLoginOpen(true)}
-                    className="hidden sm:inline-flex text-[#111827] hover:text-blue-600 hover:bg-blue-50"
+                    className="text-[#111827] hover:text-blue-600 hover:bg-blue-50"
                   >
                     {t.nav.login}
                   </Button>
