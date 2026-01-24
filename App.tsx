@@ -51,6 +51,9 @@ const AISEOFloatingButton = lazy(() => import('./components/AISEOFloatingButton'
 const AIChatbot = lazy(() => import('./components/AIChatbot'));
 const AISEOManager = lazy(() => import('./components/AISEOManager').then(module => ({ default: module.AISEOManager })));
 
+// 🔧 影片診斷工具
+import { VideoDebugger } from './components/VideoDebugger';
+
 // 🔧 測試和診斷頁面 - Lazy Load（不常用）
 const AISEOTestPage = lazy(() => import('./components/AISEOTestPage'));
 const BrevoTestPage = lazy(() => import('./components/BrevoTestPage'));
@@ -179,7 +182,7 @@ function AppContent() {
     }
   }, [user]);
   
-  // 🔥 NEW: 監聽自定義��航事件（例如從錢包餘額不足對話框觸發）
+  // 🔥 NEW: 監聽自定義航事件（例如從錢包餘額不足對話框觸發）
   useEffect(() => {
     const handleNavigate = (event: any) => {
       const targetView = event.detail?.view;
@@ -989,6 +992,9 @@ function AppContent() {
         onClose={() => setShowEmailModal(false)}
         userId={lineUserId}
       />
+      
+      {/* 🔧 影片診斷工具 */}
+      <VideoDebugger />
     </div>
   );
 }

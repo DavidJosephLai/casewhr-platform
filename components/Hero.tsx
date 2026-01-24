@@ -170,26 +170,29 @@ export function Hero() {
             onCanPlay={() => {
               console.log('✅ [Hero] Video can play');
             }}
+            onPlaying={() => {
+              console.log('🎬 [Hero] Video is now playing!');
+            }}
             className="absolute inset-0 w-full h-full object-cover"
             style={{ zIndex: 1 }}
           >
-            {/* 🎬 經測試可靠的影片源 */}
+            {/* 🎬 使用更可靠的 Pexels 影片源 */}
             
-            {/* 主影片：商務辦公室場景（高可靠性） */}
+            {/* 主影片：商務團隊合作（Pexels - 高可靠性） */}
             <source 
-              src="https://cdn.pixabay.com/video/2021/08/04/84516-583693651_large.mp4" 
+              src="https://videos.pexels.com/video-files/3191158/3191158-uhd_2560_1440_25fps.mp4" 
               type="video/mp4" 
             />
             
-            {/* 備用影片 1：團隊合作 */}
+            {/* 備用影片 1：辦公室工作（Pexels） */}
             <source 
-              src="https://cdn.pixabay.com/video/2020/05/30/40747-424810828_large.mp4" 
+              src="https://videos.pexels.com/video-files/4065891/4065891-uhd_2560_1440_25fps.mp4" 
               type="video/mp4" 
             />
             
-            {/* 備用影片 2：商業會議 */}
+            {/* 備用影片 2：商業會議（Coverr） */}
             <source 
-              src="https://cdn.pixabay.com/video/2019/08/20/26201-356237807_large.mp4" 
+              src="https://coverr.co/videos/business-team-meeting--ZPmOGlVWt8/download"
               type="video/mp4" 
             />
             
