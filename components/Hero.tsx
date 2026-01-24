@@ -159,6 +159,7 @@ export function Hero() {
             muted
             loop
             playsInline
+            preload="auto"
             onError={() => {
               console.log('⚠️ [Hero] Video failed to load, falling back to image');
               setVideoError(true);
@@ -166,24 +167,33 @@ export function Hero() {
             onLoadedData={() => {
               console.log('✅ [Hero] Video loaded successfully');
             }}
+            onCanPlay={() => {
+              console.log('✅ [Hero] Video can play');
+            }}
             className="absolute inset-0 w-full h-full object-cover"
             style={{ zIndex: 1 }}
           >
-            {/* 🎬 主影片：科技感 - 數據可視化與程式碼 */}
+            {/* 🎬 經測試可靠的影片源 */}
+            
+            {/* 主影片：商務辦公室場景（高可靠性） */}
             <source 
-              src="https://cdn.pixabay.com/video/2022/11/29/141363-777455382_large.mp4" 
+              src="https://cdn.pixabay.com/video/2021/08/04/84516-583693651_large.mp4" 
               type="video/mp4" 
             />
-            {/* 備用影片 1：數位轉型 - 商業數據分析 */}
+            
+            {/* 備用影片 1：團隊合作 */}
             <source 
-              src="https://cdn.pixabay.com/video/2020/06/25/42996-436094944_large.mp4" 
+              src="https://cdn.pixabay.com/video/2020/05/30/40747-424810828_large.mp4" 
               type="video/mp4" 
             />
-            {/* 備用影片 2：科技辦公 - 現代工作空間 */}
+            
+            {/* 備用影片 2：商業會議 */}
             <source 
-              src="https://cdn.pixabay.com/video/2019/08/10/25739-353801590_large.mp4" 
+              src="https://cdn.pixabay.com/video/2019/08/20/26201-356237807_large.mp4" 
               type="video/mp4" 
             />
+            
+            您的瀏覽器不支援影片播放。
           </video>
         )}
         
