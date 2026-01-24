@@ -13,6 +13,11 @@ export function Hero() {
   const { user, profile } = useAuth();
   const { setView, setManualOverride } = useView();
   const t = getTranslation(language as any).hero;
+  
+  // 🔍 診斷翻譯載入
+  console.log('🌍 [Hero] 當前語言:', language);
+  console.log('📝 [Hero] CTA4 翻譯:', t.cta4);
+  
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [videoError, setVideoError] = useState(false);
   const [videoUrl] = useState<string>('https://videos.pexels.com/video-files/3581208/3581208-hd_1920_1080_30fps.mp4');
