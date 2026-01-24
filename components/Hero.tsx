@@ -64,6 +64,7 @@ export function Hero() {
   }, []);
 
   const handleGetStarted = () => {
+    console.log('🔵 [Hero] 按鈕 1/2 被點擊，用戶狀態:', user ? '已登入' : '未登入');
     if (!user) {
       setManualOverride(true);
       setTimeout(() => setView('register'), 0);
@@ -73,6 +74,7 @@ export function Hero() {
   };
 
   const handleFindWork = () => {
+    console.log('🟢 [Hero] 按鈕 3/4 被點擊，用戶狀態:', user ? '已登入' : '未登入');
     if (!user) {
       setManualOverride(true);
       setTimeout(() => setView('register'), 0);
