@@ -1,284 +1,224 @@
-import { Button } from "./ui/button";
 import { useLanguage } from "../lib/LanguageContext";
 import { useView } from "../contexts/ViewContext";
-import { translations, getTranslation } from "../lib/translations";
-import { useState, useEffect } from "react";
+import { getTranslation } from "../lib/translations";
+import { useState } from "react";
 import { PostProjectDialog } from "./PostProjectDialog";
 import { useAuth } from "../contexts/AuthContext";
-import { ArrowRight, Crown, Users, Briefcase, Star } from "lucide-react";
-import { supabase } from "../utils/supabase/client";
+import { Crown, Users, Briefcase, Star } from "lucide-react";
+import { Button } from "./ui/button";
 
 export function Hero() {
   const { language } = useLanguage();
   const { user, profile } = useAuth();
-  const { setView, setManualOverride } = useView();
+  const { view, setView, setManualOverride } = useView();
   const t = getTranslation(language as any).hero;
   
-  // 🔍 診斷翻譯載入
-  console.log('🌍 [Hero] 當前語言:', language);
-  console.log('📝 [Hero] CTA4 翻譯:', t.cta4);
-  
   const [showProjectForm, setShowProjectForm] = useState(false);
-  const [videoError, setVideoError] = useState(false);
-  const [videoUrl] = useState<string>('https://videos.pexels.com/video-files/3581208/3581208-hd_1920_1080_30fps.mp4');
-  const [fallbackImageUrl] = useState<string>('https://images.unsplash.com/photo-1622126977176-bf029dbf6ed0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMG9mZmljZSUyMHdvcmtzcGFjZXxlbnwxfHx8fDE3NjkxMjQ3MTB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral');
-  const [videoLoaded, setVideoLoaded] = useState(false);
-  
-  // 🔥 動態統計數字動畫
-  const [stats, setStats] = useState({
-    freelancers: 0,
-    projects: 0,
-    clients: 0
-  });
-  
-  // 統計數字動畫
-  useEffect(() => {
-    const targetStats = {
-      freelancers: 15847,
-      projects: 42389,
-      clients: 8932
+
+  // 🔥 跟 Header 一樣的 scrollToSection 函數
+  const scrollToSection = (id: string) => {
+    console.log(`🎯 [Hero] Attempting to scroll to section: ${id}`);
+    console.log(`📍 [Hero] Current view: ${view}`);
+    
+    const isChangingView = view !== 'home';
+    
+    if (isChangingView) {
+      console.log(`🔄 [Hero] Switching to home view first`);
+      setView('home');
+      setManualOverride(true);
+    }
+    
+    // 滾動到指定元素
+    const scrollToElement = () => {
+      const element = document.getElementById(id);
+      console.log(`🔍 [Hero] Looking for element #${id}:`, element);
+      
+      if (element) {
+        // 計算元素位置並扣除 header 高度
+        const headerHeight = 80;
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const targetPosition = elementPosition - headerHeight;
+        
+        console.log(`📍 [Hero] Element position: ${elementPosition}, target: ${targetPosition}, current scroll: ${window.pageYOffset}`);
+        
+        // 一次性滾動到目標位置
+        window.scrollTo({
+          top: targetPosition,
+          behavior: 'smooth'
+        });
+        
+        console.log(`✅ [Hero] Scrolled to section: ${id}`);
+        return true;
+      }
+      console.log(`⏳ [Hero] Element #${id} not found, retrying...`);
+      return false;
     };
     
-    const duration = 2000; // 2秒動畫
-    const steps = 60;
-    const interval = duration / steps;
+    // 如果已經在首頁，立即滾動
+    if (!isChangingView) {
+      console.log(`⏰ [Hero] Already on home page, scrolling immediately`);
+      setTimeout(() => scrollToElement(), 50);
+      return;
+    }
     
-    let currentStep = 0;
-    const timer = setInterval(() => {
-      currentStep++;
-      const progress = currentStep / steps;
-      
-      setStats({
-        freelancers: Math.floor(targetStats.freelancers * progress),
-        projects: Math.floor(targetStats.projects * progress),
-        clients: Math.floor(targetStats.clients * progress)
-      });
-      
-      if (currentStep >= steps) {
-        clearInterval(timer);
-        setStats(targetStats);
+    // 如果是從其他頁面切換過來，使用更長的初始延遲和重試機制
+    console.log(`⏰ [Hero] Switching from ${view} to home, using extended retry mechanism`);
+    
+    setTimeout(() => {
+      console.log(`⏰ [Hero] First scroll attempt after 1000ms`);
+      if (!scrollToElement()) {
+        const retryDelays = [300, 300, 300, 300];
+        let attemptCount = 1;
+        
+        const retry = (index: number) => {
+          if (index >= retryDelays.length) {
+            console.warn(`❌ [Hero] Failed to scroll to #${id} after ${attemptCount + 1} attempts`);
+            return;
+          }
+          
+          setTimeout(() => {
+            attemptCount++;
+            console.log(`⏰ [Hero] Retry attempt ${attemptCount}`);
+            if (!scrollToElement()) {
+              retry(index + 1);
+            }
+          }, retryDelays[index]);
+        };
+        
+        retry(0);
       }
-    }, interval);
-    
-    return () => clearInterval(timer);
-  }, []);
+    }, 1000);
+  };
 
   const handleGetStarted = () => {
-    console.log('🔵 [Hero] 按鈕 1/2 被點擊，用戶狀態:', user ? '已登入' : '未登入');
-    if (!user) {
-      setManualOverride(true);
-      setTimeout(() => setView('register'), 0);
-    } else {
-      setShowProjectForm(true);
-    }
+    console.log('🔵 [Hero] 瀏覽人才按鈕被點擊');
+    scrollToSection('talents'); // 直接滾動到人才區域
   };
 
   const handleFindWork = () => {
-    console.log('🟢 [Hero] 按鈕 3/4 被點擊，用戶狀態:', user ? '已登入' : '未登入');
-    if (!user) {
-      setManualOverride(true);
-      setTimeout(() => setView('register'), 0);
-    } else {
-      setManualOverride(true);
-      setTimeout(() => setView('home'), 0);
-    }
+    console.log('🟢 [Hero] 發布項目按鈕被點擊');
+    // 只有這個需要登入！
+    window.dispatchEvent(new CustomEvent('openAuthDialog', { detail: 'login' }));
+  };
+
+  const handleBrowseProjects = () => {
+    console.log('🔵 [Hero] 瀏覽發案項目按鈕被點擊');
+    scrollToSection('projects'); // 直接滾動到發案項目區域（修正：從 services 改為 projects）
+  };
+
+  const handleBecomePro = () => {
+    console.log('⭐ [Hero] 查看作品集按鈕被點擊');
+    scrollToSection('portfolio'); // 直接滾動到作品集區域
   };
 
   const isPremium = profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'vip';
 
   return (
     <>
-      <div className="relative overflow-hidden min-h-[80vh] flex flex-col">
-        {/* 優先嘗試播放影片，失敗時使用圖片備用 */}
-        {!videoError && videoUrl ? (
-          <>
-            <video
-              key={videoUrl}
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover"
-              onError={() => {
-                console.warn('⚠️ [Hero] 影片無法播放（可能是 Figma Make 環境限制）');
-                console.log('🔄 [Hero] 自動切換到圖片備用方案');
-                setVideoError(true);
-              }}
-              onLoadedData={() => {
-                console.log('✅ [Hero] 影片已載入並可播放');
-                setVideoLoaded(true);
-              }}
-              onLoadStart={() => {
-                console.log('🔄 [Hero] 開始載入 Pexels 影片...');
-              }}
-            >
-              <source src={videoUrl} type="video/mp4" />
-              您的瀏覽器不支援影片播放。
-            </video>
-            
-            {/* 載入指示器 */}
-            {!videoLoaded && (
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-600 flex items-center justify-center z-5">
-                <div className="text-white text-xl">🎬 載入影片中...</div>
-              </div>
-            )}
-          </>
-        ) : videoError && fallbackImageUrl ? (
-          <>
-            {/* 備用圖片 */}
-            <img
-              src={fallbackImageUrl}
-              alt="Background"
-              className="absolute inset-0 w-full h-full object-cover"
-              onLoad={() => {
-                console.log('✅ [Hero] 備用圖片已載入');
-                setVideoLoaded(true);
-              }}
-            />
-          </>
-        ) : (
-          // 最終備用背景（漸層）
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-600" />
-        )}
+      <div className="min-h-[70vh] py-20 relative overflow-hidden">
+        {/* 🎬 背景影片層 - 自動播放循環 */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover z-0"
+        >
+          <source 
+            src="https://bihplitfentxioxyjalb.supabase.co/storage/v1/object/public/Background/7581208-hd_1920_1080_30fps.mp4" 
+            type="video/mp4" 
+          />
+        </video>
+        
+        {/* 半透明深色疊加層讓文字清晰可讀 */}
+        <div className="absolute inset-0 bg-black/50 z-0" />
+        
+        {/* 內容層 */}
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-3xl">
+            <div className="mb-6">
+              <span className="text-yellow-300 text-sm font-semibold">
+                {t.badge}
+              </span>
+            </div>
 
-        {/* 深色遮罩層 - 保留視覺效果但不阻擋點擊 */}
-        <div className="absolute inset-0 bg-black/60 pointer-events-none" />
+            <h1 className="text-5xl font-bold text-white mb-6">
+              {t.slogan}
+            </h1>
 
-        {/* 主要內容區域 - 垂直居中 */}
-        <div className="relative z-10 flex-1 flex items-center">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
-            <div className="max-w-3xl">
-              {/* 小標籤 */}
-              <div className="inline-block mb-6">
-                <span className="text-yellow-400 text-sm font-semibold tracking-wide">
-                  {t.badge}
-                </span>
-              </div>
+            <p className="text-xl text-white/90 mb-8">
+              {t.subtitle}
+            </p>
 
-              {/* 主標題 */}
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-                {t.slogan}
-              </h1>
+            <p className="text-2xl text-blue-200 font-semibold mb-10">
+              {t.vision}
+            </p>
 
-              {/* 描述文字 */}
-              <p className="text-lg sm:text-xl text-white/90 mb-8 leading-relaxed max-w-2xl">
-                {t.subtitle}
-              </p>
-
-              {/* 高亮文字 */}
-              <p className="text-xl sm:text-2xl text-blue-300 font-semibold mb-10 italic">
-                {t.vision}
-              </p>
-
-              {/* CTA 按鈕組 */}
-              <div className="flex flex-wrap gap-4 mb-12 relative z-10">
-                <Button
-                  size="lg"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    console.log('🔵 [Hero] 按鈕 1 被點擊！');
-                    handleGetStarted();
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
-                >
-                  {isPremium && <Crown className="size-5 mr-2 text-yellow-300" />}
-                  {t.cta1}
-                </Button>
-                <Button
-                  size="lg"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    console.log('🟢 [Hero] 按鈕 2 被點擊！');
-                    handleGetStarted();
-                  }}
-                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
-                >
-                  {t.cta2}
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    console.log('🟡 [Hero] 按鈕 3 被點擊！');
-                    handleFindWork();
-                  }}
-                  className="bg-transparent hover:bg-white/10 text-white border-2 border-white/80 px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
-                >
-                  {t.cta3}
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    console.log('🟠 [Hero] 按鈕 4 被點擊！');
-                    handleFindWork();
-                  }}
-                  className="bg-transparent hover:bg-white/10 text-white border-2 border-white/80 px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
-                >
-                  <Star className="size-5 mr-2" />
-                  {t.cta4}
-                </Button>
-              </div>
+            {/* ✅ 按鈕組 - 確保正確的 z-index */}
+            <div className="flex flex-wrap gap-4 mb-12 relative z-10">
+              <Button
+                onClick={handleGetStarted}
+                size="lg"
+                className="bg-white text-blue-600 hover:bg-blue-50 font-semibold relative z-10"
+              >
+                {isPremium && <Crown className="size-5 mr-2 text-yellow-500" />}
+                {t.cta1}
+              </Button>
+              
+              <Button
+                onClick={handleFindWork}
+                size="lg"
+                className="bg-green-600 text-white hover:bg-green-700 font-semibold relative z-10"
+              >
+                {t.cta2}
+              </Button>
+              
+              <Button
+                onClick={handleBrowseProjects}
+                size="lg"
+                variant="outline"
+                className="bg-white/10 text-white border-white hover:bg-white/20 font-semibold relative z-10"
+              >
+                {t.cta3}
+              </Button>
+              
+              <Button
+                onClick={handleBecomePro}
+                size="lg"
+                variant="outline"
+                className="bg-white/10 text-white border-white hover:bg-white/20 font-semibold relative z-10"
+              >
+                <Star className="size-5 mr-2" />
+                {t.cta4}
+              </Button>
             </div>
           </div>
         </div>
 
-        {/* 底部統計數字 - 水平排列 */}
-        <div className="relative z-10 bg-black/30 backdrop-blur-sm border-t border-white/10">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-              {/* 統計 1：專業人才 */}
-              <div className="flex items-center gap-4 justify-center sm:justify-start">
-                <div className="p-3 bg-yellow-500/20 rounded-lg">
-                  <Users className="size-8 text-yellow-400" />
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-white">
-                    {stats.freelancers.toLocaleString()}+
-                  </div>
-                  <div className="text-white/80 text-sm mt-1">
-                    {t.statsFreelancers}
-                  </div>
-                </div>
+        {/* 統計數據區域 */}
+        <div className="bg-white/10 py-8 mt-12">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
+              <div>
+                <Users className="size-8 text-yellow-300 mx-auto mb-2" />
+                <div className="text-3xl font-bold text-white">15,847+</div>
+                <div className="text-white/80 text-sm">{t.statsFreelancers}</div>
               </div>
-
-              {/* 統計 2：成功專案 */}
-              <div className="flex items-center gap-4 justify-center sm:justify-start">
-                <div className="p-3 bg-green-500/20 rounded-lg">
-                  <Briefcase className="size-8 text-green-400" />
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-white">
-                    {stats.projects.toLocaleString()}+
-                  </div>
-                  <div className="text-white/80 text-sm mt-1">
-                    {t.statsProjects}
-                  </div>
-                </div>
+              <div>
+                <Briefcase className="size-8 text-green-300 mx-auto mb-2" />
+                <div className="text-3xl font-bold text-white">42,389+</div>
+                <div className="text-white/80 text-sm">{t.statsProjects}</div>
               </div>
-
-              {/* 統計 3：滿意客戶 */}
-              <div className="flex items-center gap-4 justify-center sm:justify-start">
-                <div className="p-3 bg-purple-500/20 rounded-lg">
-                  <Crown className="size-8 text-purple-400" />
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-white">
-                    {stats.clients.toLocaleString()}+
-                  </div>
-                  <div className="text-white/80 text-sm mt-1">
-                    {t.statsClients}
-                  </div>
-                </div>
+              <div>
+                <Crown className="size-8 text-purple-300 mx-auto mb-2" />
+                <div className="text-3xl font-bold text-white">8,932+</div>
+                <div className="text-white/80 text-sm">{t.statsClients}</div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 專案發布對話框 */}
       <PostProjectDialog 
         open={showProjectForm} 
         onOpenChange={setShowProjectForm}
