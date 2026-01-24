@@ -145,7 +145,7 @@ export function Hero() {
         <div className="absolute inset-0 bg-black/60" />
 
         {/* 主要內容區域 - 垂直居中 */}
-        <div className="relative z-10 flex-1 flex items-center">
+        <div className="relative z-[9999] flex-1 flex items-center">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
             <div className="max-w-3xl">
               {/* 小標籤 */}
@@ -210,7 +210,7 @@ export function Hero() {
         </div>
 
         {/* 底部統計數字 - 水平排列 */}
-        <div className="relative z-10 bg-black/30 backdrop-blur-sm border-t border-white/10">
+        <div className="relative z-[9999] bg-black/30 backdrop-blur-sm border-t border-white/10">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
               {/* 統計 1：專業人才 */}
