@@ -14,6 +14,7 @@ export function Hero() {
   const { setView, setManualOverride } = useView();
   const t = getTranslation(language as any).hero;
   const [showProjectForm, setShowProjectForm] = useState(false);
+  const [videoError, setVideoError] = useState(false); // 🎬 追蹤影片載入狀態
   
   // 🔥 動態統計數字動畫
   const [stats, setStats] = useState({
@@ -144,14 +145,52 @@ export function Hero() {
   return (
     <>
       <div className="relative h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900">
+        {/* 🎬 背景圖片（Fallback） */}
         <ImageWithFallback
           src="https://images.unsplash.com/photo-1758518730384-be3d205838e8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMGhhbmRzaGFrZSUyMG1lZXRpbmd8ZW58MXx8fHwxNzY0NDkwMDAyfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
           alt="Business handshake"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-black/60" />
         
-        <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center pt-16">
+        {/* 🎬 背景影片（優先顯示） */}
+        {!videoError && (
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            onError={() => {
+              console.log('⚠️ [Hero] Video failed to load, falling back to image');
+              setVideoError(true);
+            }}
+            onLoadedData={() => {
+              console.log('✅ [Hero] Video loaded successfully');
+            }}
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ zIndex: 1 }}
+          >
+            {/* 🎬 主影片：科技感 - 數據可視化與程式碼 */}
+            <source 
+              src="https://cdn.pixabay.com/video/2022/11/29/141363-777455382_large.mp4" 
+              type="video/mp4" 
+            />
+            {/* 備用影片 1：數位轉型 - 商業數據分析 */}
+            <source 
+              src="https://cdn.pixabay.com/video/2020/06/25/42996-436094944_large.mp4" 
+              type="video/mp4" 
+            />
+            {/* 備用影片 2：科技辦公 - 現代工作空間 */}
+            <source 
+              src="https://cdn.pixabay.com/video/2019/08/10/25739-353801590_large.mp4" 
+              type="video/mp4" 
+            />
+          </video>
+        )}
+        
+        {/* 🎨 深色遮罩層（確保文字清晰可讀） */}
+        <div className="absolute inset-0 bg-black/60" style={{ zIndex: 2 }} />
+        
+        <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center pt-16" style={{ zIndex: 3 }}>
           <div className="max-w-3xl">
             <h1 className="text-white mb-6">
               {t.title}
