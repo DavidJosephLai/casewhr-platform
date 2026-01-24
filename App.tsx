@@ -51,9 +51,6 @@ const AISEOFloatingButton = lazy(() => import('./components/AISEOFloatingButton'
 const AIChatbot = lazy(() => import('./components/AIChatbot'));
 const AISEOManager = lazy(() => import('./components/AISEOManager').then(module => ({ default: module.AISEOManager })));
 
-// 🔧 影片診斷工具
-import { VideoDebugger } from './components/VideoDebugger';
-
 // 🔧 測試和診斷頁面 - Lazy Load（不常用）
 const AISEOTestPage = lazy(() => import('./components/AISEOTestPage'));
 const BrevoTestPage = lazy(() => import('./components/BrevoTestPage'));
@@ -108,7 +105,7 @@ import WismachionApp from './wismachion/WismachionApp';
 
 // Loading fallback components - 🚀 優化：移除刺眼的藍色載入器
 function LoadingFallback() {
-  return null; // 靜默載入，不顯示任何內容
+  return null; // 靜默載入不顯示任何內容
 }
 
 function PageLoadingFallback() {
@@ -992,9 +989,6 @@ function AppContent() {
         onClose={() => setShowEmailModal(false)}
         userId={lineUserId}
       />
-      
-      {/* 🔧 影片診斷工具 */}
-      <VideoDebugger />
     </div>
   );
 }
