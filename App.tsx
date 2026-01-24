@@ -127,9 +127,6 @@ function AppContent() {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [lineUserId, setLineUserId] = useState<string | null>(null);
   
-  // 🔍 診斷遮罩層問題
-  console.log('🚨 [App] EmailRequiredModal 狀態:', { showEmailModal, lineUserId });
-  
   // 將語言轉換為 AIChatbot 支持的格式
   const chatbotLanguage = language === 'zh' ? 'zh-TW' : language as 'en' | 'zh-TW' | 'zh-CN';
   
@@ -287,7 +284,7 @@ function AppContent() {
       return;
     }
     
-    // 📝 檢查是否是 Blog 後台��理頁面
+    // 📝 檢查是否是 Blog 後台理頁面
     if (urlPath === '/blog/admin') {
       console.log('🔧 [App] Blog admin page detected');
       
@@ -348,7 +345,7 @@ function AppContent() {
 
   // 處理 LINE OAuth 回調
   useEffect(() => {
-    // 檢查是否為 LINE 回調 URL
+    // 檢查是否為 LINE ��調 URL
     if (window.location.pathname === '/line-callback') {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
@@ -360,7 +357,7 @@ function AppContent() {
       console.log('🟢 [LINE Callback] Parameters:', { code: !!code, state: !!state, error });
       
       if (error) {
-        console.error('��� [LINE Callback] Authorization failed:', error);
+        console.error(' [LINE Callback] Authorization failed:', error);
         toast.error(
           language === 'en'
             ? `LINE authorization failed: ${errorDescription || error}`
