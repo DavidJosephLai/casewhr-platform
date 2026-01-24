@@ -15,7 +15,7 @@ export function Hero() {
   const t = getTranslation(language as any).hero;
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [videoError, setVideoError] = useState(false);
-  const [videoUrl, setVideoUrl] = useState<string>('');
+  const [videoUrl] = useState<string>('https://videos.pexels.com/video-files/3581208/3581208-hd_1920_1080_30fps.mp4');
   const [fallbackImageUrl] = useState<string>('https://images.unsplash.com/photo-1622126977176-bf029dbf6ed0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMG9mZmljZSUyMHdvcmtzcGFjZXxlbnwxfHx8fDE3NjkxMjQ3MTB8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral');
   const [videoLoaded, setVideoLoaded] = useState(false);
   
@@ -57,40 +57,6 @@ export function Hero() {
     
     return () => clearInterval(timer);
   }, []);
-  
-  // 🔥 從 Supabase Storage 載入影片，失敗時使用圖片備用
-  useEffect(() => {
-    const loadVideo = async () => {
-      try {
-        console.log('🔍 [Hero] 開始從 Supabase Storage 獲取影片 URL...');
-        
-        // 使用 Supabase Client 獲取公開 URL
-        const { data: publicUrlData } = supabase.storage
-          .from('Background')
-          .getPublicUrl('3581208-hd_1920_1080_30fps.mp4');
-        
-        console.log('📡 [Hero] Supabase 返回的影片 URL:', publicUrlData.publicUrl);
-        
-        // 測試 URL 是否可訪問
-        const response = await fetch(publicUrlData.publicUrl, { method: 'HEAD' });
-        console.log('📊 [Hero] URL 回應狀態:', response.status, response.statusText);
-        
-        if (response.ok) {
-          setVideoUrl(publicUrlData.publicUrl);
-          console.log('✅ [Hero] 影片 URL 設定成功');
-        } else {
-          console.warn('⚠️ [Hero] 影片無法訪問，將使用圖片備用');
-          setVideoError(true);
-        }
-      } catch (error) {
-        console.error('❌ [Hero] 載入影片失敗:', error);
-        console.log('🔄 [Hero] 切換到圖片備用方案');
-        setVideoError(true);
-      }
-    };
-    
-    loadVideo();
-  }, []);
 
   const handleGetStarted = () => {
     if (!user) {
@@ -126,11 +92,9 @@ export function Hero() {
               muted
               playsInline
               className="absolute inset-0 w-full h-full object-cover"
-              onError={(e) => {
-                console.error('❌ [Hero] 影片播放錯誤');
-                console.error('❌ [Hero] 影片 URL:', videoUrl);
-                console.error('❌ [Hero] 錯誤詳情:', e);
-                console.log('🔄 [Hero] 切換到圖片備用方案');
+              onError={() => {
+                console.warn('⚠️ [Hero] 影片無法播放（可能是 Figma Make 環境限制）');
+                console.log('🔄 [Hero] 自動切換到圖片備用方案');
                 setVideoError(true);
               }}
               onLoadedData={() => {
@@ -138,7 +102,7 @@ export function Hero() {
                 setVideoLoaded(true);
               }}
               onLoadStart={() => {
-                console.log('🔄 [Hero] 開始載入影片...');
+                console.log('🔄 [Hero] 開始載入 Pexels 影片...');
               }}
             >
               <source src={videoUrl} type="video/mp4" />
