@@ -145,7 +145,7 @@ export function Hero() {
         <div className="absolute inset-0 bg-black/60 pointer-events-none" />
 
         {/* 主要內容區域 - 垂直居中 */}
-        <div className="relative z-[9999] flex-1 flex items-center">
+        <div className="relative z-10 flex-1 flex items-center">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
             <div className="max-w-3xl">
               {/* 小標籤 */}
@@ -171,7 +171,7 @@ export function Hero() {
               </p>
 
               {/* CTA 按鈕組 */}
-              <div className="flex flex-wrap gap-4 mb-12 relative z-[10000]">
+              <div className="flex flex-wrap gap-4 mb-12 relative z-10">
                 <Button
                   size="lg"
                   onClick={(e) => {
@@ -179,8 +179,7 @@ export function Hero() {
                     console.log('🔵 [Hero] 按鈕 1 被點擊！');
                     handleGetStarted();
                   }}
-                  className="relative z-[10001] bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer pointer-events-auto"
-                  style={{ pointerEvents: 'auto' }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   {isPremium && <Crown className="size-5 mr-2 text-yellow-300" />}
                   {t.cta1}
@@ -192,8 +191,7 @@ export function Hero() {
                     console.log('🟢 [Hero] 按鈕 2 被點擊！');
                     handleGetStarted();
                   }}
-                  className="relative z-[10001] bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer pointer-events-auto"
-                  style={{ pointerEvents: 'auto' }}
+                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   {t.cta2}
                 </Button>
@@ -205,8 +203,7 @@ export function Hero() {
                     console.log('🟡 [Hero] 按鈕 3 被點擊！');
                     handleFindWork();
                   }}
-                  className="relative z-[10001] bg-transparent hover:bg-white/10 text-white border-2 border-white/80 px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer pointer-events-auto"
-                  style={{ pointerEvents: 'auto' }}
+                  className="bg-transparent hover:bg-white/10 text-white border-2 border-white/80 px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   {t.cta3}
                 </Button>
@@ -218,8 +215,7 @@ export function Hero() {
                     console.log('🟠 [Hero] 按鈕 4 被點擊！');
                     handleFindWork();
                   }}
-                  className="relative z-[10001] bg-transparent hover:bg-white/10 text-white border-2 border-white/80 px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer pointer-events-auto"
-                  style={{ pointerEvents: 'auto' }}
+                  className="bg-transparent hover:bg-white/10 text-white border-2 border-white/80 px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   <Star className="size-5 mr-2" />
                   {t.cta4}
@@ -230,7 +226,7 @@ export function Hero() {
         </div>
 
         {/* 底部統計數字 - 水平排列 */}
-        <div className="relative z-[9999] bg-black/30 backdrop-blur-sm border-t border-white/10">
+        <div className="relative z-10 bg-black/30 backdrop-blur-sm border-t border-white/10">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
               {/* 統計 1：專業人才 */}
