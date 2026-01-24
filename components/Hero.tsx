@@ -144,23 +144,23 @@ export function Hero() {
               {/* 小標籤 */}
               <div className="inline-block mb-6">
                 <span className="text-yellow-400 text-sm font-semibold tracking-wide">
-                  超級國際雙語接洽平台
+                  {t.badge}
                 </span>
               </div>
 
               {/* 主標題 */}
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-                專業接洽，精準解決。
+                {t.slogan}
               </h1>
 
               {/* 描述文字 */}
               <p className="text-lg sm:text-xl text-white/90 mb-8 leading-relaxed max-w-2xl">
-                Case Where 是您尋找專業人才和項目最基本和快捷的互信平台。從開始到部署，我們準時您與經驗豐富的專業人士。
+                {t.subtitle}
               </p>
 
               {/* 高亮文字 */}
               <p className="text-xl sm:text-2xl text-blue-300 font-semibold mb-10 italic">
-                在正確的地方，找到正確的解決方案，讓您安心好眠，更可放鬆。
+                {t.vision}
               </p>
 
               {/* CTA 按鈕組 */}
@@ -171,14 +171,14 @@ export function Hero() {
                   className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   {isPremium && <Crown className="size-5 mr-2 text-yellow-300" />}
-                  尋找人才
+                  {t.cta1}
                 </Button>
                 <Button
                   size="lg"
                   onClick={handleGetStarted}
                   className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
                 >
-                  開始發佈項目
+                  {t.cta2}
                 </Button>
                 <Button
                   size="lg"
@@ -186,7 +186,7 @@ export function Hero() {
                   onClick={handleFindWork}
                   className="bg-transparent hover:bg-white/10 text-white border-2 border-white/80 px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
                 >
-                  瀏覽項目
+                  {t.cta3}
                 </Button>
                 <Button
                   size="lg"
@@ -195,7 +195,7 @@ export function Hero() {
                   className="bg-transparent hover:bg-white/10 text-white border-2 border-white/80 px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   <Star className="size-5 mr-2" />
-                  查看作品
+                  {t.cta4}
                 </Button>
               </div>
             </div>
@@ -216,7 +216,7 @@ export function Hero() {
                     {stats.freelancers.toLocaleString()}+
                   </div>
                   <div className="text-white/80 text-sm mt-1">
-                    專業自由工作者
+                    {t.statsFreelancers}
                   </div>
                 </div>
               </div>
@@ -231,7 +231,7 @@ export function Hero() {
                     {stats.projects.toLocaleString()}+
                   </div>
                   <div className="text-white/80 text-sm mt-1">
-                    已完成的成功專案
+                    {t.statsProjects}
                   </div>
                 </div>
               </div>
@@ -246,7 +246,7 @@ export function Hero() {
                     {stats.clients.toLocaleString()}+
                   </div>
                   <div className="text-white/80 text-sm mt-1">
-                    滿意客戶
+                    {t.statsClients}
                   </div>
                 </div>
               </div>
