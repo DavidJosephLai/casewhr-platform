@@ -108,7 +108,7 @@ export function Hero() {
 
   const handleBecomePro = () => {
     console.log('⭐ [Hero] 查看作品集按鈕被點擊');
-    scrollToSection('portfolio'); // 直接滾動到作品集區域
+    scrollToSection('talents'); // 滾動到人才區域（作品集在人才目錄中展示）
   };
 
   const isPremium = profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'vip';
