@@ -171,35 +171,55 @@ export function Hero() {
               </p>
 
               {/* CTA 按鈕組 */}
-              <div className="flex flex-wrap gap-4 mb-12">
+              <div className="flex flex-wrap gap-4 mb-12 relative z-[10000]">
                 <Button
                   size="lg"
-                  onClick={handleGetStarted}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log('🔵 [Hero] 按鈕 1 被點擊！');
+                    handleGetStarted();
+                  }}
+                  className="relative z-[10001] bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer pointer-events-auto"
+                  style={{ pointerEvents: 'auto' }}
                 >
                   {isPremium && <Crown className="size-5 mr-2 text-yellow-300" />}
                   {t.cta1}
                 </Button>
                 <Button
                   size="lg"
-                  onClick={handleGetStarted}
-                  className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log('🟢 [Hero] 按鈕 2 被點擊！');
+                    handleGetStarted();
+                  }}
+                  className="relative z-[10001] bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer pointer-events-auto"
+                  style={{ pointerEvents: 'auto' }}
                 >
                   {t.cta2}
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={handleFindWork}
-                  className="bg-transparent hover:bg-white/10 text-white border-2 border-white/80 px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log('🟡 [Hero] 按鈕 3 被點擊！');
+                    handleFindWork();
+                  }}
+                  className="relative z-[10001] bg-transparent hover:bg-white/10 text-white border-2 border-white/80 px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer pointer-events-auto"
+                  style={{ pointerEvents: 'auto' }}
                 >
                   {t.cta3}
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={handleFindWork}
-                  className="bg-transparent hover:bg-white/10 text-white border-2 border-white/80 px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    console.log('🟠 [Hero] 按鈕 4 被點擊！');
+                    handleFindWork();
+                  }}
+                  className="relative z-[10001] bg-transparent hover:bg-white/10 text-white border-2 border-white/80 px-8 py-6 text-base font-semibold rounded-md shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer pointer-events-auto"
+                  style={{ pointerEvents: 'auto' }}
                 >
                   <Star className="size-5 mr-2" />
                   {t.cta4}
