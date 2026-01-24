@@ -141,9 +141,6 @@ export function Hero() {
           <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-600" />
         )}
 
-        {/* 深色遮罩層 - ⚡ 添加 pointer-events-none 防止阻擋點擊 */}
-        <div className="absolute inset-0 bg-black/60 pointer-events-none" />
-
         {/* 主要內容區域 - 垂直居中 */}
         <div className="relative z-[9999] flex-1 flex items-center">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
