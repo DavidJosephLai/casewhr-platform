@@ -76,6 +76,7 @@ const KeywordDeploymentCheck = lazy(() => import('./components/KeywordDeployment
 const OpenAIKeyGuide = lazy(() => import('./components/OpenAIKeyGuide'));
 const DataSyncDiagnostic = lazy(() => import('./components/DataSyncDiagnostic'));
 const DeepDataDiagnostic = lazy(() => import('./components/DeepDataDiagnostic'));
+const ErrorDiagnosticPage = lazy(() => import('./components/ErrorDiagnosticPage'));
 // const FetchInterceptorTest = lazy(() => import('./components/FetchInterceptorTest')); // ❌ Removed - component doesn't exist
 
 // 📄 內容頁面 - Lazy Load（SEO 相關頁面）
@@ -179,7 +180,7 @@ function AppContent() {
     }
   }, [user]);
   
-  // 🔥 NEW: 監聽自定義航事件（例如從錢包餘額不足對話框觸發）
+  // 🔥 NEW: 監聽自定義航（例如從錢包餘額不足對話框觸發）
   useEffect(() => {
     const handleNavigate = (event: any) => {
       const targetView = event.detail?.view;
@@ -345,7 +346,7 @@ function AppContent() {
 
   // 處理 LINE OAuth 回調
   useEffect(() => {
-    // 檢查是否為 LINE ��調 URL
+    // 檢查是否為 LINE 調 URL
     if (window.location.pathname === '/line-callback') {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
@@ -895,6 +896,13 @@ function AppContent() {
             <DeepDataDiagnostic />
           </Suspense>
         </div>
+      ) : view === 'error-diagnostic' ? (
+        <div className="pt-20">
+          <SEO title="Error Diagnostic" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <ErrorDiagnosticPage />
+          </Suspense>
+        </div>
       ) : view === 'wismachion' ? (
         <div className="pt-0">
           <SEO 
@@ -967,21 +975,13 @@ function AppContent() {
       <Footer />
       {/* 🌐 网络错误提示 - 检测到 Supabase 错误时显示 */}
       <NetworkErrorNotice />
-      {/* ✅ 全局功能 - 使用 Suspense 但 fallback=null 避免閃爍 */}
-      <Suspense fallback={null}>
-        <AdminFloatingButton />
-      </Suspense>
-      <Suspense fallback={null}>
-        <QuickAdminPanel />
-      </Suspense>
-      <Suspense fallback={null}>
-        <AISEOFloatingButton />
-      </Suspense>
+      {/* ✅ 全局功能 - AI Chatbot */}
       <Suspense fallback={null}>
         <AIChatbot language={chatbotLanguage} />
       </Suspense>
       {/* 🧪 開發模式登錄 - 僅在開發環境顯示 */}
-      <DevModeLogin />
+      {/* 🔧 臨時禁用以調試點擊問題 */}
+      {false && <DevModeLogin />}
       <Toaster />
       {/* 🟢 LINE OAuth Email Modal */}
       <EmailRequiredModal
