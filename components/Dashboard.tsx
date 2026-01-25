@@ -369,12 +369,15 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
               <UserCircle className="h-4 w-4 mr-2" />
               {language === 'en' ? 'Edit Profile' : '編輯個人資料'}
             </Button>
-            {isClient && (
-              <Button onClick={() => setShowPostDialog(true)}>
-                <PlusCircle className="h-4 w-4 mr-2" />
-                {getTranslation(language).projects.postProject}
-              </Button>
-            )}
+            
+            {/* 🔥 發布項目按鈕 - 移除 isClient 限制，所有用戶都可發布項目 */}
+            <Button 
+              onClick={() => setShowPostDialog(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />
+              {getTranslation(language).projects.postProject}
+            </Button>
           </div>
         </div>
       </div>
@@ -420,7 +423,7 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
                   {language === 'en' 
                     ? 'Open, in progress, pending review, or pending payment' 
                     : language === 'zh-CN' 
-                    ? '等待接案、执行中、待审核或待拨款' 
+                    ? '等待接案、执行��、待审核或待拨款' 
                     : '等待接案、執行、待審核或待撥款'}
                 </CardDescription>
               </CardHeader>
@@ -689,17 +692,12 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
         onOpenChange={setShowProfileDialog}
       />
       
-      {/* 🔥 只有客戶才能看到發布項目對話框 */}
-      {(profile?.is_client || 
-        (Array.isArray(profile?.account_type) 
-          ? profile.account_type.includes('client') 
-          : profile?.account_type === 'client')) && (
-        <PostProjectDialog
-          open={showPostDialog}
-          onOpenChange={setShowPostDialog}
-          onSuccess={handleProjectSubmitted}
-        />
-      )}
+      {/* 🔥 發布項目對話框 - 移除 isClient 限制，所有登入用戶都可發布項目 */}
+      <PostProjectDialog
+        open={showPostDialog}
+        onOpenChange={setShowPostDialog}
+        onSuccess={handleProjectSubmitted}
+      />
     </div>
   );
 });
