@@ -76,41 +76,7 @@ export function InternalLinkManager() {
   const [activeTab, setActiveTab] = useState('overview');
   const [analyzeUrl, setAnalyzeUrl] = useState('');
 
-  // 掃描網站
-  const scanWebsite = async () => {
-    setLoading(true);
-    toast.info('🔍 開始掃描網站...');
-    
-    try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/seo/scan-website`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${publicAnonKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ baseUrl: 'https://casewhr.com' }),
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setLinks(data.links);
-        toast.success(`✅ 掃描完成！發現 ${data.progress.pagesScanned} 個頁面，${data.progress.linksFound} 個連結`);
-        await loadLinks(); // 重新載入資料
-      } else {
-        const error = await response.json();
-        toast.error(`掃描失敗: ${error.error || '未知錯誤'}`);
-      }
-    } catch (error) {
-      console.error('Failed to scan website:', error);
-      toast.error('掃描網站時發生錯誤');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // 多語言內容
   const content = {
     en: {
       title: 'Internal Link Management',
@@ -265,6 +231,41 @@ export function InternalLinkManager() {
   };
 
   const t = content[language as keyof typeof content] || content['zh-TW'];
+
+  // 掃描網站
+  const scanWebsite = async () => {
+    setLoading(true);
+    toast.info('🔍 ���始掃描網站...');
+    
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/seo/scan-website`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ baseUrl: 'https://casewhr.com' }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setLinks(data.links);
+        toast.success(`✅ 掃描完成！發現 ${data.progress?.pagesScanned || 0} 個頁面，${data.progress?.linksFound || data.links?.length || 0} 個連結`);
+        await loadLinks(); // 重新載入資料
+      } else {
+        const error = await response.json();
+        toast.error(`掃描失敗: ${error.error || '未知錯誤'}`);
+      }
+    } catch (error) {
+      console.error('Failed to scan website:', error);
+      toast.error('掃描網站時發生錯誤');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 載入內部連結數據
   const loadLinks = async () => {
@@ -658,7 +659,7 @@ export function InternalLinkManager() {
             {/* 快速分析按鈕 */}
             <div className="flex gap-2 flex-wrap">
               <p className="text-sm text-gray-600 w-full mb-2">💡 快速分析：</p>
-              {['/projects', '/talents', '/pricing', '/dashboard', '/blog'].map((url) => (
+              {['/projects', '/talents', '/pricing', '/dashboard', '/about'].map((url) => (
                 <Button
                   key={url}
                   size="sm"
