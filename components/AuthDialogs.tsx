@@ -466,7 +466,7 @@ export function AuthDialogs({
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleLogin} className="space-y-4 mt-4">
+          <form onSubmit={handleLogin} className="space-y-4 mt-4" noValidate>
             <div className="space-y-2">
               <Label htmlFor="login-email">{t.login.email}</Label>
               <div className="relative">
