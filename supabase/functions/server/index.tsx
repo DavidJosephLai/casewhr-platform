@@ -40,6 +40,8 @@ import { logLineEnvStatus } from "./line_health_check.tsx";
 import { sitemapRouter } from "./sitemap.tsx";
 import wismachionRoutes from "./wismachion_routes.tsx";
 import * as internalLinkScanner from "./internal_link_scanner.tsx";
+import * as videoUploadService from "./video_upload_service.tsx";
+import * as subscriptionRecurring from "./subscription_recurring_service.tsx";
 
 console.log('🚀 [SERVER STARTUP] Edge Function v2.0.6 - LINE Auth Integration - Starting...');
 
@@ -2446,18 +2448,33 @@ app.get("/make-server-215f78a5/projects", async (c) => {
       return c.json({ projects: [] });
     }
 
-    // ✅ 移除硬限制，改為智能批次處理 - 支援 300+ 筆數據
-    const batchSize = 100;
+    // 🚀 優化：減少批次大小以避免超時
+    const batchSize = 50; // 從 100 降到 50
     const totalProjects = projectIds.length;
     let allProjectsData: any[] = [];
     
     console.log(`📦 [GET /projects] Loading ${totalProjects} projects in batches of ${batchSize}...`);
     
+    // 🚀 設置最大處理時間（25秒，留出緩衝時間）
+    const startTime = Date.now();
+    const maxProcessingTime = 25000; // 25秒
+    
     for (let i = 0; i < totalProjects; i += batchSize) {
+      // 檢查是否超時
+      if (Date.now() - startTime > maxProcessingTime) {
+        console.warn(`⏰ [GET /projects] Timeout approaching, stopping at ${i}/${totalProjects} projects`);
+        break;
+      }
+      
       const batch = projectIds.slice(i, Math.min(i + batchSize, totalProjects));
-      const batchProjects = await kv.mget(batch.map(id => `project:${id}`));
-      allProjectsData = [...allProjectsData, ...batchProjects];
-      console.log(`📦 Loaded batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(totalProjects / batchSize)}`);
+      try {
+        const batchProjects = await kv.mget(batch.map(id => `project:${id}`));
+        allProjectsData = [...allProjectsData, ...batchProjects];
+        console.log(`📦 Loaded batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(totalProjects / batchSize)}`);
+      } catch (batchError) {
+        console.error(`❌ [GET /projects] Error loading batch ${Math.floor(i / batchSize) + 1}:`, batchError);
+        // 繼續處理下一批
+      }
     }
 
     const projects = allProjectsData;
@@ -2649,37 +2666,52 @@ app.get("/make-server-215f78a5/projects", async (c) => {
     // ✅ 優化：為所有項目添加提案計數（批次處理）
     console.log('📥 [GET /projects] Adding proposal counts for all projects...');
     
-    // 批次處理提案計數，避免超時
-    const proposalCountBatchSize = 50;
+    // 🚀 優化：減少批次大小並添加超時保護
+    const proposalCountBatchSize = 30; // 從 50 降到 30
     const projectsWithCounts: any[] = [];
     
     for (let i = 0; i < filteredProjects.length; i += proposalCountBatchSize) {
+      // 檢查是否超時
+      if (Date.now() - startTime > maxProcessingTime) {
+        console.warn(`⏰ [GET /projects] Timeout approaching, skipping remaining proposal counts`);
+        // 將剩餘項目添加為 0 提案計數
+        const remaining = filteredProjects.slice(i).map(p => ({ ...p, proposal_count: 0, pending_proposal_count: 0 }));
+        projectsWithCounts.push(...remaining);
+        break;
+      }
+      
       const batch = filteredProjects.slice(i, Math.min(i + proposalCountBatchSize, filteredProjects.length));
       
-      const batchWithCounts = await Promise.all(
-        batch.map(async (project) => {
-          try {
-            const proposalIds = await kv.get(`proposals:project:${project.id}`) || [];
-            
-            return {
-              ...project,
-              proposal_count: Array.isArray(proposalIds) ? proposalIds.length : 0,
-              pending_proposal_count: 0,
-            };
-          } catch (proposalError) {
-            // Silently handle missing proposal data - it's expected for new projects
-            console.log(`ℹ️  No proposals found for project ${project.id}`);
-            return {
-              ...project,
-              proposal_count: 0,
-              pending_proposal_count: 0,
-            };
-          }
-        })
-      );
-      
-      projectsWithCounts.push(...batchWithCounts);
-      console.log(`📊 Counted proposals for batch ${Math.floor(i / proposalCountBatchSize) + 1}/${Math.ceil(filteredProjects.length / proposalCountBatchSize)}`);
+      try {
+        const batchWithCounts = await Promise.all(
+          batch.map(async (project) => {
+            try {
+              const proposalIds = await kv.get(`proposals:project:${project.id}`) || [];
+              
+              return {
+                ...project,
+                proposal_count: Array.isArray(proposalIds) ? proposalIds.length : 0,
+                pending_proposal_count: 0,
+              };
+            } catch (proposalError) {
+              // Silently handle missing proposal data - it's expected for new projects
+              return {
+                ...project,
+                proposal_count: 0,
+                pending_proposal_count: 0,
+              };
+            }
+          })
+        );
+        
+        projectsWithCounts.push(...batchWithCounts);
+        console.log(`📊 Counted proposals for batch ${Math.floor(i / proposalCountBatchSize) + 1}/${Math.ceil(filteredProjects.length / proposalCountBatchSize)}`);
+      } catch (batchError) {
+        console.error(`❌ [GET /projects] Error counting proposals for batch:`, batchError);
+        // 添加該批次但不含提案計數
+        const batchWithoutCounts = batch.map(p => ({ ...p, proposal_count: 0, pending_proposal_count: 0 }));
+        projectsWithCounts.push(...batchWithoutCounts);
+      }
     }
     
     // 所有項目已包含提案計數
@@ -9793,7 +9825,7 @@ app.post("/make-server-215f78a5/team/send-message", async (c) => {
               </p>
               <p style="margin: 8px 0 0 0; color: #075985; font-size: 13px; line-height: 1.6;">
                 <strong>English:</strong> Simply click "Reply" in your email client. Your response will be sent directly to <strong>${user.email}</strong>.<br>
-                <strong>中文:</strong> 只需點擊您郵件客戶端的「回覆」按鈕，您的回覆將直接發送到 <strong>${user.email}</strong>。
+                <strong>中文:</strong> 只需點擊您��件客戶端的「回覆」按鈕，您的回覆將直接發送到 <strong>${user.email}</strong>。
               </p>
             </div>
           </div>
@@ -11300,6 +11332,187 @@ app.post("/make-server-215f78a5/support/tickets/:ticketId/replies", async (c) =>
   } catch (error) {
     console.error('❌ [Support] Error adding reply:', error);
     return c.json({ error: 'Failed to add reply' }, 500);
+  }
+});
+
+// ============= RECURRING SUBSCRIPTION ROUTES =============
+
+// Create PayPal recurring subscription
+app.post("/make-server-215f78a5/subscription/paypal/create-recurring", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const body = await c.req.json();
+    const { planType } = body; // 'pro' | 'enterprise'
+
+    if (!['pro', 'enterprise'].includes(planType)) {
+      return c.json({ error: 'Invalid plan type' }, 400);
+    }
+
+    const returnUrl = `${c.req.header('origin') || 'https://casewhr.com'}/?payment=success&provider=paypal-subscription`;
+    const cancelUrl = `${c.req.header('origin') || 'https://casewhr.com'}/?payment=cancel`;
+
+    const { subscriptionId, approvalUrl } = await subscriptionRecurring.createPayPalSubscription(
+      user.id,
+      planType,
+      returnUrl,
+      cancelUrl
+    );
+
+    return c.json({
+      success: true,
+      subscriptionId,
+      approvalUrl,
+    });
+  } catch (error: any) {
+    console.error('❌ [PayPal Subscription] Error:', error);
+    return c.json({ error: error.message || 'Failed to create PayPal subscription' }, 500);
+  }
+});
+
+// Activate PayPal subscription (callback after user approval)
+app.post("/make-server-215f78a5/subscription/paypal/activate", async (c) => {
+  try {
+    const body = await c.req.json();
+    const { subscriptionId } = body;
+
+    if (!subscriptionId) {
+      return c.json({ error: 'Missing subscription ID' }, 400);
+    }
+
+    await subscriptionRecurring.activatePayPalSubscription(subscriptionId);
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('❌ [PayPal Subscription] Activation error:', error);
+    return c.json({ error: error.message || 'Failed to activate subscription' }, 500);
+  }
+});
+
+// Cancel PayPal subscription
+app.post("/make-server-215f78a5/subscription/paypal/cancel-recurring", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const body = await c.req.json();
+    const { reason } = body;
+
+    await subscriptionRecurring.cancelPayPalSubscription(user.id, reason);
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('❌ [PayPal Subscription] Cancel error:', error);
+    return c.json({ error: error.message || 'Failed to cancel subscription' }, 500);
+  }
+});
+
+// PayPal Webhook handler
+app.post("/make-server-215f78a5/webhooks/paypal/subscription", async (c) => {
+  try {
+    const event = await c.req.json();
+    
+    console.log('🔔 [PayPal Webhook] Received event:', event.event_type);
+    
+    await subscriptionRecurring.handlePayPalWebhook(event);
+    
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('❌ [PayPal Webhook] Error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Create ECPay recurring subscription
+app.post("/make-server-215f78a5/subscription/ecpay/create-recurring", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const body = await c.req.json();
+    const { planType } = body; // 'pro' | 'enterprise'
+
+    if (!['pro', 'enterprise'].includes(planType)) {
+      return c.json({ error: 'Invalid plan type' }, 400);
+    }
+
+    const returnUrl = `${c.req.header('origin') || 'https://casewhr.com'}`;
+
+    const formHtml = await subscriptionRecurring.createECPaySubscription(
+      user.id,
+      planType,
+      user.email || '',
+      returnUrl
+    );
+
+    return c.html(formHtml);
+  } catch (error: any) {
+    console.error('❌ [ECPay Subscription] Error:', error);
+    return c.json({ error: error.message || 'Failed to create ECPay subscription' }, 500);
+  }
+});
+
+// ECPay period callback
+app.post("/make-server-215f78a5/ecpay-period-callback", async (c) => {
+  try {
+    const params = await c.req.parseBody();
+    
+    console.log('🔔 [ECPay Period] Callback received');
+    
+    await subscriptionRecurring.handleECPayPeriodCallback(params);
+    
+    return c.text('1|OK');
+  } catch (error: any) {
+    console.error('❌ [ECPay Period] Callback error:', error);
+    return c.text('0|Error');
+  }
+});
+
+// Cancel ECPay subscription
+app.post("/make-server-215f78a5/subscription/ecpay/cancel-recurring", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    await subscriptionRecurring.cancelECPaySubscription(user.id);
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('❌ [ECPay Subscription] Cancel error:', error);
+    return c.json({ error: error.message || 'Failed to cancel subscription' }, 500);
   }
 });
 
@@ -21427,6 +21640,70 @@ registerKeywordRoutes(app);
 // ============= SEO KEYWORD MAP ROUTES =============
 import { registerKeywordMapRoutes } from './seo_keyword_map_service.tsx';
 registerKeywordMapRoutes(app);
+
+// ============= VIDEO UPLOAD ROUTES =============
+// Bucket 已在 Supabase 手動創建，無需初始化
+
+// 上傳影片路由
+app.post('/make-server-215f78a5/upload-hero-video', async (c) => {
+  try {
+    const formData = await c.req.formData();
+    const videoFile = formData.get('video') as File;
+    
+    if (!videoFile) {
+      return c.json({ error: '沒有收到影片檔案' }, 400);
+    }
+    
+    // 驗證檔案大小（50MB）
+    if (videoFile.size > 50 * 1024 * 1024) {
+      return c.json({ error: '影片檔案太大，請使用小於 50MB 的影片' }, 400);
+    }
+    
+    // 驗證檔案類型
+    if (!videoFile.type.startsWith('video/')) {
+      return c.json({ error: '請上傳影片檔案' }, 400);
+    }
+    
+    // 上傳到 Supabase Storage
+    const result = await videoUploadService.uploadHeroVideo(videoFile, videoFile.name);
+    
+    return c.json({
+      success: true,
+      url: result.url,
+      path: result.path,
+      message: '影片上傳成功！'
+    });
+    
+  } catch (error: any) {
+    console.error('❌ [Video Upload Route] Error:', error);
+    return c.json({ 
+      error: error.message || '上傳失敗，請重試'
+    }, 500);
+  }
+});
+
+// 列出已上傳的影片
+app.get('/make-server-215f78a5/list-hero-videos', async (c) => {
+  try {
+    const videos = await videoUploadService.listHeroVideos();
+    return c.json({ success: true, videos });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 刪除影片
+app.delete('/make-server-215f78a5/delete-hero-video/:path', async (c) => {
+  try {
+    const path = c.req.param('path');
+    await videoUploadService.deleteHeroVideo(path);
+    return c.json({ success: true, message: '影片已刪除' });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+console.log('✅ [SERVER] Video upload routes registered');
 
 console.log('🎉 [SERVER] All routes registered, starting server...');
 
