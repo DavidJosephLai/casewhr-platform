@@ -90,8 +90,6 @@ export async function generateSEO(
     // 构建提示词
     const userPrompt = buildSEOPrompt(input, language);
 
-    console.log(`[AI SEO] 生成 SEO 元数据 - 语言: ${language}, 标题: ${input.title}`);
-
     // 调用 OpenAI API
     const completion = await openai.chat.completions.create({
       model: "gpt-4o", // 升級到最新 GPT-4o 模型（更快、更便宜、更強大）
@@ -114,11 +112,8 @@ export async function generateSEO(
     // 解析 AI 回應
     const result = parseAIResponse(responseText, language);
 
-    console.log(`[AI SEO] SEO 生成成功 - 评分: ${result.score}`);
-
     return result;
   } catch (error) {
-    console.error("[AI SEO] SEO 生成失败:", error);
     throw new Error(`AI SEO generation failed: ${error.message}`);
   }
 }
@@ -136,8 +131,6 @@ export async function researchKeywords(
 
     // 构建提示词
     const userPrompt = buildKeywordPrompt(input, language, count);
-
-    console.log(`[AI SEO] 关键词研究 - 语言: ${language}, 主题: ${input.topic}`);
 
     // 调用 OpenAI API
     const completion = await openai.chat.completions.create({
@@ -161,11 +154,8 @@ export async function researchKeywords(
     // 解析关键词响应
     const result = parseKeywordResponse(responseText, language);
 
-    console.log(`[AI SEO] 关键词研究成功 - 找到 ${result.keywords.length} 个关键词`);
-
     return result;
   } catch (error) {
-    console.error("[AI SEO] 关键词研究失败:", error);
     throw new Error(`Keyword research failed: ${error.message}`);
   }
 }
@@ -381,7 +371,6 @@ function parseAIResponse(
       language,
     };
   } catch (error) {
-    console.error("[AI SEO] 解析响应失败:", error);
     throw new Error(`Failed to parse AI response: ${error.message}`);
   }
 }
@@ -408,7 +397,6 @@ function parseKeywordResponse(
       language,
     };
   } catch (error) {
-    console.error("[AI SEO] 解析关键词响应失败:", error);
     throw new Error(`Failed to parse keyword response: ${error.message}`);
   }
 }
@@ -452,7 +440,6 @@ export async function healthCheck(): Promise<{
       message: `OpenAI API connected successfully. Response: ${response}`,
     };
   } catch (error) {
-    console.error("[AI SEO] Health check failed:", error);
     return {
       status: "error",
       apiKeyConfigured: true,

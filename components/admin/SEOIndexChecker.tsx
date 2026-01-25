@@ -45,8 +45,6 @@ export function SEOIndexChecker() {
       const suggestions: string[] = [];
 
       // 1. 檢查 site: 指令
-      console.log('🔍 檢查 Google 索引狀態...');
-      
       // 模擬檢查（實際需要使用 Google Search Console API）
       const siteCheckUrl = `https://www.google.com/search?q=site:${domain}`;
       
@@ -58,7 +56,6 @@ export function SEOIndexChecker() {
       try {
         const sitemapResponse = await fetch(sitemapUrl, { method: 'HEAD' });
         if (sitemapResponse.ok) {
-          console.log('✅ Sitemap 存在');
           suggestions.push('✅ Sitemap 已存在，建議提交到 Google Search Console');
         } else {
           issues.push('❌ Sitemap 不存在或無法訪問');
@@ -78,8 +75,6 @@ export function SEOIndexChecker() {
           if (robotsText.includes('Disallow: /')) {
             issues.push('⚠️ robots.txt 可能阻止了搜索引擎爬蟲');
             suggestions.push('🔧 檢查 robots.txt 是否正確配置');
-          } else {
-            console.log('✅ robots.txt 正常');
           }
         }
       } catch (error) {
@@ -135,7 +130,6 @@ export function SEOIndexChecker() {
       }
 
     } catch (error: any) {
-      console.error('❌ 檢查失敗:', error);
       setResult({
         indexed: false,
         issues: ['❌ 檢查過程出錯: ' + error.message],

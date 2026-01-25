@@ -66,15 +66,8 @@ export function SEOManagementCenter() {
     totalSearchVolume: 0
   });
   const [keywordClusters, setKeywordClusters] = useState<KeywordCluster[]>([]);
-  const [contentGenerating, setContentGenerating] = useState(false);
-
-  // 🔥🔥🔥 VERSION CHECK - 組件載入時輸出到控制台
-  useEffect(() => {
-    console.log('🔥🔥🔥 SEOManagementCenter v3.0 已載入！時間:', new Date().toISOString());
-    console.log('🔥🔥🔥 如果您看到這個訊息，代表新版組件已經載入！');
-    console.log('🔥🔥🔥 BUILD TIMESTAMP:', '2026-01-21T17:35:00.000Z');
-    console.log('🔥🔥🔥 RANDOM ID:', Math.random());
-  }, []);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState('');
 
   // 🌍 多語言文案
   const t = {
@@ -183,7 +176,7 @@ export function SEOManagementCenter() {
       keywords: '個關鍵字',
       more: '更多',
       aiContentGeneration: 'AI 內容生成',
-      aiContentDesc: '系統���使用 AI 為每個關鍵字集群生成 SEO 優化的內容，包括標題、描述、段落、FAQ 等。',
+      aiContentDesc: '系統將使用 AI 為每個關鍵字集群生成 SEO 優化的內容，包括標題、描述、段落、FAQ 等。',
       batchGenerate: '批量生成 SEO 內容',
       batchGenerateDesc: '為前 5 個優先級最的關鍵字集群生成內容',
       generating: '生成中...',
@@ -305,7 +298,7 @@ export function SEOManagementCenter() {
         totalSearchVolume: 145600
       });
     } catch (error) {
-      console.error('Failed to load SEO stats:', error);
+      // Error loading SEO stats
     }
   };
 
@@ -326,7 +319,6 @@ export function SEOManagementCenter() {
       const data = await response.json();
       setKeywordClusters(data.data.clusters);
     } catch (error: any) {
-      console.error('Failed to load keyword clusters:', error);
       toast.error(content.failedToLoadKeywords);
     } finally {
       setLoading(false);
@@ -339,7 +331,7 @@ export function SEOManagementCenter() {
     }
 
     try {
-      setContentGenerating(true);
+      setIsGenerating(true);
       toast.info(content.startingGeneration);
 
       // 逐個生成內容
@@ -377,10 +369,9 @@ export function SEOManagementCenter() {
 
       toast.success(content.generationComplete);
     } catch (error: any) {
-      console.error('Failed to generate content:', error);
       toast.error(content.generationError);
     } finally {
-      setContentGenerating(false);
+      setIsGenerating(false);
     }
   };
 
@@ -413,13 +404,6 @@ export function SEOManagementCenter() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* 🔥🔥🔥 VERSION BANNER - 頁面頂部版本標記 */}
-        <div className="mb-4 p-3 bg-gradient-to-r from-purple-500 to-pink-500 border-2 border-white rounded-lg shadow-lg">
-          <p className="text-white font-bold text-center text-sm">
-            ⚡ SEO 管理中心 v3.0.{Math.floor(Date.now() / 1000)} - 最後更新: {new Date().toLocaleString('zh-TW')}
-          </p>
-        </div>
-
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -679,9 +663,9 @@ export function SEOManagementCenter() {
                   </div>
                   <Button 
                     onClick={generateAllContent}
-                    disabled={contentGenerating}
+                    disabled={isGenerating}
                   >
-                    {contentGenerating ? (
+                    {isGenerating ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         {content.generating}
@@ -715,30 +699,6 @@ export function SEOManagementCenter() {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics">
-            {/* 🔥🔥🔥 VERSION 3.1 - FORCE UPDATE - TIMESTAMP: {new Date().toISOString()} 🔥🔥🔥 */}
-            <div className="mb-6 p-10 bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500 border-8 border-purple-600 rounded-3xl shadow-2xl">
-              <h1 className="text-white font-black text-5xl text-center drop-shadow-2xl mb-6 animate-bounce">
-                ⚡⚡⚡ 新版本 v3.1 強制更新成功！⚡⚡⚡
-              </h1>
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 mb-4">
-                <p className="text-white text-center text-3xl font-bold">
-                  載入時間: {new Date().toLocaleString('zh-TW', { 
-                    year: 'numeric', 
-                    month: '2-digit', 
-                    day: '2-digit', 
-                    hour: '2-digit', 
-                    minute: '2-digit', 
-                    second: '2-digit' 
-                  })}
-                </p>
-              </div>
-              <p className="text-yellow-100 text-center text-2xl font-black animate-pulse">
-                隨機ID: {Math.random().toString(36).substring(2, 15)}
-              </p>
-              <p className="text-white text-center mt-4 text-lg font-semibold">
-                如果您還看到「分析功能正在開發中...」，請完全關閉瀏覽器後重新開啟！
-              </p>
-            </div>
             <SEOAnalyticsDashboard />
           </TabsContent>
         </Tabs>

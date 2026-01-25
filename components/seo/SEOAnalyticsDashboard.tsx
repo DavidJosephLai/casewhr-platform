@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../lib/LanguageContext';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 interface SEOMetrics {
   indexedPages: {
@@ -329,7 +329,6 @@ export function SEOAnalyticsDashboard() {
       ]);
 
     } catch (error: any) {
-      console.error('Failed to load analytics:', error);
       toast.error('Failed to load analytics data');
     } finally {
       setLoading(false);
