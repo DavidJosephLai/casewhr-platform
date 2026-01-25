@@ -1,7 +1,6 @@
-import { AdminAISEO } from './admin/AdminAISEO';
-import { AvatarUploadDiagnostic } from './admin/AvatarUploadDiagnostic';
 import { SEOManagementCenter } from './seo/SEOManagementCenter';
 import { OpenAIUsageReport } from './admin/OpenAIUsageReport';
+import { SEOHealthDiagnostic } from './admin/SEOHealthDiagnostic';
 import { isAdmin as checkIsAdmin } from '../lib/adminConfig';
 
 export function AdminPanel() {
@@ -132,7 +131,7 @@ export function AdminPanel() {
 
         <TabsContent value="diagnostics" className="space-y-6">
           <DiagnosticPanel />
-          <AvatarUploadDiagnostic />
+          <SEOHealthDiagnostic />
         </TabsContent>
 
         <TabsContent value="users" className="space-y-6">
