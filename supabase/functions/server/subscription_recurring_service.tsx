@@ -574,27 +574,44 @@ export async function createECPaySubscription(
   // ⚠️ PeriodReturnURL 必須使用完整的 Supabase Function URL（正式環境）
   const periodReturnURL = 'https://bihplitfentxioxyjalb.supabase.co/functions/v1/make-server-215f78a5/ecpay-period-callback';
   
+  // 🕐 正確的日期時間格式：YYYY/MM/DD HH:mm:ss
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  const merchantTradeDate = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`;
+  
+  console.log('🕐 [ECPay] MerchantTradeDate:', merchantTradeDate);
+  console.log('💰 [ECPay] Amount:', amount, 'TWD');
+  console.log('📦 [ECPay] TradeNo:', tradeNo);
+  
   const params = {
     MerchantID: ECPAY_MERCHANT_ID,
     MerchantTradeNo: tradeNo,
-    MerchantTradeDate: new Date().toISOString().slice(0, 19).replace('T', ' '),
+    MerchantTradeDate: merchantTradeDate, // ✅ 修正格式
     PaymentType: 'aio',
     TotalAmount: amount.toString(),
-    TradeDesc: `Case Where ${planType === 'pro' ? 'Pro' : 'Enterprise'} Subscription`,
-    ItemName: `${planType === 'pro' ? 'Pro' : 'Enterprise'} Monthly Plan`,
-    ReturnURL: returnUrl,
+    TradeDesc: `CaseWHR-${planType.toUpperCase()}-Plan`, // ✅ 移除空格
+    ItemName: `${planType === 'pro' ? 'Pro' : 'Enterprise'}-Monthly-Plan`, // ✅ 移除空格
+    ReturnURL: periodReturnURL, // ✅ 使用 periodReturnURL 作為主要回調
     ChoosePayment: 'Credit',
     EncryptType: '1',
     // 定期定額參數
     PeriodAmount: amount.toString(),
     PeriodType: 'M', // M = 月
     Frequency: '1', // 每1個月
-    ExecTimes: '12', // 執行12次（1年）- 可改為 0 表示無限制
-    PeriodReturnURL: periodReturnURL,  // ✅ 使用完整 URL
+    ExecTimes: '0', // ✅ 改為 0 = 無限制（直到用戶取消）
+    PeriodReturnURL: periodReturnURL,  // ✅ 定期扣款回調
   };
+  
+  console.log('📋 [ECPay] Params:', JSON.stringify(params, null, 2));
   
   // 生成檢查碼
   const checkMacValue = await generateECPayCheckMacValue(params);
+  console.log('🔐 [ECPay] CheckMacValue:', checkMacValue);
   
   // 保存訂閱信息
   await kv.set(`ecpay_subscription_pending_${tradeNo}`, {
@@ -614,15 +631,52 @@ export async function createECPaySubscription(
     <head>
       <meta charset="UTF-8">
       <title>Redirecting to ECPay...</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          margin: 0;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+          text-align: center;
+          color: white;
+        }
+        .loader {
+          border: 4px solid rgba(255,255,255,0.3);
+          border-top: 4px solid white;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          animation: spin 1s linear infinite;
+          margin: 20px auto;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      </style>
     </head>
     <body>
+      <div class="container">
+        <h2>🔄 正在導向綠界付款...</h2>
+        <div class="loader"></div>
+        <p>請稍候，即將跳轉至安全付款頁面</p>
+      </div>
       <form id="ecpayForm" method="post" action="${ECPAY_API_BASE}">
         ${Object.entries({ ...params, CheckMacValue: checkMacValue }).map(([key, value]) => 
           `<input type="hidden" name="${key}" value="${value}">`
         ).join('\n')}
       </form>
       <script>
-        document.getElementById('ecpayForm').submit();
+        console.log('🟢 [ECPay] Submitting form to:', '${ECPAY_API_BASE}');
+        console.log('🟢 [ECPay] Form data:', ${JSON.stringify({ ...params, CheckMacValue: checkMacValue })});
+        setTimeout(() => {
+          document.getElementById('ecpayForm').submit();
+        }, 500);
       </script>
     </body>
     </html>
@@ -656,7 +710,7 @@ export async function handleECPayPeriodCallback(params: Record<string, any>): Pr
     if (pendingData) {
       const { user_id, plan_type, amount } = pendingData;
       
-      // 首次訂�� - 創建訂閱記錄
+      // 首次訂 - 創建訂閱記錄
       if (!PeriodNo || PeriodNo === '0') {
         const userSubscription = {
           user_id,

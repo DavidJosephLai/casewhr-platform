@@ -360,10 +360,10 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
                     ? 'You will be redirected to ECPay to complete your subscription payment.' 
                     : '您將被導向綠界科技完成訂閱付款。'}
                 </p>
-                <p className="text-xs text-green-700 mt-2">
+                <p className="text-xs text-green-700 mt-2 whitespace-pre-line">
                   {language === 'en' 
-                    ? '✓ Secure payment gateway\n✓ Auto-renewal support' 
-                    : '✓ 安全支付閘道\n✓ 支援自動續訂'}
+                    ? '✓ Secure payment gateway\n✓ Auto-renewal support\n✓ All major credit cards accepted' 
+                    : '✓ 安全支付閘道\n✓ 支援自動續訂\n✓ 支援所有主流信用卡'}
                 </p>
               </div>
             </TabsContent>
