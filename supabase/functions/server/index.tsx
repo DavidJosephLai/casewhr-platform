@@ -5666,7 +5666,7 @@ app.get("/make-server-215f78a5/profile/:userId", async (c) => {
     // ✅ 獲取訂閱狀態（自動檢查過期並降級）
     let subscription = null;
     try {
-      subscription = await subscriptionRecurringService.getUserSubscription(userId);
+      subscription = await subscriptionRecurring.getUserSubscription(userId);
       console.log('📊 [GET /profile/:userId] Subscription status:', {
         plan: subscription.plan,
         status: subscription.status,
