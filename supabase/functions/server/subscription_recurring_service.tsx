@@ -471,6 +471,22 @@ const ECPAY_API_BASE = ECPAY_MODE === 'production'
   ? 'https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5'
   : 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5';
 
+// 🔍 環境檢測日誌
+console.log('🔍 [ECPay] Environment Configuration:', {
+  mode: ECPAY_MODE,
+  merchantIdLength: ECPAY_MERCHANT_ID?.length,
+  merchantIdPrefix: ECPAY_MERCHANT_ID?.substring(0, 4),
+  apiBase: ECPAY_API_BASE,
+  hashKeySet: ECPAY_HASH_KEY ? '✅' : '❌',
+  hashIVSet: ECPAY_HASH_IV ? '✅' : '❌'
+});
+
+// ⚠️ 檢測環境不匹配（測試商戶ID用於正式環境）
+if (ECPAY_MODE === 'production' && ECPAY_MERCHANT_ID === '2000132') {
+  console.warn('⚠️ [ECPay] WARNING: Using test merchant ID (2000132) in production mode!');
+  console.warn('⚠️ [ECPay] This will cause API errors. Please set ECPAY_MODE=stage for testing.');
+}
+
 /**
  * 生成 ECPay 檢查碼
  * ⚠️ CRITICAL: ECPay 使用 MD5 (EncryptType=1) 或 SHA256 (EncryptType=0)
@@ -569,15 +585,18 @@ export async function createECPaySubscription(
   returnUrl: string
 ): Promise<string> {
   const amount = planType === 'pro' ? 480 : 1400; // TWD
-  const tradeNo = `SUB${Date.now()}${Math.random().toString(36).substring(2, 9)}`;
   
-  // 🔍 DEBUG: 確認金額計算
-  console.log('🔍 [ECPay] ============ DEBUG START ============');
-  console.log('🔍 [ECPay] planType:', planType);
-  console.log('🔍 [ECPay] amount (calculated):', amount);
-  console.log('🔍 [ECPay] amount.toString():', amount.toString());
-  console.log('🔍 [ECPay] typeof amount:', typeof amount);
-  console.log('🔍 [ECPay] ============ DEBUG END ============');
+  // ✅ 修正：MerchantTradeNo 必須 ≤ 20 字元
+  // 格式：S + 10位時間戳 + 6位隨機碼 = 17 字元
+  const timestamp = Date.now().toString().slice(-10); // 取最後 10 位數字
+  const randomStr = Math.random().toString(36).substring(2, 8); // 6 位隨機字符
+  const tradeNo = `S${timestamp}${randomStr}`;
+  
+  console.log('📦 [ECPay] TradeNo:', tradeNo, '(length:', tradeNo.length, ')');
+  
+  if (tradeNo.length > 20) {
+    throw new Error(`TradeNo too long: ${tradeNo.length} chars (max 20)`);
+  }
   
   // ⚠️ PeriodReturnURL 必須使用完整的 Supabase Function URL（正式環境）
   const periodReturnURL = 'https://bihplitfentxioxyjalb.supabase.co/functions/v1/make-server-215f78a5/ecpay-period-callback';
@@ -618,6 +637,9 @@ export async function createECPaySubscription(
   console.log('📋 [ECPay] Params:', JSON.stringify(params, null, 2));
   console.log('💰💰💰 [ECPay] TotalAmount in params:', params.TotalAmount);
   console.log('💰💰💰 [ECPay] PeriodAmount in params:', params.PeriodAmount);
+  console.log('🏪 [ECPay] MerchantID:', ECPAY_MERCHANT_ID);
+  console.log('🌍 [ECPay] Current Mode:', ECPAY_MODE);
+  console.log('🔗 [ECPay] API Endpoint:', ECPAY_API_BASE);
   
   // 生成檢查碼
   const checkMacValue = await generateECPayCheckMacValue(params);
