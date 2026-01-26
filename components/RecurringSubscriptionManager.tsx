@@ -221,18 +221,46 @@ export function RecurringSubscriptionManager({
   // 使用 ECPay 訂閱
   const subscribeWithECPay = async (planType: 'pro' | 'enterprise') => {
     try {
-      // ✅ 最簡單的測試 - 立即輸出
-      console.log('🚀🚀🚀 BUTTON CLICKED! ECPay subscription starting...', { planType });
-      alert('按鈕已點擊！請查看 Console');
+      // ✅ 在頁面上顯示日誌，不依賴 Console
+      const logDiv = document.createElement('div');
+      logDiv.id = 'ecpay-debug-log';
+      logDiv.style.cssText = `
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: white;
+        border: 3px solid red;
+        padding: 20px;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow-y: auto;
+        z-index: 99999;
+        font-family: monospace;
+        font-size: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      `;
+      document.body.appendChild(logDiv);
+      
+      const log = (msg: string) => {
+        const line = document.createElement('div');
+        line.textContent = `${new Date().toLocaleTimeString()}: ${msg}`;
+        line.style.marginBottom = '5px';
+        logDiv.appendChild(line);
+        console.log(msg); // 也輸出到 Console
+      };
+      
+      log('🚀 按鈕已點擊！開始訂閱流程...');
+      log(`📋 計劃類型: ${planType}`);
+      log(`👤 用戶ID: ${userId}`);
+      log(`🔑 AccessToken: ${accessToken ? '有' : '無'}`);
       
       setProcessing(true);
-      
-      console.log('🟢 [ECPay] Starting subscription flow...', { planType, userId, projectId });
+      log('✅ 設置 processing = true');
       
       const url = `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/subscription/ecpay/create-recurring`;
-      console.log('🟢 [ECPay] Calling API:', url);
-      console.log('🟢 [ECPay] Request body:', JSON.stringify({ planType }));
+      log(`🌐 API URL: ${url}`);
       
+      log('📤 開始發送請求...');
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -242,58 +270,62 @@ export function RecurringSubscriptionManager({
         body: JSON.stringify({ planType }),
       });
 
-      console.log('🟢 [ECPay] Response status:', response.status);
-      console.log('🟢 [ECPay] Response headers:', Object.fromEntries(response.headers.entries()));
+      log(`📥 收到回應，狀態碼: ${response.status}`);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ [ECPay] API Error:', response.status, errorText);
+        log(`❌ API 錯誤: ${errorText}`);
         throw new Error(`Failed to create ECPay subscription: ${errorText}`);
       }
 
-      // ECPay 返回 HTML form，直接渲染並提交
       const html = await response.text();
-      console.log('🟢 [ECPay] Received HTML form, length:', html.length);
-      console.log('🟢 [ECPay] HTML preview:', html.substring(0, 200));
+      log(`✅ 收到 HTML，長度: ${html.length} 字元`);
+      log(`📄 HTML 預覽: ${html.substring(0, 100)}...`);
       
       if (html.length < 100) {
-        console.error('❌ [ECPay] HTML too short, might be an error:', html);
+        log(`❌ HTML 太短，可能是錯誤`);
         throw new Error('Invalid response from server');
       }
       
-      // 創建隱藏的容器
+      log('📝 創建表單容器...');
       const container = document.createElement('div');
       container.style.display = 'none';
       container.innerHTML = html;
       document.body.appendChild(container);
       
-      // 查找並自動提交表單
       const form = container.querySelector('form');
       if (!form) {
-        console.error('❌ [ECPay] No form found in HTML:', html);
+        log('❌ 找不到表單！');
         throw new Error('No payment form found');
       }
       
-      console.log('🟢 [ECPay] Form found:', {
-        action: form.action,
-        method: form.method,
-        inputs: form.querySelectorAll('input').length
-      });
+      log(`✅ 找到表單: action=${form.action}`);
+      log(`📋 表單輸入數量: ${form.querySelectorAll('input').length}`);
+      log('🚀 準備提交表單到 ECPay...');
       
-      console.log('✅ [ECPay] Submitting form to ECPay...');
-      form.submit();
+      // 延遲 2 秒讓用戶看到日誌
+      setTimeout(() => {
+        log('✈️ 正在跳轉到 ECPay...');
+        form.submit();
+      }, 2000);
       
-      // 不要在這裡重置 processing，因為頁面會跳轉
-      // setProcessing(false);
     } catch (error: any) {
-      console.error('❌ [ECPay] Error creating subscription:', error);
-      console.error('❌ [ECPay] Error stack:', error.stack);
+      const logDiv = document.getElementById('ecpay-debug-log');
+      if (logDiv) {
+        const errorLine = document.createElement('div');
+        errorLine.style.color = 'red';
+        errorLine.style.fontWeight = 'bold';
+        errorLine.textContent = `❌ 錯誤: ${error.message}`;
+        logDiv.appendChild(errorLine);
+      }
+      
+      console.error('❌ [ECPay] Error:', error);
       toast.error(
         language === 'en' 
           ? `Failed to create subscription: ${error.message}` 
           : `創建訂閱失敗: ${error.message}`
       );
-      setProcessing(false); // 只在錯誤時重置
+      setProcessing(false);
     }
   };
 
