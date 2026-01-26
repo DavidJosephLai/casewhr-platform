@@ -401,8 +401,8 @@ export const MembershipCard = memo(function MembershipCard() {
                   </p>
                   <p className="text-xs text-red-700 mt-1">
                     {language === 'en' 
-                      ? `Your subscription expired on ${new Date(subscription.end_date).toLocaleDateString('en-US')}. Please upgrade to continue using premium features.` 
-                      : `您的訂閱已於 ${new Date(subscription.end_date).toLocaleDateString('zh-TW')} 過期。請升級以繼續使用進階功能。`}
+                      ? `Your subscription expired${subscription.end_date ? ` on ${new Date(subscription.end_date).toLocaleDateString('en-US')}` : ''}. Please upgrade to continue using premium features.` 
+                      : `您的訂閱已${subscription.end_date ? `於 ${new Date(subscription.end_date).toLocaleDateString('zh-TW')} ` : ''}過期。請升級以繼續使用進階功能。`}
                   </p>
                 </div>
               </div>

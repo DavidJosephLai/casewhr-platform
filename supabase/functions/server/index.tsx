@@ -245,7 +245,8 @@ async function checkEnterpriseSubscription(userId: string): Promise<{ hasEnterpr
   const subscriptionKey = `subscription_${userId}`;
   const subscription = await kv.get(subscriptionKey);
   
-  const hasEnterprise = subscription?.plan === 'enterprise';
+  // ✅ 必須是 enterprise 且狀態為 active
+  const hasEnterprise = subscription?.plan === 'enterprise' && subscription?.status === 'active';
   
   return { hasEnterprise, subscription };
 }
@@ -6208,6 +6209,21 @@ app.get("/make-server-215f78a5/subscription/:userId", async (c) => {
       });
     }
 
+    // ✅ 檢查訂閱是否已過期
+    const now = new Date();
+    const endDate = new Date(subscription.end_date || subscription.current_period_end);
+    
+    if (endDate < now && subscription.status === 'active') {
+      console.log(`⏰ [Subscription] Plan expired for user ${userId}, changing to expired status`);
+      
+      // 更新為過期狀態
+      subscription.status = 'expired';
+      subscription.plan = 'free'; // ✅ 降級為免費版
+      await kv.set(subscriptionKey, subscription);
+      
+      console.log(`✅ [Subscription] User ${userId} downgraded to free plan due to expiration`);
+    }
+
     return c.json({ subscription });
   } catch (error) {
     console.error('Error fetching subscription:', error);
@@ -8633,7 +8649,10 @@ app.post("/make-server-215f78a5/payment/escrow/release", async (c) => {
     // Get freelancer's subscription to calculate platform fee
     const subscriptionKey = `subscription_${freelancerId}`;
     const subscription = await kv.get(subscriptionKey);
-    const plan = subscription?.plan || 'free';
+    
+    // ✅ 只有 active 狀態的訂閱才能享受優惠手續費
+    const isActiveSubscription = subscription?.status === 'active';
+    const plan = (isActiveSubscription && subscription?.plan) ? subscription.plan : 'free';
 
     // Calculate platform fee based on subscription plan
     const platformFeePercentages: Record<string, number> = {
@@ -8646,7 +8665,8 @@ app.post("/make-server-215f78a5/payment/escrow/release", async (c) => {
     const platformFee = Math.round((escrowAmount * feePercentage) / 100);
     const freelancerPayout = escrowAmount - platformFee;
 
-    console.log('💰 [Escrow Release] Plan:', plan);
+    console.log('💰 [Escrow Release] Subscription:', subscription?.plan, 'Status:', subscription?.status);
+    console.log('💰 [Escrow Release] Effective Plan:', plan, '(Active:', isActiveSubscription, ')');
     console.log('💰 [Escrow Release] Fee percentage:', feePercentage + '%');
     console.log('💰 [Escrow Release] Platform fee:', platformFee);
     console.log('💰 [Escrow Release] Freelancer payout:', freelancerPayout);
@@ -9036,10 +9056,12 @@ app.get("/make-server-215f78a5/team/members", async (c) => {
     const subscriptionKey = `subscription_${user.id}`;
     const subscription = await kv.get(subscriptionKey);
     
-    if (!subscription || subscription.plan !== 'enterprise') {
+    // ✅ 必須是 enterprise 且狀態為 active
+    if (!subscription || subscription.plan !== 'enterprise' || subscription.status !== 'active') {
       return c.json({ 
-        error: 'Team management is only available for Enterprise plan users',
+        error: 'Team management is only available for active Enterprise plan users',
         currentPlan: subscription?.plan || 'free',
+        currentStatus: subscription?.status || 'none',
         requiredPlan: 'enterprise'
       }, 403);
     }
@@ -9102,11 +9124,13 @@ app.post("/make-server-215f78a5/team/invite", async (c) => {
     console.log('🔍 [Team Invite] Checking subscription for user:', user.id);
     console.log('📊 [Team Invite] Subscription data:', subscription);
     
-    if (!subscription || subscription.plan !== 'enterprise') {
-      console.log('❌ [Team Invite] Access denied - Current plan:', subscription?.plan || 'none');
+    // ✅ 必須是 enterprise 且狀態為 active
+    if (!subscription || subscription.plan !== 'enterprise' || subscription.status !== 'active') {
+      console.log('❌ [Team Invite] Access denied - Plan:', subscription?.plan, 'Status:', subscription?.status);
       return c.json({ 
-        error: 'Team management is only available for Enterprise plan users',
+        error: 'Team management is only available for active Enterprise plan users',
         currentPlan: subscription?.plan || 'free',
+        currentStatus: subscription?.status || 'none',
         requiredPlan: 'enterprise'
       }, 403);
     }
@@ -20335,7 +20359,7 @@ app.post("/make-server-215f78a5/test-smart-email", async (c) => {
       result,
       userInfo: {
         tier: userInfo.subscriptionTier,
-        hasCustomLogo: subscription?.plan === 'enterprise',
+        hasCustomLogo: subscription?.plan === 'enterprise' && subscription?.status === 'active',
       },
     });
   } catch (error: any) {

@@ -247,7 +247,9 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
     planPrice: planPriceDisplay,
     walletBalance,
     hasEnoughBalance,
-    fetchingBalance
+    fetchingBalance,
+    paymentMethod, // ✅ 添加支付方式
+    loading, // ✅ 添加 loading 狀態
   });
 
   return (
