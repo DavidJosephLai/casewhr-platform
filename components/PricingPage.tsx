@@ -731,7 +731,7 @@ export function PricingPage() {
       </div>
 
       {/* Upgrade Dialog */}
-      {selectedPlan && (
+      {selectedPlan && !showDowngradeDialog && (
         <UpgradeDialog
           open={showUpgradeDialog}
           onOpenChange={setShowUpgradeDialog}
