@@ -768,11 +768,18 @@ export function PricingPage() {
             console.log('✅ Downgrade successful! Refreshing subscription and wallet...');
             setShowDowngradeDialog(false);
             setSelectedPlan(null);
-            // Refresh wallet balance and subscription after successful downgrade
-            fetchWalletBalance();
-            refreshLimits();
-            // Trigger global subscription refresh event
-            window.dispatchEvent(new Event('refreshSubscription'));
+            
+            // 🔧 使用 setTimeout 確保狀態更新順序，避免 React DOM 渲染衝突
+            setTimeout(() => {
+              // Refresh wallet balance and subscription after successful downgrade
+              fetchWalletBalance();
+              refreshLimits();
+              
+              // Trigger global subscription refresh event (延遲更久)
+              setTimeout(() => {
+                window.dispatchEvent(new Event('refreshSubscription'));
+              }, 200);
+            }, 100);
           }}
         />
       )}

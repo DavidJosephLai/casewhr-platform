@@ -55,7 +55,7 @@ const featureLimitations = {
       'No team management'
     ],
     zh: [
-      '僅限 3 個活���項目',
+      '僅限 3 個活項目',
       '月僅限 5 個提案',
       '平台服務費提高至 20%',
       '無認證徽章',
@@ -169,10 +169,15 @@ export function DowngradeDialog({
         duration: 5000,
       });
 
+      // 🔧 先關閉對話框
       onOpenChange(false);
-      if (onSuccess) {
-        onSuccess();
-      }
+      
+      // 🔧 延遲執行回調，避免 React DOM 渲染衝突
+      setTimeout(() => {
+        if (onSuccess) {
+          onSuccess();
+        }
+      }, 100);
     } catch (error) {
       console.error('❌ Downgrade error:', error);
       toast.error(t.error, {
