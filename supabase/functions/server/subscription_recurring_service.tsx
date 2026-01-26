@@ -198,28 +198,28 @@ export async function createECPaySubscription(
   console.log('🕐 [ECPay] MerchantTradeDate:', merchantTradeDate);
   console.log('💰 [ECPay] Amount:', amount, 'TWD');
   
-  // ⚠️ CRITICAL FIX: TradeDesc 和 ItemName 不能包含特殊字符
-  // 只允許：中文、英文、數字、空格
-  const params = {
+  // ⚠️ CRITICAL FIX: CheckMacValue 計算時，所有參數都要轉成字串！
+  // 因為 HTML form 會把所有值轉成字串傳送給 ECPay
+  const params: Record<string, string> = {
     MerchantID: ECPAY_MERCHANT_ID,
     MerchantTradeNo: tradeNo,
     MerchantTradeDate: merchantTradeDate,
     PaymentType: 'aio',
-    TotalAmount: Math.floor(amount).toString(), // ✅ 確保是整數
-    TradeDesc: planType === 'pro' ? 'Pro Plan' : 'Enterprise Plan', // ✅ 移除特殊字符
-    ItemName: planType === 'pro' ? 'Pro Monthly Plan' : 'Enterprise Monthly Plan', // ✅ 移除特殊字符
+    TotalAmount: Math.floor(amount).toString(), // ✅ 字串化！
+    TradeDesc: planType === 'pro' ? 'Pro Plan' : 'Enterprise Plan',
+    ItemName: planType === 'pro' ? 'Pro Monthly Plan' : 'Enterprise Monthly Plan',
     ReturnURL: periodReturnURL,
     ChoosePayment: 'Credit',
-    EncryptType: 1, // ✅ 必須是數字，不是字串！
+    EncryptType: '1', // ✅ 字串化！
     // ✅ 定期定額參數
-    PeriodAmount: Math.floor(amount).toString(), // ✅ 必須是整數
+    PeriodAmount: Math.floor(amount).toString(), // ✅ 字串化！
     PeriodType: 'M',
-    Frequency: '1',
-    ExecTimes: '999',
+    Frequency: '1', // ✅ 字串化！
+    ExecTimes: '999', // ✅ 字串化！
     PeriodReturnURL: periodReturnURL,
     // ✅ 信用卡參數
-    CreditInstallment: '0',
-    UnionPay: '0',
+    CreditInstallment: '0', // ✅ 字串化！
+    UnionPay: '0', // ✅ 字串化！
   };
   
   console.log('📋 [ECPay] Params:', JSON.stringify(params, null, 2));
