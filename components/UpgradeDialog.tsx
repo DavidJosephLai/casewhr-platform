@@ -7,7 +7,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { getTranslation } from "../lib/translations";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { DollarSign, Loader2, AlertCircle } from "lucide-react";
+import { DollarSign, Loader2, AlertCircle, CreditCard, Wallet as WalletIcon } from "lucide-react"; // ✅ 添加圖標
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs"; // ✅ 添加 Tabs
 
 interface UpgradeDialogProps {
   open: boolean;
@@ -24,6 +25,7 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
   const [loading, setLoading] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [fetchingBalance, setFetchingBalance] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'ecpay'>('wallet'); // ✅ 添加支付方式選擇
 
   // ⭐ 根據語言自動對應貨幣（與平台整體邏輯一致）
   const selectedCurrency: Currency = 
@@ -130,13 +132,6 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
       return;
     }
 
-    // ⭐ 錢包餘額是 USD，需要轉換成目標貨幣比較
-    const walletBalanceInCurrency = convertCurrency(walletBalance, 'USD', selectedCurrency);
-    if (walletBalanceInCurrency < planPriceDisplay) {
-      toast.error(t.upgradeDialog.insufficientBalance);
-      return;
-    }
-
     setLoading(true);
     try {
       const response = await fetch(
@@ -166,6 +161,69 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
     } catch (error) {
       console.error('Upgrade error:', error);
       toast.error(t.upgradeDialog.error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ 添加 ECPay 訂閱處理函數
+  const handleECPaySubscription = async () => {
+    if (!user || !accessToken) {
+      toast.error(language === 'en' ? 'Please login first' : '請先登入');
+      return;
+    }
+
+    console.log('🟢 [ECPay] Starting subscription flow...');
+    console.log('🟢 [ECPay] Plan:', targetPlan, 'Cycle:', billingCycle, 'Price:', planPriceDisplay);
+
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay/subscription/create`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            planType: billingCycle, // 'monthly' or 'yearly'
+            planName: targetPlan, // 'pro' or 'enterprise'
+          }),
+        }
+      );
+
+      console.log('🟢 [ECPay] Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ [ECPay] Error response:', errorText);
+        toast.error(language === 'en' ? 'Failed to create subscription' : '建立訂閱失敗');
+        return;
+      }
+
+      const data = await response.json();
+      console.log('✅ [ECPay] Subscription data:', data);
+
+      // 提交表單到 ECPay
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = data.action;
+      
+      for (const [key, value] of Object.entries(data.formData)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value as string;
+        form.appendChild(input);
+      }
+      
+      document.body.appendChild(form);
+      console.log('✅ [ECPay] Form submitted, redirecting...');
+      form.submit();
+    } catch (error) {
+      console.error('❌ [ECPay] Error:', error);
+      toast.error(language === 'en' ? 'Failed to process subscription' : '處理訂閱失敗');
     } finally {
       setLoading(false);
     }
@@ -213,55 +271,94 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
             <p className="text-sm text-gray-600">{planDetails.description}</p>
           </div>
 
-          {/* Wallet Balance */}
-          <div className="border rounded-lg p-4">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm text-gray-600 flex items-center gap-2">
-                <DollarSign className="h-4 w-4" />
-                {language === 'en' ? 'Your Wallet Balance' : '您的錢包餘額'}
-              </span>
-              {fetchingBalance ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <span className={`font-medium ${hasEnoughBalance ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(
-                    convertCurrency(walletBalance, 'USD', selectedCurrency),
-                    selectedCurrency
-                  )}
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">{t.upgradeDialog.paymentFrom}</p>
-          </div>
+          {/* ✅ 支付方式選擇 */}
+          <Tabs value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'wallet' | 'ecpay')}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="wallet" className="flex items-center gap-2">
+                <WalletIcon className="h-4 w-4" />
+                {language === 'en' ? 'Wallet' : '錢包'}
+              </TabsTrigger>
+              <TabsTrigger value="ecpay" className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                {language === 'en' ? 'ECPay' : '綠界科技'}
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Warning if insufficient balance */}
-          {!fetchingBalance && !hasEnoughBalance && (
-            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm text-red-800">{t.upgradeDialog.insufficientBalance}</p>
-                <p className="text-xs text-red-600 mt-1">
-                  {language === 'en' 
-                    ? `You need ${formatCurrency(planPriceDisplay - walletBalanceInCurrency, selectedCurrency)} more` 
-                    : `您還需要 ${formatCurrency(planPriceDisplay - walletBalanceInCurrency, selectedCurrency)}`}
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2 text-xs h-7"
-                  onClick={() => {
-                    console.log('💰 [UpgradeDialog] "Go to Wallet" button clicked');
-                    onOpenChange(false);
-                    // 觸發導航到 Dashboard 的 Wallet 頁籤
-                    console.log('💰 [UpgradeDialog] Dispatching showDashboard event with tab: wallet');
-                    window.dispatchEvent(new CustomEvent('showDashboard', { detail: { tab: 'wallet' } }));
-                  }}
-                >
-                  {language === 'en' ? '💰 Go to Wallet to Top Up' : '💰 前往錢包充值'}
-                </Button>
+            {/* Wallet Tab Content */}
+            <TabsContent value="wallet" className="space-y-4 mt-4">
+              {/* Wallet Balance */}
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-gray-600 flex items-center gap-2">
+                    <DollarSign className="h-4 w-4" />
+                    {language === 'en' ? 'Your Wallet Balance' : '您的錢包餘額'}
+                  </span>
+                  {fetchingBalance ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <span className={`font-medium ${hasEnoughBalance ? 'text-green-600' : 'text-red-600'}`}>
+                      {formatCurrency(
+                        convertCurrency(walletBalance, 'USD', selectedCurrency),
+                        selectedCurrency
+                      )}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">{t.upgradeDialog.paymentFrom}</p>
               </div>
-            </div>
-          )}
+
+              {/* Warning if insufficient balance */}
+              {!fetchingBalance && !hasEnoughBalance && (
+                <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm text-red-800">{t.upgradeDialog.insufficientBalance}</p>
+                    <p className="text-xs text-red-600 mt-1">
+                      {language === 'en' 
+                        ? `You need ${formatCurrency(planPriceDisplay - walletBalanceInCurrency, selectedCurrency)} more` 
+                        : `您還需要 ${formatCurrency(planPriceDisplay - walletBalanceInCurrency, selectedCurrency)}`}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 text-xs h-7"
+                      onClick={() => {
+                        console.log('💰 [UpgradeDialog] "Go to Wallet" button clicked');
+                        onOpenChange(false);
+                        // 觸發導航到 Dashboard 的 Wallet 頁籤
+                        console.log('💰 [UpgradeDialog] Dispatching showDashboard event with tab: wallet');
+                        window.dispatchEvent(new CustomEvent('showDashboard', { detail: { tab: 'wallet' } }));
+                      }}
+                    >
+                      {language === 'en' ? '💰 Go to Wallet to Top Up' : '💰 前往錢包充值'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* ECPay Tab Content */}
+            <TabsContent value="ecpay" className="space-y-4 mt-4">
+              <div className="border rounded-lg p-4 bg-green-50 border-green-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <CreditCard className="h-5 w-5 text-green-600" />
+                  <h4 className="font-medium text-green-900">
+                    {language === 'en' ? 'ECPay Credit Card Payment' : '綠界信用卡付款'}
+                  </h4>
+                </div>
+                <p className="text-sm text-green-800">
+                  {language === 'en' 
+                    ? 'You will be redirected to ECPay to complete your subscription payment.' 
+                    : '您將被導向綠界科技完成訂閱付款。'}
+                </p>
+                <p className="text-xs text-green-700 mt-2">
+                  {language === 'en' 
+                    ? '✓ Secure payment gateway\n✓ Auto-renewal support' 
+                    : '✓ 安全支付閘道\n✓ 支援自動續訂'}
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
         <DialogFooter>
@@ -269,14 +366,16 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
             {t.upgradeDialog.cancel}
           </Button>
           <Button 
-            onClick={handleUpgrade} 
-            disabled={loading || fetchingBalance || !hasEnoughBalance}
+            onClick={paymentMethod === 'ecpay' ? handleECPaySubscription : handleUpgrade} 
+            disabled={loading || (paymentMethod === 'wallet' && (fetchingBalance || !hasEnoughBalance))}
           >
             {loading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 {language === 'en' ? 'Processing...' : '處理中...'}
               </>
+            ) : paymentMethod === 'ecpay' ? (
+              language === 'en' ? '💳 Pay with ECPay' : '💳 使用綠界支付'
             ) : (
               t.upgradeDialog.confirmPurchase
             )}
