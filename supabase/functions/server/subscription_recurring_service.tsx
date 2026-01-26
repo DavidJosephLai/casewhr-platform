@@ -571,6 +571,14 @@ export async function createECPaySubscription(
   const amount = planType === 'pro' ? 480 : 1400; // TWD
   const tradeNo = `SUB${Date.now()}${Math.random().toString(36).substring(2, 9)}`;
   
+  // 🔍 DEBUG: 確認金額計算
+  console.log('🔍 [ECPay] ============ DEBUG START ============');
+  console.log('🔍 [ECPay] planType:', planType);
+  console.log('🔍 [ECPay] amount (calculated):', amount);
+  console.log('🔍 [ECPay] amount.toString():', amount.toString());
+  console.log('🔍 [ECPay] typeof amount:', typeof amount);
+  console.log('🔍 [ECPay] ============ DEBUG END ============');
+  
   // ⚠️ PeriodReturnURL 必須使用完整的 Supabase Function URL（正式環境）
   const periodReturnURL = 'https://bihplitfentxioxyjalb.supabase.co/functions/v1/make-server-215f78a5/ecpay-period-callback';
   
@@ -608,6 +616,8 @@ export async function createECPaySubscription(
   };
   
   console.log('📋 [ECPay] Params:', JSON.stringify(params, null, 2));
+  console.log('💰💰💰 [ECPay] TotalAmount in params:', params.TotalAmount);
+  console.log('💰💰💰 [ECPay] PeriodAmount in params:', params.PeriodAmount);
   
   // 生成檢查碼
   const checkMacValue = await generateECPayCheckMacValue(params);

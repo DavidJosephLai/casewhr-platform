@@ -167,27 +167,30 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
   };
 
   // ✅ 添加 ECPay 訂閱處理函數
-  const handleECPaySubscription = async () => {
-    if (!user || !accessToken) {
-      toast.error(language === 'en' ? 'Please login first' : '請先登入');
-      return;
-    }
-
-    console.log('🟢 [ECPay] Starting subscription flow...');
-    console.log('🟢 [ECPay] Plan:', targetPlan, 'Cycle:', billingCycle, 'Price:', planPriceDisplay);
-
-    setLoading(true);
+  const handleECPayPayment = async () => {
     try {
+      setLoading(true); // ✅ 使用 setLoading 而非 setIsProcessing
+      
+      console.log('🟢 [ECPay] Starting subscription flow...');
+      console.log('🟢 [ECPay] Plan:', targetPlan, 'Cycle:', billingCycle, 'Price:', planPriceTWD, 'TWD');
+      
+      // ✅ 確保 targetPlan 正確傳遞
+      if (!targetPlan || !['pro', 'enterprise'].includes(targetPlan)) {
+        throw new Error(`Invalid plan type: ${targetPlan}`);
+      }
+      
+      console.log('🟢 [ECPay] Sending request with planType:', targetPlan);
+
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay/subscription/create`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay-create-subscription`,
         {
           method: 'POST',
           headers: {
+            'Authorization': `Bearer ${accessToken}`, // ✅ 使用 accessToken 而非 publicAnonKey
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
-            planType: targetPlan, // ✅ 修正：傳遞 'pro' 或 'enterprise'
+            planType: targetPlan, // ✅ 確保傳遞正確的 planType
           }),
         }
       );
@@ -195,44 +198,32 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
       console.log('🟢 [ECPay] Response status:', response.status);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ [ECPay] Error response:', errorText);
-        toast.error(language === 'en' ? 'Failed to create subscription' : '建立訂閱失敗');
-        setLoading(false);
-        return;
+        const error = await response.json();
+        console.error('❌ [ECPay] Error response:', error);
+        throw new Error(error.error || 'Failed to create ECPay subscription');
       }
 
-      // ✅ 後端返回 HTML，直接打開新視窗
+      // ✅ ECPay 返回 HTML form
       const htmlContent = await response.text();
-      console.log('✅ [ECPay] Received HTML form, opening popup...');
+      console.log('✅ [ECPay] Received HTML form, length:', htmlContent.length);
       
-      // 在新視窗中打開 ECPay 表單
-      const popup = window.open('', 'ecpay_payment', 'width=800,height=600,scrollbars=yes');
-      if (popup) {
-        popup.document.write(htmlContent);
-        popup.document.close();
-        
-        // 顯示提示訊息
-        toast.success(
-          language === 'en' 
-            ? 'Redirecting to ECPay payment page...' 
-            : '正在導向綠界付款頁面...'
-        );
-        
-        // 關閉升級對話框
-        onOpenChange(false);
-      } else {
-        toast.error(
-          language === 'en' 
-            ? 'Please allow pop-ups to complete payment' 
-            : '請允許彈出視窗以完成付款'
-        );
+      // 🚀 彈出視窗並顯示 HTML
+      const popup = window.open('', 'ECPayPayment', 'width=800,height=600');
+      if (!popup) {
+        throw new Error('Please allow popups for this website');
       }
-    } catch (error) {
-      console.error('❌ [ECPay] Error:', error);
-      toast.error(language === 'en' ? 'Failed to process subscription' : '處理訂閱失敗');
+      
+      popup.document.write(htmlContent);
+      popup.document.close();
+      
+      console.log('✅ [ECPay] Popup window opened successfully');
+      
+      onOpenChange(false); // ✅ 使用 onOpenChange 而非 setOpen
+    } catch (error: any) {
+      console.error('❌ [ECPay Payment] Error:', error);
+      toast.error(`ECPay payment failed: ${error.message}`);
     } finally {
-      setLoading(false);
+      setLoading(false); // ✅ 使用 setLoading 而非 setIsProcessing
     }
   };
 
@@ -375,7 +366,7 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
             {t.upgradeDialog.cancel}
           </Button>
           <Button 
-            onClick={paymentMethod === 'ecpay' ? handleECPaySubscription : handleUpgrade} 
+            onClick={paymentMethod === 'ecpay' ? handleECPayPayment : handleUpgrade} 
             disabled={loading || (paymentMethod === 'wallet' && (fetchingBalance || !hasEnoughBalance))}
           >
             {loading ? (
