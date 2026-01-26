@@ -187,8 +187,7 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
             'Authorization': `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
-            planType: billingCycle, // 'monthly' or 'yearly'
-            planName: targetPlan, // 'pro' or 'enterprise'
+            planType: targetPlan, // ✅ 修正：傳遞 'pro' 或 'enterprise'
           }),
         }
       );
@@ -199,28 +198,36 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
         const errorText = await response.text();
         console.error('❌ [ECPay] Error response:', errorText);
         toast.error(language === 'en' ? 'Failed to create subscription' : '建立訂閱失敗');
+        setLoading(false);
         return;
       }
 
-      const data = await response.json();
-      console.log('✅ [ECPay] Subscription data:', data);
-
-      // 提交表單到 ECPay
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = data.action;
+      // ✅ 後端返回 HTML，直接打開新視窗
+      const htmlContent = await response.text();
+      console.log('✅ [ECPay] Received HTML form, opening popup...');
       
-      for (const [key, value] of Object.entries(data.formData)) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        input.value = value as string;
-        form.appendChild(input);
+      // 在新視窗中打開 ECPay 表單
+      const popup = window.open('', 'ecpay_payment', 'width=800,height=600,scrollbars=yes');
+      if (popup) {
+        popup.document.write(htmlContent);
+        popup.document.close();
+        
+        // 顯示提示訊息
+        toast.success(
+          language === 'en' 
+            ? 'Redirecting to ECPay payment page...' 
+            : '正在導向綠界付款頁面...'
+        );
+        
+        // 關閉升級對話框
+        onOpenChange(false);
+      } else {
+        toast.error(
+          language === 'en' 
+            ? 'Please allow pop-ups to complete payment' 
+            : '請允許彈出視窗以完成付款'
+        );
       }
-      
-      document.body.appendChild(form);
-      console.log('✅ [ECPay] Form submitted, redirecting...');
-      form.submit();
     } catch (error) {
       console.error('❌ [ECPay] Error:', error);
       toast.error(language === 'en' ? 'Failed to process subscription' : '處理訂閱失敗');
