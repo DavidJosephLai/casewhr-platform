@@ -461,7 +461,24 @@ app.get("/make-server-215f78a5/test-ecpay-config", (c) => {
     mode,
     hashKeyLength: hashKey?.length || 0,
     hashIVLength: hashIV?.length || 0,
-    status: (merchantId && hashKey && hashIV) ? '✅ ALL SET' : '❌ MISSING'
+    hashKeyFull: hashKey, // ⚠️ 完整 Key（僅用於診斷）
+    hashIVFull: hashIV,   // ⚠️ 完整 IV（僅用於診斷）
+    status: (merchantId && hashKey && hashIV) ? '✅ ALL SET' : '❌ MISSING',
+    
+    // 📌 加入測試環境的正確 Key/IV（根據 ECPay 文件）
+    testModeCheck: mode === 'test' ? {
+      expectedMerchantId: '2000132',
+      expectedHashKey: '5294y06JbISpM5x9',
+      expectedHashIV: 'v77hoKGq4kWxNNIS',
+      yourMerchantId: merchantId,
+      yourHashKey: hashKey,
+      yourHashIV: hashIV,
+      isCorrect: (
+        merchantId === '2000132' &&
+        hashKey === '5294y06JbISpM5x9' &&
+        hashIV === 'v77hoKGq4kWxNNIS'
+      )
+    } : '✅ Production mode - using your credentials'
   });
 });
 
@@ -5646,8 +5663,23 @@ app.get("/make-server-215f78a5/profile/:userId", async (c) => {
       console.log('⚠️ [GET /profile/:userId] Profile not found, returning null (frontend will use defaults)');
     }
 
-    // Always return 200 with profile (or null)
-    return c.json({ profile });
+    // ✅ 獲取訂閱狀態（自動檢查過期並降級）
+    let subscription = null;
+    try {
+      subscription = await subscriptionRecurringService.getUserSubscription(userId);
+      console.log('📊 [GET /profile/:userId] Subscription status:', {
+        plan: subscription.plan,
+        status: subscription.status,
+        auto_renew: subscription.auto_renew,
+        next_billing: subscription.next_billing_date,
+      });
+    } catch (subError) {
+      console.error('⚠️ [GET /profile/:userId] Failed to get subscription:', subError);
+      subscription = { plan: 'free', status: 'active' };
+    }
+
+    // Always return 200 with profile (or null) and subscription
+    return c.json({ profile, subscription });
   } catch (error) {
     console.error('❌ [GET /profile/:userId] Unexpected error:', error);
     // Even if something goes wrong, return null profile instead of error
