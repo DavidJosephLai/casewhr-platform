@@ -473,30 +473,62 @@ const ECPAY_API_BASE = ECPAY_MODE === 'production'
 
 /**
  * 生成 ECPay 檢查碼
+ * ⚠️ CRITICAL: ECPay 使用 MD5 (EncryptType=1) 或 SHA256 (EncryptType=0)
  */
 async function generateECPayCheckMacValue(params: Record<string, any>): Promise<string> {
-  // 1. 參數排序
-  const sortedKeys = Object.keys(params).sort();
+  // 1. 移除 CheckMacValue（如果存在）
+  const cleanParams = { ...params };
+  delete cleanParams.CheckMacValue;
   
-  // 2. 組合字串
+  // 2. 參數按照 ASCII 排序
+  const sortedKeys = Object.keys(cleanParams).sort();
+  
+  // 3. 組合字串：HashKey + 參數 + HashIV
   let checkValue = `HashKey=${ECPAY_HASH_KEY}`;
   sortedKeys.forEach(key => {
-    if (key !== 'CheckMacValue') {
-      checkValue += `&${key}=${params[key]}`;
-    }
+    checkValue += `&${key}=${cleanParams[key]}`;
   });
   checkValue += `&HashIV=${ECPAY_HASH_IV}`;
   
-  // 3. URL encode
-  checkValue = encodeURIComponent(checkValue).toLowerCase();
+  // 4. URL encode
+  checkValue = encodeURIComponent(checkValue);
   
-  // 4. SHA256 加密
-  const encoder = new TextEncoder();
-  const data = encoder.encode(checkValue);
+  // 5. 轉小寫
+  checkValue = checkValue.toLowerCase();
   
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hash));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+  // 6. 替換特殊字符（ECPay 特殊要求）
+  checkValue = checkValue
+    .replace(/%2d/g, '-')
+    .replace(/%5f/g, '_')
+    .replace(/%2e/g, '.')
+    .replace(/%21/g, '!')
+    .replace(/%2a/g, '*')
+    .replace(/%28/g, '(')
+    .replace(/%29/g, ')');
+  
+  // 7. 根據 EncryptType 選擇加密方式
+  const encryptType = cleanParams.EncryptType || '1'; // 預設為 1 (MD5)
+  
+  console.log('🔐 [ECPay] Generating CheckMacValue:', {
+    encryptType,
+    checkValueLength: checkValue.length,
+    hashKey: ECPAY_HASH_KEY ? '✅ Set' : '❌ Missing',
+    hashIV: ECPAY_HASH_IV ? '✅ Set' : '❌ Missing'
+  });
+  
+  if (encryptType === '1') {
+    // MD5 加密 - 使用 Node.js crypto module
+    const { createHash } = await import('node:crypto');
+    const hash = createHash('md5').update(checkValue).digest('hex');
+    return hash.toUpperCase();
+  } else {
+    // SHA256 加密 (EncryptType = 0)
+    const encoder = new TextEncoder();
+    const data = encoder.encode(checkValue);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hash));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+  }
 }
 
 /**
@@ -624,7 +656,7 @@ export async function handleECPayPeriodCallback(params: Record<string, any>): Pr
     if (pendingData) {
       const { user_id, plan_type, amount } = pendingData;
       
-      // 首次訂閱 - 創建訂閱記錄
+      // 首次訂�� - 創建訂閱記錄
       if (!PeriodNo || PeriodNo === '0') {
         const userSubscription = {
           user_id,
