@@ -198,28 +198,29 @@ export async function createECPaySubscription(
   console.log('🕐 [ECPay] MerchantTradeDate:', merchantTradeDate);
   console.log('💰 [ECPay] Amount:', amount, 'TWD');
   
-  // ⚠️ CRITICAL FIX: CheckMacValue 計算時，所有參數都要轉成字串！
-  // 因為 HTML form 會把所有值轉成字串傳送給 ECPay
+  // ⚠️ ClientBackURL - 用戶付款後跳轉的頁面
+  const clientBackURL = `${returnUrl}?payment=success&provider=ecpay-subscription&plan=${planType}`;
+  
+  // ✅ ECPay 定期定額官方規範參數（只包含必要參數，避免衝突）
   const params: Record<string, string> = {
     MerchantID: ECPAY_MERCHANT_ID,
     MerchantTradeNo: tradeNo,
     MerchantTradeDate: merchantTradeDate,
     PaymentType: 'aio',
-    TotalAmount: Math.floor(amount).toString(), // ✅ 字串化！
+    TotalAmount: Math.floor(amount).toString(),
     TradeDesc: planType === 'pro' ? 'Pro Plan' : 'Enterprise Plan',
     ItemName: planType === 'pro' ? 'Pro Monthly Plan' : 'Enterprise Monthly Plan',
     ReturnURL: periodReturnURL,
     ChoosePayment: 'Credit',
-    EncryptType: '1', // ✅ 字串化！
-    // ✅ 定期定額參數
-    PeriodAmount: Math.floor(amount).toString(), // ✅ 字串化！
+    EncryptType: '1',
+    // ✅ 定期定額必要參數
+    PeriodAmount: Math.floor(amount).toString(),
     PeriodType: 'M',
-    Frequency: '1', // ✅ 字串化！
-    ExecTimes: '999', // ✅ 字串化！
+    Frequency: '1',
+    ExecTimes: '999',
     PeriodReturnURL: periodReturnURL,
-    // ✅ 信用卡參數
-    CreditInstallment: '0', // ✅ 字串化！
-    UnionPay: '0', // ✅ 字串化！
+    // ✅ 用戶付款後跳轉（可選但建議加上）
+    ClientBackURL: clientBackURL,
   };
   
   console.log('📋 [ECPay] Params:', JSON.stringify(params, null, 2));
@@ -327,8 +328,7 @@ export async function createECPaySubscription(
         <input type="hidden" name="Frequency" value="${params.Frequency}">
         <input type="hidden" name="ExecTimes" value="${params.ExecTimes}">
         <input type="hidden" name="PeriodReturnURL" value="${params.PeriodReturnURL}">
-        <input type="hidden" name="CreditInstallment" value="${params.CreditInstallment}">
-        <input type="hidden" name="UnionPay" value="${params.UnionPay}">
+        <input type="hidden" name="ClientBackURL" value="${params.ClientBackURL}">
         <input type="hidden" name="CheckMacValue" value="${checkMacValue}">
       </form>
       
