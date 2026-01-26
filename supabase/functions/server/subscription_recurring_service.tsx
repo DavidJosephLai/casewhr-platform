@@ -593,14 +593,14 @@ export async function createECPaySubscription(
     MerchantTradeNo: tradeNo,
     MerchantTradeDate: merchantTradeDate, // ✅ 修正格式
     PaymentType: 'aio',
-    TotalAmount: amount.toString(),
+    TotalAmount: amount.toString(), // ✅ 首次立即扣款（與 PeriodAmount 相同）
     TradeDesc: `CaseWHR-${planType.toUpperCase()}-Plan`, // ✅ 移除空格
     ItemName: `${planType === 'pro' ? 'Pro' : 'Enterprise'}-Monthly-Plan`, // ✅ 移除空格
     ReturnURL: periodReturnURL, // ✅ 使用 periodReturnURL 作為主要回調
     ChoosePayment: 'Credit',
     EncryptType: '1',
     // 定期定額參數
-    PeriodAmount: amount.toString(),
+    PeriodAmount: amount.toString(), // ✅ 每次扣款金額
     PeriodType: 'M', // M = 月
     Frequency: '1', // 每1個月
     ExecTimes: '0', // ✅ 改為 0 = 無限制（直到用戶取消）
