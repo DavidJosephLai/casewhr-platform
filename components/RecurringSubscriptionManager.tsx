@@ -426,7 +426,8 @@ export function RecurringSubscriptionManager({
                     translations[normalizedLanguage].upgradeWithPayPal
                   )}
                 </Button>
-                {language === 'zh' && (
+                {/* ✅ ECPay 按鈕：繁體中文 OR 簡體中文時顯示 */}
+                {(language === 'zh' || language === 'zh-CN') && (
                   <Button
                     onClick={() => subscribeWithECPay('pro')}
                     disabled={processing}
@@ -468,7 +469,8 @@ export function RecurringSubscriptionManager({
                     translations[normalizedLanguage].upgradeWithPayPal
                   )}
                 </Button>
-                {language === 'zh' && (
+                {/* ✅ ECPay 按鈕：繁體中文 OR 簡體中文時顯示 */}
+                {(language === 'zh' || language === 'zh-CN') && (
                   <Button
                     onClick={() => subscribeWithECPay('enterprise')}
                     disabled={processing}
