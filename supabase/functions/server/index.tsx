@@ -225,6 +225,34 @@ async function getProfileSafely(userId: string): Promise<any> {
 
 // Helper function to check if user has enterprise subscription
 async function checkEnterpriseSubscription(userId: string): Promise<{ hasEnterprise: boolean; subscription: any }> {
+  // 🔐 ROOT ADMIN: Check if this user is a root admin first
+  const profile = await getProfileSafely(userId);
+  const userEmail = profile?.email?.toLowerCase();
+  
+  const ROOT_ADMIN_EMAILS = [
+    'davidlai234@hotmail.com',
+    'davidjosephlai@gmail.com',
+    'davidjosephlai@casewhr.com',
+    'davidlai117@yahoo.com.tw',
+    'admin@casewhr.com',
+  ];
+  
+  if (userEmail && ROOT_ADMIN_EMAILS.includes(userEmail)) {
+    console.log('👑 [checkEnterpriseSubscription] Root admin detected:', userEmail);
+    
+    // Root admins always have enterprise access
+    const adminSubscription = {
+      plan: 'enterprise',
+      status: 'active',
+      user_id: userId,
+      is_root_admin: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    
+    return { hasEnterprise: true, subscription: adminSubscription };
+  }
+  
   // 🧪 DEV MODE: Check if this is a dev user
   if (userId.startsWith('dev-user-')) {
     console.log('🧪 [checkEnterpriseSubscription] Dev mode detected for user:', userId);
@@ -6192,6 +6220,34 @@ app.get("/make-server-215f78a5/subscription/:userId", async (c) => {
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
+    // 🔐 ROOT ADMIN: Check if this user is a root admin
+    const profile = await getProfileSafely(userId);
+    const userEmail = profile?.email?.toLowerCase();
+    
+    const ROOT_ADMIN_EMAILS = [
+      'davidlai234@hotmail.com',
+      'davidjosephlai@gmail.com',
+      'davidjosephlai@casewhr.com',
+      'davidlai117@yahoo.com.tw',
+      'admin@casewhr.com',
+    ];
+    
+    if (userEmail && ROOT_ADMIN_EMAILS.includes(userEmail)) {
+      console.log('👑 [Subscription API] Root admin detected:', userEmail);
+      
+      // Root admins always have enterprise subscription
+      return c.json({
+        subscription: {
+          plan: 'enterprise',
+          status: 'active',
+          is_root_admin: true,
+          start_date: '2024-01-01T00:00:00.000Z',
+          end_date: '2099-12-31T23:59:59.999Z', // Never expires
+          auto_renew: false,
+        }
+      });
+    }
+
     // Get subscription from KV store
     const subscriptionKey = `subscription_${userId}`;
     const subscription = await kv.get(subscriptionKey);
@@ -8650,23 +8706,53 @@ app.post("/make-server-215f78a5/payment/escrow/release", async (c) => {
     const subscriptionKey = `subscription_${freelancerId}`;
     const subscription = await kv.get(subscriptionKey);
     
-    // ✅ 只有 active 狀態的訂閱才能享受優惠手續費
-    const isActiveSubscription = subscription?.status === 'active';
-    const plan = (isActiveSubscription && subscription?.plan) ? subscription.plan : 'free';
-
-    // Calculate platform fee based on subscription plan
-    const platformFeePercentages: Record<string, number> = {
-      free: 20,
-      pro: 10,
-      enterprise: 5,
-    };
+    // 🔐 ROOT ADMIN: Check if freelancer is a root admin
+    const freelancerProfile = await getProfileSafely(freelancerId);
+    const freelancerEmail = freelancerProfile?.email?.toLowerCase();
     
-    const feePercentage = platformFeePercentages[plan] || 20;
-    const platformFee = Math.round((escrowAmount * feePercentage) / 100);
-    const freelancerPayout = escrowAmount - platformFee;
+    const ROOT_ADMIN_EMAILS = [
+      'davidlai234@hotmail.com',
+      'davidjosephlai@gmail.com',
+      'davidjosephlai@casewhr.com',
+      'davidlai117@yahoo.com.tw',
+      'admin@casewhr.com',
+    ];
+    
+    let feePercentage = 20;
+    let platformFee = 0;
+    let freelancerPayout = escrowAmount;
+    let isRootAdmin = false;
+    
+    if (freelancerEmail && ROOT_ADMIN_EMAILS.includes(freelancerEmail)) {
+      // 👑 根管理員完全免除平台手續費
+      console.log('👑 [Escrow Release] Root admin detected:', freelancerEmail);
+      console.log('👑 [Escrow Release] Platform owner - NO FEES charged!');
+      
+      isRootAdmin = true;
+      feePercentage = 0;
+      platformFee = 0;
+      freelancerPayout = escrowAmount; // 100% 給管理員
+    } else {
+      // ✅ 只有 active 狀態的訂閱才能享受優惠手續費
+      const isActiveSubscription = subscription?.status === 'active';
+      const plan = (isActiveSubscription && subscription?.plan) ? subscription.plan : 'free';
+      
+      // Calculate platform fee based on subscription plan
+      const platformFeePercentages: Record<string, number> = {
+        free: 20,
+        pro: 10,
+        enterprise: 5,
+      };
+      
+      feePercentage = platformFeePercentages[plan] || 20;
+      platformFee = Math.round((escrowAmount * feePercentage) / 100);
+      freelancerPayout = escrowAmount - platformFee;
+      
+      console.log('💰 [Escrow Release] Freelancer Email:', freelancerEmail);
+      console.log('💰 [Escrow Release] Subscription:', subscription?.plan, 'Status:', subscription?.status);
+      console.log('💰 [Escrow Release] Effective Plan:', plan, '(Active:', isActiveSubscription, ')');
+    }
 
-    console.log('💰 [Escrow Release] Subscription:', subscription?.plan, 'Status:', subscription?.status);
-    console.log('💰 [Escrow Release] Effective Plan:', plan, '(Active:', isActiveSubscription, ')');
     console.log('💰 [Escrow Release] Fee percentage:', feePercentage + '%');
     console.log('💰 [Escrow Release] Platform fee:', platformFee);
     console.log('💰 [Escrow Release] Freelancer payout:', freelancerPayout);

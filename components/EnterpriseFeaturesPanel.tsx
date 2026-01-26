@@ -121,6 +121,20 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
 
   const isEnterprise = subscription?.plan === 'enterprise' && subscription?.status === 'active';
   
+  // 🔐 ROOT ADMIN: Check if current user is a root admin
+  const userEmail = user?.email?.toLowerCase();
+  const ROOT_ADMIN_EMAILS = [
+    'davidlai234@hotmail.com',
+    'davidjosephlai@gmail.com',
+    'davidjosephlai@casewhr.com',
+    'davidlai117@yahoo.com.tw',
+    'admin@casewhr.com',
+  ];
+  const isRootAdmin = userEmail && ROOT_ADMIN_EMAILS.includes(userEmail);
+  
+  // Root admins always have enterprise access
+  const hasEnterpriseAccess = isRootAdmin || isEnterprise;
+  
   // 🔍 添加調試日誌
   console.log('🔍 [EnterpriseFeaturesPanel] Current state:', {
     user: user?.email,
@@ -128,6 +142,8 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
     plan: subscription?.plan,
     status: subscription?.status,
     isEnterprise: isEnterprise,
+    isRootAdmin: isRootAdmin,
+    hasEnterpriseAccess: hasEnterpriseAccess,
     loading: loading
   });
 
@@ -324,9 +340,10 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
             </div>
             <div className="flex items-center gap-2">
               {/* 🔧 訂閱狀態標籤 */}
-              {isEnterprise ? (
+              {hasEnterpriseAccess ? (
                 <Badge className="bg-purple-600 text-white hover:bg-purple-700">
                   ✅ {language === 'en' ? 'Active' : '已啟用'}
+                  {isRootAdmin && ' 👑'}
                 </Badge>
               ) : (
                 <Badge variant="outline" className="border-purple-300 text-purple-700">
@@ -367,20 +384,20 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
                   key={feature.key}
                   variant="outline"
                   className={`h-auto py-4 px-4 flex flex-col items-start gap-2 hover:bg-white hover:shadow-md transition-all ${
-                    !isEnterprise ? 'opacity-60' : ''
+                    !hasEnterpriseAccess ? 'opacity-60' : ''
                   }`}
-                  onClick={isEnterprise ? feature.action : () => {
+                  onClick={hasEnterpriseAccess ? feature.action : () => {
                     window.dispatchEvent(new CustomEvent('showPricing', { detail: {} }));
                   }}
                 >
                   <div className="flex items-center gap-2 w-full">
-                    <Icon className={`h-5 w-5 ${isEnterprise ? 'text-purple-600' : 'text-gray-400'}`} />
+                    <Icon className={`h-5 w-5 ${hasEnterpriseAccess ? 'text-purple-600' : 'text-gray-400'}`} />
                     <span className="font-medium text-sm">{featureContent.title}</span>
                   </div>
                   <p className="text-xs text-gray-600 text-left">
                     {featureContent.description}
                   </p>
-                  {!isEnterprise && (
+                  {!hasEnterpriseAccess && (
                     <Badge variant="outline" className="text-xs mt-auto">
                       {t.upgradeRequired}
                     </Badge>
@@ -390,7 +407,7 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
             })}
           </div>
 
-          {!isEnterprise && (
+          {!hasEnterpriseAccess && (
             <div className="mt-6 p-4 bg-white rounded-lg border border-purple-200">
               <div className="flex items-center justify-between">
                 <div>
