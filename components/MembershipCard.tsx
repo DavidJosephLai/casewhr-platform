@@ -298,6 +298,7 @@ export const MembershipCard = memo(function MembershipCard() {
               plan={subscription.plan} 
               language={language}
               size="lg"
+              status={subscription.status} // ✅ 傳遞狀態
             />
           </div>
         </CardHeader>

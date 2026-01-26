@@ -6,6 +6,7 @@ interface SubscriptionBadgeProps {
   language?: 'en' | 'zh' | 'zh-TW' | 'zh-CN';
   size?: 'sm' | 'md' | 'lg';
   showIcon?: boolean;
+  status?: 'active' | 'expired' | 'cancelled'; // ✅ 添加狀態
 }
 
 const planConfig = {
@@ -16,7 +17,7 @@ const planConfig = {
     icon: Gift,
   },
   pro: {
-    name: { en: 'Professional', zh: '專業版', 'zh-TW': '專業版', 'zh-CN': '专业版' },
+    name: { en: 'Pro', zh: '專業版', 'zh-TW': '專業版', 'zh-CN': '专业版' },
     color: 'bg-blue-600',
     textColor: 'text-white',
     icon: Zap,
@@ -49,8 +50,12 @@ export function SubscriptionBadge({
   language = 'en',
   size = 'md',
   showIcon = true,
+  status = 'active', // ✅ 默認為 active
 }: SubscriptionBadgeProps) {
-  const config = planConfig[plan];
+  // ✅ 如果訂閱已過期或取消，顯示為 FREE
+  const displayPlan = (status === 'expired' || status === 'cancelled') ? 'free' : plan;
+  
+  const config = planConfig[displayPlan];
   const sizeStyle = sizeConfig[size];
   const Icon = config.icon;
 

@@ -54,8 +54,13 @@ export function QuickSubscriptionCheck() {
       
       setSubscription(data.subscription);
       
-      if (data.subscription?.plan === 'enterprise') {
+      // ✅ 檢查 plan 和 status
+      if (data.subscription?.plan === 'enterprise' && data.subscription?.status === 'active') {
         toast.success('✅ Enterprise subscription confirmed!');
+      } else if (data.subscription?.status === 'expired') {
+        toast.error('⚠️ Your subscription has expired. Please renew to continue.');
+      } else if (data.subscription?.status === 'cancelled') {
+        toast.warning('⚠️ Your subscription is cancelled and will expire soon.');
       } else {
         toast.info(`Current plan: ${data.subscription?.plan || 'free'}`);
       }
