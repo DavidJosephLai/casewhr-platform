@@ -37,8 +37,11 @@ export function RecurringSubscriptionManager({
   const [subscription, setSubscription] = useState<any>(null);
   const [processing, setProcessing] = useState(false);
 
+  // 🔧 FIX: 正規化語言代碼，確保匹配翻譯對象
+  const normalizedLanguage = language === 'zh' || language === 'zh-CN' ? language : 'en';
+
   // 文案
-  const t = {
+  const translations = {
     en: {
       title: 'Recurring Subscription',
       subtitle: 'Manage your automatic subscription payments',
@@ -132,7 +135,7 @@ export function RecurringSubscriptionManager({
       proFeatures: '无限项目、优先支持、进阶功能',
       enterpriseFeatures: '专业版所有功能 + 客制化品牌、专属客户经理、API 访问',
     },
-  }[language];
+  };
 
   // 載入訂閱信息
   useEffect(() => {
@@ -229,7 +232,7 @@ export function RecurringSubscriptionManager({
 
   // 取消訂閱
   const cancelSubscription = async () => {
-    if (!confirm(t.confirmCancel)) {
+    if (!confirm(translations[normalizedLanguage].confirmCancel)) {
       return;
     }
 
@@ -283,8 +286,8 @@ export function RecurringSubscriptionManager({
     <div className="space-y-6">
       {/* 標題 */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">{t.title}</h2>
-        <p className="text-gray-600 mt-1">{t.subtitle}</p>
+        <h2 className="text-2xl font-bold text-gray-900">{translations[normalizedLanguage].title}</h2>
+        <p className="text-gray-600 mt-1">{translations[normalizedLanguage].subtitle}</p>
       </div>
 
       {hasActiveSubscription ? (
@@ -294,9 +297,9 @@ export function RecurringSubscriptionManager({
             {/* 方案信息 */}
             <div className="flex items-center justify-between pb-4 border-b">
               <div>
-                <div className="text-sm text-gray-600">{t.currentPlan}</div>
+                <div className="text-sm text-gray-600">{translations[normalizedLanguage].currentPlan}</div>
                 <div className="text-2xl font-bold text-blue-600">
-                  {subscription.plan === 'pro' ? t.pro : t.enterprise}
+                  {subscription.plan === 'pro' ? translations[normalizedLanguage].pro : translations[normalizedLanguage].enterprise}
                 </div>
               </div>
               <div className={`px-4 py-2 rounded-full text-sm font-semibold ${
@@ -306,8 +309,8 @@ export function RecurringSubscriptionManager({
                   ? 'bg-red-100 text-red-800'
                   : 'bg-yellow-100 text-yellow-800'
               }`}>
-                {subscription.status === 'active' ? t.active :
-                 subscription.status === 'cancelled' ? t.cancelled : t.suspended}
+                {subscription.status === 'active' ? translations[normalizedLanguage].active :
+                 subscription.status === 'cancelled' ? translations[normalizedLanguage].cancelled : translations[normalizedLanguage].suspended}
               </div>
             </div>
 
@@ -316,7 +319,7 @@ export function RecurringSubscriptionManager({
               <div className="flex items-center gap-3">
                 <CreditCard className="w-5 h-5 text-gray-400" />
                 <div>
-                  <div className="text-sm text-gray-600">{t.paymentMethod}</div>
+                  <div className="text-sm text-gray-600">{translations[normalizedLanguage].paymentMethod}</div>
                   <div className="font-semibold">
                     {subscription.payment_method === 'paypal' ? 'PayPal' : 
                      subscription.payment_method === 'ecpay' ? 'ECPay' : 'N/A'}
@@ -327,8 +330,8 @@ export function RecurringSubscriptionManager({
               <div className="flex items-center gap-3">
                 <Repeat className="w-5 h-5 text-gray-400" />
                 <div>
-                  <div className="text-sm text-gray-600">{t.billingCycle}</div>
-                  <div className="font-semibold">{t.monthly}</div>
+                  <div className="text-sm text-gray-600">{translations[normalizedLanguage].billingCycle}</div>
+                  <div className="font-semibold">{translations[normalizedLanguage].monthly}</div>
                 </div>
               </div>
 
@@ -336,7 +339,7 @@ export function RecurringSubscriptionManager({
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-gray-400" />
                   <div>
-                    <div className="text-sm text-gray-600">{t.nextBillingDate}</div>
+                    <div className="text-sm text-gray-600">{translations[normalizedLanguage].nextBillingDate}</div>
                     <div className="font-semibold">
                       {new Date(subscription.next_billing_date).toLocaleDateString()}
                     </div>
@@ -351,9 +354,9 @@ export function RecurringSubscriptionManager({
                   <XCircle className="w-5 h-5 text-red-600" />
                 )}
                 <div>
-                  <div className="text-sm text-gray-600">{t.autoRenew}</div>
+                  <div className="text-sm text-gray-600">{translations[normalizedLanguage].autoRenew}</div>
                   <div className="font-semibold">
-                    {subscription.auto_renew ? t.enabled : t.disabled}
+                    {subscription.auto_renew ? translations[normalizedLanguage].enabled : translations[normalizedLanguage].disabled}
                   </div>
                 </div>
               </div>
@@ -371,12 +374,12 @@ export function RecurringSubscriptionManager({
                   {processing ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {t.cancelling}
+                      {translations[normalizedLanguage].cancelling}
                     </>
                   ) : (
                     <>
                       <XCircle className="w-4 h-4 mr-2" />
-                      {t.cancelSubscription}
+                      {translations[normalizedLanguage].cancelSubscription}
                     </>
                   )}
                 </Button>
@@ -390,12 +393,12 @@ export function RecurringSubscriptionManager({
           <Alert>
             <AlertTriangle className="w-4 h-4" />
             <AlertDescription>
-              {t.noPlan}
+              {translations[normalizedLanguage].noPlan}
             </AlertDescription>
           </Alert>
 
           <div className="text-lg font-semibold text-gray-900">
-            {t.choosePlan}
+            {translations[normalizedLanguage].choosePlan}
           </div>
 
           {/* Pro 方案 */}
@@ -403,14 +406,14 @@ export function RecurringSubscriptionManager({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">{t.pro}</h3>
+                  <h3 className="text-xl font-bold text-gray-900">{translations[normalizedLanguage].pro}</h3>
                   <p className="text-2xl font-bold text-blue-600 mt-1">
                     {language === 'zh' ? 'NT$480/月' : '$15/month'}
                   </p>
                 </div>
                 <DollarSign className="w-12 h-12 text-blue-600" />
               </div>
-              <p className="text-gray-600">{t.proFeatures}</p>
+              <p className="text-gray-600">{translations[normalizedLanguage].proFeatures}</p>
               <div className="flex gap-3">
                 <Button
                   onClick={() => subscribeWithPayPal('pro')}
@@ -420,7 +423,7 @@ export function RecurringSubscriptionManager({
                   {processing ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    t.upgradeWithPayPal
+                    translations[normalizedLanguage].upgradeWithPayPal
                   )}
                 </Button>
                 {language === 'zh' && (
@@ -432,7 +435,7 @@ export function RecurringSubscriptionManager({
                     {processing ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      t.upgradeWithECPay
+                      translations[normalizedLanguage].upgradeWithECPay
                     )}
                   </Button>
                 )}
@@ -445,14 +448,14 @@ export function RecurringSubscriptionManager({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">{t.enterprise}</h3>
+                  <h3 className="text-xl font-bold text-gray-900">{translations[normalizedLanguage].enterprise}</h3>
                   <p className="text-2xl font-bold text-purple-600 mt-1">
                     {language === 'zh' ? 'NT$1,400/月' : '$45/month'}
                   </p>
                 </div>
                 <DollarSign className="w-12 h-12 text-purple-600" />
               </div>
-              <p className="text-gray-600">{t.enterpriseFeatures}</p>
+              <p className="text-gray-600">{translations[normalizedLanguage].enterpriseFeatures}</p>
               <div className="flex gap-3">
                 <Button
                   onClick={() => subscribeWithPayPal('enterprise')}
@@ -462,7 +465,7 @@ export function RecurringSubscriptionManager({
                   {processing ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
-                    t.upgradeWithPayPal
+                    translations[normalizedLanguage].upgradeWithPayPal
                   )}
                 </Button>
                 {language === 'zh' && (
@@ -474,7 +477,7 @@ export function RecurringSubscriptionManager({
                     {processing ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      t.upgradeWithECPay
+                      translations[normalizedLanguage].upgradeWithECPay
                     )}
                   </Button>
                 )}
