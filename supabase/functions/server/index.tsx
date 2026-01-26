@@ -4374,6 +4374,7 @@ app.get("/make-server-215f78a5/reviews/user/:user_id", async (c) => {
     const userId = c.req.param('user_id');
     
     if (!userId) {
+      console.error('❌ [Reviews] Missing user ID parameter');
       return c.json({ error: 'User ID is required' }, 400);
     }
 
@@ -4385,8 +4386,8 @@ app.get("/make-server-215f78a5/reviews/user/:user_id", async (c) => {
       const storedReviewIds = await kv.get(`user:${userId}:reviews`);
       reviewIds = Array.isArray(storedReviewIds) ? storedReviewIds : [];
       console.log(`📊 [Reviews] Found ${reviewIds.length} review IDs`);
-    } catch (error) {
-      console.error(`❌ [Reviews] Error fetching review IDs:`, error);
+    } catch (error: any) {
+      console.error(`❌ [Reviews] Error fetching review IDs:`, error?.message || error);
       reviewIds = [];
     }
 
@@ -4397,8 +4398,8 @@ app.get("/make-server-215f78a5/reviews/user/:user_id", async (c) => {
         const reviewData = await kv.mget(reviewIds.map((id: string) => `review:${id}`));
         reviews = reviewData.filter((r: any) => r !== null && r !== undefined);
         console.log(`📊 [Reviews] Fetched ${reviews.length} review details`);
-      } catch (error) {
-        console.error(`❌ [Reviews] Error fetching review details:`, error);
+      } catch (error: any) {
+        console.error(`❌ [Reviews] Error fetching review details:`, error?.message || error);
         reviews = [];
       }
     }
@@ -4406,23 +4407,34 @@ app.get("/make-server-215f78a5/reviews/user/:user_id", async (c) => {
     // Enrich reviews with reviewer and project information
     const enrichedReviews = await Promise.all(
       reviews.map(async (review: any) => {
-        // Use safe profile getter - no error logging for missing profiles
-        const reviewerProfile = await getProfileSafely(review.reviewer_id);
-        
-        let project = null;
         try {
-          project = await kv.get(`project:${review.project_id}`);
-        } catch (error) {
-          // Project might not exist - silently handle
-          project = null;
+          // Use safe profile getter - no error logging for missing profiles
+          const reviewerProfile = await getProfileSafely(review.reviewer_id);
+          
+          let project = null;
+          try {
+            project = await kv.get(`project:${review.project_id}`);
+          } catch (error) {
+            // Project might not exist - silently handle
+            project = null;
+          }
+          
+          return {
+            ...review,
+            reviewer_name: reviewerProfile?.name || 'Anonymous',
+            reviewer_email: reviewerProfile?.email || '',
+            project_title: project?.title || 'Unknown Project',
+          };
+        } catch (error: any) {
+          console.error(`❌ [Reviews] Error enriching review:`, error?.message || error);
+          // Return basic review data if enrichment fails
+          return {
+            ...review,
+            reviewer_name: 'Anonymous',
+            reviewer_email: '',
+            project_title: 'Unknown Project',
+          };
         }
-        
-        return {
-          ...review,
-          reviewer_name: reviewerProfile?.name || 'Anonymous',
-          reviewer_email: reviewerProfile?.email || '',
-          project_title: project?.title || 'Unknown Project',
-        };
       })
     );
 
@@ -4451,14 +4463,16 @@ app.get("/make-server-215f78a5/reviews/user/:user_id", async (c) => {
       total_reviews: enrichedReviews.length,
     });
 
-  } catch (error) {
-    console.error('❌ [Reviews] Error fetching reviews:', error);
+  } catch (error: any) {
+    console.error('❌ [Reviews] Fatal error fetching reviews:', error?.message || error);
+    console.error('❌ [Reviews] Error stack:', error?.stack);
     // Return empty data instead of error to prevent UI crashes
     return c.json({
       reviews: [],
       average_rating: 0,
       total_reviews: 0,
-    });
+      error: 'Failed to fetch reviews',
+    }, 200); // Return 200 with error message to prevent fetch failures
   }
 });
 
