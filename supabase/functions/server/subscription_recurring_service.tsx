@@ -474,7 +474,7 @@ const ECPAY_API_BASE = ECPAY_MODE === 'production'
 /**
  * 生成 ECPay 檢查碼
  */
-function generateECPayCheckMacValue(params: Record<string, any>): string {
+async function generateECPayCheckMacValue(params: Record<string, any>): Promise<string> {
   // 1. 參數排序
   const sortedKeys = Object.keys(params).sort();
   
@@ -494,11 +494,32 @@ function generateECPayCheckMacValue(params: Record<string, any>): string {
   const encoder = new TextEncoder();
   const data = encoder.encode(checkValue);
   
-  return crypto.subtle.digest('SHA-256', data)
-    .then(hash => {
-      const hashArray = Array.from(new Uint8Array(hash));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hash));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+
+/**
+ * 驗證 ECPay 檢查碼
+ */
+async function verifyECPayCheckMacValue(params: Record<string, any>): Promise<boolean> {
+  const receivedCheckMac = params.CheckMacValue;
+  if (!receivedCheckMac) {
+    console.error('❌ [ECPay] No CheckMacValue in callback');
+    return false;
+  }
+  
+  const calculatedCheckMac = await generateECPayCheckMacValue(params);
+  const isValid = receivedCheckMac.toUpperCase() === calculatedCheckMac.toUpperCase();
+  
+  if (!isValid) {
+    console.error('❌ [ECPay] CheckMacValue verification failed', {
+      received: receivedCheckMac,
+      calculated: calculatedCheckMac
     });
+  }
+  
+  return isValid;
 }
 
 /**
@@ -518,6 +539,9 @@ export async function createECPaySubscription(
   const amount = planType === 'pro' ? 480 : 1400; // TWD
   const tradeNo = `SUB${Date.now()}${Math.random().toString(36).substring(2, 9)}`;
   
+  // ⚠️ PeriodReturnURL 必須使用完整的 Supabase Function URL（正式環境）
+  const periodReturnURL = 'https://bihplitfentxioxyjalb.supabase.co/functions/v1/make-server-215f78a5/ecpay-period-callback';
+  
   const params = {
     MerchantID: ECPAY_MERCHANT_ID,
     MerchantTradeNo: tradeNo,
@@ -534,7 +558,7 @@ export async function createECPaySubscription(
     PeriodType: 'M', // M = 月
     Frequency: '1', // 每1個月
     ExecTimes: '12', // 執行12次（1年）- 可改為 0 表示無限制
-    PeriodReturnURL: `${returnUrl}/ecpay-period-callback`,
+    PeriodReturnURL: periodReturnURL,  // ✅ 使用完整 URL
   };
   
   // 生成檢查碼
@@ -582,6 +606,16 @@ export async function handleECPayPeriodCallback(params: Record<string, any>): Pr
   const { MerchantTradeNo, RtnCode, RtnMsg, PeriodType, Frequency, ExecTimes, PeriodNo } = params;
   
   console.log(`🔔 [ECPay Period] Callback received for ${MerchantTradeNo}`);
+  console.log('📦 [ECPay Period] Callback params:', JSON.stringify(params, null, 2));
+  
+  // ✅ 驗證 CheckMacValue
+  const isValid = await verifyECPayCheckMacValue(params);
+  if (!isValid) {
+    console.error('❌ [ECPay Period] CheckMacValue verification failed - possible security breach!');
+    throw new Error('Invalid CheckMacValue');
+  }
+  
+  console.log('✅ [ECPay Period] CheckMacValue verified successfully');
   
   if (RtnCode === '1') {
     // 付款成功

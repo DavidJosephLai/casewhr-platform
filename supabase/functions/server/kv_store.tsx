@@ -187,7 +187,8 @@ export const getByPrefix = async (prefix: string): Promise<any[]> => {
       console.error(`❌ [KV Store] Error getting by prefix "${prefix}":`, errorMessage.substring(0, 200));
       throw new Error(errorMessage.substring(0, 200));
     }
-    return data?.map((d) => d.value) ?? [];
+    // 🔥 FIX: Return { key, value } objects, not just values
+    return data ?? [];
   } catch (error: any) {
     // If error message contains HTML or network error keywords, return empty array
     const errorStr = error?.message?.toLowerCase() || '';

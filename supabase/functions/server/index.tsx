@@ -65,6 +65,30 @@ const supabase = createClient(
 console.log('✅ [SERVER] Hono app created');
 console.log('✅ [SERVER] Supabase client initialized');
 
+// 🛡️ 全局錯誤處理中間件
+app.use('*', async (c, next) => {
+  try {
+    await next();
+  } catch (error: any) {
+    console.error('❌ [GLOBAL ERROR]', error);
+    
+    // 檢查是否是資料庫連接錯誤
+    const errorMessage = error?.message || String(error);
+    if (errorMessage.includes('kv_store_215f78a5') || errorMessage.includes('Cannot read properties of undefined')) {
+      return c.json({
+        error: 'Database connection error',
+        message: '資料庫連接錯誤，請稍後再試',
+        details: errorMessage.substring(0, 200)
+      }, 500);
+    }
+    
+    return c.json({
+      error: 'Internal server error',
+      message: error.message || '伺服器內部錯誤'
+    }, 500);
+  }
+});
+
 // 🧪 Helper function to verify user from access token (supports dev mode)
 async function verifyUser(accessToken: string | undefined) {
   if (!accessToken) {
