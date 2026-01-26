@@ -32,8 +32,44 @@ console.log('🔍 [ECPay] Environment Configuration:', {
 });
 
 /**
+ * .NET HttpUtility.UrlEncode 相容函數
+ * 必須與 ECPay 後台使用的 .NET 編碼方式一致
+ */
+function dotNetUrlEncode(str: string): string {
+  let encoded = '';
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    const code = char.charCodeAt(0);
+    
+    // 不需要編碼的字元：A-Z a-z 0-9 - _ . ! * ( )
+    if (
+      (code >= 48 && code <= 57) ||   // 0-9
+      (code >= 65 && code <= 90) ||   // A-Z
+      (code >= 97 && code <= 122) ||  // a-z
+      char === '-' || char === '_' || char === '.' || 
+      char === '!' || char === '*' || char === '(' || char === ')'
+    ) {
+      encoded += char;
+    } 
+    // 空格編碼為 +
+    else if (char === ' ') {
+      encoded += '+';
+    } 
+    // 其他字元編碼為 %XX
+    else {
+      const bytes = new TextEncoder().encode(char);
+      for (const byte of bytes) {
+        encoded += '%' + byte.toString(16).toUpperCase().padStart(2, '0');
+      }
+    }
+  }
+  return encoded;
+}
+
+/**
  * 生成 ECPay 檢查碼
- * ⚠️ CRITICAL: ECPay 使用 MD5 (EncryptType=1) 或 SHA256 (EncryptType=0)
+ * ✅ 使用正確的 .NET HttpUtility.UrlEncode 規則
+ * ✅ 支援 SHA256 (EncryptType=1) 和 MD5 (EncryptType=0)
  */
 async function generateECPayCheckMacValue(params: Record<string, any>): Promise<string> {
   // 1. 移除 CheckMacValue（如果存在）
@@ -45,59 +81,50 @@ async function generateECPayCheckMacValue(params: Record<string, any>): Promise<
   
   console.log('🔍 [ECPay CheckMac] Step 1 - Sorted Keys:', sortedKeys);
   
-  // 3. ⚠️ 關鍵修正：每個參數值單獨 URL encode，然後組字串
-  // 組合字串：HashKey=xxx&key1=encodedValue1&key2=encodedValue2...&HashIV=xxx
-  const encodedParams: string[] = [];
-  sortedKeys.forEach(key => {
-    const encodedValue = encodeURIComponent(String(cleanParams[key]));
-    encodedParams.push(`${key}=${encodedValue}`);
-  });
+  // 3. 組合參數字串：key1=value1&key2=value2...
+  const paramString = sortedKeys
+    .map(key => `${key}=${cleanParams[key]}`)
+    .join('&');
   
-  let rawString = `HashKey=${ECPAY_HASH_KEY}&${encodedParams.join('&')}&HashIV=${ECPAY_HASH_IV}`;
+  // 4. 加上 HashKey 和 HashIV
+  const rawString = `HashKey=${ECPAY_HASH_KEY}&${paramString}&HashIV=${ECPAY_HASH_IV}`;
   
-  console.log('🔍 [ECPay CheckMac] Step 2 - Raw String (with encoded values):', rawString.substring(0, 300) + '...');
+  console.log('🔍 [ECPay CheckMac] Step 2 - Raw String:', rawString.substring(0, 300) + '...');
   
-  // 4. 轉小寫
-  rawString = rawString.toLowerCase();
+  // 5. ✅ 使用 .NET HttpUtility.UrlEncode
+  const encodedString = dotNetUrlEncode(rawString);
   
-  console.log('🔍 [ECPay CheckMac] Step 3 - Lowercase:', rawString.substring(0, 300) + '...');
+  console.log('🔍 [ECPay CheckMac] Step 3 - URL Encoded:', encodedString.substring(0, 300) + '...');
   
-  // 5. 替換特殊字符（ECPay 要求這些字符不編碼）
-  rawString = rawString
-    .replace(/%2d/g, '-')
-    .replace(/%5f/g, '_')
-    .replace(/%2e/g, '.')
-    .replace(/%21/g, '!')
-    .replace(/%2a/g, '*')
-    .replace(/%28/g, '(')
-    .replace(/%29/g, ')');
+  // 6. 轉小寫
+  const lowerString = encodedString.toLowerCase();
   
-  console.log('🔍 [ECPay CheckMac] Step 4 - Special Chars Replaced:', rawString.substring(0, 300) + '...');
+  console.log('🔍 [ECPay CheckMac] Step 4 - Lowercase:', lowerString.substring(0, 300) + '...');
   
-  // 6. 根據 EncryptType 選擇加密方式
-  const encryptType = cleanParams.EncryptType || '1'; // 預設為 1 (MD5)
+  // 7. 根據 EncryptType 選擇加密方式
+  const encryptType = cleanParams.EncryptType || '1';
   
   let checkMacValue: string;
   
   if (encryptType === '1') {
-    // MD5 加密 - 使用 Node.js crypto module
-    const { createHash } = await import('node:crypto');
-    const hash = createHash('md5').update(rawString).digest('hex');
-    checkMacValue = hash.toUpperCase();
-  } else {
-    // SHA256 加密 (EncryptType = 0)
+    // ✅ SHA256 加密 (EncryptType=1 在新版 ECPay 文檔中代表 SHA256)
     const encoder = new TextEncoder();
-    const data = encoder.encode(rawString);
+    const data = encoder.encode(lowerString);
     const hash = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hash));
     checkMacValue = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+  } else {
+    // MD5 加密 (EncryptType=0，舊版)
+    const { createHash } = await import('node:crypto');
+    const hash = createHash('md5').update(lowerString).digest('hex');
+    checkMacValue = hash.toUpperCase();
   }
   
   console.log('🔍 [ECPay CheckMac] Step 5 - Final CheckMacValue:', checkMacValue);
   console.log('🔍 [ECPay CheckMac] Config:', {
     merchantId: ECPAY_MERCHANT_ID,
-    hashKeyLength: ECPAY_HASH_KEY?.length,
-    hashIVLength: ECPAY_HASH_IV?.length,
+    hashKey: ECPAY_HASH_KEY ? `${ECPAY_HASH_KEY.substring(0, 4)}...` : '❌',
+    hashIV: ECPAY_HASH_IV ? `${ECPAY_HASH_IV.substring(0, 4)}...` : '❌',
     encryptType
   });
   
