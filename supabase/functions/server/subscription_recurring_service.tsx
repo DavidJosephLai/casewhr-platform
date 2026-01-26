@@ -499,7 +499,9 @@ async function generateECPayCheckMacValue(params: Record<string, any>): Promise<
   // 2. 參數按照 ASCII 排序
   const sortedKeys = Object.keys(cleanParams).sort();
   
-  console.log('🔍 [ECPay CheckMac] Step 1 - Sorted Keys:', sortedKeys);
+  // 🔍 VERBOSE LOGGING FOR DEBUG
+  const debugLogs: string[] = [];
+  debugLogs.push(`[STEP 1] Sorted Keys (${sortedKeys.length}): ${sortedKeys.join(', ')}`);
   
   // 3. 組合字串：HashKey + 參數 + HashIV（先不編碼）
   let rawString = `HashKey=${ECPAY_HASH_KEY}`;
@@ -508,12 +510,12 @@ async function generateECPayCheckMacValue(params: Record<string, any>): Promise<
   });
   rawString += `&HashIV=${ECPAY_HASH_IV}`;
   
-  console.log('🔍 [ECPay CheckMac] Step 2 - Raw String (first 200 chars):', rawString.substring(0, 200));
+  debugLogs.push(`[STEP 2] Raw String: ${rawString}`);
   
   // 4. URL encode 整個字串
   let encodedString = encodeURIComponent(rawString);
   
-  console.log('🔍 [ECPay CheckMac] Step 3 - After URL Encode (first 200 chars):', encodedString.substring(0, 200));
+  debugLogs.push(`[STEP 3] After URL Encode: ${encodedString.substring(0, 300)}...`);
   
   // 5. 轉小寫
   encodedString = encodedString.toLowerCase();
@@ -528,7 +530,7 @@ async function generateECPayCheckMacValue(params: Record<string, any>): Promise<
     .replace(/%28/g, '(')
     .replace(/%29/g, ')');
   
-  console.log('🔍 [ECPay CheckMac] Step 4 - After Special Char Replacement (first 200 chars):', encodedString.substring(0, 200));
+  debugLogs.push(`[STEP 4] After Special Char Replacement: ${encodedString.substring(0, 300)}...`);
   
   // 7. 根據 EncryptType 選擇加密方式
   const encryptType = cleanParams.EncryptType || '1'; // 預設為 1 (MD5)
@@ -549,13 +551,13 @@ async function generateECPayCheckMacValue(params: Record<string, any>): Promise<
     checkMacValue = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
   }
   
-  console.log('🔍 [ECPay CheckMac] Step 5 - Final CheckMacValue:', checkMacValue);
-  console.log('🔍 [ECPay CheckMac] Configuration:', {
-    encryptType,
-    hashKeyLength: ECPAY_HASH_KEY?.length,
-    hashIVLength: ECPAY_HASH_IV?.length,
-    merchantId: ECPAY_MERCHANT_ID
-  });
+  debugLogs.push(`[STEP 5] Final CheckMacValue (${encryptType === '1' ? 'MD5' : 'SHA256'}): ${checkMacValue}`);
+  debugLogs.push(`[CONFIG] MerchantID: ${ECPAY_MERCHANT_ID}, HashKey Length: ${ECPAY_HASH_KEY?.length}, HashIV Length: ${ECPAY_HASH_IV?.length}`);
+  
+  // ✅ 將 debug 日誌保存到全局變量供前端使用
+  (globalThis as any).__ecpayDebugLogs = debugLogs;
+  
+  console.log('🔍 [ECPay CheckMac] Debug logs:', debugLogs.join('\n'));
   
   return checkMacValue;
 }
@@ -645,7 +647,7 @@ export async function createECPaySubscription(
     Frequency: '1',
     ExecTimes: '999',
     PeriodReturnURL: periodReturnURL,
-    // ✅ 信用卡參數 - 確���直接進入信用卡頁面
+    // ✅ 信用卡參數 - 確直接進入信用卡頁面
     CreditInstallment: '0', // 0 = 不分期
     UnionPay: '0', // 0 = 不啟用銀聯卡
   };
@@ -660,6 +662,9 @@ export async function createECPaySubscription(
   // 生成檢查碼
   const checkMacValue = await generateECPayCheckMacValue(params);
   console.log('🔐 [ECPay] CheckMacValue:', checkMacValue);
+  
+  // ✅ 獲取 debug 日誌
+  const debugLogs = (globalThis as any).__ecpayDebugLogs || [];
   
   // 保存訂閱信息
   await kv.set(`ecpay_subscription_pending_${tradeNo}`, {
@@ -702,29 +707,89 @@ export async function createECPaySubscription(
           animation: spin 1s linear infinite;
           margin: 20px auto;
         }
+        .debug-panel {
+          position: fixed;
+          top: 10px;
+          left: 10px;
+          right: 10px;
+          background: white;
+          color: #333;
+          padding: 20px;
+          border-radius: 8px;
+          max-height: 500px;
+          overflow-y: auto;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+          text-align: left;
+          font-size: 11px;
+          font-family: 'Courier New', monospace;
+          display: none;
+          z-index: 99999;
+        }
+        .debug-toggle {
+          position: fixed;
+          top: 10px;
+          right: 10px;
+          background: #ff6b6b;
+          color: white;
+          padding: 10px 20px;
+          border-radius: 5px;
+          cursor: pointer;
+          z-index: 100000;
+          font-weight: bold;
+        }
+        .debug-panel.show {
+          display: block;
+        }
+        .debug-line {
+          padding: 5px 0;
+          border-bottom: 1px solid #eee;
+          word-wrap: break-word;
+        }
         @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+          0% { transform: rotate(0deg); }\n          100% { transform: rotate(360deg); }
         }
       </style>
     </head>
     <body>
-      <div class="container">
-        <h2>🔄 正在導向綠界付款...</h2>
-        <div class="loader"></div>
-        <p>請稍候，即將跳轉至安全付款頁面</p>
+      <div class=\"debug-toggle\" onclick=\"toggleDebug()\">🔍 DEBUG LOGS</div>
+      
+      <div class=\"debug-panel\" id=\"debugPanel\">
+        <h3 style=\"margin-top: 0; color: #ff6b6b;\">🔍 ECPay CheckMacValue 計算過程</h3>
+        ${debugLogs.map((log: string) => `<div class=\"debug-line\">${log}</div>`).join('')}
+        <hr style=\"margin: 20px 0;\"/>
+        <h4>📋 提交參數：</h4>
+        <div class=\"debug-line\"><strong>MerchantID:</strong> ${ECPAY_MERCHANT_ID}</div>
+        <div class=\"debug-line\"><strong>MerchantTradeNo:</strong> ${tradeNo}</div>
+        <div class=\"debug-line\"><strong>TotalAmount:</strong> ${params.TotalAmount}</div>
+        <div class=\"debug-line\"><strong>PeriodAmount:</strong> ${params.PeriodAmount}</div>
+        <div class=\"debug-line\"><strong>API Endpoint:</strong> ${ECPAY_API_BASE}</div>
+        <div class=\"debug-line\"><strong>CheckMacValue:</strong> ${checkMacValue}</div>
       </div>
-      <form id="ecpayForm" method="post" action="${ECPAY_API_BASE}">
-        ${Object.entries({ ...params, CheckMacValue: checkMacValue }).map(([key, value]) => 
-          `<input type="hidden" name="${key}" value="${value}">`
-        ).join('\n')}
+      
+      <div class=\"container\">
+        <h2>🔄 正在導向綠界付款...</h2>
+        <div class=\"loader\"></div>
+        <p>請稍候，即將跳轉至安全付款頁面</p>
+        <p style=\"font-size: 12px; margin-top: 20px; opacity: 0.8;\">點擊右上角的 DEBUG LOGS 查看詳細資訊</p>
+      </div>
+      <form id=\"ecpayForm\" method=\"post\" action=\"${ECPAY_API_BASE}\">\n        ${Object.entries({ ...params, CheckMacValue: checkMacValue }).map(([key, value]) => 
+          `<input type=\"hidden\" name=\"${key}\" value=\"${value}\">`
+        ).join('\\n')}
       </form>
       <script>
+        function toggleDebug() {
+          document.getElementById('debugPanel').classList.toggle('show');
+        }
+        
         console.log('🟢 [ECPay] Submitting form to:', '${ECPAY_API_BASE}');
         console.log('🟢 [ECPay] Form data:', ${JSON.stringify({ ...params, CheckMacValue: checkMacValue })});
+        console.log('🟢 [ECPay] Debug logs:', ${JSON.stringify(debugLogs)});
+        
+        // 10秒後自動提交
         setTimeout(() => {
+          console.log('✈️ Submitting form to ECPay...');
           document.getElementById('ecpayForm').submit();
-        }, 500);
+        }, 10000);
       </script>
     </body>
     </html>
@@ -892,8 +957,8 @@ export async function cancelECPaySubscription(userId: string): Promise<void> {
   }
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━��━━━━━━━━━━━
-// 🔄 訂閱管理通用函數
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🔄 訂閱管理通��函數
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 /**
