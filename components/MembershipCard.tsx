@@ -414,27 +414,53 @@ export const MembershipCard = memo(function MembershipCard() {
             {/* Billing Cycle Toggle (只在有升級選項時顯示) */}
             {nextTierPlan && (
               <div className="bg-blue-50 p-3 rounded-lg">
-                <p className="text-xs text-gray-600 mb-2">
+                <p className="text-xs text-gray-600 mb-2 font-medium">
                   {language === 'en' ? 'Choose billing cycle:' : '選擇計費週期：'}
                 </p>
                 <div className="flex gap-2">
                   <Button
                     variant={billingCycle === 'monthly' ? 'default' : 'outline'}
                     size="sm"
-                    className="flex-1 text-xs"
-                    onClick={() => setBillingCycle('monthly')}
+                    className={`flex-1 text-xs transition-all ${
+                      billingCycle === 'monthly' 
+                        ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md' 
+                        : 'border-2 hover:border-blue-400 hover:bg-blue-50'
+                    }`}
+                    onClick={() => {
+                      console.log('📅 Switching to monthly billing');
+                      setBillingCycle('monthly');
+                    }}
                   >
                     {language === 'en' ? 'Monthly' : '月付'}
                   </Button>
                   <Button
                     variant={billingCycle === 'yearly' ? 'default' : 'outline'}
                     size="sm"
-                    className="flex-1 text-xs"
-                    onClick={() => setBillingCycle('yearly')}
+                    className={`flex-1 text-xs transition-all ${
+                      billingCycle === 'yearly' 
+                        ? 'bg-green-600 text-white hover:bg-green-700 shadow-md' 
+                        : 'border-2 hover:border-green-400 hover:bg-green-50'
+                    }`}
+                    onClick={() => {
+                      console.log('📅 Switching to yearly billing');
+                      setBillingCycle('yearly');
+                    }}
                   >
                     {language === 'en' ? 'Yearly (Save 20%)' : '年付 (省 20%)'}
+                    {billingCycle === 'yearly' && (
+                      <span className="ml-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold bg-yellow-400 text-green-900 rounded-full">
+                        ✓
+                      </span>
+                    )}
                   </Button>
                 </div>
+                {/* 顯示當前選擇的提示 */}
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  {billingCycle === 'monthly' 
+                    ? (language === 'en' ? '💳 Monthly billing selected' : '💳 已選擇月付')
+                    : (language === 'en' ? '🎉 Yearly billing - Save 20%!' : '🎉 已選擇年付 - 省 20%！')
+                  }
+                </p>
               </div>
             )}
             

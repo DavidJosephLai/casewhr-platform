@@ -25,7 +25,7 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
   const [loading, setLoading] = useState(false);
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [fetchingBalance, setFetchingBalance] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'ecpay'>('wallet'); // ✅ 添加支付方式選擇
+  const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'ecpay' | 'paypal'>('ecpay'); // ✅ 添加 PayPal 選項
 
   // 🛡️ 防禦性檢查：如果 targetPlan 是 'free'，不渲染對話框
   if (targetPlan === 'free') {
@@ -56,6 +56,17 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
   
   // 顯示用的價格（可能是 USD、TWD 或 CNY）
   const planPriceDisplay = planPrices[targetPlan][billingCycle][selectedCurrency];
+
+  // 🎯 根據計費週期自動選擇付款方式
+  useEffect(() => {
+    if (billingCycle === 'monthly') {
+      setPaymentMethod('ecpay'); // 月付 → ECPay
+      console.log('📅 [UpgradeDialog] Auto-selected ECPay for monthly billing');
+    } else if (billingCycle === 'yearly') {
+      setPaymentMethod('paypal'); // 年付 → PayPal
+      console.log('📅 [UpgradeDialog] Auto-selected PayPal for yearly billing');
+    }
+  }, [billingCycle]);
 
   useEffect(() => {
     if (open && user && accessToken) {
@@ -233,6 +244,71 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
     }
   };
 
+  // 🔵 添加 PayPal 訂閱處理函數
+  const handlePayPalPayment = async () => {
+    try {
+      setLoading(true);
+      
+      console.log('🔵 [PayPal] Starting subscription flow...');
+      console.log('🔵 [PayPal] Plan:', targetPlan, 'Cycle:', billingCycle);
+      
+      // 確定 PayPal Plan ID
+      const paypalPlanIds = {
+        pro: {
+          monthly: 'P-24193930M7354211WNF33BOA',
+          yearly: 'P-8R6038908D0666614NF364XA' // ✅ Pro 年付
+        },
+        enterprise: {
+          monthly: 'P-6R584025SB253261BNF33PDI',
+          yearly: 'P-5PG7025386205482MNF367HI' // ✅ Enterprise 年付
+        }
+      };
+
+      const planId = paypalPlanIds[targetPlan][billingCycle];
+      console.log('🔵 [PayPal] Using Plan ID:', planId);
+
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/subscription/paypal/create-subscription`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            plan_id: planId,
+            user_id: user.id,
+          }),
+        }
+      );
+
+      console.log('🔵 [PayPal] Response status:', response.status);
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error('❌ [PayPal] Error response:', error);
+        throw new Error(error.error || 'Failed to create PayPal subscription');
+      }
+
+      const data = await response.json();
+      console.log('✅ [PayPal] Subscription created:', data);
+
+      // 跳轉到 PayPal 授權頁面
+      if (data.approval_url) {
+        console.log('🔵 [PayPal] Redirecting to:', data.approval_url);
+        window.location.href = data.approval_url;
+      } else {
+        throw new Error('No approval URL received from PayPal');
+      }
+      
+      onOpenChange(false);
+    } catch (error: any) {
+      console.error('❌ [PayPal Payment] Error:', error);
+      toast.error(`PayPal payment failed: ${error.message}`);
+      setLoading(false);
+    }
+  };
+
   const planDetails = t.plans[targetPlan];
   // ⭐ 錢包餘額是 USD，需要轉換成目標貨幣比較
   const walletBalanceInCurrency = convertCurrency(walletBalance, 'USD', selectedCurrency);
@@ -278,15 +354,19 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
           </div>
 
           {/* ✅ 支付方式選擇 */}
-          <Tabs value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'wallet' | 'ecpay')}>
-            <TabsList className="grid w-full grid-cols-2">
+          <Tabs value={paymentMethod} onValueChange={(value) => setPaymentMethod(value as 'wallet' | 'ecpay' | 'paypal')}>
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="wallet" className="flex items-center gap-2">
                 <WalletIcon className="h-4 w-4" />
                 {language === 'en' ? 'Wallet' : '錢包'}
               </TabsTrigger>
               <TabsTrigger value="ecpay" className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4" />
-                {language === 'en' ? 'ECPay' : '綠界科技'}
+                {language === 'en' ? 'ECPay' : '綠界'}
+              </TabsTrigger>
+              <TabsTrigger value="paypal" className="flex items-center gap-2">
+                💙
+                {language === 'en' ? 'PayPal' : 'PayPal'}
               </TabsTrigger>
             </TabsList>
 
@@ -362,6 +442,38 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
                     ? '✓ Secure payment gateway\n✓ Auto-renewal support\n✓ All major credit cards accepted' 
                     : '✓ 安全支付閘道\n✓ 支援自動續訂\n✓ 支援所有主流信用卡'}
                 </p>
+                {billingCycle === 'monthly' && (
+                  <div className="mt-3 p-2 bg-green-100 border border-green-300 rounded text-xs text-green-900">
+                    💡 {language === 'en' ? 'Recommended for monthly billing' : '推薦用於月付方案'}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            {/* PayPal Tab Content */}
+            <TabsContent value="paypal" className="space-y-4 mt-4">
+              <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xl">💙</span>
+                  <h4 className="font-medium text-blue-900">
+                    {language === 'en' ? 'PayPal Subscription' : 'PayPal 訂閱付款'}
+                  </h4>
+                </div>
+                <p className="text-sm text-blue-800">
+                  {language === 'en' 
+                    ? 'You will be redirected to PayPal to authorize your subscription.' 
+                    : '您將被導向 PayPal 授權您的訂閱。'}
+                </p>
+                <p className="text-xs text-blue-700 mt-2 whitespace-pre-line">
+                  {language === 'en' 
+                    ? '✓ Secure global payment\n✓ Auto-renewal with PayPal\n✓ Easy cancellation anytime' 
+                    : '✓ 安全國際支付\n✓ PayPal 自動續訂\n✓ 隨時輕鬆取消'}
+                </p>
+                {billingCycle === 'yearly' && (
+                  <div className="mt-3 p-2 bg-blue-100 border border-blue-300 rounded text-xs text-blue-900">
+                    💡 {language === 'en' ? 'Recommended for yearly billing' : '推薦用於年付方案'}
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>
@@ -372,7 +484,13 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
             {t.upgradeDialog.cancel}
           </Button>
           <Button 
-            onClick={paymentMethod === 'ecpay' ? handleECPayPayment : handleUpgrade} 
+            onClick={
+              paymentMethod === 'ecpay' 
+                ? handleECPayPayment 
+                : paymentMethod === 'paypal' 
+                  ? handlePayPalPayment 
+                  : handleUpgrade
+            } 
             disabled={loading || (paymentMethod === 'wallet' && (fetchingBalance || !hasEnoughBalance))}
           >
             {loading ? (
@@ -382,6 +500,8 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
               </>
             ) : paymentMethod === 'ecpay' ? (
               language === 'en' ? '💳 Pay with ECPay' : '💳 使用綠界支付'
+            ) : paymentMethod === 'paypal' ? (
+              language === 'en' ? '💙 Pay with PayPal' : '💙 使用 PayPal 支付'
             ) : (
               t.upgradeDialog.confirmPurchase
             )}
