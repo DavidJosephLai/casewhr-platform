@@ -775,20 +775,49 @@ export async function activatePayPalSubscription(subscriptionId: string): Promis
   const subscriptionData = await response.json();
 
   if (subscriptionData.status === 'ACTIVE') {
-    // 創建本地訂閱錄
-    const amount = plan_type === 'pro' ? 15 : 45; // USD
+    // 🎯 從 PayPal 訂閱中提取計費週期和金額
+    const planId = subscriptionData.plan_id;
+    
+    // 根據 Plan ID 判斷計費週期和金額
+    let billing_cycle = 'monthly';
+    let amount = 15; // 默認 Pro 月付
+    
+    // Pro 方案
+    if (planId === 'P-24193930M7354211WNF33BOA') {
+      billing_cycle = 'monthly';
+      amount = 15;
+    } else if (planId === 'P-8R6038908D0666614NF364XA') {
+      billing_cycle = 'yearly';
+      amount = 150;
+    }
+    // Enterprise 方案
+    else if (planId === 'P-6R584025SB253261BNF33PDI') {
+      billing_cycle = 'monthly';
+      amount = 45;
+    } else if (planId === 'P-5PG7025386205482MNF367HI') {
+      billing_cycle = 'yearly';
+      amount = 450;
+    }
+    
+    console.log('🎯 [PayPal] Detected billing cycle:', billing_cycle, 'Amount:', amount);
+    
+    // 創建本地訂閱記錄
     const userSubscription = {
       user_id,
       plan: plan_type,
       status: 'active',
       payment_method: 'paypal',
       paypal_subscription_id: subscriptionId,
-      billing_cycle: 'monthly',
+      billing_cycle,
       amount,
       start_date: new Date().toISOString(),
       next_billing_date: (() => {
         const next = new Date();
-        next.setMonth(next.getMonth() + 1);
+        if (billing_cycle === 'yearly') {
+          next.setFullYear(next.getFullYear() + 1); // ✅ 年付：一年後續訂
+        } else {
+          next.setMonth(next.getMonth() + 1); // 月付：一個月後續訂
+        }
         return next.toISOString();
       })(),
       auto_renew: true,
@@ -799,7 +828,12 @@ export async function activatePayPalSubscription(subscriptionId: string): Promis
     await kv.set(`subscription_${user_id}`, userSubscription);
     await kv.del(`paypal_subscription_pending_${subscriptionId}`);
 
-    console.log(`✅ [PayPal] Subscription activated for user ${user_id}`);
+    console.log(`✅ [PayPal] Subscription activated for user ${user_id}:`, {
+      plan: plan_type,
+      billing_cycle,
+      amount,
+      next_billing_date: userSubscription.next_billing_date
+    });
   } else {
     throw new Error(`PayPal subscription status is ${subscriptionData.status}, expected ACTIVE`);
   }
@@ -849,4 +883,311 @@ export async function cancelPayPalSubscription(userId: string): Promise<void> {
   await kv.set(`subscription_${userId}`, userSubscription);
 
   console.log(`✅ [PayPal] Subscription cancelled for user ${userId}`);
+}
+
+/**
+ * 處理 PayPal Webhook 事件
+ * Handles PayPal webhook events and stores them in the database
+ */
+export async function handlePayPalWebhook(event: any): Promise<void> {
+  const eventType = event.event_type;
+  const eventId = event.id;
+  const timestamp = event.create_time;
+
+  console.log('🔔 [PayPal Webhook] Processing event:', {
+    type: eventType,
+    id: eventId,
+    timestamp
+  });
+
+  // ✅ 儲存 webhook 事件到資料庫
+  try {
+    await kv.set(`paypal_webhook_${eventId}`, {
+      event_id: eventId,
+      event_type: eventType,
+      resource_type: event.resource_type,
+      summary: event.summary,
+      resource: event.resource,
+      create_time: timestamp,
+      processed_at: new Date().toISOString(),
+      status: 'processing'
+    });
+    console.log(`✅ [PayPal Webhook] Event ${eventId} saved to database`);
+  } catch (error) {
+    console.error('❌ [PayPal Webhook] Failed to save event to database:', error);
+    throw error;
+  }
+
+  // 處理不同類型的 webhook 事件
+  try {
+    switch (eventType) {
+      case 'BILLING.SUBSCRIPTION.ACTIVATED':
+        await handleSubscriptionActivated(event);
+        break;
+
+      case 'BILLING.SUBSCRIPTION.CANCELLED':
+        await handleSubscriptionCancelled(event);
+        break;
+
+      case 'BILLING.SUBSCRIPTION.SUSPENDED':
+        await handleSubscriptionSuspended(event);
+        break;
+
+      case 'BILLING.SUBSCRIPTION.EXPIRED':
+        await handleSubscriptionExpired(event);
+        break;
+
+      case 'BILLING.SUBSCRIPTION.UPDATED':
+        await handleSubscriptionUpdated(event);
+        break;
+
+      case 'PAYMENT.SALE.COMPLETED':
+        await handlePaymentCompleted(event);
+        break;
+
+      case 'PAYMENT.SALE.REFUNDED':
+        await handlePaymentRefunded(event);
+        break;
+
+      default:
+        console.log(`ℹ️ [PayPal Webhook] Unhandled event type: ${eventType}`);
+    }
+
+    // 更新事件處理狀態
+    const webhookData = await kv.get(`paypal_webhook_${eventId}`);
+    if (webhookData) {
+      webhookData.status = 'completed';
+      webhookData.completed_at = new Date().toISOString();
+      await kv.set(`paypal_webhook_${eventId}`, webhookData);
+    }
+
+    console.log(`✅ [PayPal Webhook] Event ${eventId} processed successfully`);
+  } catch (error) {
+    console.error(`❌ [PayPal Webhook] Error processing event ${eventId}:`, error);
+    
+    // 更新事件處理狀態為失敗
+    const webhookData = await kv.get(`paypal_webhook_${eventId}`);
+    if (webhookData) {
+      webhookData.status = 'failed';
+      webhookData.error = error.message;
+      webhookData.failed_at = new Date().toISOString();
+      await kv.set(`paypal_webhook_${eventId}`, webhookData);
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * 處理訂閱激活事件
+ */
+async function handleSubscriptionActivated(event: any): Promise<void> {
+  const subscriptionId = event.resource.id;
+  console.log(`✅ [PayPal Webhook] Subscription activated: ${subscriptionId}`);
+
+  // 查找 pending 訂閱
+  const pendingData = await kv.get(`paypal_subscription_pending_${subscriptionId}`);
+  
+  if (pendingData) {
+    const { user_id, plan_type } = pendingData;
+    const amount = plan_type === 'pro' ? 15 : 45; // USD
+
+    const userSubscription = {
+      user_id,
+      plan: plan_type,
+      status: 'active',
+      payment_method: 'paypal',
+      paypal_subscription_id: subscriptionId,
+      billing_cycle: 'monthly',
+      amount,
+      start_date: new Date().toISOString(),
+      next_billing_date: (() => {
+        const next = new Date();
+        next.setMonth(next.getMonth() + 1);
+        return next.toISOString();
+      })(),
+      auto_renew: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    await kv.set(`subscription_${user_id}`, userSubscription);
+    await kv.del(`paypal_subscription_pending_${subscriptionId}`);
+
+    console.log(`✅ [PayPal Webhook] User ${user_id} subscription activated`);
+
+    // 發送訂閱成功郵件
+    try {
+      const userProfile = await kv.get(`user_${user_id}`);
+      if (userProfile?.email) {
+        const emailHtml = emailService.getSubscriptionSuccessEmail({
+          name: userProfile.name || userProfile.email.split('@')[0],
+          plan: plan_type,
+          amount,
+          nextBillingDate: new Date(userSubscription.next_billing_date).toLocaleDateString('en-US'),
+          language: 'en',
+          currency: 'USD'
+        });
+
+        await emailService.sendEmail({
+          to: userProfile.email,
+          subject: '✅ Subscription Activated - Welcome!',
+          html: emailHtml
+        });
+
+        console.log(`📧 [PayPal Webhook] Activation email sent to ${userProfile.email}`);
+      }
+    } catch (emailError) {
+      console.error('❌ [PayPal Webhook] Failed to send activation email:', emailError);
+    }
+  }
+}
+
+/**
+ * 處理訂閱取消事件
+ */
+async function handleSubscriptionCancelled(event: any): Promise<void> {
+  const subscriptionId = event.resource.id;
+  console.log(`⚠️ [PayPal Webhook] Subscription cancelled: ${subscriptionId}`);
+
+  // 查找用戶訂閱
+  const users = await kv.getByPrefix('subscription_');
+  for (const subscription of users) {
+    if (subscription.paypal_subscription_id === subscriptionId) {
+      subscription.status = 'cancelled';
+      subscription.cancelled_at = new Date().toISOString();
+      subscription.auto_renew = false;
+      subscription.updated_at = new Date().toISOString();
+
+      await kv.set(`subscription_${subscription.user_id}`, subscription);
+      console.log(`✅ [PayPal Webhook] User ${subscription.user_id} subscription cancelled`);
+      break;
+    }
+  }
+}
+
+/**
+ * 處理訂閱暫停事件
+ */
+async function handleSubscriptionSuspended(event: any): Promise<void> {
+  const subscriptionId = event.resource.id;
+  console.log(`⚠️ [PayPal Webhook] Subscription suspended: ${subscriptionId}`);
+
+  const users = await kv.getByPrefix('subscription_');
+  for (const subscription of users) {
+    if (subscription.paypal_subscription_id === subscriptionId) {
+      subscription.status = 'suspended';
+      subscription.suspended_at = new Date().toISOString();
+      subscription.updated_at = new Date().toISOString();
+
+      await kv.set(`subscription_${subscription.user_id}`, subscription);
+      console.log(`✅ [PayPal Webhook] User ${subscription.user_id} subscription suspended`);
+      break;
+    }
+  }
+}
+
+/**
+ * 處理訂閱過期事件
+ */
+async function handleSubscriptionExpired(event: any): Promise<void> {
+  const subscriptionId = event.resource.id;
+  console.log(`⏰ [PayPal Webhook] Subscription expired: ${subscriptionId}`);
+
+  const users = await kv.getByPrefix('subscription_');
+  for (const subscription of users) {
+    if (subscription.paypal_subscription_id === subscriptionId) {
+      subscription.status = 'expired';
+      subscription.expired_at = new Date().toISOString();
+      subscription.plan = 'free'; // 降級為免費方案
+      subscription.updated_at = new Date().toISOString();
+
+      await kv.set(`subscription_${subscription.user_id}`, subscription);
+      console.log(`✅ [PayPal Webhook] User ${subscription.user_id} subscription expired, downgraded to free`);
+      break;
+    }
+  }
+}
+
+/**
+ * 處理訂閱更新事件
+ */
+async function handleSubscriptionUpdated(event: any): Promise<void> {
+  const subscriptionId = event.resource.id;
+  console.log(`🔄 [PayPal Webhook] Subscription updated: ${subscriptionId}`);
+
+  const users = await kv.getByPrefix('subscription_');
+  for (const subscription of users) {
+    if (subscription.paypal_subscription_id === subscriptionId) {
+      subscription.updated_at = new Date().toISOString();
+      await kv.set(`subscription_${subscription.user_id}`, subscription);
+      console.log(`✅ [PayPal Webhook] User ${subscription.user_id} subscription updated`);
+      break;
+    }
+  }
+}
+
+/**
+ * 處理付款完成事件（定期扣款成功）
+ */
+async function handlePaymentCompleted(event: any): Promise<void> {
+  const saleId = event.resource.id;
+  const subscriptionId = event.resource.billing_agreement_id;
+  const amount = event.resource.amount.total;
+
+  console.log(`💰 [PayPal Webhook] Payment completed: ${saleId} for subscription ${subscriptionId}`);
+
+  if (subscriptionId) {
+    const users = await kv.getByPrefix('subscription_');
+    for (const subscription of users) {
+      if (subscription.paypal_subscription_id === subscriptionId) {
+        // 更新下次扣款日期
+        const nextBilling = new Date();
+        nextBilling.setMonth(nextBilling.getMonth() + 1);
+        subscription.next_billing_date = nextBilling.toISOString();
+        subscription.updated_at = new Date().toISOString();
+
+        await kv.set(`subscription_${subscription.user_id}`, subscription);
+        
+        // 記錄付款歷史
+        const paymentHistory = await kv.get(`payment_history_${subscription.user_id}`) || [];
+        paymentHistory.push({
+          payment_id: saleId,
+          amount: parseFloat(amount),
+          currency: event.resource.amount.currency,
+          date: new Date().toISOString(),
+          type: 'recurring',
+          status: 'completed'
+        });
+        await kv.set(`payment_history_${subscription.user_id}`, paymentHistory);
+
+        console.log(`✅ [PayPal Webhook] Payment recorded for user ${subscription.user_id}`);
+        break;
+      }
+    }
+  }
+}
+
+/**
+ * 處理付款退款事件
+ */
+async function handlePaymentRefunded(event: any): Promise<void> {
+  const refundId = event.resource.id;
+  const saleId = event.resource.sale_id;
+  const amount = event.resource.amount.total;
+
+  console.log(`💸 [PayPal Webhook] Payment refunded: ${refundId} for sale ${saleId}`);
+
+  // 記錄退款
+  const refundRecord = {
+    refund_id: refundId,
+    sale_id: saleId,
+    amount: parseFloat(amount),
+    currency: event.resource.amount.currency,
+    date: new Date().toISOString(),
+    status: 'completed'
+  };
+
+  await kv.set(`paypal_refund_${refundId}`, refundRecord);
+  console.log(`✅ [PayPal Webhook] Refund ${refundId} recorded`);
 }

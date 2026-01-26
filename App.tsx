@@ -63,6 +63,8 @@ const AuthDiagnostic = lazy(() => import('./components/AuthDiagnostic'));
 const SimpleLoginTest = lazy(() => import('./components/SimpleLoginTest'));
 const FigmaEnvDiagnostic = lazy(() => import('./components/FigmaEnvDiagnostic'));
 const ECPayDiagnostic = lazy(() => import('./components/ECPayDiagnostic'));
+const PayPalPlanCreator = lazy(() => import('./components/PayPalPlanCreator'));
+const SubscriptionGuarantee = lazy(() => import('./components/SubscriptionGuarantee'));
 const EmailManagementPage = lazy(() => import('./components/EmailManagementPage'));
 const EmailIntegrationPanel = lazy(() => import('./components/EmailIntegrationPanel'));
 const StripeEnvCheck = lazy(() => import('./components/StripeEnvCheck'));
@@ -506,7 +508,7 @@ function AppContent() {
               toast.success(
                 language === 'en'
                   ? `🎉 Payment successful! $${data.amount?.toLocaleString() || '?'} added to your wallet.\n\n📄 E-invoice will be issued within 24 hours.\n🔍 Check at: Ministry of Finance E-Invoice Platform\nhttps://www.einvoice.nat.gov.tw/`
-                  : `🎉 付款成功！已將 $${data.amount?.toLocaleString() || '?'} 加入您的錢包。\n\n📄 電子發票將於 24 小時內開立\n🔍 查詢請至：財政部電發票整合服務平台\nhttps://www.einvoice.nat.gov.tw/`,
+                  : `🎉 付款成功！已將 $${data.amount?.toLocaleString() || '?'} 加入您的錢包。\n\n📄 電子發票將於 24 小���內開立\n🔍 查詢請至：財政部電發票整合服務平台\nhttps://www.einvoice.nat.gov.tw/`,
                 { duration: 8000 }
               );
               
@@ -725,6 +727,20 @@ function AppContent() {
           <SEO title="ECPay Diagnostic" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
             <ECPayDiagnostic />
+          </Suspense>
+        </div>
+      ) : view === 'paypal-plan-creator' ? (
+        <div className="pt-20">
+          <SEO title="PayPal Plan Creator" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <PayPalPlanCreator />
+          </Suspense>
+        </div>
+      ) : view === 'subscription-guarantee' ? (
+        <div className="pt-20">
+          <SEO title="Subscription Guarantee" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <SubscriptionGuarantee />
           </Suspense>
         </div>
       ) : view === 'email-management' ? (
