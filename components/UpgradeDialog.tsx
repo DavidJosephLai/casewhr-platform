@@ -172,7 +172,7 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
     }
   };
 
-  // ✅ 添加 ECPay 訂閱處理函數
+  // ✅ ��加 ECPay 訂閱處理函數
   const handleECPayPayment = async () => {
     try {
       setLoading(true); // ✅ 使用 setLoading 而非 setIsProcessing
@@ -329,14 +329,14 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
                       size="sm"
                       className="mt-2 text-xs h-7"
                       onClick={() => {
-                        console.log('💰 [UpgradeDialog] "Go to Wallet" button clicked');
+                        console.log('💳 [UpgradeDialog] "Go to Wallet Subscription" button clicked');
                         onOpenChange(false);
-                        // 觸發導航到 Dashboard 的 Wallet 頁籤
-                        console.log('💰 [UpgradeDialog] Dispatching showDashboard event with tab: wallet');
-                        window.dispatchEvent(new CustomEvent('showDashboard', { detail: { tab: 'wallet' } }));
+                        // 觸發導航到 Dashboard 的 Wallet 頁籤 - 訂閱子選項
+                        console.log('💳 [UpgradeDialog] Dispatching showDashboard event with tab: wallet, subtab: subscription');
+                        window.dispatchEvent(new CustomEvent('showDashboard', { detail: { tab: 'wallet', subtab: 'subscription' } }));
                       }}
                     >
-                      {language === 'en' ? '💰 Go to Wallet to Top Up' : '💰 前往錢包充值'}
+                      {language === 'en' ? '💳 Go to Wallet - Subscriptions' : '💳 前往錢包 - 訂閱'}
                     </Button>
                   </div>
                 </div>
