@@ -567,12 +567,15 @@ const PAYPAL_MODE = Deno.env.get('PAYPAL_MODE') || 'production'; // ✅ 默認�
 const PAYPAL_CLIENT_ID = Deno.env.get('PAYPAL_CLIENT_ID') || '';
 const PAYPAL_CLIENT_SECRET = Deno.env.get('PAYPAL_CLIENT_SECRET') || '';
 
-const PAYPAL_API_BASE = PAYPAL_MODE === 'production'
+// ✅ 支持 'production' 和 'live' 兩種模式名稱
+const isProductionMode = PAYPAL_MODE === 'production' || PAYPAL_MODE === 'live';
+const PAYPAL_API_BASE = isProductionMode
   ? 'https://api-m.paypal.com'
   : 'https://api-m.sandbox.paypal.com';
 
 console.log('🔍 [PayPal] Environment Configuration:', {
   mode: PAYPAL_MODE,
+  isProduction: isProductionMode,
   apiBase: PAYPAL_API_BASE,
   clientIdSet: PAYPAL_CLIENT_ID ? '✅' : '❌',
   clientSecretSet: PAYPAL_CLIENT_SECRET ? '✅' : '❌'
@@ -755,7 +758,7 @@ export async function activatePayPalSubscription(subscriptionId: string): Promis
   const subscriptionData = await response.json();
 
   if (subscriptionData.status === 'ACTIVE') {
-    // 創建本地訂閱��錄
+    // 創建本地訂閱錄
     const amount = plan_type === 'pro' ? 15 : 45; // USD
     const userSubscription = {
       user_id,
