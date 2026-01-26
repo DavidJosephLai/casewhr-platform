@@ -499,21 +499,27 @@ async function generateECPayCheckMacValue(params: Record<string, any>): Promise<
   // 2. 參數按照 ASCII 排序
   const sortedKeys = Object.keys(cleanParams).sort();
   
-  // 3. 組合字串：HashKey + 參數 + HashIV
-  let checkValue = `HashKey=${ECPAY_HASH_KEY}`;
-  sortedKeys.forEach(key => {
-    checkValue += `&${key}=${cleanParams[key]}`;
-  });
-  checkValue += `&HashIV=${ECPAY_HASH_IV}`;
+  console.log('🔍 [ECPay CheckMac] Step 1 - Sorted Keys:', sortedKeys);
   
-  // 4. URL encode
-  checkValue = encodeURIComponent(checkValue);
+  // 3. 組合字串：HashKey + 參數 + HashIV（先不編碼）
+  let rawString = `HashKey=${ECPAY_HASH_KEY}`;
+  sortedKeys.forEach(key => {
+    rawString += `&${key}=${cleanParams[key]}`;
+  });
+  rawString += `&HashIV=${ECPAY_HASH_IV}`;
+  
+  console.log('🔍 [ECPay CheckMac] Step 2 - Raw String (first 200 chars):', rawString.substring(0, 200));
+  
+  // 4. URL encode 整個字串
+  let encodedString = encodeURIComponent(rawString);
+  
+  console.log('🔍 [ECPay CheckMac] Step 3 - After URL Encode (first 200 chars):', encodedString.substring(0, 200));
   
   // 5. 轉小寫
-  checkValue = checkValue.toLowerCase();
+  encodedString = encodedString.toLowerCase();
   
-  // 6. 替換特殊字符（ECPay 特殊要求）
-  checkValue = checkValue
+  // 6. 替換特殊字符（ECPay 要求這些字符不編碼）
+  encodedString = encodedString
     .replace(/%2d/g, '-')
     .replace(/%5f/g, '_')
     .replace(/%2e/g, '.')
@@ -522,29 +528,36 @@ async function generateECPayCheckMacValue(params: Record<string, any>): Promise<
     .replace(/%28/g, '(')
     .replace(/%29/g, ')');
   
+  console.log('🔍 [ECPay CheckMac] Step 4 - After Special Char Replacement (first 200 chars):', encodedString.substring(0, 200));
+  
   // 7. 根據 EncryptType 選擇加密方式
   const encryptType = cleanParams.EncryptType || '1'; // 預設為 1 (MD5)
   
-  console.log('🔐 [ECPay] Generating CheckMacValue:', {
-    encryptType,
-    checkValueLength: checkValue.length,
-    hashKey: ECPAY_HASH_KEY ? '✅ Set' : '❌ Missing',
-    hashIV: ECPAY_HASH_IV ? '✅ Set' : '❌ Missing'
-  });
+  let checkMacValue: string;
   
   if (encryptType === '1') {
     // MD5 加密 - 使用 Node.js crypto module
     const { createHash } = await import('node:crypto');
-    const hash = createHash('md5').update(checkValue).digest('hex');
-    return hash.toUpperCase();
+    const hash = createHash('md5').update(encodedString).digest('hex');
+    checkMacValue = hash.toUpperCase();
   } else {
     // SHA256 加密 (EncryptType = 0)
     const encoder = new TextEncoder();
-    const data = encoder.encode(checkValue);
+    const data = encoder.encode(encodedString);
     const hash = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hash));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    checkMacValue = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
   }
+  
+  console.log('🔍 [ECPay CheckMac] Step 5 - Final CheckMacValue:', checkMacValue);
+  console.log('🔍 [ECPay CheckMac] Configuration:', {
+    encryptType,
+    hashKeyLength: ECPAY_HASH_KEY?.length,
+    hashIVLength: ECPAY_HASH_IV?.length,
+    merchantId: ECPAY_MERCHANT_ID
+  });
+  
+  return checkMacValue;
 }
 
 /**
@@ -618,20 +631,23 @@ export async function createECPaySubscription(
   const params = {
     MerchantID: ECPAY_MERCHANT_ID,
     MerchantTradeNo: tradeNo,
-    MerchantTradeDate: merchantTradeDate, // ✅ 修正格式
+    MerchantTradeDate: merchantTradeDate,
     PaymentType: 'aio',
-    TotalAmount: amount.toString(), // ✅ 首次立即扣款（與 PeriodAmount 相同）
-    TradeDesc: `CaseWHR-${planType.toUpperCase()}-Plan`, // ✅ 移除空格
-    ItemName: `${planType === 'pro' ? 'Pro' : 'Enterprise'}-Monthly-Plan`, // ✅ 移除空格
-    ReturnURL: periodReturnURL, // ✅ 使用 periodReturnURL 作為主要回調
-    ChoosePayment: 'Credit',
+    TotalAmount: amount.toString(),
+    TradeDesc: `CaseWHR-${planType.toUpperCase()}-Plan`,
+    ItemName: `${planType === 'pro' ? 'Pro' : 'Enterprise'}-Monthly-Plan`,
+    ReturnURL: periodReturnURL,
+    ChoosePayment: 'Credit', // ✅ 只允許信用卡
     EncryptType: '1',
-    // 定期定額參數
-    PeriodAmount: amount.toString(), // ✅ 每次扣款金額
-    PeriodType: 'M', // M = 月
-    Frequency: '1', // 每1個月
-    ExecTimes: '0', // ✅ 改為 0 = 無限制（直到用戶取消）
-    PeriodReturnURL: periodReturnURL,  // ✅ 定期扣款回調
+    // ✅ 定期定額參數
+    PeriodAmount: amount.toString(),
+    PeriodType: 'M',
+    Frequency: '1',
+    ExecTimes: '999',
+    PeriodReturnURL: periodReturnURL,
+    // ✅ 信用卡參數 - 確���直接進入信用卡頁面
+    CreditInstallment: '0', // 0 = 不分期
+    UnionPay: '0', // 0 = 不啟用銀聯卡
   };
   
   console.log('📋 [ECPay] Params:', JSON.stringify(params, null, 2));
@@ -876,7 +892,7 @@ export async function cancelECPaySubscription(userId: string): Promise<void> {
   }
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━��━━━━━━━━━━━
 // 🔄 訂閱管理通用函數
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
