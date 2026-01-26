@@ -172,7 +172,7 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
     }
   };
 
-  // ✅ ��加 ECPay 訂閱處理函數
+  // ✅ 加 ECPay 訂閱處理函數
   const handleECPayPayment = async () => {
     try {
       setLoading(true); // ✅ 使用 setLoading 而非 setIsProcessing
@@ -188,7 +188,7 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
       console.log('🟢 [ECPay] Sending request with planType:', targetPlan);
 
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/ecpay-create-subscription`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/subscription/ecpay/create-recurring`,
         {
           method: 'POST',
           headers: {
