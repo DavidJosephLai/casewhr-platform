@@ -205,14 +205,14 @@ export async function createECPaySubscription(
     MerchantTradeNo: tradeNo,
     MerchantTradeDate: merchantTradeDate,
     PaymentType: 'aio',
-    TotalAmount: amount.toString(),
+    TotalAmount: Math.floor(amount).toString(), // ✅ 確保是整數
     TradeDesc: planType === 'pro' ? 'Pro Plan' : 'Enterprise Plan', // ✅ 移除特殊字符
     ItemName: planType === 'pro' ? 'Pro Monthly Plan' : 'Enterprise Monthly Plan', // ✅ 移除特殊字符
     ReturnURL: periodReturnURL,
     ChoosePayment: 'Credit',
     EncryptType: '1',
     // ✅ 定期定額參數
-    PeriodAmount: amount.toString(),
+    PeriodAmount: Math.floor(amount).toString(), // ✅ 必須是整數
     PeriodType: 'M',
     Frequency: '1',
     ExecTimes: '999',
