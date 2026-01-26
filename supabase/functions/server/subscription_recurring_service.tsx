@@ -228,6 +228,12 @@ export async function createECPaySubscription(
   const checkMacValue = await generateECPayCheckMacValue(params);
   console.log('🔐 [ECPay] CheckMacValue:', checkMacValue);
   
+  // ✅ 關鍵 Debug 資訊（隱藏敏感資料）
+  console.log('🔍 [ECPAY DEBUG] MerchantID:', ECPAY_MERCHANT_ID);
+  console.log('🔍 [ECPAY DEBUG] HashKey:', ECPAY_HASH_KEY ? `${ECPAY_HASH_KEY.substring(0, 4)}****${ECPAY_HASH_KEY.substring(ECPAY_HASH_KEY.length - 4)}` : 'MISSING');
+  console.log('🔍 [ECPAY DEBUG] HashIV:', ECPAY_HASH_IV ? `${ECPAY_HASH_IV.substring(0, 4)}****${ECPAY_HASH_IV.substring(ECPAY_HASH_IV.length - 4)}` : 'MISSING');
+  console.log('🔍 [ECPAY DEBUG] CheckMacValue:', checkMacValue);
+  
   // 保存訂閱信息
   await kv.set(`ecpay_subscription_pending_${tradeNo}`, {
     trade_no: tradeNo,
