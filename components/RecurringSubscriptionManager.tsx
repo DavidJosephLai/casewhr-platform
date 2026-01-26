@@ -37,6 +37,14 @@ export function RecurringSubscriptionManager({
   const [subscription, setSubscription] = useState<any>(null);
   const [processing, setProcessing] = useState(false);
 
+  // 🚨 DEBUG: 立即輸出組件參數
+  console.log('🔍 [RecurringSubscriptionManager] Component mounted with:', {
+    userId,
+    hasAccessToken: !!accessToken,
+    language,
+    timestamp: new Date().toISOString()
+  });
+
   // 🔧 FIX: 正規化語言代碼，確保匹配翻譯對象
   const normalizedLanguage = (language === 'zh' || language === 'zh-TW') ? 'zh' : 
                               language === 'zh-CN' ? 'zh-CN' : 'en';
@@ -44,6 +52,14 @@ export function RecurringSubscriptionManager({
   // 🌏 判斷是否為中文用戶（繁體或簡體）
   const isChinese = language === 'zh' || language === 'zh-TW' || language === 'zh-CN';
 
+  // 🚨 DEBUG: 輸出語言判斷結果
+  console.log('🔍 [RecurringSubscriptionManager] Language settings:', {
+    originalLanguage: language,
+    normalizedLanguage,
+    isChinese,
+    willShowECPayButton: isChinese
+  });
+  
   // 文案
   const translations = {
     en: {
@@ -205,6 +221,10 @@ export function RecurringSubscriptionManager({
   // 使用 ECPay 訂閱
   const subscribeWithECPay = async (planType: 'pro' | 'enterprise') => {
     try {
+      // ✅ 最簡單的測試 - 立即輸出
+      console.log('🚀🚀🚀 BUTTON CLICKED! ECPay subscription starting...', { planType });
+      alert('按鈕已點擊！請查看 Console');
+      
       setProcessing(true);
       
       console.log('🟢 [ECPay] Starting subscription flow...', { planType, userId, projectId });
