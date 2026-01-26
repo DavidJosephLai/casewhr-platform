@@ -19,6 +19,7 @@ const ECPAY_HASH_KEY = Deno.env.get('ECPAY_HASH_KEY') || '';
 const ECPAY_HASH_IV = Deno.env.get('ECPAY_HASH_IV') || '';
 const ECPAY_MODE = Deno.env.get('ECPAY_MODE') || 'production';
 
+// ⚠️ 定期定額專用 API 端點（和一般付款不同！）
 const ECPAY_API_BASE = ECPAY_MODE === 'production'
   ? 'https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5'
   : 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5';
@@ -68,8 +69,7 @@ function dotNetUrlEncode(str: string): string {
 
 /**
  * 生成 ECPay 檢查碼
- * ✅ 使用正確的 .NET HttpUtility.UrlEncode 規則
- * ✅ 支援 SHA256 (EncryptType=1) 和 MD5 (EncryptType=0)
+ * ✅ 直接複製一般付款成功的邏輯！
  */
 async function generateECPayCheckMacValue(params: Record<string, any>): Promise<string> {
   // 1. 移除 CheckMacValue（如果存在）
@@ -101,31 +101,21 @@ async function generateECPayCheckMacValue(params: Record<string, any>): Promise<
   
   console.log('🔍 [ECPay CheckMac] Step 4 - Lowercase:', lowerString.substring(0, 300) + '...');
   
-  // 7. 根據 EncryptType 選擇加密方式
-  const encryptType = cleanParams.EncryptType;
+  // 7. ✅ 直接使用 SHA256（和一般付款一樣）
+  const encoder = new TextEncoder();
+  const data = encoder.encode(lowerString);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   
-  let checkMacValue: string;
-  
-  if (encryptType === 1 || encryptType === '1') {
-    // ✅ SHA256 加密 (EncryptType=1 在新版 ECPay 文檔中代表 SHA256)
-    const encoder = new TextEncoder();
-    const data = encoder.encode(lowerString);
-    const hash = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hash));
-    checkMacValue = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-  } else {
-    // MD5 加密 (EncryptType=0，舊版)
-    const { createHash } = await import('node:crypto');
-    const hash = createHash('md5').update(lowerString).digest('hex');
-    checkMacValue = hash.toUpperCase();
-  }
+  // 8. 轉大寫
+  const checkMacValue = hashHex.toUpperCase();
   
   console.log('🔍 [ECPay CheckMac] Step 5 - Final CheckMacValue:', checkMacValue);
   console.log('🔍 [ECPay CheckMac] Config:', {
     merchantId: ECPAY_MERCHANT_ID,
     hashKey: ECPAY_HASH_KEY ? `${ECPAY_HASH_KEY.substring(0, 4)}...` : '❌',
     hashIV: ECPAY_HASH_IV ? `${ECPAY_HASH_IV.substring(0, 4)}...` : '❌',
-    encryptType
   });
   
   return checkMacValue;
