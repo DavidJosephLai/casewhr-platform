@@ -582,6 +582,23 @@ console.log('🔍 [PayPal] Environment Configuration:', {
  * 獲取 PayPal Access Token
  */
 async function getPayPalAccessToken(): Promise<string> {
+  // ✅ 驗證環境變數
+  if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+    console.error('❌ [PayPal] Missing credentials:', {
+      clientId: PAYPAL_CLIENT_ID ? 'Set' : 'Missing',
+      clientSecret: PAYPAL_CLIENT_SECRET ? 'Set' : 'Missing',
+      mode: PAYPAL_MODE
+    });
+    throw new Error('PayPal credentials not configured. Please set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET environment variables.');
+  }
+
+  console.log('🔐 [PayPal] Attempting authentication...', {
+    mode: PAYPAL_MODE,
+    apiBase: PAYPAL_API_BASE,
+    clientIdLength: PAYPAL_CLIENT_ID.length,
+    clientIdPrefix: PAYPAL_CLIENT_ID.substring(0, 10) + '...'
+  });
+
   const auth = btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`);
   
   const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
@@ -596,10 +613,26 @@ async function getPayPalAccessToken(): Promise<string> {
   if (!response.ok) {
     const error = await response.text();
     console.error('❌ [PayPal] Failed to get access token:', error);
+    console.error('❌ [PayPal] Response status:', response.status);
+    console.error('❌ [PayPal] API Base:', PAYPAL_API_BASE);
+    console.error('❌ [PayPal] Mode:', PAYPAL_MODE);
+    
+    // 如果是認證錯誤，提供更詳細的說明
+    if (error.includes('invalid_client')) {
+      throw new Error(
+        `PayPal authentication failed. Please verify:\n` +
+        `1. PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET are correct\n` +
+        `2. Credentials match the PAYPAL_MODE (${PAYPAL_MODE})\n` +
+        `3. Sandbox credentials for sandbox mode, Live credentials for production mode\n` +
+        `Current mode: ${PAYPAL_MODE}, API: ${PAYPAL_API_BASE}`
+      );
+    }
+    
     throw new Error('Failed to authenticate with PayPal');
   }
 
   const data = await response.json();
+  console.log('✅ [PayPal] Authentication successful');
   return data.access_token;
 }
 
@@ -722,7 +755,7 @@ export async function activatePayPalSubscription(subscriptionId: string): Promis
   const subscriptionData = await response.json();
 
   if (subscriptionData.status === 'ACTIVE') {
-    // 創建本地訂閱記錄
+    // 創建本地訂閱��錄
     const amount = plan_type === 'pro' ? 15 : 45; // USD
     const userSubscription = {
       user_id,

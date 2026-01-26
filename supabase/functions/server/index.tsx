@@ -11583,7 +11583,22 @@ app.post("/make-server-215f78a5/subscription/paypal/create-recurring", async (c)
     });
   } catch (error: any) {
     console.error('❌ [PayPal Subscription] Error:', error);
-    return c.json({ error: error.message || 'Failed to create PayPal subscription' }, 500);
+    console.error('❌ [PayPal Subscription] Stack:', error.stack);
+    
+    // 提供更友好的錯誤訊息
+    let userMessage = error.message || 'Failed to create PayPal subscription';
+    
+    if (error.message?.includes('PayPal credentials not configured')) {
+      userMessage = '⚠️ PayPal 尚未配置。請使用 ECPay 或其他支付方式。';
+    } else if (error.message?.includes('PayPal authentication failed')) {
+      userMessage = '⚠️ PayPal 認證失敗。請使用 ECPay 或聯繫客服。';
+    }
+    
+    return c.json({ 
+      error: userMessage,
+      provider: 'paypal',
+      suggestion: 'Please use ECPay for subscription payment'
+    }, 500);
   }
 });
 
