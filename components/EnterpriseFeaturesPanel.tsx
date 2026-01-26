@@ -119,13 +119,14 @@ export function EnterpriseFeaturesPanel({ language }: EnterpriseFeaturesPanelPro
     }
   };
 
-  const isEnterprise = subscription?.plan === 'enterprise';
+  const isEnterprise = subscription?.plan === 'enterprise' && subscription?.status === 'active';
   
   // 🔍 添加調試日誌
   console.log('🔍 [EnterpriseFeaturesPanel] Current state:', {
     user: user?.email,
     subscription: subscription,
     plan: subscription?.plan,
+    status: subscription?.status,
     isEnterprise: isEnterprise,
     loading: loading
   });
