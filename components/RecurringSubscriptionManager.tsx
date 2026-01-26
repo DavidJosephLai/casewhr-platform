@@ -25,7 +25,7 @@ import { projectId, publicAnonKey } from '../utils/supabase/info';
 interface RecurringSubscriptionManagerProps {
   userId: string;
   accessToken: string;
-  language?: 'en' | 'zh' | 'zh-CN';
+  language?: 'en' | 'zh' | 'zh-TW' | 'zh-CN'; // ✅ 修復：包含所有語言選項
 }
 
 export function RecurringSubscriptionManager({
@@ -38,7 +38,11 @@ export function RecurringSubscriptionManager({
   const [processing, setProcessing] = useState(false);
 
   // 🔧 FIX: 正規化語言代碼，確保匹配翻譯對象
-  const normalizedLanguage = language === 'zh' || language === 'zh-CN' ? language : 'en';
+  const normalizedLanguage = (language === 'zh' || language === 'zh-TW') ? 'zh' : 
+                              language === 'zh-CN' ? 'zh-CN' : 'en';
+  
+  // 🌏 判斷是否為中文用戶（繁體或簡體）
+  const isChinese = language === 'zh' || language === 'zh-TW' || language === 'zh-CN';
 
   // 文案
   const translations = {
@@ -408,7 +412,8 @@ export function RecurringSubscriptionManager({
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">{translations[normalizedLanguage].pro}</h3>
                   <p className="text-2xl font-bold text-blue-600 mt-1">
-                    {language === 'zh' ? 'NT$480/月' : '$15/month'}
+                    {/* ✅ 中文用戶顯示台幣，英文用戶顯示美金 */}
+                    {isChinese ? 'NT$480/月' : '$15/month'}
                   </p>
                 </div>
                 <DollarSign className="w-12 h-12 text-blue-600" />
@@ -426,8 +431,8 @@ export function RecurringSubscriptionManager({
                     translations[normalizedLanguage].upgradeWithPayPal
                   )}
                 </Button>
-                {/* ✅ ECPay 按鈕：繁體中文 OR 簡體中文時顯示 */}
-                {(language === 'zh' || language === 'zh-CN') && (
+                {/* ✅ ECPay 按鈕：所有中文用戶都顯示 */}
+                {isChinese && (
                   <Button
                     onClick={() => subscribeWithECPay('pro')}
                     disabled={processing}
@@ -451,7 +456,8 @@ export function RecurringSubscriptionManager({
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">{translations[normalizedLanguage].enterprise}</h3>
                   <p className="text-2xl font-bold text-purple-600 mt-1">
-                    {language === 'zh' ? 'NT$1,400/月' : '$45/month'}
+                    {/* ✅ 中文用戶顯示台幣，英文用戶顯示美金 */}
+                    {isChinese ? 'NT$1,400/月' : '$45/month'}
                   </p>
                 </div>
                 <DollarSign className="w-12 h-12 text-purple-600" />
@@ -469,8 +475,8 @@ export function RecurringSubscriptionManager({
                     translations[normalizedLanguage].upgradeWithPayPal
                   )}
                 </Button>
-                {/* ✅ ECPay 按鈕：繁體中文 OR 簡體中文時顯示 */}
-                {(language === 'zh' || language === 'zh-CN') && (
+                {/* ✅ ECPay 按鈕：所有中文用戶都顯示 */}
+                {isChinese && (
                   <Button
                     onClick={() => subscribeWithECPay('enterprise')}
                     disabled={processing}
