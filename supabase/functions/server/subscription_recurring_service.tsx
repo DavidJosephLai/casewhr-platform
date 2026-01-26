@@ -756,7 +756,10 @@ export async function createECPaySubscription(
       
       <div class="debug-panel" id="debugPanel">
         <h3 style="margin-top: 0; color: #ff6b6b;">🔍 ECPay CheckMacValue 計算過程</h3>
-        ${debugLogs.map((log: string) => `<div class="debug-line">${log}</div>`).join('')}
+        ${debugLogs.map((log: string) => {
+          const escaped = log.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+          return `<div class="debug-line">${escaped}</div>`;
+        }).join('')}
         <hr style="margin: 20px 0;"/>
         <h4>📋 提交參數：</h4>
         <div class="debug-line"><strong>MerchantID:</strong> ${ECPAY_MERCHANT_ID}</div>
@@ -783,12 +786,13 @@ export async function createECPaySubscription(
           document.getElementById('debugPanel').classList.toggle('show');
         }
         
-        console.log('🟢 [ECPay] Submitting form to:', '${ECPAY_API_BASE}');
-        console.log('🟢 [ECPay] Debug logs:', ${JSON.stringify(debugLogs)});
+        console.log('ECPay Form Ready');
+        console.log('Target URL: ${ECPAY_API_BASE}');
+        console.log('CheckMacValue: ${checkMacValue}');
         
         // 10秒後自動提交
-        setTimeout(() => {
-          console.log('✈️ Submitting form to ECPay...');
+        setTimeout(function() {
+          console.log('Submitting form to ECPay...');
           document.getElementById('ecpayForm').submit();
         }, 10000);
       </script>
@@ -805,7 +809,7 @@ export async function createECPaySubscription(
 export async function handleECPayPeriodCallback(params: Record<string, any>): Promise<void> {
   const { MerchantTradeNo, RtnCode, RtnMsg, PeriodType, Frequency, ExecTimes, PeriodNo } = params;
   
-  console.log(`�� [ECPay Period] Callback received for ${MerchantTradeNo}`);
+  console.log(` [ECPay Period] Callback received for ${MerchantTradeNo}`);
   console.log('📦 [ECPay Period] Callback params:', JSON.stringify(params, null, 2));
   
   // ✅ 驗證 CheckMacValue
