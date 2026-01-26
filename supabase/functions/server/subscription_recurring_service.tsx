@@ -361,7 +361,7 @@ export async function handleECPayPeriodCallback(params: Record<string, any>): Pr
     const pendingData = await kv.get(`ecpay_subscription_pending_${MerchantTradeNo}`);
     
     if (pendingData) {
-      const { user_id, plan_type, amount } = pendingData;
+      const { user_id, plan_type, amount, email } = pendingData;
       
       // 首次訂閱 - 創建訂閱記錄
       if (!PeriodNo || PeriodNo === '0') {
@@ -388,10 +388,105 @@ export async function handleECPayPeriodCallback(params: Record<string, any>): Pr
         await kv.del(`ecpay_subscription_pending_${MerchantTradeNo}`);
         
         console.log(`✅ [ECPay] Subscription activated for user ${user_id}`);
+        
+        // 🔔 發送訂閱成功郵件
+        try {
+          const userName = email.split('@')[0];
+          const nextBillingDate = new Date(userSubscription.next_billing_date).toLocaleDateString('zh-TW');
+          
+          const emailHtml = emailService.getSubscriptionSuccessEmail({
+            name: userName,
+            plan: plan_type,
+            amount,
+            nextBillingDate,
+            language: 'zh',
+            currency: 'TWD'
+          });
+          
+          await emailService.sendEmail({
+            to: email,
+            subject: '✅ 訂閱成功！感謝您的支持',
+            html: emailHtml
+          });
+          
+          console.log(`📧 [ECPay] Subscription success email sent to ${email}`);
+        } catch (emailError) {
+          console.error('❌ [ECPay] Failed to send subscription success email:', emailError);
+        }
+      } else {
+        // 定期扣款成功 - 更新下次扣款日期
+        const userSubscription = await kv.get(`subscription_${user_id}`);
+        if (userSubscription) {
+          const nextBilling = new Date();
+          nextBilling.setMonth(nextBilling.getMonth() + 1);
+          userSubscription.next_billing_date = nextBilling.toISOString();
+          userSubscription.updated_at = new Date().toISOString();
+          
+          await kv.set(`subscription_${user_id}`, userSubscription);
+          console.log(`✅ [ECPay] Recurring payment ${PeriodNo} successful for user ${user_id}`);
+        }
       }
     }
   } else {
+    // 扣款失敗
     console.error(`❌ [ECPay Period] Payment failed: ${RtnMsg}`);
+    
+    const pendingData = await kv.get(`ecpay_subscription_pending_${MerchantTradeNo}`);
+    if (pendingData) {
+      const { user_id, plan_type, amount, email } = pendingData;
+      
+      // 🔔 發送扣款失敗通知
+      try {
+        const userName = email.split('@')[0];
+        const nextRetryDate = new Date();
+        nextRetryDate.setDate(nextRetryDate.getDate() + 3);
+        
+        const emailHtml = emailService.getRecurringPaymentFailedEmail({
+          name: userName,
+          plan: plan_type,
+          amount,
+          currency: 'TWD',
+          nextRetryDate: nextRetryDate.toLocaleDateString('zh-TW'),
+          reason: RtnMsg || '銀行拒絕交易',
+          language: 'zh'
+        });
+        
+        await emailService.sendEmail({
+          to: email,
+          subject: '⚠️ 定期扣款失敗 - 需要您的注意',
+          html: emailHtml
+        });
+        
+        console.log(`📧 [ECPay] Payment failed email sent to ${email}`);
+      } catch (emailError) {
+        console.error('❌ [ECPay] Failed to send payment failed email:', emailError);
+      }
+      
+      // 記錄失敗次數
+      const failKey = `ecpay_payment_failures_${user_id}`;
+      const failures = (await kv.get(failKey)) || [];
+      failures.push({
+        date: new Date().toISOString(),
+        reason: RtnMsg,
+        amount,
+        trade_no: MerchantTradeNo
+      });
+      await kv.set(failKey, failures);
+      
+      // 如果失敗次數 >= 3，取消訂閱
+      if (failures.length >= 3) {
+        const userSubscription = await kv.get(`subscription_${user_id}`);
+        if (userSubscription) {
+          userSubscription.status = 'cancelled';
+          userSubscription.cancelled_at = new Date().toISOString();
+          userSubscription.cancel_reason = 'Payment failed 3 times';
+          userSubscription.auto_renew = false;
+          
+          await kv.set(`subscription_${user_id}`, userSubscription);
+          console.log(`⚠️ [ECPay] Subscription cancelled after 3 failed payments for user ${user_id}`);
+        }
+      }
+    }
   }
 }
 

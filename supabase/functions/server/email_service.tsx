@@ -537,6 +537,383 @@ export function getLowBalanceEmail(params: {
   `;
 }
 
+// ========== 📧 訂閱到期通知 ==========
+export function getSubscriptionExpiringEmail(params: {
+  name: string;
+  plan: string;
+  expiryDate: string;
+  daysRemaining: number;
+  language: 'en' | 'zh';
+}) {
+  const { name, plan, expiryDate, daysRemaining, language } = params;
+  
+  const planNames = {
+    en: { free: 'Free', pro: 'Professional', enterprise: 'Enterprise' },
+    zh: { free: '免費', pro: '專業版', enterprise: '企業版' }
+  };
+
+  const content = language === 'en' ? {
+    title: '⏰ Subscription Expiring Soon',
+    greeting: `Hi ${name},`,
+    message: `Your ${planNames.en[plan as keyof typeof planNames.en]} subscription will expire in ${daysRemaining} days.`,
+    detailsTitle: 'Subscription Details:',
+    planLabel: 'Current Plan',
+    expiryLabel: 'Expiry Date',
+    whatHappens: 'What happens when your subscription expires:',
+    impact1: 'Your account will be downgraded to the Free plan',
+    impact2: 'Commission rate will increase from your current rate to 20%',
+    impact3: 'You will lose access to premium features',
+    action: 'To maintain your subscription benefits, please renew your subscription before it expires.',
+    renewButton: 'Renew Subscription',
+    footer: 'You can manage your subscription anytime from your dashboard.',
+    team: 'The Case Where Team'
+  } : {
+    title: '⏰ 訂閱即將到期',
+    greeting: `您好 ${name},`,
+    message: `您的 ${planNames.zh[plan as keyof typeof planNames.zh]} 訂閱將在 ${daysRemaining} 天後到期。`,
+    detailsTitle: '訂閱詳情：',
+    planLabel: '目前方案',
+    expiryLabel: '到期日期',
+    whatHappens: '訂閱到期後會發生什麼：',
+    impact1: '您的帳戶將降級為免費方案',
+    impact2: '手續費將從您目前的費率增加到 20%',
+    impact3: '您將失去進階功能的使用權',
+    action: '為了保持您的訂閱權益，請在到期前續訂。',
+    renewButton: '續訂方案',
+    footer: '您可以隨時從儀表板管理您的訂閱。',
+    team: 'Case Where 團隊'
+  };
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9fafb; padding: 30px; }
+          .card { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+          .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+          .detail-label { font-weight: 600; color: #6b7280; }
+          .detail-value { color: #111827; }
+          .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px; }
+          .impact-list { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .impact-list li { margin: 10px 0; color: #dc2626; }
+          .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; }
+          .button { display: inline-block; background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+          .days-badge { background: #dc2626; color: white; padding: 8px 16px; border-radius: 20px; display: inline-block; font-weight: 700; margin: 10px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>${content.title}</h1>
+            <div class="days-badge">⏰ ${daysRemaining} ${language === 'en' ? 'days remaining' : '天剩餘'}</div>
+          </div>
+          <div class="content">
+            <p>${content.greeting}</p>
+            <p>${content.message}</p>
+            
+            <div class="card">
+              <h3>${content.detailsTitle}</h3>
+              <div class="detail-row">
+                <span class="detail-label">${content.planLabel}:</span>
+                <span class="detail-value">${planNames[language][plan as keyof typeof planNames[typeof language]]}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">${content.expiryLabel}:</span>
+                <span class="detail-value">${expiryDate}</span>
+              </div>
+            </div>
+
+            <div class="warning">
+              <h3>⚠️ ${content.whatHappens}</h3>
+              <ul class="impact-list">
+                <li>${content.impact1}</li>
+                <li>${content.impact2}</li>
+                <li>${content.impact3}</li>
+              </ul>
+            </div>
+
+            <p><strong>${content.action}</strong></p>
+            <center>
+              <a href="https://casewhr.com/subscription" class="button">${content.renewButton}</a>
+            </center>
+
+            <p>${content.footer}</p>
+            <p><strong>${content.team}</strong></p>
+          </div>
+          <div class="footer">
+            © 2024 Case Where 接得準股份有限公司
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+// ========== 🚫 訂閱已到期通知 ==========
+export function getSubscriptionExpiredEmail(params: {
+  name: string;
+  plan: string;
+  expiredDate: string;
+  language: 'en' | 'zh';
+}) {
+  const { name, plan, expiredDate, language } = params;
+  
+  const planNames = {
+    en: { free: 'Free', pro: 'Professional', enterprise: 'Enterprise' },
+    zh: { free: '免費', pro: '專業版', enterprise: '企業版' }
+  };
+
+  const content = language === 'en' ? {
+    title: '❌ Subscription Expired',
+    greeting: `Hi ${name},`,
+    message: `Your ${planNames.en[plan as keyof typeof planNames.en]} subscription has expired.`,
+    expiredLabel: 'Expired on',
+    currentStatus: 'Your account has been automatically downgraded to the Free plan.',
+    changes: 'Changes to your account:',
+    change1: 'Commission rate increased to 20%',
+    change2: 'Premium features are now disabled',
+    change3: 'Advanced analytics and reporting unavailable',
+    action: 'Want to restore your premium features? Renew your subscription now!',
+    renewButton: 'Renew Now',
+    footer: 'You can upgrade your plan anytime from your dashboard.',
+    team: 'The Case Where Team'
+  } : {
+    title: '❌ 訂閱已到期',
+    greeting: `您好 ${name},`,
+    message: `您的 ${planNames.zh[plan as keyof typeof planNames.zh]} 訂閱已過期。`,
+    expiredLabel: '到期日期',
+    currentStatus: '您的帳戶已自動降級為免費方案。',
+    changes: '您的帳戶變更：',
+    change1: '手續費增加至 20%',
+    change2: '進階功能已停用',
+    change3: '進階分析和報表功能不可用',
+    action: '想要恢復您的進階功能？立即續訂！',
+    renewButton: '立即續訂',
+    footer: '您可以隨時從儀表板升級方案。',
+    team: 'Case Where 團隊'
+  };
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9fafb; padding: 30px; }
+          .card { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+          .alert { background: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 4px; }
+          .change-list { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .change-list li { margin: 10px 0; color: #dc2626; font-weight: 600; }
+          .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; }
+          .button { display: inline-block; background: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+          .expired-badge { background: #991b1b; color: white; padding: 8px 16px; border-radius: 20px; display: inline-block; font-weight: 700; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>${content.title}</h1>
+            <div class="expired-badge">❌ ${content.expiredLabel}: ${expiredDate}</div>
+          </div>
+          <div class="content">
+            <p>${content.greeting}</p>
+            
+            <div class="alert">
+              <p><strong>${content.message}</strong></p>
+              <p>${content.currentStatus}</p>
+            </div>
+            
+            <div class="card">
+              <h3>⚠️ ${content.changes}</h3>
+              <ul class="change-list">
+                <li>📈 ${content.change1}</li>
+                <li>🔒 ${content.change2}</li>
+                <li>📊 ${content.change3}</li>
+              </ul>
+            </div>
+
+            <p><strong>${content.action}</strong></p>
+            <center>
+              <a href="https://casewhr.com/subscription" class="button">${content.renewButton}</a>
+            </center>
+
+            <p>${content.footer}</p>
+            <p><strong>${content.team}</strong></p>
+          </div>
+          <div class="footer">
+            © 2024 Case Where 接得準股份有限公司
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+// ========== 💳 扣款失敗通知（定期扣款專用）==========
+export function getRecurringPaymentFailedEmail(params: {
+  name: string;
+  plan: string;
+  amount: number;
+  currency: string;
+  nextRetryDate: string;
+  reason: string;
+  language: 'en' | 'zh';
+}) {
+  const { name, plan, amount, currency, nextRetryDate, reason, language } = params;
+  
+  const planNames = {
+    en: { free: 'Free', pro: 'Professional', enterprise: 'Enterprise' },
+    zh: { free: '免費', pro: '專業版', enterprise: '企業版' }
+  };
+
+  // 三幣格式化
+  const formatAmount = (amount: number, currency: string) => {
+    switch (currency) {
+      case 'USD': return `$${amount.toFixed(2)}`;
+      case 'CNY': return `¥${Math.round(amount)}`;
+      case 'TWD':
+      default: return `NT$${Math.round(amount)}`;
+    }
+  };
+
+  const content = language === 'en' ? {
+    title: '⚠️ Recurring Payment Failed',
+    greeting: `Hi ${name},`,
+    message: `We were unable to process your recurring subscription payment for the ${planNames.en[plan as keyof typeof planNames.en]} plan.`,
+    detailsTitle: 'Failed Payment Details:',
+    planLabel: 'Plan',
+    amountLabel: 'Amount',
+    reasonLabel: 'Failure Reason',
+    nextRetryLabel: 'Next Retry',
+    whatHappens: 'What happens next:',
+    step1: `We will automatically retry the payment on ${nextRetryDate}`,
+    step2: 'If payment fails after 3 attempts, your subscription will be cancelled',
+    step3: 'Your account will be downgraded to the Free plan',
+    actionTitle: 'How to resolve this:',
+    action1: 'Update your payment method or credit card information',
+    action2: 'Ensure your card has sufficient funds',
+    action3: 'Contact your bank if the issue persists',
+    updateButton: 'Update Payment Method',
+    footer: 'Need help? Contact our support team at support@casewhr.com',
+    team: 'The Case Where Team'
+  } : {
+    title: '⚠️ 定期扣款失敗',
+    greeting: `您好 ${name},`,
+    message: `我們無法處理您的 ${planNames.zh[plan as keyof typeof planNames.zh]} 訂閱定期扣款。`,
+    detailsTitle: '失敗的付款詳情：',
+    planLabel: '方案',
+    amountLabel: '金額',
+    reasonLabel: '失敗原因',
+    nextRetryLabel: '下次重試',
+    whatHappens: '接下來會發生什麼：',
+    step1: `我們將在 ${nextRetryDate} 自動重試扣款`,
+    step2: '如果 3 次嘗試後仍失敗，您的訂閱將被取消',
+    step3: '您的帳戶將降級為免費方案',
+    actionTitle: '如何解決：',
+    action1: '更新您的支付方式或信用卡資訊',
+    action2: '確保您的卡片有足夠的餘額',
+    action3: '如果問題持續，請聯繫您的銀行',
+    updateButton: '更新支付方式',
+    footer: '需要幫助？請聯繫我們的支援團隊：support@casewhr.com',
+    team: 'Case Where 團隊'
+  };
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9fafb; padding: 30px; }
+          .card { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+          .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+          .detail-label { font-weight: 600; color: #6b7280; }
+          .detail-value { color: #111827; }
+          .alert { background: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 4px; }
+          .warning-list { background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b; }
+          .warning-list li { margin: 10px 0; color: #92400e; }
+          .action-list { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .action-list li { margin: 10px 0; }
+          .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 14px; }
+          .button { display: inline-block; background: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>${content.title}</h1>
+          </div>
+          <div class="content">
+            <p>${content.greeting}</p>
+            
+            <div class="alert">
+              <strong>${content.message}</strong>
+            </div>
+            
+            <div class="card">
+              <h3>${content.detailsTitle}</h3>
+              <div class="detail-row">
+                <span class="detail-label">${content.planLabel}:</span>
+                <span class="detail-value">${planNames[language][plan as keyof typeof planNames[typeof language]]}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">${content.amountLabel}:</span>
+                <span class="detail-value">${formatAmount(amount, currency)}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">${content.reasonLabel}:</span>
+                <span class="detail-value">${reason}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">${content.nextRetryLabel}:</span>
+                <span class="detail-value">${nextRetryDate}</span>
+              </div>
+            </div>
+
+            <div class="warning-list">
+              <h3>⚠️ ${content.whatHappens}</h3>
+              <ol>
+                <li>${content.step1}</li>
+                <li>${content.step2}</li>
+                <li>${content.step3}</li>
+              </ol>
+            </div>
+
+            <div class="action-list">
+              <h3>🔧 ${content.actionTitle}</h3>
+              <ul>
+                <li>${content.action1}</li>
+                <li>${content.action2}</li>
+                <li>${content.action3}</li>
+              </ul>
+              <center>
+                <a href="https://casewhr.com/subscription" class="button">${content.updateButton}</a>
+              </center>
+            </div>
+
+            <p><em>${content.footer}</em></p>
+            <p><strong>${content.team}</strong></p>
+          </div>
+          <div class="footer">
+            © 2024 Case Where 接得準股份有限公司
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+}
+
 // ========== PROJECT EMAIL TEMPLATES ==========
 
 export function getProjectCreatedEmail(params: {

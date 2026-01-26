@@ -42,6 +42,7 @@ import wismachionRoutes from "./wismachion_routes.tsx";
 import * as internalLinkScanner from "./internal_link_scanner.tsx";
 import * as videoUploadService from "./video_upload_service.tsx";
 import * as subscriptionRecurring from "./subscription_recurring_service.tsx";
+import * as subscriptionMonitor from "./subscription_monitor.tsx";
 
 console.log('🚀 [SERVER STARTUP] Edge Function v2.0.6 - LINE Auth Integration - Starting...');
 
@@ -1310,12 +1311,12 @@ console.log('✅ [SERVER] Invoice management APIs registered');
 registerSubscriptionNotificationRoutes(app);
 console.log('✅ [SERVER] Subscription notification APIs registered');
 
-// Start automatic subscription check (runs daily)
-console.log('[SERVER] Starting daily subscription check...');
-setInterval(async () => {
-  console.log('[SERVER] Running scheduled subscription check...');
-  await checkSubscriptionsAndNotify();
-}, 24 * 60 * 60 * 1000); // Run every 24 hours
+// ⚠️ Edge Functions 不支持 setInterval 長時間運行
+// 訂閱檢查改用外部 Cron Job 或手動觸發 API
+console.log('ℹ️ [SERVER] Subscription monitoring available via API endpoints:');
+console.log('  - POST /make-server-215f78a5/subscription/check-expiry');
+console.log('  - POST /make-server-215f78a5/subscription/cleanup-notifications');
+console.log('ℹ️ [SERVER] Set up external cron (e.g., GitHub Actions) to call these endpoints daily');
 
 // 🔧 Update admin profile - Fix admin permissions
 app.post("/make-server-215f78a5/update-admin-profile", async (c) => {
@@ -11749,6 +11750,109 @@ app.post("/make-server-215f78a5/subscription/ecpay/cancel-recurring", async (c) 
   } catch (error: any) {
     console.error('❌ [ECPay Subscription] Cancel error:', error);
     return c.json({ error: error.message || 'Failed to cancel subscription' }, 500);
+  }
+});
+
+// ============= 訂閱監控 API =============
+
+// 🤖 Cron Job 端點（供外部定時任務調用）
+app.post("/make-server-215f78a5/cron/subscription-check", async (c) => {
+  try {
+    const cronSecret = c.req.header('X-Cron-Secret');
+    const expectedSecret = Deno.env.get('CRON_SECRET') || 'casewhr-cron-2024';
+    
+    if (cronSecret !== expectedSecret) {
+      console.warn('⚠️ [Cron] Invalid secret provided');
+      return c.json({ error: 'Invalid cron secret' }, 401);
+    }
+
+    console.log('🤖 [Cron] Running scheduled subscription check...');
+    
+    const stats = await subscriptionMonitor.checkSubscriptionExpiry();
+    
+    console.log('✅ [Cron] Subscription check completed:', stats);
+    
+    return c.json({
+      success: true,
+      stats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('❌ [Cron] Error during subscription check:', error);
+    return c.json({ 
+      error: error.message || 'Cron job failed',
+      timestamp: new Date().toISOString()
+    }, 500);
+  }
+});
+
+// 手動觸發訂閱到期檢查（僅限管理員）
+app.post("/make-server-215f78a5/subscription/check-expiry", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    // 檢查是否為管理員
+    const isAdmin = await adminCheck.isUserAdmin(user.id);
+    if (!isAdmin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+
+    console.log('🔍 [Subscription Monitor] Manual expiry check triggered by admin:', user.id);
+    
+    const stats = await subscriptionMonitor.checkSubscriptionExpiry();
+    
+    return c.json({
+      success: true,
+      stats,
+      message: `檢查了 ${stats.checked} 個訂閱，發送了 ${stats.emailsSent} 封郵件`
+    });
+  } catch (error: any) {
+    console.error('❌ [Subscription Monitor] Check expiry error:', error);
+    return c.json({ error: error.message || 'Failed to check subscription expiry' }, 500);
+  }
+});
+
+// 手動清理舊通知（僅限管理員）
+app.post("/make-server-215f78a5/subscription/cleanup-notifications", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    // 檢查是否為管理員
+    const isAdmin = await adminCheck.isUserAdmin(user.id);
+    if (!isAdmin) {
+      return c.json({ error: 'Admin access required' }, 403);
+    }
+
+    console.log('🧹 [Subscription Monitor] Manual cleanup triggered by admin:', user.id);
+    
+    const deletedCount = await subscriptionMonitor.cleanupOldNotifications();
+    
+    return c.json({
+      success: true,
+      deletedCount,
+      message: `清理了 ${deletedCount} 條舊通知記錄`
+    });
+  } catch (error: any) {
+    console.error('❌ [Subscription Monitor] Cleanup error:', error);
+    return c.json({ error: error.message || 'Failed to cleanup notifications' }, 500);
   }
 });
 
