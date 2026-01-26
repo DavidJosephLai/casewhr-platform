@@ -51,6 +51,7 @@ import { EnterpriseFeaturesPanel } from './EnterpriseFeaturesPanel';
 import { EnterpriseChat } from './EnterpriseChat';
 import { ExchangeRateIndicator } from './ExchangeRateIndicator';
 import { QuickSubscriptionCheck } from './QuickSubscriptionCheck';
+import { RecurringSubscriptionManager } from './RecurringSubscriptionManager';
 import { ContractManager } from './ContractManager';
 import { UnifiedInvoiceManager } from './UnifiedInvoiceManager';
 import { SLAMonitoring } from './SLAMonitoring';
@@ -423,7 +424,7 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
                   {language === 'en' 
                     ? 'Open, in progress, pending review, or pending payment' 
                     : language === 'zh-CN' 
-                    ? '等待接案、执行��、待审核或待拨款' 
+                    ? '等待接案、执行、待审核或待拨款' 
                     : '等待接案、執行、待審核或待撥款'}
                 </CardDescription>
               </CardHeader>
@@ -634,6 +635,11 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
         <TabsContent value="wallet" className="space-y-6">
           <ExchangeRateIndicator />
           <QuickSubscriptionCheck />
+          <RecurringSubscriptionManager 
+            userId={user?.id || ''}
+            accessToken={accessToken || ''}
+            language={language}
+          />
           <Wallet />
           <KYCVerification />
           <WithdrawalRequest />
