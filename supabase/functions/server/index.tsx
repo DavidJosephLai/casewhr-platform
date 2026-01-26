@@ -438,6 +438,33 @@ app.use(
 );
 console.log('✅ [SERVER] CORS configured');
 
+// ✅ 超簡單健康檢查端點（在所有 middleware 之前）
+app.get("/make-server-215f78a5/health", (c) => {
+  return c.json({ 
+    status: "OK", 
+    timestamp: new Date().toISOString(),
+    message: "Server is running" 
+  });
+});
+
+// ✅ ECPay 配置檢查端點（在所有 middleware 之前）
+app.get("/make-server-215f78a5/test-ecpay-config", (c) => {
+  const merchantId = Deno.env.get('ECPAY_MERCHANT_ID');
+  const hashKey = Deno.env.get('ECPAY_HASH_KEY');
+  const hashIV = Deno.env.get('ECPAY_HASH_IV');
+  const mode = Deno.env.get('ECPAY_MODE') || 'production';
+  
+  return c.json({
+    merchantId: merchantId || '❌ NOT SET',
+    hashKey: hashKey ? `${hashKey.substring(0, 4)}...${hashKey.substring(hashKey.length - 4)}` : '❌ NOT SET',
+    hashIV: hashIV ? `${hashIV.substring(0, 4)}...${hashIV.substring(hashIV.length - 4)}` : '❌ NOT SET',
+    mode,
+    hashKeyLength: hashKey?.length || 0,
+    hashIVLength: hashIV?.length || 0,
+    status: (merchantId && hashKey && hashIV) ? '✅ ALL SET' : '❌ MISSING'
+  });
+});
+
 // Add global request logging middleware
 app.use("/*", async (c, next) => {
   const path = c.req.path;
@@ -21819,7 +21846,7 @@ app.post('/make-server-215f78a5/upload-hero-video', async (c) => {
     
     // 驗證檔案大小（50MB）
     if (videoFile.size > 50 * 1024 * 1024) {
-      return c.json({ error: '影片檔案太大，請使用小於 50MB 的影片' }, 400);
+      return c.json({ error: '影片檔案太大，請使用���於 50MB 的影片' }, 400);
     }
     
     // 驗證檔案類型
