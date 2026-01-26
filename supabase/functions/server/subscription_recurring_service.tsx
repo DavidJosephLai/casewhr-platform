@@ -102,11 +102,11 @@ async function generateECPayCheckMacValue(params: Record<string, any>): Promise<
   console.log('🔍 [ECPay CheckMac] Step 4 - Lowercase:', lowerString.substring(0, 300) + '...');
   
   // 7. 根據 EncryptType 選擇加密方式
-  const encryptType = cleanParams.EncryptType || '1';
+  const encryptType = cleanParams.EncryptType;
   
   let checkMacValue: string;
   
-  if (encryptType === '1') {
+  if (encryptType === 1 || encryptType === '1') {
     // ✅ SHA256 加密 (EncryptType=1 在新版 ECPay 文檔中代表 SHA256)
     const encoder = new TextEncoder();
     const data = encoder.encode(lowerString);
@@ -210,7 +210,7 @@ export async function createECPaySubscription(
     ItemName: planType === 'pro' ? 'Pro Monthly Plan' : 'Enterprise Monthly Plan', // ✅ 移除特殊字符
     ReturnURL: periodReturnURL,
     ChoosePayment: 'Credit',
-    EncryptType: '1',
+    EncryptType: 1, // ✅ 必須是數字，不是字串！
     // ✅ 定期定額參數
     PeriodAmount: Math.floor(amount).toString(), // ✅ 必須是整數
     PeriodType: 'M',
