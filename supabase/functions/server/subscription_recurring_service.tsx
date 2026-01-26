@@ -746,35 +746,37 @@ export async function createECPaySubscription(
           word-wrap: break-word;
         }
         @keyframes spin {
-          0% { transform: rotate(0deg); }\n          100% { transform: rotate(360deg); }
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       </style>
     </head>
     <body>
-      <div class=\"debug-toggle\" onclick=\"toggleDebug()\">🔍 DEBUG LOGS</div>
+      <div class="debug-toggle" onclick="toggleDebug()">🔍 DEBUG LOGS</div>
       
-      <div class=\"debug-panel\" id=\"debugPanel\">
-        <h3 style=\"margin-top: 0; color: #ff6b6b;\">🔍 ECPay CheckMacValue 計算過程</h3>
-        ${debugLogs.map((log: string) => `<div class=\"debug-line\">${log}</div>`).join('')}
-        <hr style=\"margin: 20px 0;\"/>
+      <div class="debug-panel" id="debugPanel">
+        <h3 style="margin-top: 0; color: #ff6b6b;">🔍 ECPay CheckMacValue 計算過程</h3>
+        ${debugLogs.map((log: string) => `<div class="debug-line">${log}</div>`).join('')}
+        <hr style="margin: 20px 0;"/>
         <h4>📋 提交參數：</h4>
-        <div class=\"debug-line\"><strong>MerchantID:</strong> ${ECPAY_MERCHANT_ID}</div>
-        <div class=\"debug-line\"><strong>MerchantTradeNo:</strong> ${tradeNo}</div>
-        <div class=\"debug-line\"><strong>TotalAmount:</strong> ${params.TotalAmount}</div>
-        <div class=\"debug-line\"><strong>PeriodAmount:</strong> ${params.PeriodAmount}</div>
-        <div class=\"debug-line\"><strong>API Endpoint:</strong> ${ECPAY_API_BASE}</div>
-        <div class=\"debug-line\"><strong>CheckMacValue:</strong> ${checkMacValue}</div>
+        <div class="debug-line"><strong>MerchantID:</strong> ${ECPAY_MERCHANT_ID}</div>
+        <div class="debug-line"><strong>MerchantTradeNo:</strong> ${tradeNo}</div>
+        <div class="debug-line"><strong>TotalAmount:</strong> ${params.TotalAmount}</div>
+        <div class="debug-line"><strong>PeriodAmount:</strong> ${params.PeriodAmount}</div>
+        <div class="debug-line"><strong>API Endpoint:</strong> ${ECPAY_API_BASE}</div>
+        <div class="debug-line"><strong>CheckMacValue:</strong> ${checkMacValue}</div>
       </div>
       
-      <div class=\"container\">
+      <div class="container">
         <h2>🔄 正在導向綠界付款...</h2>
-        <div class=\"loader\"></div>
+        <div class="loader"></div>
         <p>請稍候，即將跳轉至安全付款頁面</p>
-        <p style=\"font-size: 12px; margin-top: 20px; opacity: 0.8;\">點擊右上角的 DEBUG LOGS 查看詳細資訊</p>
+        <p style="font-size: 12px; margin-top: 20px; opacity: 0.8;">點擊右上角的 DEBUG LOGS 查看詳細資訊</p>
       </div>
-      <form id=\"ecpayForm\" method=\"post\" action=\"${ECPAY_API_BASE}\">\n        ${Object.entries({ ...params, CheckMacValue: checkMacValue }).map(([key, value]) => 
-          `<input type=\"hidden\" name=\"${key}\" value=\"${value}\">`
-        ).join('\\n')}
+      <form id="ecpayForm" method="post" action="${ECPAY_API_BASE}">
+        ${Object.entries({ ...params, CheckMacValue: checkMacValue }).map(([key, value]) => 
+          `<input type="hidden" name="${key}" value="${value}">`
+        ).join('\n')}
       </form>
       <script>
         function toggleDebug() {
@@ -782,7 +784,6 @@ export async function createECPaySubscription(
         }
         
         console.log('🟢 [ECPay] Submitting form to:', '${ECPAY_API_BASE}');
-        console.log('🟢 [ECPay] Form data:', ${JSON.stringify({ ...params, CheckMacValue: checkMacValue })});
         console.log('🟢 [ECPay] Debug logs:', ${JSON.stringify(debugLogs)});
         
         // 10秒後自動提交
@@ -804,7 +805,7 @@ export async function createECPaySubscription(
 export async function handleECPayPeriodCallback(params: Record<string, any>): Promise<void> {
   const { MerchantTradeNo, RtnCode, RtnMsg, PeriodType, Frequency, ExecTimes, PeriodNo } = params;
   
-  console.log(`🔔 [ECPay Period] Callback received for ${MerchantTradeNo}`);
+  console.log(`�� [ECPay Period] Callback received for ${MerchantTradeNo}`);
   console.log('📦 [ECPay Period] Callback params:', JSON.stringify(params, null, 2));
   
   // ✅ 驗證 CheckMacValue
@@ -958,7 +959,7 @@ export async function cancelECPaySubscription(userId: string): Promise<void> {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 🔄 訂閱管理通��函數
+// 🔄 訂閱管理通函數
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 /**
