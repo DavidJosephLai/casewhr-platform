@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs"; // ✅ 添
 interface UpgradeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  targetPlan: 'pro' | 'enterprise';
+  targetPlan: 'free' | 'pro' | 'enterprise'; // ✅ 允許接收 'free'，但在組件內部會拒絕
   billingCycle: 'monthly' | 'yearly';
   onUpgradeSuccess: () => void;
 }
@@ -26,6 +26,12 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [fetchingBalance, setFetchingBalance] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'ecpay'>('wallet'); // ✅ 添加支付方式選擇
+
+  // 🛡️ 防禦性檢查：如果 targetPlan 是 'free'，不渲染對話框
+  if (targetPlan === 'free') {
+    console.error('❌ [UpgradeDialog] Invalid targetPlan: free. This should use DowngradeDialog instead.');
+    return null;
+  }
 
   // ⭐ 根據語言自動對應貨幣（與平台整體邏輯一致）
   const selectedCurrency: Currency = 
