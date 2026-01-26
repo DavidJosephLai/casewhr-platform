@@ -10,7 +10,9 @@ const PAYPAL_CLIENT_SECRET = (Deno.env.get('PAYPAL_CLIENT_SECRET') || '').trim()
 const PAYPAL_MODE = (Deno.env.get('PAYPAL_MODE') || 'live').trim(); // 'sandbox' or 'live' - ✅ 生產環境
 
 // PayPal API Base URLs
-const PAYPAL_API_BASE = PAYPAL_MODE === 'live'
+// ✅ 支持 'production' 和 'live' 兩種模式名稱
+const isProductionMode = PAYPAL_MODE === 'production' || PAYPAL_MODE === 'live';
+const PAYPAL_API_BASE = isProductionMode
   ? 'https://api-m.paypal.com'
   : 'https://api-m.sandbox.paypal.com';
 
