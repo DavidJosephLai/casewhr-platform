@@ -211,6 +211,7 @@ export function RecurringSubscriptionManager({
       
       const url = `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/subscription/ecpay/create-recurring`;
       console.log('🟢 [ECPay] Calling API:', url);
+      console.log('🟢 [ECPay] Request body:', JSON.stringify({ planType }));
       
       const response = await fetch(url, {
         method: 'POST',
@@ -222,6 +223,7 @@ export function RecurringSubscriptionManager({
       });
 
       console.log('🟢 [ECPay] Response status:', response.status);
+      console.log('🟢 [ECPay] Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -232,25 +234,46 @@ export function RecurringSubscriptionManager({
       // ECPay 返回 HTML form，直接渲染並提交
       const html = await response.text();
       console.log('🟢 [ECPay] Received HTML form, length:', html.length);
+      console.log('🟢 [ECPay] HTML preview:', html.substring(0, 200));
       
       if (html.length < 100) {
         console.error('❌ [ECPay] HTML too short, might be an error:', html);
         throw new Error('Invalid response from server');
       }
       
+      // 創建隱藏的容器
       const container = document.createElement('div');
+      container.style.display = 'none';
       container.innerHTML = html;
       document.body.appendChild(container);
       
-      console.log('✅ [ECPay] Form submitted, redirecting to ECPay...');
+      // 查找並自動提交表單
+      const form = container.querySelector('form');
+      if (!form) {
+        console.error('❌ [ECPay] No form found in HTML:', html);
+        throw new Error('No payment form found');
+      }
+      
+      console.log('🟢 [ECPay] Form found:', {
+        action: form.action,
+        method: form.method,
+        inputs: form.querySelectorAll('input').length
+      });
+      
+      console.log('✅ [ECPay] Submitting form to ECPay...');
+      form.submit();
+      
+      // 不要在這裡重置 processing，因為頁面會跳轉
+      // setProcessing(false);
     } catch (error: any) {
       console.error('❌ [ECPay] Error creating subscription:', error);
+      console.error('❌ [ECPay] Error stack:', error.stack);
       toast.error(
         language === 'en' 
           ? `Failed to create subscription: ${error.message}` 
           : `創建訂閱失敗: ${error.message}`
       );
-      setProcessing(false);
+      setProcessing(false); // 只在錯誤時重置
     }
   };
 
