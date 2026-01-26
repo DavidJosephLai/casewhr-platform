@@ -389,6 +389,25 @@ export const MembershipCard = memo(function MembershipCard() {
             </div>
           )}
 
+          {/* ✅ Expired Status Warning */}
+          {subscription.status === 'expired' && (
+            <div className="bg-red-50 border border-red-200 p-3 rounded-lg">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-red-900">
+                    {language === 'en' ? 'Subscription Expired' : '訂閱已過期'}
+                  </p>
+                  <p className="text-xs text-red-700 mt-1">
+                    {language === 'en' 
+                      ? `Your subscription expired on ${new Date(subscription.end_date).toLocaleDateString('en-US')}. Please upgrade to continue using premium features.` 
+                      : `您的訂閱已於 ${new Date(subscription.end_date).toLocaleDateString('zh-TW')} 過期。請升級以繼續使用進階功能。`}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Action Buttons */}
           <div className="flex flex-col gap-2 pt-2">
             {/* Billing Cycle Toggle (只在有升級選項時顯示) */}

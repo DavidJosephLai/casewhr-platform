@@ -37,6 +37,11 @@ import aiSeoRoutes from "./ai-seo.ts";
 import { handleSitemapRequest, handleRobotsRequest, handleSEOHealthCheck } from "./sitemap_service.tsx";
 import * as lineAuth from "./line-auth.tsx";
 import { logLineEnvStatus } from "./line_health_check.tsx";
+import { sitemapRouter } from "./sitemap.tsx";
+import wismachionRoutes from "./wismachion_routes.tsx";
+import * as internalLinkScanner from "./internal_link_scanner.tsx";
+import * as videoUploadService from "./video_upload_service.tsx";
+import * as subscriptionRecurring from "./subscription_recurring_service.tsx";
 
 console.log('🚀 [SERVER STARTUP] Edge Function v2.0.6 - LINE Auth Integration - Starting...');
 
@@ -59,6 +64,30 @@ const supabase = createClient(
 
 console.log('✅ [SERVER] Hono app created');
 console.log('✅ [SERVER] Supabase client initialized');
+
+// 🛡️ 全局錯誤處理中間件
+app.use('*', async (c, next) => {
+  try {
+    await next();
+  } catch (error: any) {
+    console.error('❌ [GLOBAL ERROR]', error);
+    
+    // 檢查是否是資料庫連接錯誤
+    const errorMessage = error?.message || String(error);
+    if (errorMessage.includes('kv_store_215f78a5') || errorMessage.includes('Cannot read properties of undefined')) {
+      return c.json({
+        error: 'Database connection error',
+        message: '資料庫連接錯誤，請稍後再試',
+        details: errorMessage.substring(0, 200)
+      }, 500);
+    }
+    
+    return c.json({
+      error: 'Internal server error',
+      message: error.message || '伺服器內部錯誤'
+    }, 500);
+  }
+});
 
 // 🧪 Helper function to verify user from access token (supports dev mode)
 async function verifyUser(accessToken: string | undefined) {
@@ -380,6 +409,16 @@ app.use(
 );
 console.log('✅ [SERVER] CORS configured');
 
+// Add global request logging middleware
+app.use("/*", async (c, next) => {
+  const path = c.req.path;
+  const method = c.req.method;
+  const hasAuth = !!c.req.header('Authorization');
+  console.log(`🌐 [REQUEST] ${method} ${path} (Auth: ${hasAuth ? 'YES' : 'NO'})`);
+  await next();
+});
+console.log('✅ [SERVER] Global request logging middleware configured');
+
 // Add global middleware to ensure CORS headers on all responses (including errors)
 app.use("/*", async (c, next) => {
   // Set CORS headers BEFORE processing the request
@@ -549,6 +588,340 @@ app.get('/make-server-215f78a5/debug/transfer-records/:userId', async (c) => {
   }
 });
 
+// 🐛 診斷路由：查看用戶訂閱資料（檢查為什麼顯示錯誤）
+app.get('/make-server-215f78a5/debug/subscription/:userId', async (c) => {
+  try {
+    const userId = c.req.param('userId');
+    
+    // 檢查兩種格式的訂閱記錄
+    const subscription_new = await kv.get(`subscription_${userId}`);
+    const subscription_old = await kv.get(`subscription:${userId}`);
+    
+    // 檢查 profile
+    const profile_new = await kv.get(`profile_${userId}`);
+    const profile_old = await kv.get(`profile:${userId}`);
+    
+    // 計算最終顯示的等級（按照 API 邏輯）
+    const subscription = subscription_new || subscription_old;
+    const profile = profile_new || profile_old;
+    const finalTier = subscription?.plan || subscription?.tier || profile?.membership_tier || 'free';
+    
+    return c.json({
+      userId,
+      subscription_formats: {
+        new_format: subscription_new ? '✅ 存在' : '❌ 不存在',
+        old_format: subscription_old ? '✅ 存在' : '❌ 不存在',
+      },
+      subscription_data: {
+        new_format: subscription_new,
+        old_format: subscription_old,
+      },
+      profile_formats: {
+        new_format: profile_new ? '✅ 存在' : '❌ 不存在',
+        old_format: profile_old ? '✅ 存在' : '❌ 不存在',
+      },
+      profile_membership_tier: profile?.membership_tier,
+      calculated_tier: finalTier,
+      priority_explanation: {
+        step1: `subscription.plan = ${subscription?.plan || 'null'}`,
+        step2: `subscription.tier = ${subscription?.tier || 'null'}`,
+        step3: `profile.membership_tier = ${profile?.membership_tier || 'null'}`,
+        step4: `default = 'free'`,
+        result: finalTier
+      }
+    });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 🐛 診斷路由：通過 email 查看訂閱資料
+app.get('/make-server-215f78a5/debug/subscription-by-email', async (c) => {
+  try {
+    const email = c.req.query('email');
+    if (!email) {
+      return c.json({ error: 'Missing email parameter' }, 400);
+    }
+    
+    // 從 Supabase Auth 查找用戶
+    const { data: authData } = await supabase.auth.admin.listUsers();
+    const authUser = authData?.users?.find(u => u.email === email);
+    
+    if (!authUser) {
+      return c.json({ error: 'User not found in auth system' }, 404);
+    }
+    
+    const userId = authUser.id;
+    
+    // 檢查兩種格式的訂閱記錄
+    const subscription_new = await kv.get(`subscription_${userId}`);
+    const subscription_old = await kv.get(`subscription:${userId}`);
+    
+    // 檢查 profile
+    const profile_new = await kv.get(`profile_${userId}`);
+    const profile_old = await kv.get(`profile:${userId}`);
+    
+    // 計算最終顯示的等級（按照 API 邏輯）
+    const subscription = subscription_new || subscription_old;
+    const profile = profile_new || profile_old;
+    const finalTier = subscription?.plan || subscription?.tier || profile?.membership_tier || 'free';
+    
+    return c.json({
+      email,
+      userId,
+      subscription_formats: {
+        new_format: subscription_new ? '✅ 存在' : '❌ 不存在',
+        old_format: subscription_old ? '✅ 存在' : '❌ 不存在',
+      },
+      subscription_data: {
+        new_format: subscription_new,
+        old_format: subscription_old,
+      },
+      profile_formats: {
+        new_format: profile_new ? '✅ 存在' : '❌ 不存在',
+        old_format: profile_old ? '✅ 存在' : '❌ 不存在',
+      },
+      profile_membership_tier: profile?.membership_tier,
+      calculated_tier: finalTier,
+      priority_explanation: {
+        step1: `subscription.plan = ${subscription?.plan || 'null'}`,
+        step2: `subscription.tier = ${subscription?.tier || 'null'}`,
+        step3: `profile.membership_tier = ${profile?.membership_tier || 'null'}`,
+        step4: `default = 'free'`,
+        result: finalTier
+      }
+    });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 🔧 修復端點：直接設定用戶的訂閱等級
+app.post('/make-server-215f78a5/debug/fix-subscription', async (c) => {
+  try {
+    const { email, tier } = await c.req.json();
+    
+    if (!email || !tier) {
+      return c.json({ error: 'Missing email or tier parameter' }, 400);
+    }
+    
+    // 驗證 tier 是否合法
+    const validTiers = ['free', 'pro', 'enterprise'];
+    if (!validTiers.includes(tier)) {
+      return c.json({ error: `Invalid tier. Must be one of: ${validTiers.join(', ')}` }, 400);
+    }
+    
+    // 從 Supabase Auth 查找用戶
+    const { data: authData } = await supabase.auth.admin.listUsers();
+    const authUser = authData?.users?.find(u => u.email === email);
+    
+    if (!authUser) {
+      return c.json({ error: 'User not found in auth system' }, 404);
+    }
+    
+    const userId = authUser.id;
+    
+    // 讀取現有的 subscription 和 profile（新舊格式都讀取）
+    const subscription_new = await kv.get(`subscription_${userId}`) || {};
+    const subscription_old = await kv.get(`subscription:${userId}`) || {};
+    const profile_new = await kv.get(`profile_${userId}`) || {};
+    const profile_old = await kv.get(`profile:${userId}`) || {};
+    
+    // 更新訂閱資料（兩種格式都更新）
+    const updatedSubscription = {
+      ...subscription_new,
+      plan: tier,
+      tier: tier,
+      status: 'active',
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`subscription_${userId}`, updatedSubscription);
+    await kv.set(`subscription:${userId}`, updatedSubscription);
+    
+    // 更新 profile 的 membership_tier（兩種格式都更新）
+    const profile = profile_new || profile_old || {};
+    const updatedProfile = {
+      ...profile,
+      membership_tier: tier,
+      updated_at: new Date().toISOString()
+    };
+    
+    await kv.set(`profile_${userId}`, updatedProfile);
+    await kv.set(`profile:${userId}`, updatedProfile);
+    
+    return c.json({
+      success: true,
+      message: `Successfully updated ${email} to ${tier}`,
+      userId,
+      updated_data: {
+        subscription: updatedSubscription,
+        profile: updatedProfile
+      }
+    });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 🔍 診斷端點：列出所有 KV Store 中的用戶資料
+app.get('/make-server-215f78a5/debug/list-all-users', async (c) => {
+  try {
+    // 獲取所有 profile
+    const newFormatProfiles = (await kv.getByPrefix('profile_') || []).map(item => item.value);
+    const oldFormatProfiles = (await kv.getByPrefix('profile:') || []).map(item => item.value);
+    
+    // 獲取所有 subscription
+    const newFormatSubs = (await kv.getByPrefix('subscription_') || []).map(item => item.value);
+    const oldFormatSubs = (await kv.getByPrefix('subscription:') || []).map(item => item.value);
+    
+    // 從 Supabase Auth 獲取所有用戶
+    const { data: authData } = await supabase.auth.admin.listUsers();
+    const authUsers = authData?.users || [];
+    
+    return c.json({
+      kv_store: {
+        profiles_new_format: newFormatProfiles.length,
+        profiles_old_format: oldFormatProfiles.length,
+        subscriptions_new_format: newFormatSubs.length,
+        subscriptions_old_format: oldFormatSubs.length,
+        profile_samples: newFormatProfiles.slice(0, 3).map((p: any) => ({
+          user_id: p.user_id,
+          email: p.email,
+          membership_tier: p.membership_tier
+        })),
+        subscription_samples: newFormatSubs.slice(0, 3).map((s: any) => ({
+          user_id: s.user_id,
+          plan: s.plan,
+          tier: s.tier,
+          status: s.status
+        }))
+      },
+      supabase_auth: {
+        total_users: authUsers.length,
+        user_samples: authUsers.slice(0, 5).map((u: any) => ({
+          id: u.id,
+          email: u.email,
+          created_at: u.created_at
+        }))
+      },
+      diagnosis: {
+        message: '如果 KV Store 的用戶數量 < Supabase Auth 的用戶數量，代表某些真實用戶沒有建立 profile/subscription'
+      }
+    });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 🔧 批量修復端點：為所有現有用戶創建缺失的 wallet 和 subscription
+app.post('/make-server-215f78a5/debug/fix-all-users', async (c) => {
+  try {
+    console.log('🔧 [批量修復] 開始修復所有用戶資料...');
+    
+    // 從 Supabase Auth 獲取所有用戶
+    const { data: authData } = await supabase.auth.admin.listUsers();
+    const authUsers = authData?.users || [];
+    
+    console.log(`📊 [批量修復] 找到 ${authUsers.length} 個 Auth 用戶`);
+    
+    const results = {
+      total_users: authUsers.length,
+      profiles_created: 0,
+      wallets_created: 0,
+      subscriptions_created: 0,
+      errors: [] as string[],
+    };
+    
+    // 逐一檢查並修復每個用戶
+    for (const authUser of authUsers) {
+      const userId = authUser.id;
+      const email = authUser.email || '';
+      const name = authUser.user_metadata?.name || authUser.user_metadata?.full_name || '';
+      
+      try {
+        // 1️⃣ 檢查並創建 Profile
+        let profile = await kv.get(`profile_${userId}`);
+        if (!profile) {
+          profile = await kv.get(`profile:${userId}`); // 檢查舊格式
+        }
+        
+        if (!profile) {
+          console.log(`📝 [批量修復] 為用戶 ${email} 創建 profile...`);
+          const newProfile = {
+            user_id: userId,
+            email: email,
+            full_name: name,
+            account_type: 'client',
+            created_at: authUser.created_at,
+            updated_at: new Date().toISOString(),
+          };
+          await kv.set(`profile_${userId}`, newProfile);
+          results.profiles_created++;
+        }
+        
+        // 2️⃣ 檢查並創建 Wallet
+        let wallet = await kv.get(`wallet_${userId}`);
+        if (!wallet) {
+          wallet = await kv.get(`wallet:${userId}`); // 檢查舊格式
+        }
+        
+        if (!wallet) {
+          console.log(`💰 [批量修復] 為用戶 ${email} 創建 wallet...`);
+          const newWallet = {
+            user_id: userId,
+            available_balance: 0,
+            pending_balance: 0,
+            total_deposited: 0,
+            total_withdrawn: 0,
+            created_at: authUser.created_at,
+            updated_at: new Date().toISOString(),
+          };
+          await kv.set(`wallet_${userId}`, newWallet);
+          results.wallets_created++;
+        }
+        
+        // 3️⃣ 檢查並創建 Subscription
+        let subscription = await kv.get(`subscription_${userId}`);
+        if (!subscription) {
+          subscription = await kv.get(`subscription:${userId}`); // 檢查舊格式
+        }
+        
+        if (!subscription) {
+          console.log(`📋 [批量修復] 為用戶 ${email} 創建 subscription (free)...`);
+          const newSubscription = {
+            user_id: userId,
+            plan: 'free',
+            tier: 'free',
+            status: 'active',
+            created_at: authUser.created_at,
+            updated_at: new Date().toISOString(),
+          };
+          await kv.set(`subscription_${userId}`, newSubscription);
+          results.subscriptions_created++;
+        }
+        
+      } catch (userError: any) {
+        const errorMsg = `Failed to fix user ${email}: ${userError.message}`;
+        console.error(`❌ [批量修復] ${errorMsg}`);
+        results.errors.push(errorMsg);
+      }
+    }
+    
+    console.log('✅ [批量修復] 完成！結果:', results);
+    
+    return c.json({
+      success: true,
+      message: '批量修復完成',
+      results
+    });
+    
+  } catch (error: any) {
+    console.error('❌ [批量修復] 致命錯誤:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
 // Register Milestone Management APIs
 app.route('/make-server-215f78a5', milestoneRoutes);
 console.log('✅ [SERVER] Milestone management APIs registered');
@@ -608,6 +981,253 @@ console.log('✅ [SERVER] AI Chatbot APIs registered');
 // Register AI SEO APIs
 app.route('/make-server-215f78a5/ai', aiSeoRoutes);
 console.log('✅ [SERVER] AI SEO APIs registered');
+
+// Register Dynamic Sitemap APIs
+app.route('/make-server-215f78a5/sitemap', sitemapRouter);
+console.log('✅ [SERVER] Dynamic Sitemap APIs registered');
+
+// 🔗 Register Internal Link Management APIs
+app.get('/make-server-215f78a5/seo/internal-links', async (c) => {
+  try {
+    const links = await internalLinkScanner.getInternalLinks();
+    const opportunities = await internalLinkScanner.generateLinkOpportunities();
+    
+    return c.json({
+      links,
+      opportunities,
+      lastUpdated: await kv.get('seo:internal_links_updated_at'),
+    });
+  } catch (error: any) {
+    console.error('❌ [SEO] Failed to get internal links:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+app.post('/make-server-215f78a5/seo/scan-website', async (c) => {
+  try {
+    let baseUrl = 'https://casewhr.com';
+    
+    // 安全地解析 JSON，如果沒有 body 則使用默認值
+    try {
+      const body = await c.req.json();
+      baseUrl = body.baseUrl || baseUrl;
+    } catch (e) {
+      console.log('🔍 [SEO] No body provided, using default URL');
+    }
+    
+    console.log(`🔍 [SEO] Starting website scan: ${baseUrl}`);
+    
+    const result = await internalLinkScanner.scanWebsite(baseUrl);
+    
+    return c.json(result);
+  } catch (error: any) {
+    console.error('❌ [SEO] Failed to scan website:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+app.post('/make-server-215f78a5/seo/check-links', async (c) => {
+  try {
+    let baseUrl = 'https://casewhr.com';
+    
+    // 安全地解析 JSON，如果沒有 body 則使用默認值
+    try {
+      const body = await c.req.json();
+      baseUrl = body.baseUrl || baseUrl;
+    } catch (e) {
+      console.log('🔍 [SEO] No body provided, using default URL');
+    }
+    
+    console.log(`🔍 [SEO] Checking all links for: ${baseUrl}`);
+    
+    const result = await internalLinkScanner.checkLinks(baseUrl);
+    const links = await internalLinkScanner.getInternalLinks();
+    
+    return c.json({ ...result, links });
+  } catch (error: any) {
+    console.error('❌ [SEO] Failed to check links:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+app.post('/make-server-215f78a5/seo/analyze-page', async (c) => {
+  try {
+    let url = '/';
+    let baseUrl = 'https://casewhr.com';
+    
+    // 安全地解析 JSON，如果沒有 body 則使用默認值
+    try {
+      const body = await c.req.json();
+      url = body.url || url;
+      baseUrl = body.baseUrl || baseUrl;
+    } catch (e) {
+      console.log('📊 [SEO] No body provided, using default values');
+    }
+    
+    console.log(`📊 [SEO] Analyzing page: ${url}`);
+    
+    const analysis = await internalLinkScanner.analyzePage(url, baseUrl);
+    
+    return c.json({ analysis });
+  } catch (error: any) {
+    console.error('❌ [SEO] Failed to analyze page:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+console.log('✅ [SERVER] Internal Link Management APIs registered');
+
+// 📝 Blog Posts API
+app.get('/make-server-215f78a5/blog/posts', async (c) => {
+  try {
+    console.log('📥 [BLOG API] Loading all posts...');
+    const allItems = await kv.getByPrefix('blog_post_');
+    console.log('📋 [BLOG API] Raw items from KV:', allItems.length);
+    console.log('📋 [BLOG API] Raw items data:', JSON.stringify(allItems, null, 2));
+    
+    const posts = allItems.map(item => item.value);
+    console.log('✅ [BLOG API] Returning posts:', posts.length);
+    console.log('📋 [BLOG API] Posts data:', JSON.stringify(posts, null, 2));
+    
+    return c.json({ posts: posts });
+  } catch (error: any) {
+    console.error('❌ [BLOG] Failed to load posts:', error);
+    return c.json({ error: error.message, posts: [] }, 500);
+  }
+});
+
+app.get('/make-server-215f78a5/blog/posts/:slug', async (c) => {
+  try {
+    const slug = c.req.param('slug');
+    const post = await kv.get(`blog_post_${slug}`);
+    
+    if (!post) {
+      return c.json({ error: 'Post not found' }, 404);
+    }
+    
+    // 獲取相關文章（同類別的其他文章）
+    const allPosts = (await kv.getByPrefix('blog_post_')).map(item => item.value);
+    const relatedPosts = allPosts
+      .filter((p: any) => p.slug !== slug && p.category === post.category)
+      .slice(0, 3);
+    
+    return c.json({ post, relatedPosts });
+  } catch (error: any) {
+    console.error('❌ [BLOG] Failed to load post:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+app.post('/make-server-215f78a5/blog/posts/:slug/view', async (c) => {
+  try {
+    const slug = c.req.param('slug');
+    const post = await kv.get(`blog_post_${slug}`);
+    
+    if (post) {
+      post.views = (post.views || 0) + 1;
+      await kv.set(`blog_post_${slug}`, post);
+    }
+    
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('❌ [BLOG] Failed to increment views:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 📝 Create/Update Blog Post (All logged-in users)
+app.post('/make-server-215f78a5/blog/posts', async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { user, error: authError } = await getUserFromToken(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+    
+    const post = await c.req.json();
+    
+    // 驗證必填欄位
+    if (!post.slug || !post.title) {
+      return c.json({ error: 'Slug and title are required' }, 400);
+    }
+    
+    // 🔥 檢查權限：只能編輯自己的文章，除非是超級管理員
+    const existingPost = await kv.get(`blog_post_${post.slug}`);
+    const SUPER_ADMINS = ['davidlai234@hotmail.com', 'davidlai117@yahoo.com.tw'];
+    const isSuperAdmin = user.email && SUPER_ADMINS.includes(user.email);
+    
+    if (existingPost && existingPost.authorEmail !== user.email && !isSuperAdmin) {
+      return c.json({ error: 'You can only edit your own posts' }, 403);
+    }
+    
+    // 設置作者資訊
+    if (!existingPost) {
+      // 新文章：設置作者
+      post.author = user.email || 'Anonymous';
+      post.authorEmail = user.email;
+    } else {
+      // 編輯現有文章：保留原作者資訊
+      post.author = existingPost.author;
+      post.authorEmail = existingPost.authorEmail;
+    }
+    
+    // 儲存文章
+    await kv.set(`blog_post_${post.slug}`, post);
+    
+    console.log(`✅ [BLOG] Post saved: ${post.slug} by ${user.email}`);
+    return c.json({ success: true, post });
+  } catch (error: any) {
+    console.error('❌ [BLOG] Failed to save post:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 🗑️ Delete Blog Post (User can delete own posts)
+app.delete('/make-server-215f78a5/blog/posts/:slug', async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { user, error: authError } = await getUserFromToken(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+    
+    const slug = c.req.param('slug');
+    const post = await kv.get(`blog_post_${slug}`);
+    
+    // 🔥 檢查權限：只能刪除自己的文章，除非是超級管理員
+    const SUPER_ADMINS = ['davidlai234@hotmail.com', 'davidlai117@yahoo.com.tw'];
+    const isSuperAdmin = user.email && SUPER_ADMINS.includes(user.email);
+    if (post && post.authorEmail !== user.email && !isSuperAdmin) {
+      return c.json({ error: 'You can only delete your own posts' }, 403);
+    }
+    
+    await kv.del(`blog_post_${slug}`);
+    
+    console.log(`✅ [BLOG] Post deleted: ${slug} by ${user.email}`);
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('❌ [BLOG] Failed to delete post:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+console.log('✅ [SERVER] Blog APIs registered');
+
+// 🧪 Test health endpoint BEFORE wismachion routes
+app.get('/make-server-215f78a5/wismachion/health-test', (c) => {
+  console.log('🩺 [HEALTH-TEST] Direct health-test endpoint hit!');
+  return c.json({ 
+    status: 'ok', 
+    message: 'Direct test route working!',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Register Wismachion License APIs
+app.route('/make-server-215f78a5/wismachion', wismachionRoutes);
+console.log('✅ [SERVER] Wismachion License APIs registered');
 
 // Register Invoice Management APIs
 app.route('/make-server-215f78a5', invoiceService.default);
@@ -787,15 +1407,32 @@ app.get("/make-server-215f78a5/auth/line/callback", async (c) => {
     await kv.del(`line_oauth_state:${state}`);
     
     // 執行 LINE 登入流程
-    const { user, session, accessToken } = await lineAuth.handleLineCallback(code);
+    const { user, userId, email, needsEmail } = await lineAuth.handleLineCallback(code);
     
-    console.log('✅ [LINE OAuth] Login successful:', user.email);
+    console.log('✅ [LINE OAuth] Login successful:', email);
+    console.log('🔍 [LINE OAuth] Needs email update:', needsEmail);
     
-    // 重定向回前端並帶上 session token
+    // 將用戶信息存儲到 KV（供前端使用）
+    const tempLoginKey = `temp_line_login:${userId}`;
+    await kv.set(tempLoginKey, {
+      user_id: userId,
+      email: email,
+      full_name: user.user_metadata?.full_name || 'LINE User',
+      avatar_url: user.user_metadata?.avatar_url || '',
+      needs_email_update: needsEmail, // 添加標記
+      created_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5分鐘過期
+    });
+    
+    console.log('✅ [LINE OAuth] Temp login data stored:', tempLoginKey);
+    
+    // 重定向回前端並帶上臨時登錄 key
     const redirectUrl = new URL('https://casewhr.com');
     redirectUrl.searchParams.set('view', 'dashboard');
     redirectUrl.searchParams.set('auth', 'line');
-    redirectUrl.searchParams.set('token', session.access_token || accessToken);
+    redirectUrl.searchParams.set('temp_key', userId);
+    redirectUrl.searchParams.set('email', email);
+    redirectUrl.searchParams.set('needs_email', needsEmail.toString()); // 添加標記到 URL
     
     return c.redirect(redirectUrl.toString());
   } catch (error: any) {
@@ -806,6 +1443,193 @@ app.get("/make-server-215f78a5/auth/line/callback", async (c) => {
     console.error('❌ [LINE OAuth] Error name:', error.name);
     console.error('❌ [LINE OAuth] ========================================');
     return c.redirect(`https://casewhr.com?error=line_login_failed&message=${encodeURIComponent(error.message || 'Unknown error')}`);
+  }
+});
+
+// 🟢 LINE OAuth: Exchange code for token (前端調用 - 新架構)
+app.post("/make-server-215f78a5/auth/line/exchange-token", async (c) => {
+  try {
+    const { code, state } = await c.req.json();
+    
+    console.log('🟢 [LINE Token Exchange] Request received:', { 
+      hasCode: !!code, 
+      hasState: !!state 
+    });
+    
+    // 檢查環境變數
+    if (!Deno.env.get('LINE_CHANNEL_ID') || !Deno.env.get('LINE_CHANNEL_SECRET')) {
+      console.error('❌ [LINE Token Exchange] LINE credentials not configured!');
+      return c.json({ 
+        error: 'line_not_configured',
+        message: 'LINE Channel ID or Secret not configured. Please set environment variables in Supabase Dashboard.'
+      }, 500);
+    }
+    
+    // 驗證必要參數
+    if (!code || !state) {
+      console.error('❌ [LINE Token Exchange] Missing code or state');
+      return c.json({ 
+        error: 'missing_parameters',
+        message: 'Missing code or state parameter'
+      }, 400);
+    }
+    
+    // 驗證 state（CSRF 保護）
+    const savedState = await kv.get(`line_oauth_state:${state}`);
+    if (!savedState) {
+      console.error('❌ [LINE Token Exchange] Invalid or expired state');
+      return c.json({ 
+        error: 'invalid_state',
+        message: 'Invalid or expired state. Please try logging in again.'
+      }, 400);
+    }
+    
+    // 刪除已使用的 state
+    await kv.del(`line_oauth_state:${state}`);
+    
+    // 執行 LINE 登入流程
+    const { user, userId, email, magicLink, needsEmail } = await lineAuth.handleLineCallback(code);
+    
+    console.log('✅ [LINE Token Exchange] Login successful:', email);
+    console.log('🔍 [LINE Token Exchange] Needs email update:', needsEmail);
+    
+    // 檢查是否需要更新 email
+    const needsEmailUpdate = needsEmail;
+    if (needsEmailUpdate) {
+      console.log('⚠️ [LINE Token Exchange] User needs to provide real email');
+    }
+    
+    return c.json({
+      success: true,
+      user: {
+        id: userId,
+        email: email,
+        full_name: user.user_metadata?.full_name || 'LINE User',
+        avatar_url: user.user_metadata?.avatar_url || '',
+      },
+      magic_link: magicLink, // Return the magic link for frontend to use
+      needsEmailUpdate, // Tell frontend if email needs updating
+    });
+  } catch (error: any) {
+    console.error('❌ [LINE Token Exchange] Error:', error);
+    console.error('❌ [LINE Token Exchange] Error stack:', error.stack);
+    return c.json({ 
+      error: 'exchange_failed',
+      message: error.message || 'Unknown error'
+    }, 500);
+  }
+});
+
+// 🟢 LINE OAuth: 更新用戶 email
+app.post("/make-server-215f78a5/auth/line/update-email", async (c) => {
+  try {
+    const { user_id, email } = await c.req.json();
+    
+    console.log('🟢 [LINE Update Email] Request received:', { user_id, email });
+    
+    // 驗證必要參數
+    if (!user_id || !email) {
+      console.error('❌ [LINE Update Email] Missing parameters');
+      return c.json({ 
+        error: 'missing_parameters',
+        message: 'Missing user_id or email parameter'
+      }, 400);
+    }
+    
+    // 調用 line-auth 服務更新 email
+    const { magicLink, linked } = await lineAuth.updateLineUserEmail(user_id, email);
+    
+    console.log('✅ [LINE Update Email] Email updated successfully');
+    if (linked) {
+      console.log('✨ [LINE Update Email] Accounts linked successfully');
+    }
+    
+    return c.json({
+      success: true,
+      message: linked ? 'Accounts linked successfully' : 'Email updated successfully',
+      magic_link: magicLink,
+      linked: linked || false,
+    });
+  } catch (error: any) {
+    console.error('❌ [LINE Update Email] Error:', error);
+    return c.json({ 
+      error: 'update_failed',
+      message: error.message || 'Unknown error'
+    }, 500);
+  }
+});
+
+// 🟢 LINE OAuth: 完成登入（生成 Supabase session）
+app.post("/make-server-215f78a5/auth/line/complete", async (c) => {
+  try {
+    const { temp_key, email } = await c.req.json();
+    
+    console.log('🟢 [LINE Auth Complete] Request received:', { temp_key, email });
+    
+    if (!temp_key || !email) {
+      console.error('❌ [LINE Auth Complete] Missing parameters');
+      return c.json({ error: 'Missing temp_key or email' }, 400);
+    }
+    
+    // 從 KV 讀取臨時登錄資料
+    const tempData = await kv.get(`temp_line_login:${temp_key}`);
+    
+    if (!tempData) {
+      console.error('❌ [LINE Auth Complete] Temp login data not found or expired');
+      return c.json({ error: 'Login session expired. Please try again.' }, 404);
+    }
+    
+    // 驗證郵箱匹配
+    if (tempData.email !== email) {
+      console.error('❌ [LINE Auth Complete] Email mismatch');
+      return c.json({ error: 'Invalid login session' }, 403);
+    }
+    
+    // 刪除臨時數據
+    await kv.del(`temp_line_login:${temp_key}`);
+    
+    console.log('✅ [LINE Auth Complete] Temp data validated and deleted');
+    
+    // 生成 Supabase magic link 供用戶登錄
+    const { data, error } = await supabase.auth.admin.generateLink({
+      type: 'magiclink',
+      email: email,
+    });
+    
+    if (error || !data) {
+      console.error('❌ [LINE Auth Complete] Failed to generate login link:', error);
+      return c.json({ error: 'Failed to complete login' }, 500);
+    }
+    
+    console.log('✅ [LINE Auth Complete] Magic link generated successfully');
+    
+    // 從 magic link 中提取 token 並返回給前端
+    // Magic link 格式: https://.../#access_token=xxx&...
+    const url = data.properties?.action_link || '';
+    const hashPart = url.split('#')[1] || '';
+    const params = new URLSearchParams(hashPart);
+    const accessToken = params.get('access_token');
+    
+    if (!accessToken) {
+      console.error('❌ [LINE Auth Complete] Failed to extract access token from magic link');
+      return c.json({ error: 'Failed to generate access token' }, 500);
+    }
+    
+    console.log('✅ [LINE Auth Complete] Access token extracted successfully');
+    
+    return c.json({
+      success: true,
+      access_token: accessToken,
+      user: {
+        id: tempData.user_id,
+        email: tempData.email,
+        full_name: tempData.full_name,
+        avatar_url: tempData.avatar_url,
+      },
+    });
+  } catch (error: any) {
+    console.error('❌ [LINE Auth Complete] Error:', error);
+    return c.json({ error: error.message || 'Unknown error' }, 500);
   }
 });
 
@@ -1263,7 +2087,7 @@ app.post("/make-server-215f78a5/test-enhanced-email", async (c) => {
       console.log('⚠️  [Test Email] Could not find user, using defaults');
     }
 
-    // 🎯 從 KV Store 獲取 Footer LOGO URL
+    // 🎯 從 KV Store 獲��� Footer LOGO URL
     const logoUrl = await kv.get('system:email:logo-url') as string | undefined;
     console.log('📧 [Test Email] Footer Logo URL:', logoUrl);
 
@@ -1418,8 +2242,8 @@ app.post("/make-server-215f78a5/diagnose-user-email", async (c) => {
     console.log(`🔍 [Diagnose] Searching for user with email: ${userEmail}`);
 
     // 搜索所有 profile，找到匹��的 email (both formats)
-    const newFormatProfiles = await kv.getByPrefix('profile_') || [];
-    const oldFormatProfiles = await kv.getByPrefix('profile:') || [];
+    const newFormatProfiles = (await kv.getByPrefix('profile_') || []).map(item => item.value);
+    const oldFormatProfiles = (await kv.getByPrefix('profile:') || []).map(item => item.value);
     const allProfiles = [...newFormatProfiles, ...oldFormatProfiles];
     console.log(`🔍 [Diagnose] Found ${allProfiles.length} profiles (new: ${newFormatProfiles.length}, old: ${oldFormatProfiles.length})`);
 
@@ -1430,7 +2254,7 @@ app.post("/make-server-215f78a5/diagnose-user-email", async (c) => {
       if (profile && profile.email === userEmail) {
         matchedProfile = profile;
         // 從 profile key 中提取 user_id
-        const profiles = await kv.getByPrefix('profile_');
+        const profiles = (await kv.getByPrefix('profile_')).map(item => item.value);
         for (let i = 0; i < profiles.length; i++) {
           if (profiles[i] === profile) {
             // 這個需要找到對應的key
@@ -1648,18 +2472,33 @@ app.get("/make-server-215f78a5/projects", async (c) => {
       return c.json({ projects: [] });
     }
 
-    // ✅ 移除硬限制，改為智能批次處理 - 支援 300+ 筆數據
-    const batchSize = 100;
+    // 🚀 優化：減少批次大小以避免超時
+    const batchSize = 50; // 從 100 降到 50
     const totalProjects = projectIds.length;
     let allProjectsData: any[] = [];
     
     console.log(`📦 [GET /projects] Loading ${totalProjects} projects in batches of ${batchSize}...`);
     
+    // 🚀 設置最大處理時間（25秒，留出緩衝時間）
+    const startTime = Date.now();
+    const maxProcessingTime = 25000; // 25秒
+    
     for (let i = 0; i < totalProjects; i += batchSize) {
+      // 檢查是否超時
+      if (Date.now() - startTime > maxProcessingTime) {
+        console.warn(`⏰ [GET /projects] Timeout approaching, stopping at ${i}/${totalProjects} projects`);
+        break;
+      }
+      
       const batch = projectIds.slice(i, Math.min(i + batchSize, totalProjects));
-      const batchProjects = await kv.mget(batch.map(id => `project:${id}`));
-      allProjectsData = [...allProjectsData, ...batchProjects];
-      console.log(`📦 Loaded batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(totalProjects / batchSize)}`);
+      try {
+        const batchProjects = await kv.mget(batch.map(id => `project:${id}`));
+        allProjectsData = [...allProjectsData, ...batchProjects];
+        console.log(`📦 Loaded batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(totalProjects / batchSize)}`);
+      } catch (batchError) {
+        console.error(`❌ [GET /projects] Error loading batch ${Math.floor(i / batchSize) + 1}:`, batchError);
+        // 繼續處理下一批
+      }
     }
 
     const projects = allProjectsData;
@@ -1851,37 +2690,52 @@ app.get("/make-server-215f78a5/projects", async (c) => {
     // ✅ 優化：為所有項目添加提案計數（批次處理）
     console.log('📥 [GET /projects] Adding proposal counts for all projects...');
     
-    // 批次處理提案計數，避免超時
-    const proposalCountBatchSize = 50;
+    // 🚀 優化：減少批次大小並添加超時保護
+    const proposalCountBatchSize = 30; // 從 50 降到 30
     const projectsWithCounts: any[] = [];
     
     for (let i = 0; i < filteredProjects.length; i += proposalCountBatchSize) {
+      // 檢查是否超時
+      if (Date.now() - startTime > maxProcessingTime) {
+        console.warn(`⏰ [GET /projects] Timeout approaching, skipping remaining proposal counts`);
+        // 將剩餘項目添加為 0 提案計數
+        const remaining = filteredProjects.slice(i).map(p => ({ ...p, proposal_count: 0, pending_proposal_count: 0 }));
+        projectsWithCounts.push(...remaining);
+        break;
+      }
+      
       const batch = filteredProjects.slice(i, Math.min(i + proposalCountBatchSize, filteredProjects.length));
       
-      const batchWithCounts = await Promise.all(
-        batch.map(async (project) => {
-          try {
-            const proposalIds = await kv.get(`proposals:project:${project.id}`) || [];
-            
-            return {
-              ...project,
-              proposal_count: Array.isArray(proposalIds) ? proposalIds.length : 0,
-              pending_proposal_count: 0,
-            };
-          } catch (proposalError) {
-            // Silently handle missing proposal data - it's expected for new projects
-            console.log(`ℹ️  No proposals found for project ${project.id}`);
-            return {
-              ...project,
-              proposal_count: 0,
-              pending_proposal_count: 0,
-            };
-          }
-        })
-      );
-      
-      projectsWithCounts.push(...batchWithCounts);
-      console.log(`📊 Counted proposals for batch ${Math.floor(i / proposalCountBatchSize) + 1}/${Math.ceil(filteredProjects.length / proposalCountBatchSize)}`);
+      try {
+        const batchWithCounts = await Promise.all(
+          batch.map(async (project) => {
+            try {
+              const proposalIds = await kv.get(`proposals:project:${project.id}`) || [];
+              
+              return {
+                ...project,
+                proposal_count: Array.isArray(proposalIds) ? proposalIds.length : 0,
+                pending_proposal_count: 0,
+              };
+            } catch (proposalError) {
+              // Silently handle missing proposal data - it's expected for new projects
+              return {
+                ...project,
+                proposal_count: 0,
+                pending_proposal_count: 0,
+              };
+            }
+          })
+        );
+        
+        projectsWithCounts.push(...batchWithCounts);
+        console.log(`📊 Counted proposals for batch ${Math.floor(i / proposalCountBatchSize) + 1}/${Math.ceil(filteredProjects.length / proposalCountBatchSize)}`);
+      } catch (batchError) {
+        console.error(`❌ [GET /projects] Error counting proposals for batch:`, batchError);
+        // 添加該批次但不含提案計數
+        const batchWithoutCounts = batch.map(p => ({ ...p, proposal_count: 0, pending_proposal_count: 0 }));
+        projectsWithCounts.push(...batchWithoutCounts);
+      }
     }
     
     // 所有項目已包含提案計數
@@ -3400,7 +4254,7 @@ app.post("/make-server-215f78a5/reviews/submit", async (c) => {
 
     // Update recipient's average rating
     try {
-      const recipientReviews = await kv.getByPrefix(`review:${project_id}:`) || [];
+      const recipientReviews = (await kv.getByPrefix(`review:${project_id}:`) || []).map(item => item.value);
       const filteredReviews = recipientReviews.filter((r: any) => r.recipient_id === recipient_id);
       const allRecipientReviews = Array.isArray(filteredReviews) && filteredReviews.length > 0
         ? await kv.mget(filteredReviews.map((r: any) => `review:${r.id}`))
@@ -3566,7 +4420,7 @@ app.get("/make-server-215f78a5/reviews/project/:project_id", async (c) => {
     // Get all reviews for this project with error handling
     let allReviews: any[] = [];
     try {
-      const reviewData = await kv.getByPrefix(`review:${projectId}:`);
+      const reviewData = (await kv.getByPrefix(`review:${projectId}:`)).map(item => item.value);
       allReviews = Array.isArray(reviewData) ? reviewData : [];
       console.log(`✅ [Reviews] Found ${allReviews.length} reviews for project`);
     } catch (error) {
@@ -4520,6 +5374,45 @@ app.post("/make-server-215f78a5/signup", async (c) => {
       // Continue anyway - profile can be created later
     }
       
+    // 💰 Create wallet for new user (統一格式：wallet_userId)
+    const walletKey = `wallet_${userId}`;
+    const wallet = {
+      user_id: userId,
+      available_balance: 0,
+      pending_balance: 0,
+      total_deposited: 0,
+      total_withdrawn: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    
+    console.log('💰 [Signup] Creating wallet in KV store:', { userId });
+    try {
+      await kv.set(walletKey, wallet);
+      console.log('✅ [Signup] Wallet created successfully');
+    } catch (kvError: any) {
+      console.error('❌ [Signup] Failed to save wallet to KV:', kvError?.message);
+    }
+    
+    // 📋 Create subscription for new user (統一格式：subscription_userId)
+    const subscriptionKey = `subscription_${userId}`;
+    const subscription = {
+      user_id: userId,
+      plan: 'free',           // 新用戶默認 free 方案
+      tier: 'free',           // 同時設置 tier 字段以確保兼容性
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    
+    console.log('📋 [Signup] Creating subscription in KV store:', { userId, plan: 'free' });
+    try {
+      await kv.set(subscriptionKey, subscription);
+      console.log('✅ [Signup] Subscription created successfully');
+    } catch (kvError: any) {
+      console.error('❌ [Signup] Failed to save subscription to KV:', kvError?.message);
+    }
+      
     // 🎉 發送歡迎郵件給新用戶
     let emailSent = false;
     let emailError = null;
@@ -4588,6 +5481,10 @@ app.get("/make-server-215f78a5/profile/:userId", async (c) => {
     }
 
     console.log('📥 [GET /profile/:userId] Fetching profile for user:', userId);
+    console.log('🔑 [GET /profile/:userId] Will search for keys:', {
+      underscore: `profile_${userId}`,
+      colon: `profile:${userId}`
+    });
 
     // Try both key formats (underscore is new standard, colon is legacy)
     const profileKeyUnderscore = `profile_${userId}`;
@@ -4600,6 +5497,8 @@ app.get("/make-server-215f78a5/profile/:userId", async (c) => {
       
       if (profile) {
         console.log('✅ [GET /profile/:userId] Profile found in NEW format (underscore)', {
+          key: profileKeyUnderscore,
+          user_id: profile.user_id,
           name: profile.name,
           email: profile.email,
           is_client: profile.is_client,
@@ -4612,6 +5511,8 @@ app.get("/make-server-215f78a5/profile/:userId", async (c) => {
         // If found in legacy format, migrate to new format
         if (profile) {
           console.log('📦 [GET /profile/:userId] Profile found in OLD format (colon), migrating...', {
+            key: profileKeyColon,
+            user_id: profile.user_id,
             name: profile.name,
             email: profile.email
           });
@@ -4627,6 +5528,48 @@ app.get("/make-server-215f78a5/profile/:userId", async (c) => {
       console.error('❌ [GET /profile/:userId] KV store error:', kvError);
       // Don't throw, just return null profile
       profile = null;
+    }
+
+    // ✅ 修復：從 Supabase Auth 獲取正確的 email（僅限真實 UUID 用戶）
+    if (profile) {
+      // 檢查是否為有效的 UUID 格式（8-4-4-4-12 格式）
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+      
+      if (isUUID) {
+        try {
+          const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(userId);
+          
+          if (!authError && authUser?.user?.email) {
+            const correctEmail = authUser.user.email;
+            
+            // 如果 profile 中的 email 不正確，修正它
+            if (profile.email !== correctEmail) {
+              console.log('🔧 [GET /profile/:userId] Fixing incorrect email:', {
+                userId,
+                storedEmail: profile.email,
+                correctEmail,
+              });
+              
+              profile.email = correctEmail;
+              
+              // 同步更新 KV store
+              try {
+                await kv.set(profileKeyUnderscore, profile);
+                console.log('✅ [GET /profile/:userId] Email corrected and saved');
+              } catch (saveError) {
+                console.error('⚠️ [GET /profile/:userId] Failed to save corrected email:', saveError);
+              }
+            }
+          } else {
+            console.warn('⚠️ [GET /profile/:userId] Could not fetch auth user:', authError?.message);
+          }
+        } catch (authCheckError) {
+          console.error('⚠️ [GET /profile/:userId] Error checking auth email:', authCheckError);
+          // 不影響返回，繼續使用現有的 profile
+        }
+      } else {
+        console.log('ℹ️ [GET /profile/:userId] Non-UUID user (dev/test user), skipping auth email check');
+      }
     }
 
     if (!profile) {
@@ -4648,11 +5591,11 @@ app.get("/make-server-215f78a5/profiles/freelancers", async (c) => {
     console.log('📥 [GET /profiles/freelancers] Request received');
     
     // Get all profiles using prefix search (new format: underscore)
-    const newFormatProfiles = await kv.getByPrefix('profile_') || [];
+    const newFormatProfiles = (await kv.getByPrefix('profile_') || []).map(item => item.value);
     console.log('📥 [GET /profiles/freelancers] New format profiles found:', newFormatProfiles.length);
     
     // Also get old format profiles for backward compatibility
-    const oldFormatProfiles = await kv.getByPrefix('profile:') || [];
+    const oldFormatProfiles = (await kv.getByPrefix('profile:') || []).map(item => item.value);
     console.log('📥 [GET /profiles/freelancers] Old format profiles found:', oldFormatProfiles.length);
     
     // Combine both formats, preferring new format if duplicate user_id exists
@@ -4676,7 +5619,7 @@ app.get("/make-server-215f78a5/profiles/freelancers", async (c) => {
     console.log('📥 [GET /profiles/freelancers] Total unique profiles:', allProfiles.length);
     
     // Get all subscriptions to add plan info to profiles
-    const allSubscriptions = await kv.getByPrefix('subscription_') || [];
+    const allSubscriptions = (await kv.getByPrefix('subscription_') || []).map(item => item.value);
     
     // Create a map of user_id -> subscription_plan
     const subscriptionMap = new Map();
@@ -4734,41 +5677,106 @@ app.post("/make-server-215f78a5/profile/:userId/avatar", async (c) => {
       return c.json({ error: 'Unauthorized' }, 403);
     }
     
-    // Get avatar URL from request body (already uploaded to Supabase Storage by frontend)
-    const body = await c.req.json();
-    const avatarUrl = body.avatar_url;
+    // 🔥 處理 FormData 文件上傳
+    const contentType = c.req.header('Content-Type') || '';
     
-    if (!avatarUrl) {
-      return c.json({ error: 'No avatar URL provided' }, 400);
+    if (contentType.includes('multipart/form-data')) {
+      // 從 FormData 接收文件
+      const formData = await c.req.formData();
+      const file = formData.get('avatar');
+      
+      if (!file || !(file instanceof File)) {
+        return c.json({ error: 'No avatar file provided' }, 400);
+      }
+      
+      // 上傳到 Supabase Storage
+      const bucketName = AVATARS_BUCKET;
+      const fileName = `${userId}/${Date.now()}-${file.name}`;
+      
+      const fileBuffer = await file.arrayBuffer();
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, fileBuffer, {
+          contentType: file.type,
+          cacheControl: '3600',
+          upsert: true
+        });
+      
+      if (uploadError) {
+        console.error('❌ [Avatar Upload] Storage upload failed:', uploadError);
+        return c.json({ error: `Upload failed: ${uploadError.message}` }, 500);
+      }
+      
+      // 獲取公開 URL
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(fileName);
+      
+      // 更新 profile
+      const profileKey = `profile_${userId}`;
+      const profile = await kv.get(profileKey);
+      
+      if (!profile) {
+        return c.json({ error: 'Profile not found' }, 404);
+      }
+      
+      profile.avatar_url = publicUrl;
+      profile.updated_at = new Date().toISOString();
+      
+      await kv.set(profileKey, profile);
+      
+      // 同時更新舊格式
+      const profileKeyColon = `profile:${userId}`;
+      const oldProfile = await kv.get(profileKeyColon);
+      if (oldProfile) {
+        oldProfile.avatar_url = publicUrl;
+        oldProfile.updated_at = new Date().toISOString();
+        await kv.set(profileKeyColon, oldProfile);
+      }
+      
+      return c.json({ 
+        success: true, 
+        avatar_url: publicUrl,
+        message: 'Avatar uploaded successfully'
+      });
+    } else {
+      // 向後兼容：接收已上傳的 avatar_url
+      const body = await c.req.json();
+      const avatarUrl = body.avatar_url;
+      
+      if (!avatarUrl) {
+        return c.json({ error: 'No avatar URL provided' }, 400);
+      }
+      
+      // Update profile with avatar URL - using underscore format (統一格式)
+      const profileKey = `profile_${userId}`;
+      const profile = await kv.get(profileKey);
+      
+      if (!profile) {
+        return c.json({ error: 'Profile not found' }, 404);
+      }
+      
+      profile.avatar_url = avatarUrl;
+      profile.updated_at = new Date().toISOString();
+      
+      await kv.set(profileKey, profile);
+      
+      // Also update in old format for backwards compatibility
+      const profileKeyColon = `profile:${userId}`;
+      const oldProfile = await kv.get(profileKeyColon);
+      if (oldProfile) {
+        oldProfile.avatar_url = avatarUrl;
+        oldProfile.updated_at = new Date().toISOString();
+        await kv.set(profileKeyColon, oldProfile);
+      }
+      
+      return c.json({ 
+        success: true, 
+        avatar_url: avatarUrl,
+        message: 'Avatar updated successfully'
+      });
     }
-    
-    // Update profile with avatar URL - using underscore format (統一格式)
-    const profileKey = `profile_${userId}`;
-    const profile = await kv.get(profileKey);
-    
-    if (!profile) {
-      return c.json({ error: 'Profile not found' }, 404);
-    }
-    
-    profile.avatar_url = avatarUrl;
-    profile.updated_at = new Date().toISOString();
-    
-    await kv.set(profileKey, profile);
-    
-    // Also update in old format for backwards compatibility
-    const profileKeyColon = `profile:${userId}`;
-    const oldProfile = await kv.get(profileKeyColon);
-    if (oldProfile) {
-      oldProfile.avatar_url = avatarUrl;
-      oldProfile.updated_at = new Date().toISOString();
-      await kv.set(profileKeyColon, oldProfile);
-    }
-    
-    return c.json({ 
-      success: true, 
-      avatar_url: avatarUrl,
-      message: 'Avatar updated successfully'
-    });
   } catch (error) {
     console.error('Error updating avatar:', error);
     return c.json({ error: 'Failed to update avatar' }, 500);
@@ -5024,7 +6032,7 @@ app.get("/make-server-215f78a5/kv/search", async (c) => {
     const prefix = c.req.query('prefix') || '';
     console.log(`🔍 [KV Search] Searching with prefix: ${prefix}`);
     
-    const results = await kv.getByPrefix(prefix) || [];
+    const results = (await kv.getByPrefix(prefix) || []).map(item => ({ key: item.key, value: item.value }));
     console.log(`✅ [KV Search] Found ${results.length} results`);
     
     return c.json({ 
@@ -5042,7 +6050,7 @@ app.get("/make-server-215f78a5/kv/search", async (c) => {
 // 📊 KV Store 獲取所有數據端點
 app.get("/make-server-215f78a5/kv/all", async (c) => {
   try {
-    console.log(`🔍 [KV All] Fetching all KV data...`);
+    console.log(`�� [KV All] Fetching all KV data...`);
     
     // 獲取所有常見前綴的數據
     const prefixes = [
@@ -5066,7 +6074,7 @@ app.get("/make-server-215f78a5/kv/all", async (c) => {
       
       const { data, error } = await supabase
         .from('kv_store_215f78a5')
-        .select('key, value, created_at')
+        .select('key, value')
         .like('key', `${prefix}%`);
       
       if (!error && data) {
@@ -5077,8 +6085,7 @@ app.get("/make-server-215f78a5/kv/all", async (c) => {
         
         allData.push(...data.map(item => ({
           key: item.key,
-          value: item.value,
-          created_at: item.created_at
+          value: item.value
         })));
       } else if (error) {
         console.warn(`⚠️ [KV All] Error fetching prefix "${prefix}":`, error.message);
@@ -5201,6 +6208,21 @@ app.get("/make-server-215f78a5/subscription/:userId", async (c) => {
       });
     }
 
+    // ✅ 檢查訂閱是否已過期
+    const now = new Date();
+    const endDate = new Date(subscription.end_date || subscription.current_period_end);
+    
+    if (endDate < now && subscription.status === 'active') {
+      console.log(`⏰ [Subscription] Plan expired for user ${userId}, changing to expired status`);
+      
+      // 更新為過期狀態
+      subscription.status = 'expired';
+      subscription.plan = 'free'; // ✅ 降級為免費版
+      await kv.set(subscriptionKey, subscription);
+      
+      console.log(`✅ [Subscription] User ${userId} downgraded to free plan due to expiration`);
+    }
+
     return c.json({ subscription });
   } catch (error) {
     console.error('Error fetching subscription:', error);
@@ -5237,12 +6259,12 @@ app.post("/make-server-215f78a5/subscription/upgrade", async (c) => {
     // ⭐ 三幣價格系統（與前端 PricingPage.tsx 完全一致）
     const planPrices = {
       pro: {
-        monthly: { USD: 9.9, TWD: 300, CNY: 70 },
-        yearly: { USD: 95, TWD: 2880, CNY: 670 }
+        monthly: { USD: 15, TWD: 480, CNY: 110 },
+        yearly: { USD: 150, TWD: 4680, CNY: 1090 }
       },
       enterprise: {
-        monthly: { USD: 29, TWD: 900, CNY: 205 },
-        yearly: { USD: 278, TWD: 8640, CNY: 1970 }
+        monthly: { USD: 45, TWD: 1400, CNY: 325 },
+        yearly: { USD: 450, TWD: 14040, CNY: 3250 }
       }
     };
 
@@ -5565,7 +6587,7 @@ app.post("/make-server-215f78a5/subscription/downgrade", async (c) => {
                 : '您的帳戶現在具���新方案��功能和限制'}</li>
               <li>${language === 'en' 
                 ? 'You can upgrade again at any time'
-                : '您可以隨時再次升級'}</li>
+                : '您可以���時再次升級'}</li>
               ${plan === 'free' ? `<li>${language === 'en' 
                 ? 'No future billing - you are on the Free plan'
                 : '無需未來付款 - 您現在使用免費方案'}</li>` : ''}
@@ -5888,7 +6910,7 @@ app.get("/make-server-215f78a5/payment-methods/:userId", async (c) => {
     }
 
     // Get all payment methods for this user
-    const paymentMethods = await kv.getByPrefix(`payment_method_${userId}_`) || [];
+    const paymentMethods = (await kv.getByPrefix(`payment_method_${userId}_`) || []).map(item => item.value);
     
     // Sort by default first, then by created date
     paymentMethods.sort((a, b) => {
@@ -5949,7 +6971,7 @@ app.post("/make-server-215f78a5/payment-methods", async (c) => {
     }
 
     // Check if this is the first payment method
-    const existingMethods = await kv.getByPrefix(`payment_method_${user.id}_`) || [];
+    const existingMethods = (await kv.getByPrefix(`payment_method_${user.id}_`) || []).map(item => item.value);
     const isFirstMethod = existingMethods.length === 0;
 
     // Create payment method
@@ -6037,7 +7059,7 @@ app.post("/make-server-215f78a5/payment-methods/:methodId/set-default", async (c
     }
 
     // Get all payment methods for this user
-    const allMethods = await kv.getByPrefix(`payment_method_${user.id}_`) || [];
+    const allMethods = (await kv.getByPrefix(`payment_method_${user.id}_`) || []).map(item => item.value);
 
     // Update all methods
     for (const method of allMethods) {
@@ -6086,7 +7108,7 @@ app.delete("/make-server-215f78a5/payment-methods/:methodId", async (c) => {
 
     // If this was the default, set another one as default
     if (wasDefault) {
-      const remainingMethods = await kv.getByPrefix(`payment_method_${user.id}_`) || [];
+      const remainingMethods = (await kv.getByPrefix(`payment_method_${user.id}_`) || []).map(item => item.value);
       if (remainingMethods.length > 0) {
         remainingMethods[0].is_default = true;
         remainingMethods[0].updated_at = new Date().toISOString();
@@ -6127,7 +7149,7 @@ app.get("/make-server-215f78a5/transactions", async (c) => {
     // Get all transactions for this user
     let allTransactions;
     try {
-      allTransactions = await kv.getByPrefix('transaction_');
+      allTransactions = (await kv.getByPrefix('transaction_')).map(item => item.value);
       console.log(`📊 [Transactions] getByPrefix returned:`, typeof allTransactions, Array.isArray(allTransactions));
     } catch (kvError) {
       console.error('❌ [Transactions] KV error:', kvError);
@@ -6210,7 +7232,7 @@ app.get("/make-server-215f78a5/transactions/stats/summary", async (c) => {
     }
 
     // Get all transactions for this user
-    const allTransactions = await kv.getByPrefix('transaction_') || [];
+    const allTransactions = (await kv.getByPrefix('transaction_') || []).map(item => item.value);
     const userTransactions = allTransactions.filter(
       (tx: any) => tx.user_id === user.id
     );
@@ -6338,7 +7360,7 @@ app.get("/make-server-215f78a5/invoices", async (c) => {
     // Get all invoices for this user
     let allInvoices;
     try {
-      allInvoices = await kv.getByPrefix('invoice_');
+      allInvoices = (await kv.getByPrefix('invoice_')).map(item => item.value);
       console.log(`📊 [Invoices] getByPrefix returned:`, typeof allInvoices, Array.isArray(allInvoices));
     } catch (kvError) {
       console.error('❌ [Invoices] KV error:', kvError);
@@ -6395,7 +7417,7 @@ app.get("/make-server-215f78a5/invoices/stats", async (c) => {
     // Get all invoices for this user
     let allInvoices;
     try {
-      allInvoices = await kv.getByPrefix('invoice_');
+      allInvoices = (await kv.getByPrefix('invoice_')).map(item => item.value);
     } catch (kvError) {
       console.error('❌ [Invoice Stats] KV error:', kvError);
       allInvoices = [];
@@ -7034,7 +8056,7 @@ app.post("/make-server-215f78a5/notifications/check-renewals", async (c) => {
     console.log('🔔 Starting renewal check...');
     
     // Get all subscriptions
-    const allSubscriptions = await kv.getByPrefix('subscription_') || [];
+    const allSubscriptions = (await kv.getByPrefix('subscription_') || []).map(item => item.value);
     const now = new Date();
     const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
     
@@ -7073,7 +8095,7 @@ app.post("/make-server-215f78a5/notifications/check-renewals", async (c) => {
           const wallet = await kv.get(walletKey);
           
           const balance = wallet?.available_balance || 0;
-          const planPrices = { pro: 29, enterprise: 99 };
+          const planPrices = { pro: 45, enterprise: 150 };
           const amount = planPrices[sub.plan as keyof typeof planPrices] || 0;
 
           // Send renewal reminder email
@@ -7135,7 +8157,7 @@ app.post("/make-server-215f78a5/subscription/process-renewals", async (c) => {
     console.log('💳 Starting subscription renewal processing...');
     
     const now = new Date();
-    const allSubscriptions = await kv.getByPrefix('subscription_') || [];
+    const allSubscriptions = (await kv.getByPrefix('subscription_') || []).map(item => item.value);
     
     let renewed = 0;
     let downgraded = 0;
@@ -7160,8 +8182,8 @@ app.post("/make-server-215f78a5/subscription/process-renewals", async (c) => {
           if (!userId) {
             // subscriptions are stored as subscription_${userId}
             // we need to find the corresponding user (both profile formats)
-            const newFormatProfiles = await kv.getByPrefix('profile_') || [];
-            const oldFormatProfiles = await kv.getByPrefix('profile:') || [];
+            const newFormatProfiles = (await kv.getByPrefix('profile_') || []).map(item => item.value);
+            const oldFormatProfiles = (await kv.getByPrefix('profile:') || []).map(item => item.value);
             const allProfiles = [...newFormatProfiles, ...oldFormatProfiles];
             for (const prof of allProfiles) {
               const subKey = `subscription_${prof.user_id}`;
@@ -7192,8 +8214,8 @@ app.post("/make-server-215f78a5/subscription/process-renewals", async (c) => {
 
           // Calculate renewal amount
           const planPrices = { 
-            pro: subscription.billingCycle === 'yearly' ? 290 : 29,
-            enterprise: subscription.billingCycle === 'yearly' ? 990 : 99 
+            pro: subscription.billingCycle === 'yearly' ? 450 : 45,
+            enterprise: subscription.billingCycle === 'yearly' ? 1400 : 140 
           };
           const amount = planPrices[subscription.plan as keyof typeof planPrices] || 0;
 
@@ -7431,7 +8453,7 @@ app.post("/make-server-215f78a5/notifications/check-low-balance", async (c) => {
   try {
     console.log('🔔 Starting low balance check...');
     
-    const allWallets = await kv.getByPrefix('wallet_') || [];
+    const allWallets = (await kv.getByPrefix('wallet_') || []).map(item => item.value);
     const threshold = 50; // Alert when balance is below $50
     
     let emailsSent = 0;
@@ -7536,8 +8558,8 @@ app.get("/make-server-215f78a5/payment/escrow/project/:projectId", async (c) => 
     console.log('📦 [Escrow] Fetching escrow for project:', projectId);
 
     // Get all escrows and find the one for this project
-    const allEscrowsColon = await kv.getByPrefix('escrow:') || [];
-    const allEscrowsUnderscore = await kv.getByPrefix('escrow_') || [];
+    const allEscrowsColon = (await kv.getByPrefix('escrow:') || []).map(item => item.value);
+    const allEscrowsUnderscore = (await kv.getByPrefix('escrow_') || []).map(item => item.value);
     const allEscrows = [...allEscrowsColon, ...allEscrowsUnderscore];
     
     const escrow = allEscrows.find((e: any) => e.project_id === projectId);
@@ -7599,8 +8621,8 @@ app.post("/make-server-215f78a5/payment/escrow/release", async (c) => {
     }
 
     // Get escrow
-    const allEscrowsColon = await kv.getByPrefix('escrow:') || [];
-    const allEscrowsUnderscore = await kv.getByPrefix('escrow_') || [];
+    const allEscrowsColon = (await kv.getByPrefix('escrow:') || []).map(item => item.value);
+    const allEscrowsUnderscore = (await kv.getByPrefix('escrow_') || []).map(item => item.value);
     const allEscrows = [...allEscrowsColon, ...allEscrowsUnderscore];
     
     const escrow = allEscrows.find((e: any) => e.project_id === project_id);
@@ -7853,8 +8875,8 @@ app.get("/make-server-215f78a5/analytics/advanced", async (c) => {
     }
 
     // Get all projects for this user
-    const allProjectsColon = await kv.getByPrefix('project:') || [];
-    const allProjectsUnderscore = await kv.getByPrefix('project_') || [];
+    const allProjectsColon = (await kv.getByPrefix('project:') || []).map(item => item.value);
+    const allProjectsUnderscore = (await kv.getByPrefix('project_') || []).map(item => item.value);
     const allProjects = [...allProjectsColon, ...allProjectsUnderscore];
     
     const userProjects = allProjects.filter((p: any) => 
@@ -7862,8 +8884,8 @@ app.get("/make-server-215f78a5/analytics/advanced", async (c) => {
     );
 
     // Get all transactions for this user
-    const allTransactionsColon = await kv.getByPrefix('transaction:') || [];
-    const allTransactionsUnderscore = await kv.getByPrefix('transaction_') || [];
+    const allTransactionsColon = (await kv.getByPrefix('transaction:') || []).map(item => item.value);
+    const allTransactionsUnderscore = (await kv.getByPrefix('transaction_') || []).map(item => item.value);
     const allTransactions = [...allTransactionsColon, ...allTransactionsUnderscore];
     
     const userTransactions = allTransactions.filter((t: any) => 
@@ -8038,7 +9060,7 @@ app.get("/make-server-215f78a5/team/members", async (c) => {
     }
 
     // Get team members for this user's organization - using only colon prefix to avoid duplicates
-    const allTeamMembers = await kv.getByPrefix('team_member:') || [];
+    const allTeamMembers = (await kv.getByPrefix('team_member:') || []).map(item => item.value);
     
     const teamMembers = allTeamMembers.filter((m: any) => m.organization_owner_id === user.id);
 
@@ -8118,7 +9140,7 @@ app.post("/make-server-215f78a5/team/invite", async (c) => {
     }
 
     // Check if member already exists - using only colon prefix
-    const allTeamMembers = await kv.getByPrefix('team_member:') || [];
+    const allTeamMembers = (await kv.getByPrefix('team_member:') || []).map(item => item.value);
     
     const existingMember = allTeamMembers.find((m: any) => 
       m.organization_owner_id === user.id && m.email === email
@@ -8311,7 +9333,7 @@ app.get("/make-server-215f78a5/team/debug/invitation/:inviteId", async (c) => {
     console.log('🔍 [DEBUG] Invitation data:', invitation);
     
     // Also check all team members to see what's in the database
-    const allTeamMembers = await kv.getByPrefix('team_member:') || [];
+    const allTeamMembers = (await kv.getByPrefix('team_member:') || []).map(item => item.value);
     console.log('🔍 [DEBUG] Total team members in database:', allTeamMembers.length);
     
     // Find any invitations with similar IDs
@@ -8410,7 +9432,7 @@ app.get("/make-server-215f78a5/team/test/list-all-invitations", async (c) => {
     console.log('🧪 [TEST] Listing all team invitations...');
     console.log('🧪 [TEST] SUPABASE_SERVICE_ROLE_KEY exists:', !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'));
     
-    const allTeamMembers = await kv.getByPrefix('team_member:') || [];
+    const allTeamMembers = (await kv.getByPrefix('team_member:') || []).map(item => item.value);
     
     console.log('🧪 [TEST] Found team members:', allTeamMembers.length);
     
@@ -8487,7 +9509,7 @@ app.post("/make-server-215f78a5/team/accept-invitation/:inviteId", async (c) => 
           
           // Try to find any enterprise user as organization owner
           console.log('🔍 [Accept Invitation] Searching for enterprise subscription owners...');
-          const allSubscriptions = await kv.getByPrefix('subscription_') || [];
+          const allSubscriptions = (await kv.getByPrefix('subscription_') || []).map(item => item.value);
           let organizationOwnerId: string | null = null;
           
           for (const sub of allSubscriptions) {
@@ -8535,7 +9557,7 @@ app.post("/make-server-215f78a5/team/accept-invitation/:inviteId", async (c) => 
       console.error('❌ [Accept Invitation] Invitation not found and could not be rebuilt');
       
       // Debug: Check if any invitations exist
-      const allInvites = await kv.getByPrefix('team_member:') || [];
+      const allInvites = (await kv.getByPrefix('team_member:') || []).map(item => item.value);
       console.log('🔍 [Accept Invitation] Total invitations in database:', allInvites.length);
       console.log('🔍 [Accept Invitation] All invitation IDs:', allInvites.map((i: any) => i.id));
       
@@ -8674,7 +9696,7 @@ app.get("/make-server-215f78a5/team/my-invitations", async (c) => {
     }
 
     // Get all team member records - using only colon prefix to avoid duplicates
-    const allTeamMembers = await kv.getByPrefix('team_member:') || [];
+    const allTeamMembers = (await kv.getByPrefix('team_member:') || []).map(item => item.value);
 
     // Filter invitations for this user's email that are pending
     const myInvitations = allTeamMembers.filter((m: any) => 
@@ -8842,7 +9864,7 @@ app.post("/make-server-215f78a5/team/send-message", async (c) => {
               </p>
               <p style="margin: 8px 0 0 0; color: #075985; font-size: 13px; line-height: 1.6;">
                 <strong>English:</strong> Simply click "Reply" in your email client. Your response will be sent directly to <strong>${user.email}</strong>.<br>
-                <strong>中文:</strong> 只需點擊您郵件客戶端的「回覆」按鈕，您的回覆將直接發送到 <strong>${user.email}</strong>。
+                <strong>中文:</strong> 只需點擊您��件客戶端的「回覆」按鈕，您的回覆將直接發送到 <strong>${user.email}</strong>。
               </p>
             </div>
           </div>
@@ -8949,8 +9971,8 @@ app.get("/make-server-215f78a5/account-manager", async (c) => {
     const manager = await kv.get(`account_manager:${assignment.manager_id}`);
 
     // Get contact history
-    const allContactsColon = await kv.getByPrefix('account_manager_contact:') || [];
-    const allContactsUnderscore = await kv.getByPrefix('account_manager_contact_') || [];
+    const allContactsColon = (await kv.getByPrefix('account_manager_contact:') || []).map(item => item.value);
+    const allContactsUnderscore = (await kv.getByPrefix('account_manager_contact_') || []).map(item => item.value);
     const allContacts = [...allContactsColon, ...allContactsUnderscore];
     
     const contactHistory = allContacts
@@ -9054,8 +10076,8 @@ app.get("/make-server-215f78a5/api-keys", async (c) => {
     }
 
     // Get API keys for this user
-    const allKeysColon = await kv.getByPrefix('api_key:') || [];
-    const allKeysUnderscore = await kv.getByPrefix('api_key_') || [];
+    const allKeysColon = (await kv.getByPrefix('api_key:') || []).map(item => item.value);
+    const allKeysUnderscore = (await kv.getByPrefix('api_key_') || []).map(item => item.value);
     const allKeys = [...allKeysColon, ...allKeysUnderscore];
     
     const userKeys = allKeys
@@ -9271,8 +10293,8 @@ app.get("/api/v1/projects", async (c) => {
     }
 
     // Get user's projects
-    const allProjectsColon = await kv.getByPrefix('project:') || [];
-    const allProjectsUnderscore = await kv.getByPrefix('project_') || [];
+    const allProjectsColon = (await kv.getByPrefix('project:') || []).map(item => item.value);
+    const allProjectsUnderscore = (await kv.getByPrefix('project_') || []).map(item => item.value);
     const allProjects = [...allProjectsColon, ...allProjectsUnderscore];
     
     const userProjects = allProjects.filter((p: any) => p.user_id === auth.userId);
@@ -9446,8 +10468,8 @@ app.get("/api/v1/proposals", async (c) => {
     const status = c.req.query('status');
 
     // Get user's proposals
-    const allProposalsColon = await kv.getByPrefix('proposal:') || [];
-    const allProposalsUnderscore = await kv.getByPrefix('proposal_') || [];
+    const allProposalsColon = (await kv.getByPrefix('proposal:') || []).map(item => item.value);
+    const allProposalsUnderscore = (await kv.getByPrefix('proposal_') || []).map(item => item.value);
     const allProposals = [...allProposalsColon, ...allProposalsUnderscore];
     
     let userProposals = allProposals.filter((p: any) => p.freelancer_id === auth.userId);
@@ -10124,8 +11146,8 @@ app.get("/make-server-215f78a5/support/tickets", async (c) => {
     }
 
     // Get all tickets for this user
-    const allTicketsColon = await kv.getByPrefix('support_ticket:') || [];
-    const allTicketsUnderscore = await kv.getByPrefix('support_ticket_') || [];
+    const allTicketsColon = (await kv.getByPrefix('support_ticket:') || []).map(item => item.value);
+    const allTicketsUnderscore = (await kv.getByPrefix('support_ticket_') || []).map(item => item.value);
     const allTickets = [...allTicketsColon, ...allTicketsUnderscore];
     
     const userTickets = allTickets
@@ -10275,8 +11297,8 @@ app.get("/make-server-215f78a5/support/tickets/:ticketId/replies", async (c) => 
     }
 
     // Get all replies for this ticket
-    const allRepliesColon = await kv.getByPrefix(`ticket_reply:${ticketId}:`) || [];
-    const allRepliesUnderscore = await kv.getByPrefix(`ticket_reply_${ticketId}_`) || [];
+    const allRepliesColon = (await kv.getByPrefix(`ticket_reply:${ticketId}:`) || []).map(item => item.value);
+    const allRepliesUnderscore = (await kv.getByPrefix(`ticket_reply_${ticketId}_`) || []).map(item => item.value);
     const allReplies = [...allRepliesColon, ...allRepliesUnderscore];
     
     const sortedReplies = allReplies.sort((a: any, b: any) => 
@@ -10352,6 +11374,216 @@ app.post("/make-server-215f78a5/support/tickets/:ticketId/replies", async (c) =>
   }
 });
 
+// ============= RECURRING SUBSCRIPTION ROUTES =============
+
+// Create PayPal recurring subscription
+app.post("/make-server-215f78a5/subscription/paypal/create-recurring", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const body = await c.req.json();
+    const { planType } = body; // 'pro' | 'enterprise'
+
+    if (!['pro', 'enterprise'].includes(planType)) {
+      return c.json({ error: 'Invalid plan type' }, 400);
+    }
+
+    const returnUrl = `${c.req.header('origin') || 'https://casewhr.com'}/?payment=success&provider=paypal-subscription`;
+    const cancelUrl = `${c.req.header('origin') || 'https://casewhr.com'}/?payment=cancel`;
+
+    const { subscriptionId, approvalUrl } = await subscriptionRecurring.createPayPalSubscription(
+      user.id,
+      planType,
+      returnUrl,
+      cancelUrl
+    );
+
+    return c.json({
+      success: true,
+      subscriptionId,
+      approvalUrl,
+    });
+  } catch (error: any) {
+    console.error('❌ [PayPal Subscription] Error:', error);
+    return c.json({ error: error.message || 'Failed to create PayPal subscription' }, 500);
+  }
+});
+
+// Activate PayPal subscription (callback after user approval)
+app.post("/make-server-215f78a5/subscription/paypal/activate", async (c) => {
+  try {
+    const body = await c.req.json();
+    const { subscriptionId } = body;
+
+    if (!subscriptionId) {
+      return c.json({ error: 'Missing subscription ID' }, 400);
+    }
+
+    await subscriptionRecurring.activatePayPalSubscription(subscriptionId);
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('❌ [PayPal Subscription] Activation error:', error);
+    return c.json({ error: error.message || 'Failed to activate subscription' }, 500);
+  }
+});
+
+// Cancel PayPal subscription
+app.post("/make-server-215f78a5/subscription/paypal/cancel-recurring", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const body = await c.req.json();
+    const { reason } = body;
+
+    await subscriptionRecurring.cancelPayPalSubscription(user.id, reason);
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('❌ [PayPal Subscription] Cancel error:', error);
+    return c.json({ error: error.message || 'Failed to cancel subscription' }, 500);
+  }
+});
+
+// PayPal Webhook handler
+app.post("/make-server-215f78a5/webhooks/paypal/subscription", async (c) => {
+  try {
+    const event = await c.req.json();
+    
+    console.log('🔔 [PayPal Webhook] Received event:', event.event_type);
+    
+    await subscriptionRecurring.handlePayPalWebhook(event);
+    
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('❌ [PayPal Webhook] Error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Create ECPay recurring subscription
+app.post("/make-server-215f78a5/subscription/ecpay/create-recurring", async (c) => {
+  try {
+    console.log('🟢 [ECPay Create] Received subscription request');
+    
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      console.error('❌ [ECPay Create] No authorization token');
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      console.error('❌ [ECPay Create] Unauthorized:', authError?.message);
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    console.log('✅ [ECPay Create] User authenticated:', user.id);
+
+    const body = await c.req.json();
+    const { planType } = body; // 'pro' | 'enterprise'
+
+    if (!['pro', 'enterprise'].includes(planType)) {
+      console.error('❌ [ECPay Create] Invalid plan type:', planType);
+      return c.json({ error: 'Invalid plan type' }, 400);
+    }
+
+    console.log('✅ [ECPay Create] Plan type:', planType);
+
+    // 檢查環境變數
+    const merchantId = Deno.env.get('ECPAY_MERCHANT_ID');
+    const hashKey = Deno.env.get('ECPAY_HASH_KEY');
+    const hashIV = Deno.env.get('ECPAY_HASH_IV');
+    
+    if (!merchantId || !hashKey || !hashIV) {
+      console.error('❌ [ECPay Create] Missing environment variables:', {
+        merchantId: merchantId ? '✅' : '❌',
+        hashKey: hashKey ? '✅' : '❌',
+        hashIV: hashIV ? '✅' : '❌'
+      });
+      return c.json({ error: 'ECPay configuration missing. Please contact support.' }, 500);
+    }
+
+    console.log('✅ [ECPay Create] Environment variables OK');
+
+    const returnUrl = `${c.req.header('origin') || 'https://casewhr.com'}`;
+    console.log('🟢 [ECPay Create] Return URL:', returnUrl);
+
+    const formHtml = await subscriptionRecurring.createECPaySubscription(
+      user.id,
+      planType,
+      user.email || '',
+      returnUrl
+    );
+
+    console.log('✅ [ECPay Create] Form HTML generated, length:', formHtml.length);
+
+    return c.html(formHtml);
+  } catch (error: any) {
+    console.error('❌ [ECPay Subscription] Error:', error);
+    console.error('❌ [ECPay Subscription] Stack:', error.stack);
+    return c.json({ error: error.message || 'Failed to create ECPay subscription' }, 500);
+  }
+});
+
+// ECPay period callback
+app.post("/make-server-215f78a5/ecpay-period-callback", async (c) => {
+  try {
+    const params = await c.req.parseBody();
+    
+    console.log('🔔 [ECPay Period] Callback received');
+    
+    await subscriptionRecurring.handleECPayPeriodCallback(params);
+    
+    return c.text('1|OK');
+  } catch (error: any) {
+    console.error('❌ [ECPay Period] Callback error:', error);
+    return c.text('0|Error');
+  }
+});
+
+// Cancel ECPay subscription
+app.post("/make-server-215f78a5/subscription/ecpay/cancel-recurring", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    await subscriptionRecurring.cancelECPaySubscription(user.id);
+
+    return c.json({ success: true });
+  } catch (error: any) {
+    console.error('❌ [ECPay Subscription] Cancel error:', error);
+    return c.json({ error: error.message || 'Failed to cancel subscription' }, 500);
+  }
+});
+
 // ============= WEBHOOK ROUTES (ENTERPRISE) =============
 
 // Get webhooks for current user
@@ -10380,7 +11612,7 @@ app.get("/make-server-215f78a5/webhooks", async (c) => {
     }
 
     // Get webhooks
-    const allWebhooks = await kv.getByPrefix(`webhook:${user.id}:`) || [];
+    const allWebhooks = (await kv.getByPrefix(`webhook:${user.id}:`) || []).map(item => item.value);
     
     return c.json({ webhooks: allWebhooks });
   } catch (error) {
@@ -10610,7 +11842,7 @@ async function deliverWebhookWithRetry(webhook: any, payload: any, maxRetries = 
 // Enhanced webhook trigger with retry
 async function triggerWebhooksWithRetry(userId: string, event: string, data: any) {
   try {
-    const allWebhooks = await kv.getByPrefix(`webhook:${userId}:`) || [];
+    const allWebhooks = (await kv.getByPrefix(`webhook:${userId}:`) || []).map(item => item.value);
     const activeWebhooks = allWebhooks.filter((w: any) => 
       w.status === 'active' && w.events.includes(event)
     );
@@ -10674,7 +11906,7 @@ app.get("/make-server-215f78a5/chats", async (c) => {
     }
 
     // Get user's chats
-    const allChats = await kv.getByPrefix(`chat:${user.id}:`) || [];
+    const allChats = (await kv.getByPrefix(`chat:${user.id}:`) || []).map(item => item.value);
     
     // Sort by last message time
     const sortedChats = allChats.sort((a: any, b: any) => {
@@ -10722,7 +11954,7 @@ app.get("/make-server-215f78a5/chats/:chatId/messages", async (c) => {
     }
 
     // Get messages
-    const allMessages = await kv.getByPrefix(`chat_message:${chatId}:`) || [];
+    const allMessages = (await kv.getByPrefix(`chat_message:${chatId}:`) || []).map(item => item.value);
     
     // Sort by created_at
     const sortedMessages = allMessages.sort((a: any, b: any) => 
@@ -10893,7 +12125,7 @@ app.post("/make-server-215f78a5/chats/:chatId/read", async (c) => {
     }
 
     // Mark all messages as read
-    const allMessages = await kv.getByPrefix(`chat_message:${chatId}:`) || [];
+    const allMessages = (await kv.getByPrefix(`chat_message:${chatId}:`) || []).map(item => item.value);
     
     for (const message of allMessages) {
       if (message.sender_id !== user.id && !message.read) {
@@ -10955,7 +12187,7 @@ app.post("/make-server-215f78a5/chats", async (c) => {
     }
 
     // Check if chat already exists
-    const existingChats = await kv.getByPrefix(`chat:${user.id}:`) || [];
+    const existingChats = (await kv.getByPrefix(`chat:${user.id}:`) || []).map(item => item.value);
     const existingChat = existingChats.find((c: any) => c.recipient_id === recipient_id);
 
     if (existingChat) {
@@ -11036,8 +12268,8 @@ app.get("/make-server-215f78a5/sla/metrics", async (c) => {
     }
 
     // Get all tickets (try both key formats)
-    const allTicketsColon = await kv.getByPrefix('support_ticket:') || [];
-    const allTicketsUnderscore = await kv.getByPrefix('support_ticket_') || [];
+    const allTicketsColon = (await kv.getByPrefix('support_ticket:') || []).map(item => item.value);
+    const allTicketsUnderscore = (await kv.getByPrefix('support_ticket_') || []).map(item => item.value);
     const allTickets = [...allTicketsColon, ...allTicketsUnderscore]
       .filter((t: any) => t.user_id === user.id);
     
@@ -11921,7 +13153,7 @@ app.get("/make-server-215f78a5/bank-accounts/:userId", async (c) => {
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
-    const bankAccounts = await kv.getByPrefix(`bank_account_${userId}_`) || [];
+    const bankAccounts = (await kv.getByPrefix(`bank_account_${userId}_`) || []).map(item => item.value);
     
     bankAccounts.sort((a, b) => {
       if (a.is_default && !b.is_default) return -1;
@@ -11987,7 +13219,7 @@ app.post("/make-server-215f78a5/bank-accounts", async (c) => {
       }
     }
 
-    const existingAccounts = await kv.getByPrefix(`bank_account_${user.id}_`) || [];
+    const existingAccounts = (await kv.getByPrefix(`bank_account_${user.id}_`) || []).map(item => item.value);
     const isFirstAccount = existingAccounts.length === 0;
 
     const accountId = `bank_account_${user.id}_${Date.now()}`;
@@ -12071,7 +13303,7 @@ app.post("/make-server-215f78a5/bank-accounts/:accountId/set-default", async (c)
       return c.json({ error: 'Bank account not found' }, 404);
     }
 
-    const allAccounts = await kv.getByPrefix(`bank_account_${user.id}_`) || [];
+    const allAccounts = (await kv.getByPrefix(`bank_account_${user.id}_`) || []).map(item => item.value);
 
     for (const account of allAccounts) {
       account.is_default = account.id === accountId;
@@ -12112,7 +13344,7 @@ app.delete("/make-server-215f78a5/bank-accounts/:accountId", async (c) => {
     await kv.del(accountId);
 
     if (bankAccount.is_default) {
-      const remainingAccounts = await kv.getByPrefix(`bank_account_${user.id}_`) || [];
+      const remainingAccounts = (await kv.getByPrefix(`bank_account_${user.id}_`) || []).map(item => item.value);
       if (remainingAccounts.length > 0) {
         remainingAccounts[0].is_default = true;
         remainingAccounts[0].updated_at = new Date().toISOString();
@@ -12239,7 +13471,7 @@ app.get("/make-server-215f78a5/withdrawals", async (c) => {
 
     let allWithdrawals;
     try {
-      allWithdrawals = await kv.getByPrefix('withdrawal_');
+      allWithdrawals = (await kv.getByPrefix('withdrawal_')).map(item => item.value);
       console.log(`📊 [Withdrawals] getByPrefix returned:`, typeof allWithdrawals, Array.isArray(allWithdrawals));
     } catch (kvError) {
       console.error('❌ [Withdrawals] KV error:', kvError);
@@ -12403,7 +13635,7 @@ app.post("/make-server-215f78a5/withdrawals/:id/approve", async (c) => {
     }
 
     // Update transaction status
-    const allTransactions = await kv.getByPrefix('transaction_') || [];
+    const allTransactions = (await kv.getByPrefix('transaction_') || []).map(item => item.value);
     const transaction = allTransactions.find((t: any) => t.reference_id === withdrawalId);
     if (transaction) {
       transaction.status = 'completed';
@@ -12462,7 +13694,7 @@ app.post("/make-server-215f78a5/withdrawals/:id/reject", async (c) => {
       await kv.set(walletKey, wallet);
     }
 
-    const allTransactions = await kv.getByPrefix('transaction_') || [];
+    const allTransactions = (await kv.getByPrefix('transaction_') || []).map(item => item.value);
     const transaction = allTransactions.find((t: any) => t.reference_id === withdrawalId);
     if (transaction) {
       transaction.status = 'failed';
@@ -12608,7 +13840,7 @@ app.post("/make-server-215f78a5/admin/setup-special-users", async (c) => {
     const now = new Date();
 
     // Get all profiles to find user IDs
-    const allProfiles = await kv.getByPrefix('profile_') || [];
+    const allProfiles = (await kv.getByPrefix('profile_') || []).map(item => item.value);
     
     for (const email of specialEmails) {
       // Find user profile by email
@@ -12790,7 +14022,7 @@ app.post("/make-server-215f78a5/public/initialize-special-users", async (c) => {
     const now = new Date();
 
     // Get all profiles to find user IDs
-    const allProfiles = await kv.getByPrefix('profile_') || [];
+    const allProfiles = (await kv.getByPrefix('profile_') || []).map(item => item.value);
     
     for (const email of specialEmails) {
       // Find user profile by email
@@ -13071,8 +14303,8 @@ app.get("/make-server-215f78a5/admin/withdrawals/all", async (c) => {
     console.log('🔍 [Admin/Withdrawals] Fetching all withdrawals...');
 
     // Get all withdrawals - support both colon and underscore formats
-    const allWithdrawalsColon = await kv.getByPrefix('withdrawal:') || [];
-    const allWithdrawalsUnderscore = await kv.getByPrefix('withdrawal_') || [];
+    const allWithdrawalsColon = (await kv.getByPrefix('withdrawal:') || []).map(item => item.value);
+    const allWithdrawalsUnderscore = (await kv.getByPrefix('withdrawal_') || []).map(item => item.value);
     
     console.log(`📊 [Admin/Withdrawals] Found ${allWithdrawalsColon.length} with 'withdrawal:' prefix`);
     console.log(`📊 [Admin/Withdrawals] Found ${allWithdrawalsUnderscore.length} with 'withdrawal_' prefix`);
@@ -13180,8 +14412,8 @@ app.get("/make-server-215f78a5/admin/withdrawals", async (c) => {
     }
 
     // Get all withdrawals - support both colon and underscore formats
-    const allWithdrawalsColon = await kv.getByPrefix('withdrawal:') || [];
-    const allWithdrawalsUnderscore = await kv.getByPrefix('withdrawal_') || [];
+    const allWithdrawalsColon = (await kv.getByPrefix('withdrawal:') || []).map(item => item.value);
+    const allWithdrawalsUnderscore = (await kv.getByPrefix('withdrawal_') || []).map(item => item.value);
     
     console.log(`📊 [Admin/Withdrawals-Alias] Found ${allWithdrawalsColon.length} with 'withdrawal:' prefix`);
     console.log(`📊 [Admin/Withdrawals-Alias] Found ${allWithdrawalsUnderscore.length} with 'withdrawal_' prefix`);
@@ -13292,8 +14524,8 @@ app.get("/make-server-215f78a5/admin/users", async (c) => {
     }
 
     // Get all profiles (both formats)
-    const newFormatProfiles = await kv.getByPrefix('profile_') || [];
-    const oldFormatProfiles = await kv.getByPrefix('profile:') || [];
+    const newFormatProfiles = (await kv.getByPrefix('profile_') || []).map(item => item.value);
+    const oldFormatProfiles = (await kv.getByPrefix('profile:') || []).map(item => item.value);
     
     // Combine and deduplicate by user_id, preferring new format
     const profileMap = new Map();
@@ -13309,12 +14541,36 @@ app.get("/make-server-215f78a5/admin/users", async (c) => {
     const usersWithData = await Promise.all(
       allProfiles.map(async (profile: any) => {
         const wallet = await kv.get(`wallet_${profile.user_id}`);
-        const subscription = await kv.get(`subscription_${profile.user_id}`);
+        
+        // 🔧 Check both subscription formats (old: subscription:id, new: subscription_id)
+        let subscription = await kv.get(`subscription_${profile.user_id}`);
+        if (!subscription) {
+          subscription = await kv.get(`subscription:${profile.user_id}`);
+        }
+        
+        // 🔧 訂閱等級優先順序：subscription.plan > subscription.tier > profile.membership_tier > 'free'
+        let rawTier = subscription?.plan || subscription?.tier || profile.membership_tier || 'free';
+        
+        // 🔄 將舊版方案名稱映射到新版（basic → pro, premium → enterprise）
+        const tierMapping: Record<string, string> = {
+          'basic': 'pro',
+          'premium': 'enterprise',
+          'starter': 'pro',           // 如果有 starter 也映射到 pro
+          'professional': 'enterprise' // 如果有 professional 也映射到 enterprise
+        };
+        const subscriptionTier = tierMapping[rawTier.toLowerCase()] || rawTier;
+        
+        // 🔧 Convert account_type (string) to account_types (array) for frontend compatibility
+        const accountTypes = profile.account_type 
+          ? [profile.account_type] 
+          : (profile.account_types || ['client']);
         
         return {
           ...profile,
+          id: profile.user_id,  // ✅ 確保 id 欄位正確對應到 user_id
+          account_types: accountTypes,  // ✅ Ensure array format
           wallet_balance: wallet?.available_balance || 0,
-          subscription_tier: subscription?.tier || 'free',
+          subscription_tier: subscriptionTier,
           subscription_status: subscription?.status || 'inactive',
         };
       })
@@ -13349,21 +14605,26 @@ app.get("/make-server-215f78a5/admin/users/:userId", async (c) => {
 
     const userId = c.req.param('userId');
     
-    // Get user data
-    const [profile, wallet, subscription, projects, proposals] = await Promise.all([
-      kv.get(`profile_${userId}`),  // 統一使用下劃線格式
+    // Get user data - check both formats for profile and subscription
+    const [profileNew, profileOld, wallet, subscriptionNew, subscriptionOld, projects, proposals] = await Promise.all([
+      kv.get(`profile_${userId}`),  // New format
+      kv.get(`profile:${userId}`),  // Old format
       kv.get(`wallet_${userId}`),
-      kv.get(`subscription_${userId}`),
+      kv.get(`subscription_${userId}`),  // New format
+      kv.get(`subscription:${userId}`),  // Old format
       kv.get(`projects:user:${userId}`),
       kv.get(`proposals:user:${userId}`),
     ]);
+
+    const profile = profileNew || profileOld;
+    const subscription = subscriptionNew || subscriptionOld;
 
     if (!profile) {
       return c.json({ error: 'User not found' }, 404);
     }
 
     // Get transactions
-    const allTransactions = await kv.getByPrefix('transaction_') || [];
+    const allTransactions = (await kv.getByPrefix('transaction_') || []).map(item => item.value);
     const userTransactions = allTransactions
       .filter((t: any) => t.user_id === userId)
       .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -13515,8 +14776,8 @@ app.post("/make-server-215f78a5/admin/admins", async (c) => {
     }
 
     // Find user by email - 搜索兩種格式的鍵
-    const profilesColon = await kv.getByPrefix('profile:');
-    const profilesUnderscore = await kv.getByPrefix('profile_');
+    const profilesColon = (await kv.getByPrefix('profile:')).map(item => item.value);
+    const profilesUnderscore = (await kv.getByPrefix('profile_')).map(item => item.value);
     const allProfiles = [...profilesColon, ...profilesUnderscore];
     
     // 使用 email 去重
@@ -13598,8 +14859,8 @@ app.get("/make-server-215f78a5/admin/debug-profile/:email", async (c) => {
     console.log(`🔍 [Debug] Checking profile for email: ${targetEmail}`);
 
     // Search in both formats
-    const profilesColon = await kv.getByPrefix('profile:');
-    const profilesUnderscore = await kv.getByPrefix('profile_');
+    const profilesColon = (await kv.getByPrefix('profile:')).map(item => item.value);
+    const profilesUnderscore = (await kv.getByPrefix('profile_')).map(item => item.value);
     
     const profileColon = profilesColon.find((p: any) => p.email === targetEmail);
     const profileUnderscore = profilesUnderscore.find((p: any) => p.email === targetEmail);
@@ -14032,36 +15293,36 @@ app.get("/make-server-215f78a5/admin/stats", async (c) => {
       });
     };
     
-    const allUsersColon = await kv.getByPrefix('profile:') || [];
-    const allUsersUnderscore = await kv.getByPrefix('profile_') || [];
+    const allUsersColon = (await kv.getByPrefix('profile:') || []).map(item => item.value);
+    const allUsersUnderscore = (await kv.getByPrefix('profile_') || []).map(item => item.value);
     const allUsers = deduplicateById([...allUsersColon, ...allUsersUnderscore]);
     
-    const allProjectsColon = await kv.getByPrefix('project:') || [];
-    const allProjectsUnderscore = await kv.getByPrefix('project_') || [];
+    const allProjectsColon = (await kv.getByPrefix('project:') || []).map(item => item.value);
+    const allProjectsUnderscore = (await kv.getByPrefix('project_') || []).map(item => item.value);
     const allProjects = deduplicateById([...allProjectsColon, ...allProjectsUnderscore]);
     
-    const allWalletsColon = await kv.getByPrefix('wallet:') || [];
-    const allWalletsUnderscore = await kv.getByPrefix('wallet_') || [];
+    const allWalletsColon = (await kv.getByPrefix('wallet:') || []).map(item => item.value);
+    const allWalletsUnderscore = (await kv.getByPrefix('wallet_') || []).map(item => item.value);
     const allWallets = deduplicateById([...allWalletsColon, ...allWalletsUnderscore]);
     
-    const allWithdrawalsColon = await kv.getByPrefix('withdrawal:') || [];
-    const allWithdrawalsUnderscore = await kv.getByPrefix('withdrawal_') || [];
+    const allWithdrawalsColon = (await kv.getByPrefix('withdrawal:') || []).map(item => item.value);
+    const allWithdrawalsUnderscore = (await kv.getByPrefix('withdrawal_') || []).map(item => item.value);
     const allWithdrawals = deduplicateById([...allWithdrawalsColon, ...allWithdrawalsUnderscore]);
     
-    const allMessagesColon = await kv.getByPrefix('message:') || [];
-    const allMessagesUnderscore = await kv.getByPrefix('message_') || [];
+    const allMessagesColon = (await kv.getByPrefix('message:') || []).map(item => item.value);
+    const allMessagesUnderscore = (await kv.getByPrefix('message_') || []).map(item => item.value);
     const allMessages = deduplicateById([...allMessagesColon, ...allMessagesUnderscore]);
     
-    const allTransactionsColon = await kv.getByPrefix('transaction:') || [];
-    const allTransactionsUnderscore = await kv.getByPrefix('transaction_') || [];
+    const allTransactionsColon = (await kv.getByPrefix('transaction:') || []).map(item => item.value);
+    const allTransactionsUnderscore = (await kv.getByPrefix('transaction_') || []).map(item => item.value);
     const allTransactions = deduplicateById([...allTransactionsColon, ...allTransactionsUnderscore]);
     
-    const allMilestonesColon = await kv.getByPrefix('milestone:') || [];
-    const allMilestonesUnderscore = await kv.getByPrefix('milestone_') || [];
+    const allMilestonesColon = (await kv.getByPrefix('milestone:') || []).map(item => item.value);
+    const allMilestonesUnderscore = (await kv.getByPrefix('milestone_') || []).map(item => item.value);
     const allMilestones = deduplicateById([...allMilestonesColon, ...allMilestonesUnderscore]);
     
-    const allReviewsColon = await kv.getByPrefix('review:') || [];
-    const allReviewsUnderscore = await kv.getByPrefix('review_') || [];
+    const allReviewsColon = (await kv.getByPrefix('review:') || []).map(item => item.value);
+    const allReviewsUnderscore = (await kv.getByPrefix('review_') || []).map(item => item.value);
     const allReviews = deduplicateById([...allReviewsColon, ...allReviewsUnderscore]);
 
     console.log('📊 [Stats] Counts:', {
@@ -14117,8 +15378,8 @@ app.get("/make-server-215f78a5/admin/stats", async (c) => {
       .reduce((sum: number, t: any) => sum + (t.platform_fee || t.service_fee || 0), 0);
     
     // 2. 訂閱收入
-    const allSubscriptionsColon = await kv.getByPrefix('subscription:') || [];
-    const allSubscriptionsUnderscore = await kv.getByPrefix('subscription_') || [];
+    const allSubscriptionsColon = (await kv.getByPrefix('subscription:') || []).map(item => item.value);
+    const allSubscriptionsUnderscore = (await kv.getByPrefix('subscription_') || []).map(item => item.value);
     const allSubscriptions = deduplicateById([...allSubscriptionsColon, ...allSubscriptionsUnderscore]);
     
     const subscriptionRevenue = allSubscriptions
@@ -14236,8 +15497,8 @@ app.get("/make-server-215f78a5/admin/revenue", async (c) => {
       });
     };
     
-    const allTransactionsColon = await kv.getByPrefix('transaction:') || [];
-    const allTransactionsUnderscore = await kv.getByPrefix('transaction_') || [];
+    const allTransactionsColon = (await kv.getByPrefix('transaction:') || []).map(item => item.value);
+    const allTransactionsUnderscore = (await kv.getByPrefix('transaction_') || []).map(item => item.value);
     const allTransactions = deduplicateById([...allTransactionsColon, ...allTransactionsUnderscore]);
 
     console.log('📊 [Revenue API] Total transactions:', allTransactions.length);
@@ -14621,7 +15882,7 @@ app.post("/make-server-215f78a5/admin/get-user-by-email", async (c) => {
     }
 
     // Search for user profile by email
-    const allProfiles = await kv.getByPrefix('user_profile_');
+    const allProfiles = (await kv.getByPrefix('user_profile_')).map(item => item.value);
     const userProfile = allProfiles.find(profile => 
       profile && profile.email && profile.email.toLowerCase() === email.toLowerCase()
     );
@@ -14681,7 +15942,7 @@ app.post("/make-server-215f78a5/admin/rebuild-project-index", async (c) => {
     console.log('🔄 [Admin] Starting project index rebuild...');
     
     // Get all keys with prefix 'project:' from KV store
-    const allProjectKeys = await kv.getByPrefix('project:');
+    const allProjectKeys = (await kv.getByPrefix('project:')).map(item => item.value);
     console.log(`📊 [Admin] Found ${allProjectKeys.length} project keys in KV store`);
     
     // Extract project IDs and projects
@@ -16320,7 +17581,7 @@ app.post("/make-server-215f78a5/api/paypal/config-test", async (c) => {
   try {
     const PAYPAL_CLIENT_ID = (Deno.env.get('PAYPAL_CLIENT_ID') || '').trim();
     const PAYPAL_CLIENT_SECRET = (Deno.env.get('PAYPAL_CLIENT_SECRET') || '').trim();
-    const PAYPAL_MODE = (Deno.env.get('PAYPAL_MODE') || 'live').trim(); // ✅ 生產環境
+    const PAYPAL_MODE = (Deno.env.get('PAYPAL_MODE') || 'live').trim(); // �� 生產環境
     const PAYPAL_API_BASE = PAYPAL_MODE === 'live'
       ? 'https://api-m.paypal.com'
       : 'https://api-m.sandbox.paypal.com';
@@ -17340,7 +18601,7 @@ app.get("/make-server-215f78a5/sitemap.xml", async (c) => {
     // 獲取所有 AI SEO 報告
     const { data, error } = await supabase
       .from('kv_store_215f78a5')
-      .select('key, value, created_at')
+      .select('key, value')
       .like('key', 'ai_seo_%')
       .not('key', 'like', '%_reports_%');
     
@@ -17354,7 +18615,8 @@ app.get("/make-server-215f78a5/sitemap.xml", async (c) => {
     
     const baseUrl = 'https://casewhr.com';
     const urls = reports.map(item => {
-      const lastmod = item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+      // 使用當前日期作為 lastmod，因為 kv_store 沒有 created_at 欄位
+      const lastmod = new Date().toISOString().split('T')[0];
       return `
   <url>
     <loc>${baseUrl}/seo-report/${item.key}</loc>
@@ -17827,7 +19089,7 @@ app.get("/make-server-215f78a5/users/available-for-chat", async (c) => {
     const userProjectMap = new Map<string, { projectId: string; projectTitle: string }>();
 
     // Source 1: Get all projects where the user is involved (as owner or freelancer)
-    const allProjects = await kv.getByPrefix('project_');
+    const allProjects = (await kv.getByPrefix('project_')).map(item => item.value);
     const userProjects = allProjects.filter((p: any) => {
       const ownerId = getProjectOwnerId(p);
       return ownerId === user.id || p.assigned_freelancer_id === user.id;
@@ -17862,7 +19124,7 @@ app.get("/make-server-215f78a5/users/available-for-chat", async (c) => {
 
     // Source 2: Get all proposals on user's projects (if user is a client)
     if (!isCurrentUserFreelancer) {
-      const allProposals = await kv.getByPrefix('proposal_');
+      const allProposals = (await kv.getByPrefix('proposal_')).map(item => item.value);
       const userProjectIds = userProjects.map((p: any) => p.id);
       
       const relevantProposals = allProposals.filter((proposal: any) => 
@@ -17889,7 +19151,7 @@ app.get("/make-server-215f78a5/users/available-for-chat", async (c) => {
 
     // Source 3: Get all projects where user has submitted proposals (if user is a freelancer)
     if (isCurrentUserFreelancer) {
-      const allProposals = await kv.getByPrefix('proposal_');
+      const allProposals = (await kv.getByPrefix('proposal_')).map(item => item.value);
       const userProposals = allProposals.filter((proposal: any) => 
         proposal.user_id === user.id
       );
@@ -17963,7 +19225,7 @@ app.get("/make-server-215f78a5/users/available-for-chat", async (c) => {
     console.log('👥 [Available Users] Unique users found:', userIds.size);
 
     // Source 5: Get users from existing conversations
-    const allConversations = await kv.getByPrefix('conversation:');
+    const allConversations = (await kv.getByPrefix('conversation:')).map(item => item.value);
     const userConversations = allConversations.filter((conv: any) => 
       conv.participants?.client_id === user.id || conv.participants?.freelancer_id === user.id
     );
@@ -18132,49 +19394,49 @@ app.post("/make-server-215f78a5/admin/initialize-data", async (c) => {
     console.log('🧹 [Admin] Cleaning up all existing test data...');
     
     // Clean test profiles
-    const testProfiles = await kv.getByPrefix('profile_test_') || [];
+    const testProfiles = (await kv.getByPrefix('profile_test_') || []).map(item => item.value);
     for (const profile of testProfiles) {
       await kv.del(`profile_${profile.id}`);
     }
     console.log(`🧹 Deleted ${testProfiles.length} test profiles`);
     
     // Clean test wallets
-    const testWallets = await kv.getByPrefix('wallet:test_') || [];
+    const testWallets = (await kv.getByPrefix('wallet:test_') || []).map(item => item.value);
     for (const wallet of testWallets) {
       await kv.del(`wallet:${wallet.user_id}`);
     }
     console.log(`🧹 Deleted ${testWallets.length} test wallets`);
     
     // Clean test projects
-    const testProjects = await kv.getByPrefix('project:test_') || [];
+    const testProjects = (await kv.getByPrefix('project:test_') || []).map(item => item.value);
     for (const project of testProjects) {
       await kv.del(`project:${project.id}`);
     }
     console.log(`🧹 Deleted ${testProjects.length} test projects`);
     
     // Clean test milestones
-    const testMilestones = await kv.getByPrefix('milestone:test_') || [];
+    const testMilestones = (await kv.getByPrefix('milestone:test_') || []).map(item => item.value);
     for (const milestone of testMilestones) {
       await kv.del(`milestone:${milestone.id}`);
     }
     console.log(`🧹 Deleted ${testMilestones.length} test milestones`);
     
     // Clean test transactions
-    const testTransactions = await kv.getByPrefix('transaction:test_') || [];
+    const testTransactions = (await kv.getByPrefix('transaction:test_') || []).map(item => item.value);
     for (const tx of testTransactions) {
       await kv.del(`transaction:${tx.id}`);
     }
     console.log(`🧹 Deleted ${testTransactions.length} test transactions`);
     
     // Clean test reviews
-    const testReviews = await kv.getByPrefix('review:test_') || [];
+    const testReviews = (await kv.getByPrefix('review:test_') || []).map(item => item.value);
     for (const review of testReviews) {
       await kv.del(`review:${review.id}`);
     }
     console.log(`🧹 Deleted ${testReviews.length} test reviews`);
     
     // Clean test messages
-    const testMessages = await kv.getByPrefix('message:test_') || [];
+    const testMessages = (await kv.getByPrefix('message:test_') || []).map(item => item.value);
     for (const msg of testMessages) {
       await kv.del(`message:${msg.id}`);
     }
@@ -18183,13 +19445,16 @@ app.post("/make-server-215f78a5/admin/initialize-data", async (c) => {
     console.log('✅ [Admin] Test data cleanup complete!');
     console.log('🚀 [Admin] Starting fresh data creation...');
 
-    // 創建測試用戶
+    // 創建測試用戶（包含新舊版訂閱方案）
     const testUsers = [
+      // 新版訂閱方案
       { name: '張小明', email: 'zhang@test.com', skills: ['網頁開發', '前端設計'], membership: 'free' },
-      { name: '李小華', email: 'li@test.com', skills: ['平面設計', 'UI/UX'], membership: 'basic' },
-      { name: '王大偉', email: 'wang@test.com', skills: ['數據分析', 'Python'], membership: 'premium' },
-      { name: 'John Smith', email: 'john@test.com', skills: ['Backend', 'Node.js'], membership: 'free' },
+      { name: '李小華', email: 'li@test.com', skills: ['平面設計', 'UI/UX'], membership: 'starter' },
+      { name: '王大偉', email: 'wang@test.com', skills: ['數據分析', 'Python'], membership: 'professional' },
+      { name: 'John Smith', email: 'john@test.com', skills: ['Backend', 'Node.js'], membership: 'enterprise' },
+      // 舊版訂閱方案（向後兼容）
       { name: 'Sarah Chen', email: 'sarah@test.com', skills: ['Marketing', 'Content'], membership: 'basic' },
+      { name: '林美麗', email: 'lin@test.com', skills: ['寫作', '編輯'], membership: 'premium' },
     ];
 
     const userIds: string[] = [];
@@ -18231,9 +19496,35 @@ app.post("/make-server-215f78a5/admin/initialize-data", async (c) => {
         updated_at: new Date().toISOString(),
       };
       
-      // Use consistent key format 'wallet:userId'
-        console.log(`  💰 Setting wallet:${userId}`);
-        await kv.set(`wallet:${userId}`, wallet);
+      // Use consistent key format 'wallet_userId' (新格式)
+        console.log(`  💰 Setting wallet_${userId}`);
+        await kv.set(`wallet_${userId}`, wallet);
+        
+        // 🎁 為部分測試用戶添加訂閱（模擬真實購買情況）
+        if (userData.membership === 'basic' || userData.membership === 'premium') {
+          // 舊版方案對應到新版方案
+          const planMap: Record<string, 'pro' | 'enterprise'> = {
+            'basic': 'pro',
+            'premium': 'enterprise'
+          };
+          const newPlan = planMap[userData.membership] || 'pro';
+          
+          const subscription = {
+            user_id: userId,
+            plan: newPlan,  // ✅ 使用新版方案名稱 (pro, enterprise)
+            billingCycle: 'monthly',
+            status: 'active',
+            start_date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), // 15天前開始
+            end_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(), // 15天後到期
+            auto_renew: true,
+            last_payment_date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+            next_billing_date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+          };
+          
+          console.log(`  🎫 Setting subscription_${userId} with plan: ${newPlan}`);
+          await kv.set(`subscription_${userId}`, subscription);
+        }
+        
         created.users++;
         console.log(`  ✅ User created: ${userData.name}`);
       } catch (userError) {
@@ -18406,7 +19697,7 @@ app.post("/make-server-215f78a5/admin/initialize-data", async (c) => {
     
     // 🧹 First, delete all existing test withdrawals to avoid duplicates
     console.log('🧹 [Admin] Cleaning up existing test withdrawals...');
-    const existingWithdrawals = await kv.getByPrefix('withdrawal:test_withdrawal_') || [];
+    const existingWithdrawals = (await kv.getByPrefix('withdrawal:test_withdrawal_') || []).map(item => item.value);
     for (const withdrawal of existingWithdrawals) {
       await kv.del(`withdrawal:${withdrawal.id}`);
     }
@@ -18459,7 +19750,7 @@ app.post("/make-server-215f78a5/admin/initialize-data", async (c) => {
     console.log('📊 [Admin] Summary:', created);
 
     // Verify data was saved
-    const verification = await kv.getByPrefix('project:');
+    const verification = (await kv.getByPrefix('project:')).map(item => item.value);
     console.log(`🔍 [Admin] Verification: Found ${verification.length} projects in database`);
 
     return c.json({ 
@@ -19111,10 +20402,127 @@ app.post("/make-server-215f78a5/ai-seo/generate", async (c) => {
     }
 
     const body = await c.req.json();
+    
+    // 🆕 支持 URL 自動生成模式
+    if (body.url && body.autoAnalyze) {
+      console.log(`🤖 [AI SEO] URL Auto-generate mode for: ${body.url}${body.customKeywords ? ` (Custom Keywords: ${body.customKeywords})` : ''}`);
+      
+      const pageContexts: Record<string, string> = {
+        '/': 'Casewhere 是一個全球接案平台，連接客戶與專業自由工作者。首頁應該突出平台的核心價值、服務範圍和用戶優勢。',
+        '/about': '關於我們頁面介紹 Casewhere 平台的使命、願景、團隊和發展歷程。',
+        '/services': '服務列表展示平台上可用的各種專業服務類別，包括設計、開發、營銷等。',
+        '/pricing': '定價方案頁面說明平台的收費結構、服務費率和價值主張。',
+        '/how-it-works': '運作方式頁面解釋如何使用平台發布項目、尋找專家和完成交易。',
+        '/for-clients': '客戶專區介紹如何作為客戶在平台上發布項目、選擇專家和管理項目。',
+        '/for-freelancers': '接案者專區說明自由工作者如何加入平台、接案和賺取收入。',
+        '/contact': '聯絡我們頁面提供與 Casewhere 團隊溝通的方式和管道。',
+        '/blog': '部落格頁面分享行業洞察、平台更新和專業知識文章。',
+        '/faq': '常見問題頁面回答用戶關於平台使用、付款、安全等常見疑問。',
+      };
+      
+      const pageContext = pageContexts[body.url] || `這是 Casewhere 平台的 ${body.url} 頁面。`;
+      
+      // 新增：支持自定義關鍵字
+      const customKeywordsHint = body.customKeywords 
+        ? `\n\n🎯 用戶指定的重點關鍵字: ${body.customKeywords}\n請務必在生成的 SEO 內容中優先使用這些關鍵字。` 
+        : '';
+      
+      const prompt = `請為 Casewhere 接案平台的以下頁面生成 SEO 優化內容：
+
+URL: ${body.url}
+頁面上下文: ${pageContext}${customKeywordsHint}
+
+請生成：
+1. SEO 標題（title）：50-60 字符，包含核心關鍵詞，吸引點擊
+2. SEO 描述（description）：150-160 字符，簡潔有力，包含行動呼籲
+3. 關鍵詞列表（keywords）：5-8 個相關關鍵詞，用逗號分隔${body.customKeywords ? '（優先使用用戶指定的關鍵字）' : ''}
+
+請以以下 JSON 格式回應：
+{
+  "title": "...",
+  "description": "...",
+  "keywords": "關鍵詞1, 關鍵詞2, 關鍵詞3, ..."
+}`;
+
+      const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+      if (!openaiApiKey) {
+        return c.json({ error: 'OpenAI API key not configured' }, 500);
+      }
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [
+            { role: 'system', content: '你是一位專業的 SEO 專家，專精於為網站頁面生成高質量的 SEO 元數據。請以 JSON 格式回應。' },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 1000,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ [AI SEO] OpenAI error:', errorText);
+        throw new Error('OpenAI API request failed');
+      }
+
+      const aiResponse = await response.json();
+      const generatedText = aiResponse.choices[0].message.content;
+      
+      const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
+      let seoData = {
+        title: 'Casewhere - 全球專業接案平台',
+        description: '連接全球客戶與專業自由工作者，提供高質量的設計、開發、營銷等專業服務。',
+        keywords: '接案平台, 自由工作者, 專業服務, 外包, 遠程工作',
+      };
+      
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          seoData = {
+            title: parsed.title || seoData.title,
+            description: parsed.description || seoData.description,
+            keywords: parsed.keywords || seoData.keywords,
+          };
+        } catch (e) {
+          console.error('❌ [AI SEO] JSON parse error:', e);
+        }
+      }
+      
+      // 🆕 使用時間戳創建唯一報告 ID，不覆蓋舊報告
+      const reportId = `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const kvKey = `ai_seo_report:${reportId}`;
+      
+      const reportData = {
+        id: reportId,
+        url: body.url,
+        ...seoData,
+        customKeywords: body.customKeywords || null,
+        generatedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      
+      await kv.set(kvKey, JSON.stringify(reportData));
+      
+      console.log(`✅ [AI SEO] New report created: ${reportId} for ${body.url}`);
+      
+      return c.json({
+        success: true,
+        ...reportData,
+      });
+    }
+    
+    // 傳統模式
     const { title, description, category, tags, language, targetAudience, projectType } = body;
 
     if (!title || !description) {
-      return c.json({ error: 'Title and description are required' }, 400);
+      return c.json({ error: 'Title and description are required (or use url + autoAnalyze mode)' }, 400);
     }
 
     console.log(`🤖 [AI SEO] Generating SEO for user ${userId}, language: ${language || 'zh-TW'}`);
@@ -19139,6 +20547,73 @@ app.post("/make-server-215f78a5/ai-seo/generate", async (c) => {
     console.error('❌ [AI SEO Generate] Error:', error);
     return c.json({
       error: 'Failed to generate SEO',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 獲取所有 AI SEO 報告列表
+app.get("/make-server-215f78a5/ai-seo/reports", async (c) => {
+  try {
+    console.log('📋 [AI SEO] Fetching all reports...');
+    
+    // 使用 getByPrefix 獲取所有報告
+    const allReports = (await kv.getByPrefix('ai_seo_report:')).map(item => item.value);
+    
+    console.log(`📊 [AI SEO] Raw reports count: ${allReports?.length || 0}`);
+    
+    // 解析並排序報告（最新的在前）
+    const reports = allReports
+      .map((item, index) => {
+        try {
+          // item is already the JSON string value, need to parse it
+          const report = typeof item === 'string' ? JSON.parse(item) : item;
+          console.log(`✅ [AI SEO] Loaded report ${index + 1}:`, report?.id);
+          return report;
+        } catch (e) {
+          console.error(`❌ [AI SEO] Failed to load report ${index + 1}:`, e);
+          return null;
+        }
+      })
+      .filter(report => report !== null)
+      .sort((a, b) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime());
+    
+    console.log(`✅ [AI SEO] Found ${reports.length} valid reports`);
+    
+    return c.json({
+      success: true,
+      reports,
+      total: reports.length,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI SEO Reports] Error:', error);
+    return c.json({
+      error: 'Failed to fetch reports',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 刪除單個 AI SEO 報告
+app.delete("/make-server-215f78a5/ai-seo/reports/:reportId", async (c) => {
+  try {
+    const reportId = c.req.param('reportId');
+    console.log(`🗑️ [AI SEO] Deleting report: ${reportId}`);
+    
+    const kvKey = `ai_seo_report:${reportId}`;
+    await kv.del(kvKey);
+    
+    console.log(`✅ [AI SEO] Report deleted: ${reportId}`);
+    
+    return c.json({
+      success: true,
+      message: 'Report deleted successfully',
+      reportId,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI SEO Delete] Error:', error);
+    return c.json({
+      error: 'Failed to delete report',
       message: error.message || 'Unknown error',
     }, 500);
   }
@@ -19194,6 +20669,321 @@ app.post("/make-server-215f78a5/ai-seo/keywords", async (c) => {
 
 console.log('✅ [SERVER] AI SEO APIs registered');
 
+// ==========================================
+// 🚀 Advanced AI Content Generator APIs
+// ==========================================
+
+// 🆕 生成完整文章內容（AI SEO 平台核心功能）
+app.post("/make-server-215f78a5/ai-content/generate-full", async (c) => {
+  try {
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return c.json({ error: 'OpenAI API key not configured' }, 500);
+    }
+
+    const generator = new (await import('./ai-content-generator.tsx')).AIContentGenerator(openaiApiKey);
+    const body = await c.req.json();
+
+    console.log(`🤖 [AI Content] Generating full content for: ${body.url}`);
+
+    const content = await generator.generateFullContent({
+      url: body.url,
+      title: body.title,
+      description: body.description,
+      keywords: body.keywords,
+      language: body.language || 'zh-TW',
+      contentType: body.contentType || 'article',
+      targetAudience: body.targetAudience,
+      tone: body.tone || 'professional',
+      wordCount: body.wordCount || 1200,
+    });
+
+    // 保存生成的內容到 KV Store
+    const reportId = `content_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const kvKey = `ai_content:${reportId}`;
+    
+    const reportData = {
+      id: reportId,
+      ...content,
+      generatedAt: new Date().toISOString(),
+      url: body.url,
+    };
+    
+    await kv.set(kvKey, JSON.stringify(reportData));
+
+    console.log(`✅ [AI Content] Full content generated: ${reportId}`);
+
+    return c.json({
+      success: true,
+      reportId,
+      ...content,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content Full] Error:', error);
+    return c.json({
+      error: 'Failed to generate content',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 生成 FAQ（專門針對 AI 搜尋引擎優化）
+app.post("/make-server-215f78a5/ai-content/generate-faq", async (c) => {
+  try {
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return c.json({ error: 'OpenAI API key not configured' }, 500);
+    }
+
+    const generator = new (await import('./ai-content-generator.tsx')).AIContentGenerator(openaiApiKey);
+    const body = await c.req.json();
+
+    console.log(`❓ [AI Content] Generating FAQ for: ${body.topic}`);
+
+    const faq = await generator.generateFAQ({
+      topic: body.topic,
+      keywords: body.keywords || [],
+      language: body.language || 'zh-TW',
+      count: body.count || 8,
+    });
+
+    return c.json({
+      success: true,
+      faq,
+      count: faq.length,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content FAQ] Error:', error);
+    return c.json({
+      error: 'Failed to generate FAQ',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 關鍵字研究（進階版）
+app.post("/make-server-215f78a5/ai-content/research-keywords", async (c) => {
+  try {
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return c.json({ error: 'OpenAI API key not configured' }, 500);
+    }
+
+    const generator = new (await import('./ai-content-generator.tsx')).AIContentGenerator(openaiApiKey);
+    const body = await c.req.json();
+
+    console.log(`🔍 [AI Content] Researching keywords for: ${body.topic}`);
+
+    const keywords = await generator.researchKeywords({
+      topic: body.topic,
+      industry: body.industry || 'freelancing',
+      language: body.language || 'zh-TW',
+      competitors: body.competitors || [],
+    });
+
+    return c.json({
+      success: true,
+      ...keywords,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content Keywords] Error:', error);
+    return c.json({
+      error: 'Failed to research keywords',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 競爭對手分析
+app.post("/make-server-215f78a5/ai-content/analyze-competitors", async (c) => {
+  try {
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return c.json({ error: 'OpenAI API key not configured' }, 500);
+    }
+
+    const generator = new (await import('./ai-content-generator.tsx')).AIContentGenerator(openaiApiKey);
+    const body = await c.req.json();
+
+    console.log(`🎯 [AI Content] Analyzing competitors: ${body.competitors?.join(', ')}`);
+
+    const analysis = await generator.analyzeCompetitors({
+      competitors: body.competitors || [],
+      topic: body.topic || 'freelancing platform',
+      language: body.language || 'zh-TW',
+    });
+
+    return c.json({
+      success: true,
+      ...analysis,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content Competitors] Error:', error);
+    return c.json({
+      error: 'Failed to analyze competitors',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 SEO 評分和改進建議
+app.post("/make-server-215f78a5/ai-content/score-seo", async (c) => {
+  try {
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return c.json({ error: 'OpenAI API key not configured' }, 500);
+    }
+
+    const generator = new (await import('./ai-content-generator.tsx')).AIContentGenerator(openaiApiKey);
+    const body = await c.req.json();
+
+    console.log(`📊 [AI Content] Scoring SEO for: ${body.url}`);
+
+    const score = await generator.scoreSEO({
+      url: body.url,
+      title: body.title,
+      description: body.description,
+      content: body.content,
+      keywords: body.keywords || [],
+      headings: body.headings || { h2: [], h3: [] },
+      language: body.language || 'zh-TW',
+    });
+
+    return c.json({
+      success: true,
+      ...score,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content Score] Error:', error);
+    return c.json({
+      error: 'Failed to score SEO',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 內部連結建議
+app.post("/make-server-215f78a5/ai-content/suggest-internal-links", async (c) => {
+  try {
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      return c.json({ error: 'OpenAI API key not configured' }, 500);
+    }
+
+    const generator = new (await import('./ai-content-generator.tsx')).AIContentGenerator(openaiApiKey);
+    const body = await c.req.json();
+
+    console.log(`🔗 [AI Content] Suggesting internal links for: ${body.currentPage}`);
+
+    const links = await generator.suggestInternalLinks({
+      currentPage: body.currentPage,
+      content: body.content,
+      allPages: body.allPages || [],
+      language: body.language || 'zh-TW',
+    });
+
+    return c.json({
+      success: true,
+      links,
+      count: links.length,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content Links] Error:', error);
+    return c.json({
+      error: 'Failed to suggest internal links',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 獲取所有生成的內容
+app.get("/make-server-215f78a5/ai-content/list", async (c) => {
+  try {
+    console.log('📋 [AI Content] Fetching all generated content...');
+    
+    const allContent = (await kv.getByPrefix('ai_content:')).map(item => item.value);
+    
+    const contents = allContent
+      .map((item: string) => {
+        try {
+          return JSON.parse(item);
+        } catch (e) {
+          return null;
+        }
+      })
+      .filter((item: any) => item !== null)
+      .sort((a: any, b: any) => new Date(b.generatedAt).getTime() - new Date(a.generatedAt).getTime());
+    
+    console.log(`✅ [AI Content] Found ${contents.length} content items`);
+    
+    return c.json({
+      success: true,
+      contents,
+      total: contents.length,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content List] Error:', error);
+    return c.json({
+      error: 'Failed to fetch content',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 獲取單個生成的內容
+app.get("/make-server-215f78a5/ai-content/:contentId", async (c) => {
+  try {
+    const contentId = c.req.param('contentId');
+    console.log(`📄 [AI Content] Fetching content: ${contentId}`);
+    
+    const kvKey = `ai_content:${contentId}`;
+    const content = await kv.get(kvKey);
+    
+    if (!content) {
+      return c.json({ error: 'Content not found' }, 404);
+    }
+    
+    const parsed = typeof content === 'string' ? JSON.parse(content) : content;
+    
+    return c.json({
+      success: true,
+      ...parsed,
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content Get] Error:', error);
+    return c.json({
+      error: 'Failed to fetch content',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+// 🆕 刪除生成的內容
+app.delete("/make-server-215f78a5/ai-content/:contentId", async (c) => {
+  try {
+    const contentId = c.req.param('contentId');
+    console.log(`🗑️ [AI Content] Deleting content: ${contentId}`);
+    
+    const kvKey = `ai_content:${contentId}`;
+    await kv.del(kvKey);
+    
+    console.log(`✅ [AI Content] Content deleted: ${contentId}`);
+    
+    return c.json({
+      success: true,
+      message: 'Content deleted successfully',
+    });
+  } catch (error: any) {
+    console.error('❌ [AI Content Delete] Error:', error);
+    return c.json({
+      error: 'Failed to delete content',
+      message: error.message || 'Unknown error',
+    }, 500);
+  }
+});
+
+console.log('✅ [SERVER] Advanced AI Content Generator APIs registered');
+
 // Check if user is a team member (for enterprise chat access)
 app.get("/make-server-215f78a5/check-team-member", async (c) => {
   try {
@@ -19211,7 +21001,7 @@ app.get("/make-server-215f78a5/check-team-member", async (c) => {
     console.log('🔍 [Check Team Member] Checking membership for user:', user.email);
 
     // Check if user is a team member
-    const allTeamMembers = await kv.getByPrefix('team_member:') || [];
+    const allTeamMembers = (await kv.getByPrefix('team_member:') || []).map(item => item.value);
     console.log('🔍 [Check Team Member] Total team members found:', allTeamMembers.length);
     
     const memberRecord = allTeamMembers.find((m: any) => 
@@ -19286,7 +21076,7 @@ app.post('/make-server-215f78a5/deliverables/check-expiring-files', async (c) =>
     console.log('🔍 [Cron] Checking for expiring deliverable files...');
 
     // 獲取所有專案的交付物
-    const allProjects = await kv.getByPrefix('project:');
+    const allProjects = (await kv.getByPrefix('project:')).map(item => item.value);
     let emailsSent = 0;
     let filesChecked = 0;
 
@@ -19717,7 +21507,7 @@ app.get("/make-server-215f78a5/admin/kyc/all", async (c) => {
       return c.json({ error: 'Admin access required' }, 403);
     }
 
-    const allKYC = await kv.getByPrefix('kyc_');
+    const allKYC = (await kv.getByPrefix('kyc_')).map(item => item.value);
     const kycList = (allKYC || [])
       .filter((k: any) => k && k.status !== 'not_started')
       .sort((a: any, b: any) => {
@@ -19756,7 +21546,7 @@ app.get("/make-server-215f78a5/admin/kyc/pending-count", async (c) => {
       return c.json({ error: 'Admin access required' }, 403);
     }
 
-    const allKYC = await kv.getByPrefix('kyc_');
+    const allKYC = (await kv.getByPrefix('kyc_')).map(item => item.value);
     const pendingCount = (allKYC || [])
       .filter((k: any) => k && k.status === 'pending')
       .length;
@@ -19890,6 +21680,98 @@ app.post("/make-server-215f78a5/admin/kyc/:userId/reject", async (c) => {
 });
 
 console.log('✅ [SERVER] KYC verification routes registered');
+
+// ============= WITHDRAWAL REQUEST ROUTES (NEW SYSTEM) =============
+import { registerWithdrawalRequestRoutes } from './withdrawal_request_routes.tsx';
+registerWithdrawalRequestRoutes(app, supabase, emailService);
+
+// ============= WALLET RESET ROUTES =============
+import { registerWalletResetRoutes } from './wallet_reset_routes.tsx';
+registerWalletResetRoutes(app, supabase);
+
+// ============= REVENUE RESET ROUTES =============
+import { registerRevenueResetRoutes } from './revenue_reset_routes.tsx';
+registerRevenueResetRoutes(app, supabase);
+
+// ============= WHITEPAPER ROUTES =============
+import { registerWhitepaperRoutes } from './whitepaper_routes.tsx';
+registerWhitepaperRoutes(app);
+
+// ============= SEO CONTENT GENERATION ROUTES =============
+import { registerSEOContentRoutes } from './seo_content_service.tsx';
+registerSEOContentRoutes(app);
+
+// ============= SEO KEYWORDS ROUTES =============
+import { registerKeywordRoutes } from './seo_keywords_service.tsx';
+registerKeywordRoutes(app);
+
+// ============= SEO KEYWORD MAP ROUTES =============
+import { registerKeywordMapRoutes } from './seo_keyword_map_service.tsx';
+registerKeywordMapRoutes(app);
+
+// ============= VIDEO UPLOAD ROUTES =============
+// Bucket 已在 Supabase 手動創建，無需初始化
+
+// 上傳影片路由
+app.post('/make-server-215f78a5/upload-hero-video', async (c) => {
+  try {
+    const formData = await c.req.formData();
+    const videoFile = formData.get('video') as File;
+    
+    if (!videoFile) {
+      return c.json({ error: '沒有收到影片檔案' }, 400);
+    }
+    
+    // 驗證檔案大小（50MB）
+    if (videoFile.size > 50 * 1024 * 1024) {
+      return c.json({ error: '影片檔案太大，請使用小於 50MB 的影片' }, 400);
+    }
+    
+    // 驗證檔案類型
+    if (!videoFile.type.startsWith('video/')) {
+      return c.json({ error: '請上傳影片檔案' }, 400);
+    }
+    
+    // 上傳到 Supabase Storage
+    const result = await videoUploadService.uploadHeroVideo(videoFile, videoFile.name);
+    
+    return c.json({
+      success: true,
+      url: result.url,
+      path: result.path,
+      message: '影片上傳成功！'
+    });
+    
+  } catch (error: any) {
+    console.error('❌ [Video Upload Route] Error:', error);
+    return c.json({ 
+      error: error.message || '上傳失敗，請重試'
+    }, 500);
+  }
+});
+
+// 列出已上傳的影片
+app.get('/make-server-215f78a5/list-hero-videos', async (c) => {
+  try {
+    const videos = await videoUploadService.listHeroVideos();
+    return c.json({ success: true, videos });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 刪除影片
+app.delete('/make-server-215f78a5/delete-hero-video/:path', async (c) => {
+  try {
+    const path = c.req.param('path');
+    await videoUploadService.deleteHeroVideo(path);
+    return c.json({ success: true, message: '影片已刪除' });
+  } catch (error: any) {
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+console.log('✅ [SERVER] Video upload routes registered');
 
 console.log('🎉 [SERVER] All routes registered, starting server...');
 
