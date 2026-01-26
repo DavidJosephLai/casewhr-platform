@@ -567,6 +567,10 @@ const PAYPAL_MODE = Deno.env.get('PAYPAL_MODE') || 'production'; // ✅ 默認�
 const PAYPAL_CLIENT_ID = Deno.env.get('PAYPAL_CLIENT_ID') || '';
 const PAYPAL_CLIENT_SECRET = Deno.env.get('PAYPAL_CLIENT_SECRET') || '';
 
+// ✅ PayPal 訂閱計劃 Plan ID
+const PAYPAL_PRO_PLAN_ID = Deno.env.get('PAYPAL_PRO_PLAN_ID') || '';
+const PAYPAL_ENTERPRISE_PLAN_ID = Deno.env.get('PAYPAL_ENTERPRISE_PLAN_ID') || '';
+
 // ✅ 支持 'production' 和 'live' 兩種模式名稱
 const isProductionMode = PAYPAL_MODE === 'production' || PAYPAL_MODE === 'live';
 const PAYPAL_API_BASE = isProductionMode
@@ -578,7 +582,9 @@ console.log('🔍 [PayPal] Environment Configuration:', {
   isProduction: isProductionMode,
   apiBase: PAYPAL_API_BASE,
   clientIdSet: PAYPAL_CLIENT_ID ? '✅' : '❌',
-  clientSecretSet: PAYPAL_CLIENT_SECRET ? '✅' : '❌'
+  clientSecretSet: PAYPAL_CLIENT_SECRET ? '✅' : '❌',
+  proPlanIdSet: PAYPAL_PRO_PLAN_ID ? '✅' : '❌',
+  enterprisePlanIdSet: PAYPAL_ENTERPRISE_PLAN_ID ? '✅' : '❌',
 });
 
 /**
@@ -656,12 +662,23 @@ export async function createPayPalSubscription(
 ): Promise<{ subscriptionId: string; approvalUrl: string }> {
   console.log('🟢 [PayPal] Creating subscription:', { userId, planType });
 
-  // ⚠️ 注意：這裡需要先在 PayPal Dashboard 創建 Plan ID
-  // Pro Plan: 每月 $15 USD
-  // Enterprise Plan: 每月 $45 USD
+  // ✅ 從環境變數讀取 Plan ID
   const planId = planType === 'pro' 
-    ? 'P-XXXXXXXXXXXXXXXXXXXX' // TODO: 替換為實際的 PayPal Plan ID
-    : 'P-YYYYYYYYYYYYYYYYYYYY'; // TODO: 替換為實際的 PayPal Plan ID
+    ? PAYPAL_PRO_PLAN_ID
+    : PAYPAL_ENTERPRISE_PLAN_ID;
+
+  // ✅ 驗證 Plan ID 是否已設置
+  if (!planId) {
+    const missingEnvVar = planType === 'pro' ? 'PAYPAL_PRO_PLAN_ID' : 'PAYPAL_ENTERPRISE_PLAN_ID';
+    console.error(`❌ [PayPal] ${missingEnvVar} not configured`);
+    throw new Error(
+      `PayPal ${planType.toUpperCase()} plan not configured. ` +
+      `Please set ${missingEnvVar} environment variable with your PayPal Plan ID. ` +
+      `You can create plans at: https://www.paypal.com/billing/plans`
+    );
+  }
+
+  console.log(`📋 [PayPal] Using Plan ID for ${planType}:`, planId.substring(0, 10) + '...');
 
   const accessToken = await getPayPalAccessToken();
 
