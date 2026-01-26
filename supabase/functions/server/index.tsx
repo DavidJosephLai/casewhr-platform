@@ -11467,25 +11467,51 @@ app.post("/make-server-215f78a5/webhooks/paypal/subscription", async (c) => {
 // Create ECPay recurring subscription
 app.post("/make-server-215f78a5/subscription/ecpay/create-recurring", async (c) => {
   try {
+    console.log('🟢 [ECPay Create] Received subscription request');
+    
     const accessToken = c.req.header('Authorization')?.split(' ')[1];
     
     if (!accessToken) {
+      console.error('❌ [ECPay Create] No authorization token');
       return c.json({ error: 'Authorization required' }, 401);
     }
 
     const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
     if (authError || !user?.id) {
+      console.error('❌ [ECPay Create] Unauthorized:', authError?.message);
       return c.json({ error: 'Unauthorized' }, 401);
     }
+
+    console.log('✅ [ECPay Create] User authenticated:', user.id);
 
     const body = await c.req.json();
     const { planType } = body; // 'pro' | 'enterprise'
 
     if (!['pro', 'enterprise'].includes(planType)) {
+      console.error('❌ [ECPay Create] Invalid plan type:', planType);
       return c.json({ error: 'Invalid plan type' }, 400);
     }
 
+    console.log('✅ [ECPay Create] Plan type:', planType);
+
+    // 檢查環境變數
+    const merchantId = Deno.env.get('ECPAY_MERCHANT_ID');
+    const hashKey = Deno.env.get('ECPAY_HASH_KEY');
+    const hashIV = Deno.env.get('ECPAY_HASH_IV');
+    
+    if (!merchantId || !hashKey || !hashIV) {
+      console.error('❌ [ECPay Create] Missing environment variables:', {
+        merchantId: merchantId ? '✅' : '❌',
+        hashKey: hashKey ? '✅' : '❌',
+        hashIV: hashIV ? '✅' : '❌'
+      });
+      return c.json({ error: 'ECPay configuration missing. Please contact support.' }, 500);
+    }
+
+    console.log('✅ [ECPay Create] Environment variables OK');
+
     const returnUrl = `${c.req.header('origin') || 'https://casewhr.com'}`;
+    console.log('🟢 [ECPay Create] Return URL:', returnUrl);
 
     const formHtml = await subscriptionRecurring.createECPaySubscription(
       user.id,
@@ -11494,9 +11520,12 @@ app.post("/make-server-215f78a5/subscription/ecpay/create-recurring", async (c) 
       returnUrl
     );
 
+    console.log('✅ [ECPay Create] Form HTML generated, length:', formHtml.length);
+
     return c.html(formHtml);
   } catch (error: any) {
     console.error('❌ [ECPay Subscription] Error:', error);
+    console.error('❌ [ECPay Subscription] Stack:', error.stack);
     return c.json({ error: error.message || 'Failed to create ECPay subscription' }, 500);
   }
 });

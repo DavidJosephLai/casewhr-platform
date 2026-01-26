@@ -206,30 +206,50 @@ export function RecurringSubscriptionManager({
   const subscribeWithECPay = async (planType: 'pro' | 'enterprise') => {
     try {
       setProcessing(true);
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/subscription/ecpay/create-recurring`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ planType }),
-        }
-      );
+      
+      console.log('🟢 [ECPay] Starting subscription flow...', { planType, userId, projectId });
+      
+      const url = `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/subscription/ecpay/create-recurring`;
+      console.log('🟢 [ECPay] Calling API:', url);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ planType }),
+      });
+
+      console.log('🟢 [ECPay] Response status:', response.status);
 
       if (!response.ok) {
-        throw new Error('Failed to create ECPay subscription');
+        const errorText = await response.text();
+        console.error('❌ [ECPay] API Error:', response.status, errorText);
+        throw new Error(`Failed to create ECPay subscription: ${errorText}`);
       }
 
       // ECPay 返回 HTML form，直接渲染並提交
       const html = await response.text();
+      console.log('🟢 [ECPay] Received HTML form, length:', html.length);
+      
+      if (html.length < 100) {
+        console.error('❌ [ECPay] HTML too short, might be an error:', html);
+        throw new Error('Invalid response from server');
+      }
+      
       const container = document.createElement('div');
       container.innerHTML = html;
       document.body.appendChild(container);
+      
+      console.log('✅ [ECPay] Form submitted, redirecting to ECPay...');
     } catch (error: any) {
-      console.error('Error creating ECPay subscription:', error);
-      toast.error(language === 'en' ? 'Failed to create subscription' : '創建訂閱失敗');
+      console.error('❌ [ECPay] Error creating subscription:', error);
+      toast.error(
+        language === 'en' 
+          ? `Failed to create subscription: ${error.message}` 
+          : `創建訂閱失敗: ${error.message}`
+      );
       setProcessing(false);
     }
   };
