@@ -707,94 +707,71 @@ export async function createECPaySubscription(
           animation: spin 1s linear infinite;
           margin: 20px auto;
         }
-        .debug-panel {
-          position: fixed;
-          top: 10px;
-          left: 10px;
-          right: 10px;
-          background: white;
-          color: #333;
-          padding: 20px;
-          border-radius: 8px;
-          max-height: 500px;
-          overflow-y: auto;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-          text-align: left;
-          font-size: 11px;
-          font-family: 'Courier New', monospace;
-          display: none;
-          z-index: 99999;
-        }
-        .debug-toggle {
-          position: fixed;
-          top: 10px;
-          right: 10px;
-          background: #ff6b6b;
-          color: white;
-          padding: 10px 20px;
-          border-radius: 5px;
-          cursor: pointer;
-          z-index: 100000;
-          font-weight: bold;
-        }
-        .debug-panel.show {
-          display: block;
-        }
-        .debug-line {
-          padding: 5px 0;
-          border-bottom: 1px solid #eee;
-          word-wrap: break-word;
-        }
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
+        .debug-info {
+          position: fixed;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(255,255,255,0.9);
+          color: #333;
+          padding: 15px;
+          border-radius: 8px;
+          font-size: 12px;
+          font-family: monospace;
+          max-width: 90%;
+          text-align: left;
+        }
       </style>
     </head>
     <body>
-      <div class="debug-toggle" onclick="toggleDebug()">🔍 DEBUG LOGS</div>
-      
-      <div class="debug-panel" id="debugPanel">
-        <h3 style="margin-top: 0; color: #ff6b6b;">🔍 ECPay CheckMacValue 計算過程</h3>
-        ${debugLogs.map((log: string) => {
-          const escaped = log.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-          return `<div class="debug-line">${escaped}</div>`;
-        }).join('')}
-        <hr style="margin: 20px 0;"/>
-        <h4>📋 提交參數：</h4>
-        <div class="debug-line"><strong>MerchantID:</strong> ${ECPAY_MERCHANT_ID}</div>
-        <div class="debug-line"><strong>MerchantTradeNo:</strong> ${tradeNo}</div>
-        <div class="debug-line"><strong>TotalAmount:</strong> ${params.TotalAmount}</div>
-        <div class="debug-line"><strong>PeriodAmount:</strong> ${params.PeriodAmount}</div>
-        <div class="debug-line"><strong>API Endpoint:</strong> ${ECPAY_API_BASE}</div>
-        <div class="debug-line"><strong>CheckMacValue:</strong> ${checkMacValue}</div>
-      </div>
-      
       <div class="container">
         <h2>🔄 正在導向綠界付款...</h2>
         <div class="loader"></div>
         <p>請稍候，即將跳轉至安全付款頁面</p>
-        <p style="font-size: 12px; margin-top: 20px; opacity: 0.8;">點擊右上角的 DEBUG LOGS 查看詳細資訊</p>
       </div>
+      
+      <div class="debug-info">
+        <strong>🔍 Debug Info:</strong><br/>
+        MerchantID: ${ECPAY_MERCHANT_ID}<br/>
+        TradeNo: ${tradeNo}<br/>
+        Amount: ${params.TotalAmount} TWD<br/>
+        API: ${ECPAY_API_BASE}<br/>
+        CheckMac: ${checkMacValue.substring(0, 20)}...
+      </div>
+      
       <form id="ecpayForm" method="post" action="${ECPAY_API_BASE}">
-        ${Object.entries({ ...params, CheckMacValue: checkMacValue }).map(([key, value]) => 
-          `<input type="hidden" name="${key}" value="${value}">`
-        ).join('\n')}
+        <input type="hidden" name="MerchantID" value="${params.MerchantID}">
+        <input type="hidden" name="MerchantTradeNo" value="${params.MerchantTradeNo}">
+        <input type="hidden" name="MerchantTradeDate" value="${params.MerchantTradeDate}">
+        <input type="hidden" name="PaymentType" value="${params.PaymentType}">
+        <input type="hidden" name="TotalAmount" value="${params.TotalAmount}">
+        <input type="hidden" name="TradeDesc" value="${params.TradeDesc}">
+        <input type="hidden" name="ItemName" value="${params.ItemName}">
+        <input type="hidden" name="ReturnURL" value="${params.ReturnURL}">
+        <input type="hidden" name="ChoosePayment" value="${params.ChoosePayment}">
+        <input type="hidden" name="EncryptType" value="${params.EncryptType}">
+        <input type="hidden" name="PeriodAmount" value="${params.PeriodAmount}">
+        <input type="hidden" name="PeriodType" value="${params.PeriodType}">
+        <input type="hidden" name="Frequency" value="${params.Frequency}">
+        <input type="hidden" name="ExecTimes" value="${params.ExecTimes}">
+        <input type="hidden" name="PeriodReturnURL" value="${params.PeriodReturnURL}">
+        <input type="hidden" name="CreditInstallment" value="${params.CreditInstallment}">
+        <input type="hidden" name="UnionPay" value="${params.UnionPay}">
+        <input type="hidden" name="CheckMacValue" value="${checkMacValue}">
       </form>
+      
       <script>
-        function toggleDebug() {
-          document.getElementById('debugPanel').classList.toggle('show');
-        }
-        
         console.log('ECPay Form Ready');
-        console.log('Target URL: ${ECPAY_API_BASE}');
-        console.log('CheckMacValue: ${checkMacValue}');
+        console.log('Submitting in 3 seconds...');
         
-        // 10秒後自動提交
         setTimeout(function() {
-          console.log('Submitting form to ECPay...');
+          console.log('Submitting to ECPay...');
           document.getElementById('ecpayForm').submit();
-        }, 10000);
+        }, 3000);
       </script>
     </body>
     </html>
