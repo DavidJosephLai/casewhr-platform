@@ -156,9 +156,27 @@ export async function createECPaySubscription(
   userId: string,
   planType: 'pro' | 'enterprise',
   email: string,
-  returnUrl: string
+  returnUrl: string,
+  billingCycle: 'monthly' | 'yearly' = 'monthly' // ✅ 新增參數
 ): Promise<string> {
-  const amount = planType === 'pro' ? 480 : 1400; // TWD
+  // 🎯 根據計費週期計算金額
+  let amount: number;
+  let periodType: string;
+  let itemName: string;
+  
+  if (billingCycle === 'yearly') {
+    // 年付價格（打8折）
+    amount = planType === 'pro' ? 4800 : 14000; // TWD
+    periodType = 'Y'; // 年
+    itemName = planType === 'pro' ? 'Pro Yearly Plan' : 'Enterprise Yearly Plan';
+  } else {
+    // 月付價格
+    amount = planType === 'pro' ? 480 : 1400; // TWD
+    periodType = 'M'; // 月
+    itemName = planType === 'pro' ? 'Pro Monthly Plan' : 'Enterprise Monthly Plan';
+  }
+  
+  console.log('💰 [ECPay] Billing Cycle:', billingCycle, 'Amount:', amount, 'TWD');
   
   // ✅ 修正：MerchantTradeNo 必須 ≤ 20 字元
   // 格式：S + 10位時間戳 + 6位隨機碼 = 17 字元
@@ -199,13 +217,13 @@ export async function createECPaySubscription(
     PaymentType: 'aio',
     TotalAmount: Math.floor(amount).toString(),
     TradeDesc: planType === 'pro' ? 'Pro Plan' : 'Enterprise Plan',
-    ItemName: planType === 'pro' ? 'Pro Monthly Plan' : 'Enterprise Monthly Plan',
+    ItemName: itemName,
     ReturnURL: periodReturnURL,
     ChoosePayment: 'Credit',
     EncryptType: '1',
     // ✅ 定期定額必要參數
     PeriodAmount: Math.floor(amount).toString(),
-    PeriodType: 'M',
+    PeriodType: periodType,
     Frequency: '1',
     ExecTimes: '999',
     PeriodReturnURL: periodReturnURL,
@@ -371,12 +389,16 @@ export async function handleECPayPeriodCallback(params: Record<string, any>): Pr
           status: 'active',
           payment_method: 'ecpay',
           ecpay_trade_no: MerchantTradeNo,
-          billing_cycle: 'monthly',
+          billing_cycle: PeriodType === 'Y' ? 'yearly' : 'monthly',
           amount,
           start_date: new Date().toISOString(),
           next_billing_date: (() => {
             const next = new Date();
-            next.setMonth(next.getMonth() + 1);
+            if (PeriodType === 'Y') {
+              next.setFullYear(next.getFullYear() + 1); // ✅ 年付：一年後續訂
+            } else {
+              next.setMonth(next.getMonth() + 1); // 月付：一個月後續訂
+            }
             return next.toISOString();
           })(),
           auto_renew: true,

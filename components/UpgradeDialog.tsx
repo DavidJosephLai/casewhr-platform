@@ -57,16 +57,8 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
   // 顯示用的價格（可能是 USD、TWD 或 CNY）
   const planPriceDisplay = planPrices[targetPlan][billingCycle][selectedCurrency];
 
-  // 🎯 根據計費週期自動選擇付款方式
-  useEffect(() => {
-    if (billingCycle === 'monthly') {
-      setPaymentMethod('ecpay'); // 月付 → ECPay
-      console.log('📅 [UpgradeDialog] Auto-selected ECPay for monthly billing');
-    } else if (billingCycle === 'yearly') {
-      setPaymentMethod('paypal'); // 年付 → PayPal
-      console.log('📅 [UpgradeDialog] Auto-selected PayPal for yearly billing');
-    }
-  }, [billingCycle]);
+  // ✅ 移除自動切換，讓用戶自己選擇
+  // ECPay 和 PayPal 都支援月付和年付
 
   useEffect(() => {
     if (open && user && accessToken) {
@@ -208,6 +200,7 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
           },
           body: JSON.stringify({
             planType: targetPlan, // ✅ 確保傳遞正確的 planType
+            billingCycle: billingCycle, // ✅ 傳入計費週期（monthly/yearly）
           }),
         }
       );
@@ -439,12 +432,12 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
                 </p>
                 <p className="text-xs text-green-700 mt-2 whitespace-pre-line">
                   {language === 'en' 
-                    ? '✓ Secure payment gateway\n✓ Auto-renewal support\n✓ All major credit cards accepted' 
-                    : '✓ 安全支付閘道\n✓ 支援自動續訂\n✓ 支援所有主流信用卡'}
+                    ? '✓ Secure payment gateway\n✓ Auto-renewal support\n✓ All major credit cards accepted\n✓ Supports both monthly and yearly billing' 
+                    : '✓ 安全支付閘道\n✓ 支援自動續訂\n✓ 支援所有主流信用卡\n✓ 支援月付和年付'}
                 </p>
-                {billingCycle === 'monthly' && (
-                  <div className="mt-3 p-2 bg-green-100 border border-green-300 rounded text-xs text-green-900">
-                    💡 {language === 'en' ? 'Recommended for monthly billing' : '推薦用於月付方案'}
+                {billingCycle === 'yearly' && (
+                  <div className="mt-3 p-2 bg-amber-100 border border-amber-300 rounded text-xs text-amber-900">
+                    💰 {language === 'en' ? 'Save 20% with yearly billing!' : '年付享 8 折優惠！'}
                   </div>
                 )}
               </div>
@@ -466,12 +459,12 @@ export function UpgradeDialog({ open, onOpenChange, targetPlan, billingCycle, on
                 </p>
                 <p className="text-xs text-blue-700 mt-2 whitespace-pre-line">
                   {language === 'en' 
-                    ? '✓ Secure global payment\n✓ Auto-renewal with PayPal\n✓ Easy cancellation anytime' 
-                    : '✓ 安全國際支付\n✓ PayPal 自動續訂\n✓ 隨時輕鬆取消'}
+                    ? '✓ Secure global payment\n✓ Auto-renewal with PayPal\n✓ Easy cancellation anytime\n✓ Supports both monthly and yearly billing' 
+                    : '✓ 安全國際支付\n✓ PayPal 自動續訂\n✓ 隨時輕鬆取消\n✓ 支援月付和年付'}
                 </p>
                 {billingCycle === 'yearly' && (
-                  <div className="mt-3 p-2 bg-blue-100 border border-blue-300 rounded text-xs text-blue-900">
-                    💡 {language === 'en' ? 'Recommended for yearly billing' : '推薦用於年付方案'}
+                  <div className="mt-3 p-2 bg-amber-100 border border-amber-300 rounded text-xs text-amber-900">
+                    💰 {language === 'en' ? 'Save 20% with yearly billing!' : '年付享 8 折優惠！'}
                   </div>
                 )}
               </div>

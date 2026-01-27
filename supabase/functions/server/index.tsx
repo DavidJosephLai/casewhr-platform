@@ -11684,14 +11684,19 @@ app.post("/make-server-215f78a5/subscription/ecpay/create-recurring", async (c) 
     console.log('✅ [ECPay Create] User authenticated:', user.id);
 
     const body = await c.req.json();
-    const { planType } = body; // 'pro' | 'enterprise'
+    const { planType, billingCycle = 'monthly' } = body; // ✅ 新增 billingCycle 參數
 
     if (!['pro', 'enterprise'].includes(planType)) {
       console.error('❌ [ECPay Create] Invalid plan type:', planType);
       return c.json({ error: 'Invalid plan type' }, 400);
     }
+    
+    if (!['monthly', 'yearly'].includes(billingCycle)) {
+      console.error('❌ [ECPay Create] Invalid billing cycle:', billingCycle);
+      return c.json({ error: 'Invalid billing cycle' }, 400);
+    }
 
-    console.log('✅ [ECPay Create] Plan type:', planType);
+    console.log('✅ [ECPay Create] Plan type:', planType, 'Billing cycle:', billingCycle);
 
     // 檢查環境變數
     const merchantId = Deno.env.get('ECPAY_MERCHANT_ID');
@@ -11716,7 +11721,8 @@ app.post("/make-server-215f78a5/subscription/ecpay/create-recurring", async (c) 
       user.id,
       planType,
       user.email || '',
-      returnUrl
+      returnUrl,
+      billingCycle // ✅ 傳入計費週期
     );
 
     console.log('✅ [ECPay Create] Form HTML generated, length:', formHtml.length);
