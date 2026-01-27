@@ -33,11 +33,29 @@ export function ViewProvider({ children }: { children: ReactNode }) {
       const pathname = window.location.pathname;
       const searchParams = new URLSearchParams(window.location.search);
       const viewParam = searchParams.get('view');
+      const hostname = window.location.hostname;
       
       console.log('🔗 [ViewContext] URL changed:');
+      console.log('   - Hostname:', hostname);
       console.log('   - Pathname:', pathname);
       console.log('   - Hash:', hash);
       console.log('   - View param:', viewParam);
+      
+      // 🔥 檢查是否是 Wismachion 子域名
+      if (hostname === 'wismachion.com' || hostname === 'www.wismachion.com') {
+        console.log('✅ [ViewContext] Wismachion subdomain detected, switching view');
+        setView('wismachion');
+        setManualOverride(true);
+        return;
+      }
+      
+      // 🔥 檢查是否是 Wismachion pathname
+      if (pathname === '/wismachion' || pathname.startsWith('/wismachion/')) {
+        console.log('✅ [ViewContext] Wismachion pathname detected, switching view');
+        setView('wismachion');
+        setManualOverride(true);
+        return;
+      }
       
       // 🔥 優先檢查 query parameter ?view=xxx
       if (viewParam) {
