@@ -45,11 +45,11 @@ export async function getDownloadUrl(
 ): Promise<string | null> {
   const supabase = getSupabaseClient();
   
-  // Define file paths based on license type
+  // Define file paths based on license type (changed to .zip format)
   const fileMap = {
-    trial: 'PerfectComm_Setup_Trial.exe',
-    standard: 'PerfectComm_Setup_Standard.exe',
-    enterprise: 'PerfectComm_Setup_Enterprise.exe'
+    trial: 'PerfectComm_Trial.zip',
+    standard: 'PerfectComm_Standard.zip',
+    enterprise: 'PerfectComm_Enterprise.zip'
   };
   
   const fileName = fileMap[licenseType];

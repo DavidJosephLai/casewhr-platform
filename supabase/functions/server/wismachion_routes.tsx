@@ -32,7 +32,9 @@ const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: '
 const PAYPAL_CLIENT_ID = (Deno.env.get('PAYPAL_CLIENT_ID') || '').trim();
 const PAYPAL_CLIENT_SECRET = (Deno.env.get('PAYPAL_CLIENT_SECRET') || '').trim();
 const PAYPAL_MODE = (Deno.env.get('PAYPAL_MODE') || 'live').trim();
-const PAYPAL_API_BASE = PAYPAL_MODE === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+// ✅ 支持 'production' 和 'live' 兩種模式名稱
+const isProductionMode = PAYPAL_MODE === 'production' || PAYPAL_MODE === 'live';
+const PAYPAL_API_BASE = isProductionMode ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
 
 // ECPay
 const ECPAY_MERCHANT_ID = Deno.env.get('ECPAY_MERCHANT_ID') || '';
@@ -1261,6 +1263,63 @@ wismachion.get('/make-server-215f78a5/wismachion/admin/download-stats', async (c
   } catch (error: any) {
     console.error('❌ [Download Stats] Error:', error);
     return c.json({ error: 'Failed to get download statistics' }, 500);
+  }
+});
+
+// Upload installer file (admin only)
+wismachion.post('/admin/upload-installer', async (c: any) => {
+  try {
+    // TODO: Add admin authentication
+    const { fileName, fileData, contentType } = await c.req.json();
+    
+    if (!fileName || !fileData) {
+      return c.json({ error: 'fileName and fileData are required' }, 400);
+    }
+    
+    // Decode base64 file data
+    const binaryString = atob(fileData);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    console.log(`📤 [Upload] Uploading ${fileName} (${bytes.length} bytes)`);
+    
+    const success = await downloadService.uploadInstaller(
+      bytes,
+      fileName,
+      contentType || 'application/zip'
+    );
+    
+    if (success) {
+      console.log(`✅ [Upload] Successfully uploaded ${fileName}`);
+      return c.json({
+        success: true,
+        message: `${fileName} uploaded successfully`,
+        fileName
+      });
+    } else {
+      return c.json({ error: 'Upload failed' }, 500);
+    }
+  } catch (error: any) {
+    console.error('❌ [Upload] Error:', error);
+    return c.json({ error: error.message || 'Failed to upload file' }, 500);
+  }
+});
+
+// List available installers (admin only)
+wismachion.get('/admin/list-installers', async (c: any) => {
+  try {
+    // TODO: Add admin authentication
+    const files = await downloadService.listInstallers();
+    
+    return c.json({
+      success: true,
+      files
+    });
+  } catch (error: any) {
+    console.error('❌ [List Installers] Error:', error);
+    return c.json({ error: 'Failed to list installers' }, 500);
   }
 });
 
