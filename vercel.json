@@ -53,28 +53,6 @@
       ],
       "destination": "https://casewhr.com/:path*",
       "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "wismachion.com"
-        }
-      ],
-      "destination": "https://casewhr.com/?view=wismachion",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.wismachion.com"
-        }
-      ],
-      "destination": "https://casewhr.com/?view=wismachion",
-      "permanent": true
     }
   ],
   "rewrites": [
