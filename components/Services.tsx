@@ -11,43 +11,33 @@ export function Services() {
 
   // Handle card clicks - scroll to relevant sections
   const handleCardClick = (index: number) => {
-    console.log('🔘 Service card clicked:', index);
     switch (index) {
       case 0: // Verified Professionals（經過驗證的專業人士）
         // Scroll to talents section and trigger auto-expand
-        console.log('→ Navigating to talents section with auto-expand');
-        // First trigger the expand event
         window.dispatchEvent(new CustomEvent('expandTalentDirectory', { detail: { expand: true } }));
-        // Then scroll to the section
         setTimeout(() => {
           document.getElementById('talents')?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
         break;
       case 1: // Wide Range of Skills（廣泛的技能範圍）
         // Scroll to categories section - 查看所有技能分類
-        console.log('→ Navigating to categories section');
         document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' });
-        // Highlight all categories briefly
         window.dispatchEvent(new CustomEvent('highlightCategories'));
         break;
       case 2: // Secure Payments（安全支付）
         // Scroll to milestone feature section - 了解里程碑付款系統
-        console.log('→ Navigating to milestone feature section');
         document.getElementById('milestone-feature')?.scrollIntoView({ behavior: 'smooth' });
         break;
       case 3: // Quality Guarantee（質量保證）
         // Scroll to cases section - 查看使用案例和質量保證
-        console.log('→ Navigating to cases section');
         document.getElementById('cases')?.scrollIntoView({ behavior: 'smooth' });
         break;
       case 4: // Fast Matching（快速匹配）
         // Scroll to projects section - 查看案件和快速匹配示例
-        console.log('→ Navigating to projects section');
         document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' });
         break;
       case 5: // Transparent Pricing（透明定價）
         // Navigate to pricing page - 查看方案定價
-        console.log('→ Navigating to pricing page');
         window.dispatchEvent(new Event('showPricing'));
         break;
       default:

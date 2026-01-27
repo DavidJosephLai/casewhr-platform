@@ -17,13 +17,9 @@ export function Hero() {
 
   // 🔥 跟 Header 一樣的 scrollToSection 函數
   const scrollToSection = (id: string) => {
-    console.log(`🎯 [Hero] Attempting to scroll to section: ${id}`);
-    console.log(`📍 [Hero] Current view: ${view}`);
-    
     const isChangingView = view !== 'home';
     
     if (isChangingView) {
-      console.log(`🔄 [Hero] Switching to home view first`);
       setView('home');
       setManualOverride(true);
     }
@@ -31,7 +27,6 @@ export function Hero() {
     // 滾動到指定元素
     const scrollToElement = () => {
       const element = document.getElementById(id);
-      console.log(`🔍 [Hero] Looking for element #${id}:`, element);
       
       if (element) {
         // 計算元素位置並扣除 header 高度
@@ -39,46 +34,34 @@ export function Hero() {
         const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
         const targetPosition = elementPosition - headerHeight;
         
-        console.log(`📍 [Hero] Element position: ${elementPosition}, target: ${targetPosition}, current scroll: ${window.pageYOffset}`);
-        
         // 一次性滾動到目標位置
         window.scrollTo({
           top: targetPosition,
           behavior: 'smooth'
         });
         
-        console.log(`✅ [Hero] Scrolled to section: ${id}`);
         return true;
       }
-      console.log(`⏳ [Hero] Element #${id} not found, retrying...`);
       return false;
     };
     
     // 如果已經在首頁，立即滾動
     if (!isChangingView) {
-      console.log(`⏰ [Hero] Already on home page, scrolling immediately`);
       setTimeout(() => scrollToElement(), 50);
       return;
     }
     
     // 如果是從其他頁面切換過來，使用更長的初始延遲和重試機制
-    console.log(`⏰ [Hero] Switching from ${view} to home, using extended retry mechanism`);
-    
     setTimeout(() => {
-      console.log(`⏰ [Hero] First scroll attempt after 1000ms`);
       if (!scrollToElement()) {
         const retryDelays = [300, 300, 300, 300];
-        let attemptCount = 1;
         
         const retry = (index: number) => {
           if (index >= retryDelays.length) {
-            console.warn(`❌ [Hero] Failed to scroll to #${id} after ${attemptCount + 1} attempts`);
             return;
           }
           
           setTimeout(() => {
-            attemptCount++;
-            console.log(`⏰ [Hero] Retry attempt ${attemptCount}`);
             if (!scrollToElement()) {
               retry(index + 1);
             }
@@ -91,24 +74,19 @@ export function Hero() {
   };
 
   const handleGetStarted = () => {
-    console.log('🔵 [Hero] 瀏覽人才按鈕被點擊');
-    scrollToSection('talents'); // 直接滾動到人才區域
+    scrollToSection('talents');
   };
 
   const handleFindWork = () => {
-    console.log('🟢 [Hero] 發布項目按鈕被點擊');
-    // 只有這個需要登入！
     window.dispatchEvent(new CustomEvent('openAuthDialog', { detail: 'login' }));
   };
 
   const handleBrowseProjects = () => {
-    console.log('🔵 [Hero] 瀏覽發案項目按鈕被點擊');
-    scrollToSection('projects'); // 直接滾動到發案項目區域（修正：從 services 改為 projects）
+    scrollToSection('projects');
   };
 
   const handleBecomePro = () => {
-    console.log('⭐ [Hero] 查看作品集按鈕被點擊');
-    scrollToSection('talents'); // 滾動到人才區域（作品集在人才目錄中展示）
+    scrollToSection('talents');
   };
 
   const isPremium = profile?.subscription_tier === 'premium' || profile?.subscription_tier === 'vip';

@@ -38,35 +38,23 @@ export function Header() {
 
   // 監聽自定義事件來打開對話框
   useEffect(() => {
-    console.log('🔷 [Header] Event listeners being set up...');
-    
     const handleOpenLogin = () => {
-      console.log('🔷 [Header] handleOpenLogin called');
       setLoginOpen(true);
     };
     
     const handleOpenProfile = () => {
-      console.log('🔷 [Header] handleOpenProfile called');
       setProfileOpen(true);
     };
     
     const handleOpenMessageCenter = (e: CustomEvent) => {
-      console.log('🔷 [Header] openMessageCenter event received:', e.detail);
       setInitialConversationId(e.detail?.conversationId);
       setMessageOpen(true);
     };
     
     const handleOpenAuthDialog = (e: CustomEvent) => {
-      console.log('🔷🔷🔷 [Header] openAuthDialog event received!');
-      console.log('🔷 [Header] Event detail:', e.detail);
-      console.log('🔷 [Header] Event type:', e.type);
-      
       if (e.detail === 'login') {
-        console.log('🔷 [Header] Opening login dialog...');
         setLoginOpen(true);
-        console.log('🔷 [Header] setLoginOpen(true) called');
       } else if (e.detail === 'signup') {
-        console.log('🔷 [Header] Opening signup dialog...');
         setLoginOpen(false);
         // 如果需要註冊對話框，可以在這裡添加
       }
@@ -76,11 +64,8 @@ export function Header() {
     window.addEventListener('openAuthDialog', handleOpenAuthDialog as EventListener);
     window.addEventListener('openProfileDialog', handleOpenProfile);
     window.addEventListener('openMessageCenter', handleOpenMessageCenter as EventListener);
-    
-    console.log('🔷 [Header] All event listeners registered successfully');
 
     return () => {
-      console.log('🔷 [Header] Cleaning up event listeners...');
       window.removeEventListener('openLoginDialog', handleOpenLogin);
       window.removeEventListener('openAuthDialog', handleOpenAuthDialog as EventListener);
       window.removeEventListener('openProfileDialog', handleOpenProfile);
@@ -89,20 +74,14 @@ export function Header() {
   }, []);
 
   const scrollToSection = (id: string) => {
-    console.log(`🎯 [Header] scrollToSection called with id: ${id}`);
-    console.log(`🎯 [Header] Current view: ${view}`);
-    
     // 切換到首頁並滾動到指定區域
     const isChangingView = view !== 'home';
     setView('home');
     setManualOverride(true);
     
-    console.log(`🎯 [Header] View changed to home, isChangingView: ${isChangingView}`);
-    
     // 滾動到指定元素
     const scrollToElement = () => {
       const element = document.getElementById(id);
-      console.log(`🔍 [Header] Looking for element #${id}:`, element);
       
       if (element) {
         // 計算元素位置並扣除 header 高度
@@ -110,49 +89,35 @@ export function Header() {
         const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
         const targetPosition = elementPosition - headerHeight;
         
-        console.log(`📍 [Header] Element position: ${elementPosition}, target: ${targetPosition}, current scroll: ${window.pageYOffset}`);
-        
         // 一次性滾動到目標位置
         window.scrollTo({
           top: targetPosition,
           behavior: 'smooth'
         });
         
-        console.log(`✅ [Header] Scrolled to section: ${id}`);
         return true;
       }
-      console.log(`⏳ [Header] Element #${id} not found, retrying...`);
       return false;
     };
     
     // 如果已經在首頁，立即滾動
     if (!isChangingView) {
-      console.log(`⏰ [Header] Already on home page, scrolling immediately`);
       setTimeout(() => scrollToElement(), 50);
       return;
     }
     
     // 如果是從其他頁面切換過來，使用更長的初始延遲和重試機制
-    console.log(`⏰ [Header] Switching from ${view} to home, using extended retry mechanism`);
-    
-    // 第一次嘗試：等待 1000ms（確保頁面完全渲染）
-    // 後續重試：每次間隔 300ms
     setTimeout(() => {
-      console.log(`⏰ [Header] First scroll attempt after 1000ms`);
       if (!scrollToElement()) {
         // 如果第一次失敗，繼續重試
         const retryDelays = [300, 300, 300, 300];
-        let attemptCount = 1;
         
         const retry = (index: number) => {
           if (index >= retryDelays.length) {
-            console.warn(`❌ [Header] Failed to scroll to #${id} after ${attemptCount + 1} attempts`);
             return;
           }
           
           setTimeout(() => {
-            attemptCount++;
-            console.log(`⏰ [Header] Retry attempt ${attemptCount}`);
             if (!scrollToElement()) {
               retry(index + 1);
             }
@@ -183,21 +148,17 @@ export function Header() {
 
   const handleSignOut = async () => {
     try {
-      console.log('🔓 [Header] Starting sign out...');
       await signOut();
-      console.log('✅ [Header] Sign out successful');
       
       // 強制跳轉到首頁並刷新（這比 reload 更可靠）
       window.location.href = window.location.origin;
     } catch (error) {
-      console.error('❌ [Header] Sign out error:', error);
       // 即使出錯也嘗試清除本地狀態並刷新頁面
       try {
         localStorage.clear();
         sessionStorage.clear();
         window.location.href = window.location.origin;
       } catch (e) {
-        console.error('❌ [Header] Failed to clear storage:', e);
         // 最手段：強制刷新當前頁面
         window.location.reload();
       }
@@ -225,18 +186,6 @@ export function Header() {
   const isAdmin = isAnyAdmin(user?.email, profile);
   const adminLevel = getAdminLevel(user?.email, profile);
 
-  // 🔍 調試日誌
-  useEffect(() => {
-    if (user?.email) {
-      console.log('🔍 [Header] Admin Check:', {
-        email: user.email,
-        isAdmin,
-        adminLevel,
-        profile: profile ? { isAdmin: profile.isAdmin, adminLevel: profile.adminLevel } : null
-      });
-    }
-  }, [user?.email, isAdmin, adminLevel, profile]);
-
   // 🔔 獲取待審核 KYC 數量（僅管理員）
   useEffect(() => {
     const fetchPendingKYCCount = async () => {
@@ -255,10 +204,9 @@ export function Header() {
         if (response.ok) {
           const data = await response.json();
           setPendingKYCCount(data.pending_count || 0);
-          console.log('🔔 [Header] Pending KYC count:', data.pending_count);
         }
       } catch (error) {
-        console.error('❌ [Header] Error fetching pending KYC count:', error);
+        // Silent error
       }
     };
 
@@ -269,7 +217,6 @@ export function Header() {
     
     // 監聽 KYC 提交和審核事件
     const handleKYCEvent = () => {
-      console.log('🔔 [Header] KYC event received, refreshing count...');
       fetchPendingKYCCount();
     };
     
@@ -474,7 +421,7 @@ export function Header() {
                       <span>{language === 'en' ? 'Upgrade' : '升級'}</span>
                     </Button>
                   )}
-                  {/* 🛡️ 管理員按鈕 - 僅管理員���見，含待審核 KYC 徽章 */}
+                  {/* 🛡️ 管理員按鈕 - 僅管理員見，含待審核 KYC 徽章 */}
                   {isAdmin && (
                     <Button
                       variant="ghost"

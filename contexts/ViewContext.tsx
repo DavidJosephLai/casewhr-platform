@@ -17,7 +17,6 @@ export function ViewProvider({ children }: { children: ReactNode }) {
 
   // Stable setView function
   const setView = useCallback((newView: ViewType) => {
-    console.log('🔄 [ViewContext] Setting view to:', newView);
     setViewState(newView);
   }, []);
 
@@ -35,15 +34,8 @@ export function ViewProvider({ children }: { children: ReactNode }) {
       const viewParam = searchParams.get('view');
       const hostname = window.location.hostname;
       
-      console.log('🔗 [ViewContext] URL changed:');
-      console.log('   - Hostname:', hostname);
-      console.log('   - Pathname:', pathname);
-      console.log('   - Hash:', hash);
-      console.log('   - View param:', viewParam);
-      
       // 🔥 檢查是否是 Wismachion 子域名
       if (hostname === 'wismachion.com' || hostname === 'www.wismachion.com') {
-        console.log('✅ [ViewContext] Wismachion subdomain detected, switching view');
         setView('wismachion');
         setManualOverride(true);
         return;
@@ -51,7 +43,6 @@ export function ViewProvider({ children }: { children: ReactNode }) {
       
       // 🔥 檢查是否是 Wismachion pathname
       if (pathname === '/wismachion' || pathname.startsWith('/wismachion/')) {
-        console.log('✅ [ViewContext] Wismachion pathname detected, switching view');
         setView('wismachion');
         setManualOverride(true);
         return;
@@ -74,7 +65,6 @@ export function ViewProvider({ children }: { children: ReactNode }) {
         ];
         
         if (validViews.includes(viewParam as ViewType)) {
-          console.log('✅ [ViewContext] Switching to view from query param:', viewParam);
           setView(viewParam as ViewType);
           setManualOverride(true);
           return;
@@ -83,7 +73,6 @@ export function ViewProvider({ children }: { children: ReactNode }) {
       
       // 優先檢查 pathname（用於 /reset-password 這類頁面）
       if (pathname.includes('/reset-password')) {
-        console.log('✅ [ViewContext] Reset password page detected, switching view');
         setView('reset-password');
         setManualOverride(true);
         return;
@@ -91,7 +80,6 @@ export function ViewProvider({ children }: { children: ReactNode }) {
       
       // 🆕 檢查 seo-content 動態路由 (必須在其他路由之前)
       if (pathname.startsWith('/seo-content/')) {
-        console.log('✅ [ViewContext] SEO content page detected, switching view');
         setView('seo-content');
         setManualOverride(true);
         return;
@@ -99,21 +87,18 @@ export function ViewProvider({ children }: { children: ReactNode }) {
       
       // 🔥 NEW: 檢查 auth/verify 路由
       if (pathname.includes('/auth/verify')) {
-        console.log('✅ [ViewContext] Auth verify page detected, switching view');
         setView('auth-verify');
         setManualOverride(true);
         return;
       }
       
       if (pathname.includes('/auth/callback')) {
-        console.log('✅ [ViewContext] Auth callback detected, switching view');
         setView('auth-callback');
         setManualOverride(true);
         return;
       }
       
       if (pathname.includes('/team/accept-invitation')) {
-        console.log('✅ [ViewContext] Accept invitation detected, switching view');
         setView('accept-invitation');
         setManualOverride(true);
         return;
@@ -121,21 +106,18 @@ export function ViewProvider({ children }: { children: ReactNode }) {
       
       // 📝 檢查 Blog 路由
       if (pathname === '/blog') {
-        console.log('✅ [ViewContext] Blog list page detected, switching view');
         setView('blog');
         setManualOverride(true);
         return;
       }
       
       if (pathname.startsWith('/blog/') && pathname !== '/blog/admin') {
-        console.log('✅ [ViewContext] Blog post page detected, switching view');
         setView('blog-post');
         setManualOverride(true);
         return;
       }
       
       if (pathname === '/blog/admin') {
-        console.log('✅ [ViewContext] Blog admin page detected, switching view');
         setView('blog-admin');
         setManualOverride(true);
         return;
@@ -186,14 +168,8 @@ export function ViewProvider({ children }: { children: ReactNode }) {
       };
       
       if (hash && hashToView[hash]) {
-        console.log('✅ [ViewContext] Switching to view from hash:', hashToView[hash]);
         setView(hashToView[hash]);
         setManualOverride(true);
-      } else if (hash === '' && pathname === '/' && !viewParam) {
-        // ⚠️ FIX: 只有在非手動覆蓋模式下才切換到 home
-        // 這樣可以防止儀表板被自動重定向
-        console.log('🏠 [ViewContext] Empty hash on root path - checking manual override');
-        // 不強制重定向，保持當前視圖
       }
     };
     
