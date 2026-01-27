@@ -508,7 +508,7 @@ function AppContent() {
               toast.success(
                 language === 'en'
                   ? `🎉 Payment successful! $${data.amount?.toLocaleString() || '?'} added to your wallet.\n\n📄 E-invoice will be issued within 24 hours.\n🔍 Check at: Ministry of Finance E-Invoice Platform\nhttps://www.einvoice.nat.gov.tw/`
-                  : `🎉 付款成功！已將 $${data.amount?.toLocaleString() || '?'} 加入您的錢包。\n\n📄 電子發票將於 24 小���內開立\n🔍 查詢請至：財政部電發票整合服務平台\nhttps://www.einvoice.nat.gov.tw/`,
+                  : `🎉 付款成功！已將 $${data.amount?.toLocaleString() || '?'} 加入您的錢包。\n\n📄 電子發票將於 24 小時內開立\n🔍 查詢請至：財政部電發票整合服務平台\nhttps://www.einvoice.nat.gov.tw/`,
                 { duration: 8000 }
               );
               
@@ -618,7 +618,8 @@ function AppContent() {
       {/* 🌐 多域名 SEO 優化 */}
       <SEOHead />
       
-      <Header />
+      {/* ✅ Wismachion 頁面不顯示主站 Header */}
+      {view !== 'wismachion' && <Header />}
       {view === 'dashboard' ? (
         <div className="pt-32">
           <SEO {...getPageSEO('dashboard', language)} noindex />
@@ -988,7 +989,8 @@ function AppContent() {
           <LatestSEOReports />
         </>
       )}
-      <Footer />
+      {/* ✅ Wismachion 頁面不顯示主站 Footer */}
+      {view !== 'wismachion' && <Footer />}
       {/* 🌐 网络错误提示 - 检测到 Supabase 错误时显示 */}
       <NetworkErrorNotice />
       {/* ✅ 全局功能 - AI Chatbot */}
