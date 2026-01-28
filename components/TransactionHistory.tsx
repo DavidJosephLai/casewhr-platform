@@ -258,9 +258,9 @@ export const TransactionHistory = memo(function TransactionHistory() {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(t => 
-        t.description.toLowerCase().includes(query) ||
-        t.type.toLowerCase().includes(query) ||
-        t.id.toLowerCase().includes(query) ||
+        t.description?.toLowerCase().includes(query) ||
+        t.type?.toLowerCase().includes(query) ||
+        t.id?.toLowerCase().includes(query) ||
         (t.reference_id && t.reference_id.toLowerCase().includes(query))
       );
     }

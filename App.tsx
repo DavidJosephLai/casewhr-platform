@@ -15,9 +15,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.0.98-toLowerCase-fix-final
+// 🔥 Version marker to force cache invalidation - v2.0.99-toLowerCase-fix-transaction-history
 // 🎯 Feature: Global fetch interceptor installed at module level
-console.log('🚀 [App v2.0.98-toLowerCase-fix-final] TalentDirectory skillsStr toLowerCase fixed with String() conversion');
+console.log('🚀 [App v2.0.99-toLowerCase-fix-transaction-history] TransactionHistory toLowerCase fixed');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
