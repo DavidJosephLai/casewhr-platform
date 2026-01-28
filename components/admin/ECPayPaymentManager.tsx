@@ -132,10 +132,10 @@ export function ECPayPaymentManager({ accessToken }: ECPayPaymentManagerProps) {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(p =>
-        p.user_email.toLowerCase().includes(term) ||
+        p.user_email?.toLowerCase().includes(term) ||
         p.user_name?.toLowerCase().includes(term) ||
         p.ecpay_transaction_id?.toLowerCase().includes(term) ||
-        p.id.toLowerCase().includes(term)
+        p.id?.toLowerCase().includes(term)
       );
     }
 
@@ -681,7 +681,7 @@ export function ECPayPaymentManager({ accessToken }: ECPayPaymentManagerProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label>付款類型 *</Label>
+                <Label>付款類�� *</Label>
                 <Select
                   value={newPayment.payment_type}
                   onValueChange={(value: any) => setNewPayment({ ...newPayment, payment_type: value })}
