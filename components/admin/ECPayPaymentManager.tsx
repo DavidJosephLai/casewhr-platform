@@ -98,8 +98,15 @@ export function ECPayPaymentManager({ accessToken }: ECPayPaymentManagerProps) {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('🔍 [ECPayPaymentManager] Raw response data:', data);
+        console.log('🔍 [ECPayPaymentManager] Payments array:', data.payments);
+        console.log('🔍 [ECPayPaymentManager] First payment sample:', data.payments?.[0]);
+        
         // 過濾掉 null 值
         const validPayments = (data.payments || []).filter((p: any) => p != null);
+        console.log('🔍 [ECPayPaymentManager] Valid payments count:', validPayments.length);
+        console.log('🔍 [ECPayPaymentManager] Valid payments sample:', validPayments[0]);
+        
         setPayments(validPayments);
       } else {
         const errorText = await response.text();
