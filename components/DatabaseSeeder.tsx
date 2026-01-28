@@ -325,8 +325,8 @@ export function DatabaseSeeder() {
       
       // 過濾匹配搜索關鍵詞的項目
       const filtered = data.projects.filter((p: any) => 
-        p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchTerm.toLowerCase())
+        p.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
 
       setSearchResults(filtered);

@@ -508,7 +508,7 @@ export function EnhancedInvoiceManager() {
 
   const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = 
-      invoice.invoice_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      invoice.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       invoice.client_name?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;

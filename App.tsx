@@ -15,9 +15,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.0.99-toLowerCase-fix-transaction-history
+// 🔥 Version marker to force cache invalidation - v2.1.00-toLowerCase-fix-comprehensive
 // 🎯 Feature: Global fetch interceptor installed at module level
-console.log('🚀 [App v2.0.99-toLowerCase-fix-transaction-history] TransactionHistory toLowerCase fixed');
+console.log('🚀 [App v2.1.00-toLowerCase-fix-comprehensive] Comprehensive toLowerCase fixes applied to multiple components');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
@@ -291,7 +291,7 @@ function AppContent() {
     if (urlPath === '/blog/admin') {
       console.log('🔧 [App] Blog admin page detected');
       
-      // 🔐 暫時移除登入檢查，讓 BlogManagementPage 自己處理
+      // 🔐 暫時移除登入檢查，讓 BlogManagementPage 自己處��
       // 因為入後狀態更新需要時間
       
       setView('blog-admin');
@@ -433,7 +433,7 @@ function AppContent() {
           toast.success(
             language === 'en'
               ? '🟢 LINE login successful! Redirecting to dashboard...'
-              : '🟢 LINE 登入成功！正在跳轉到儀表板...',
+              : '🟢 LINE 登���成功！正在跳轉到儀表板...',
             { duration: 3000 }
           );
           

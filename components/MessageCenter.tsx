@@ -359,7 +359,7 @@ export function MessageCenter({
     const other = getOtherParticipant(conv);
     const searchLower = searchQuery.toLowerCase();
     return (
-      other.name.toLowerCase().includes(searchLower) ||
+      other.name?.toLowerCase().includes(searchLower) ||
       conv.last_message?.toLowerCase().includes(searchLower)
     );
   });

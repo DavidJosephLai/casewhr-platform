@@ -641,7 +641,7 @@ export function EnterpriseChat({ language = 'en' }: EnterpriseChatProps) {
   };
 
   const filteredChats = chats.filter(chat =>
-    chat.recipient_name.toLowerCase().includes(searchQuery.toLowerCase())
+    chat.recipient_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Check if user has enterprise access (either owns enterprise subscription or is a team member)
