@@ -153,7 +153,7 @@ export function InvoiceManager({ userId, accessToken, isAdmin = false }: {
       subtitle: '管理台灣電子發票',
       createInvoice: '開具發票',
       createDialogTitle: '開具電子發票',
-      createDialogDesc: '填寫發��資訊',
+      createDialogDesc: '填寫發票資訊',
       searchPlaceholder: '搜尋發票號碼、用戶郵箱或姓名...',
       filterPlaceholder: '發票狀態',
       allStatus: '全部狀態',
@@ -234,7 +234,7 @@ export function InvoiceManager({ userId, accessToken, isAdmin = false }: {
       allStatus: '全部狀態',
       recordsTitle: '發票記錄',
       recordsCount: (count: number) => `共 ${count} 張發票`,
-      noRecords: '暫無發票記錄',
+      noRecords: '暫無發票��錄',
       invoiceNumber: '發票號碼',
       invoiceDate: '開票日期',
       user: '用戶',
@@ -413,9 +413,9 @@ export function InvoiceManager({ userId, accessToken, isAdmin = false }: {
   };
 
   const filteredInvoices = invoices.filter(invoice => 
-    invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.user_email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.user_name.toLowerCase().includes(searchTerm.toLowerCase())
+    invoice.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    invoice.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    invoice.user_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getStatusBadge = (status: string) => {

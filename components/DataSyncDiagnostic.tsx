@@ -369,8 +369,8 @@ export default function DataSyncDiagnostic() {
    * 過濾數據
    */
   const filteredData = kvData.filter(item => 
-    item.key.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    JSON.stringify(item.value).toLowerCase().includes(searchTerm.toLowerCase())
+    item.key?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    JSON.stringify(item.value)?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   /**

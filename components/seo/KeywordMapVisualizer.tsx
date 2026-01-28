@@ -351,8 +351,8 @@ export function KeywordMapVisualizer() {
   };
 
   const filteredMappings = mappings.filter(m => {
-    const matchesSearch = m.keyword.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         m.targetUrl.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = m.keyword?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         m.targetUrl?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesPriority = filterPriority === 'all' || m.priority === filterPriority;
     const matchesPageType = filterPageType === 'all' || m.pageType === filterPageType;
     const matchesUrl = !selectedUrl || m.targetUrl === selectedUrl;
