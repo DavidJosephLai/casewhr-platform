@@ -608,70 +608,84 @@ export function ECPayPaymentManager({ accessToken }: ECPayPaymentManagerProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPayments.map((payment) => (
-                    <TableRow key={payment.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{payment.user_name || '未知'}</div>
-                          <div className="text-sm text-gray-500">{payment.user_email}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getTypeBadge(payment.payment_type)}</TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">NT${payment.amount_twd?.toLocaleString() || 0}</div>
-                          <div className="text-sm text-gray-500">${payment.amount_usd || 0}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {payment.ecpay_transaction_id || '—'}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">{formatDate(payment.created_at)}</div>
-                        {payment.confirmed_at && (
-                          <div className="text-xs text-gray-500">
-                            確認: {formatDate(payment.confirmed_at)}
+                  {filteredPayments.map((payment, index) => {
+                    // 🔍 調試：記錄每筆付款的數據
+                    if (index === 0) {
+                      console.log('🔍 [ECPayPaymentManager] Rendering first payment:', payment);
+                      console.log('🔍 [ECPayPaymentManager] Payment keys:', Object.keys(payment));
+                      console.log('🔍 [ECPayPaymentManager] user_name:', payment.user_name);
+                      console.log('🔍 [ECPayPaymentManager] user_email:', payment.user_email);
+                      console.log('🔍 [ECPayPaymentManager] amount_twd:', payment.amount_twd);
+                      console.log('🔍 [ECPayPaymentManager] amount_usd:', payment.amount_usd);
+                      console.log('🔍 [ECPayPaymentManager] created_at:', payment.created_at);
+                      console.log('🔍 [ECPayPaymentManager] status:', payment.status);
+                    }
+                    
+                    return (
+                      <TableRow key={payment.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{payment.user_name || '未知'}</div>
+                            <div className="text-sm text-gray-500">{payment.user_email}</div>
                           </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-1 justify-end">
-                          {payment.status === 'pending' && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedPayment(payment);
-                                  setConfirmDialogOpen(true);
-                                }}
-                              >
-                                <CheckCircle className="h-4 w-4 mr-1 text-green-600" />
-                                確認
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleRejectPayment(payment)}
-                              >
-                                <XCircle className="h-4 w-4 text-red-600" />
-                              </Button>
-                            </>
+                        </TableCell>
+                        <TableCell>{getTypeBadge(payment.payment_type)}</TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">NT${payment.amount_twd?.toLocaleString() || 0}</div>
+                            <div className="text-sm text-gray-500">${payment.amount_usd || 0}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(payment.status)}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {payment.ecpay_transaction_id || '—'}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">{formatDate(payment.created_at)}</div>
+                          {payment.confirmed_at && (
+                            <div className="text-xs text-gray-500">
+                              確認: {formatDate(payment.confirmed_at)}
+                            </div>
                           )}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDeletePayment(payment.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-gray-400" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-1 justify-end">
+                            {payment.status === 'pending' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedPayment(payment);
+                                    setConfirmDialogOpen(true);
+                                  }}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1 text-green-600" />
+                                  確認
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleRejectPayment(payment)}
+                                >
+                                  <XCircle className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeletePayment(payment.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-gray-400" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>

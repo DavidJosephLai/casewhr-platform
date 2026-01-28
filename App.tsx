@@ -15,9 +15,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.06-chunk-error-fix
+// 🔥 Version marker to force cache invalidation - v2.1.08-ecpay-backend-fix
 // 🎯 Feature: Global fetch interceptor installed at module level
-console.log('🚀 [App v2.1.06-chunk-error-fix] Added chunk loading error auto-recovery');
+console.log('🚀 [App v2.1.08-ecpay-backend-fix] Fixed backend KV data extraction');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -79,7 +79,7 @@ const AISEOFloatingButton = lazy(() => import('./components/AISEOFloatingButton'
 const AIChatbot = lazy(() => import('./components/AIChatbot'));
 const AISEOManager = lazy(() => import('./components/AISEOManager').then(module => ({ default: module.AISEOManager })));
 
-// 🔧 測試和診斷頁面 - Lazy Load（不常用）
+// 🔧 測試和診斷頁面 - Lazy Load��不常用）
 const AISEOTestPage = lazy(() => import('./components/AISEOTestPage'));
 const BrevoTestPage = lazy(() => import('./components/BrevoTestPage'));
 const EmailTestPage = lazy(() => import('./components/EmailTestPage'));
