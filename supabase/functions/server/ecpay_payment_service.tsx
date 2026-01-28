@@ -255,15 +255,14 @@ async function getUserByEmail(email: string) {
 // Get all ECPay payments
 export async function getAllPayments(): Promise<ECPayPayment[]> {
   try {
-    const payments = await kv.getByPrefix('ecpay_payment:');
-    // 🔧 修復：getByPrefix 已經返回 value 數組，不需要再 .map(p => p.value)
-    console.log('[ECPay] Raw payments from KV:', payments.length);
+    const kvResults = await kv.getByPrefix('ecpay_payment:');
     
-    // 過濾掉 null 值並排序
-    const validPayments = payments.filter(p => p != null);
-    console.log('[ECPay] Valid payments after filtering:', validPayments.length);
+    // 🔧 修復：getByPrefix 返回 { key, value } 對象數組，需要提取 value
+    const payments = kvResults
+      .filter(item => item != null && item.value != null)
+      .map(item => item.value);
     
-    return validPayments.sort((a, b) => 
+    return payments.sort((a, b) => 
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
   } catch (error) {
