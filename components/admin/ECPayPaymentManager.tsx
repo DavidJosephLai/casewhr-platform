@@ -76,7 +76,6 @@ export function ECPayPaymentManager({ accessToken }: ECPayPaymentManagerProps) {
     setLoading(true);
     try {
       // 🧪 在 Figma Make 環境中，使用正確的認證方式
-      // 檢查是否在開發模式
       const devModeActive = localStorage.getItem('dev_mode_active') === 'true';
       
       // 構建請求頭
@@ -85,19 +84,11 @@ export function ECPayPaymentManager({ accessToken }: ECPayPaymentManagerProps) {
       if (devModeActive && accessToken.startsWith('dev-user-')) {
         // Dev mode: 使用自定義 header 避免 Supabase JWT 驗證
         headers['X-Dev-Token'] = accessToken;
-        headers['Authorization'] = `Bearer ${publicAnonKey}`; // 使用 publicAnonKey 通過平台驗證
-        console.log('[ECPayPaymentManager] Using dev mode with X-Dev-Token');
+        headers['Authorization'] = `Bearer ${publicAnonKey}`;
       } else {
         // Production: 使用標準 JWT token
         headers['Authorization'] = `Bearer ${accessToken || publicAnonKey}`;
-        console.log('[ECPayPaymentManager] Using production JWT token');
       }
-      
-      console.log('[ECPayPaymentManager] Loading payments with auth:', {
-        devMode: devModeActive,
-        hasDevToken: !!headers['X-Dev-Token'],
-        authPrefix: headers['Authorization'].substring(0, 20) + '...'
-      });
       
       // 從 KV store 載入付款記錄
       const response = await fetch(
@@ -109,18 +100,13 @@ export function ECPayPaymentManager({ accessToken }: ECPayPaymentManagerProps) {
         const data = await response.json();
         // 過濾掉 null 值
         const validPayments = (data.payments || []).filter((p: any) => p != null);
-        console.log('[ECPayPaymentManager] Payments loaded:', validPayments.length);
         setPayments(validPayments);
       } else {
         const errorText = await response.text();
-        console.error('Failed to load ECPay payments. Status:', response.status);
-        console.error('Error response:', errorText);
         toast.error(`載入 ECPay 付款記錄失敗: ${response.status} ${response.statusText}`);
-        // 如果後端還沒有這個 API，使用空數組
         setPayments([]);
       }
     } catch (error) {
-      console.error('Error loading ECPay payments:', error);
       toast.error('載入 ECPay 付款記錄時發生錯誤');
       setPayments([]);
     } finally {
