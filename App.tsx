@@ -15,9 +15,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.09-production-clean
-// 🎯 Feature: Global fetch interceptor installed at module level
-console.log('🚀 [App v2.1.09-production-clean] Removed debug logs, production ready');
+// 🔥 Version marker to force cache invalidation - v2.1.12-compact-benefits-top
+// 🎨 Update: Compacted PostProjectBenefits and moved to top of homepage
+console.log('🚀 [App v2.1.12-compact-benefits-top] Compact benefits section at top');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -65,6 +65,7 @@ import { TrustBadges } from './components/TrustBadges';
 import { LatestSEOReports } from './components/LatestSEOReports';
 import { PlatformComparison } from './components/PlatformComparison';
 import { WhitepaperDownload } from './components/WhitepaperDownload';
+import { PostProjectBenefits } from './components/PostProjectBenefits';
 
 // ✅ 只對大型頁面使用 Lazy Load（真正需要代碼分割的）
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -474,7 +475,7 @@ function AppContent() {
           toast.error(
             language === 'en'
               ? `❌ LINE login failed: ${error.message}`
-              : `❌ LINE 登入失敗：${error.message}`,
+              : `❌ LINE 登���失敗：${error.message}`,
             { duration: 5000 }
           );
           
@@ -998,6 +999,8 @@ function AppContent() {
         <>
           <SEO {...getPageSEO('home', language)} />
           <Hero />
+          {/* 🎯 刊登外包優勢 - 放在最上面 */}
+          <PostProjectBenefits />
           {/* ⚡ 首頁組件 - 移除 Suspense 以提升性能 */}
           <TrustBadges />
           <PopularServices />
