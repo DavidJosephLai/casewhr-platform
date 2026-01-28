@@ -406,14 +406,25 @@ export function ECPayPaymentManager({ accessToken }: ECPayPaymentManagerProps) {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('zh-TW', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return '—';
+    
+    try {
+      const date = new Date(dateString);
+      // 檢查日期是否有效
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      
+      return date.toLocaleString('zh-TW', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid Date';
+    }
   };
 
   const stats = {
