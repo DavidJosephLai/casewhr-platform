@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 // Minimal config optimized for Figma Make
 export default defineConfig({
   plugins: [react()],
-  clearScreen: false, // 防止 clearScreen undefined 錯誤
+  clearScreen: false,
   build: {
     target: 'es2015',
     outDir: 'dist',
@@ -13,11 +13,14 @@ export default defineConfig({
     minify: 'esbuild',
     rollupOptions: {
       output: {
-        manualChunks: undefined, // 避免 chunk 分割問題
+        manualChunks: undefined,
       },
     },
+    copyPublicDir: true,
   },
   optimizeDeps: {
-    exclude: [], // 不排除任何依賴
+    include: ['react', 'react-dom'], // 明確包含 React
+    exclude: [],
   },
+  publicDir: 'public',
 });
