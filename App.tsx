@@ -15,9 +15,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.01-toLowerCase-fix-final-comprehensive
+// 🔥 Version marker to force cache invalidation - v2.1.02-toLowerCase-fix-unified-invoice
 // 🎯 Feature: Global fetch interceptor installed at module level
-console.log('🚀 [App v2.1.01-toLowerCase-fix-final-comprehensive] ALL toLowerCase errors fixed with optional chaining');
+console.log('🚀 [App v2.1.02-toLowerCase-fix-unified-invoice] Fixed UnifiedInvoiceManager toLowerCase error');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';

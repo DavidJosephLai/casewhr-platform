@@ -470,7 +470,7 @@ export function UnifiedInvoiceManager() {
 
   const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = 
-      invoice.invoice_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      invoice.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       invoice.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       invoice.user_email?.toLowerCase().includes(searchQuery.toLowerCase());
     
