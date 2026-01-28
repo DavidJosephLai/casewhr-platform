@@ -15,9 +15,37 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.05-ecpay-debug
+// 🔥 Version marker to force cache invalidation - v2.1.06-chunk-error-fix
 // 🎯 Feature: Global fetch interceptor installed at module level
-console.log('🚀 [App v2.1.05-ecpay-debug] Added detailed logging for ECPay payment data');
+console.log('🚀 [App v2.1.06-chunk-error-fix] Added chunk loading error auto-recovery');
+
+// 🛡️ Global error handler for chunk loading failures
+window.addEventListener('error', (event) => {
+  // Check if it's a chunk loading error
+  if (
+    event.message?.includes('Failed to fetch dynamically imported module') ||
+    event.message?.includes('Importing a module script failed') ||
+    event.message?.includes('chunk') ||
+    event.filename?.includes('/assets/')
+  ) {
+    console.error('🔥 [App] Chunk loading failed, attempting recovery...');
+    console.error('Error details:', event.message);
+    
+    // Clear all caches and reload
+    if ('caches' in window) {
+      caches.keys().then(keys => {
+        keys.forEach(key => caches.delete(key));
+        console.log('✅ [App] Cache cleared, reloading page...');
+        window.location.reload();
+      });
+    } else {
+      // Fallback: just reload
+      window.location.reload();
+    }
+    
+    event.preventDefault();
+  }
+});
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
@@ -81,7 +109,7 @@ const DeepDataDiagnostic = lazy(() => import('./components/DeepDataDiagnostic'))
 const ErrorDiagnosticPage = lazy(() => import('./components/ErrorDiagnosticPage'));
 // const FetchInterceptorTest = lazy(() => import('./components/FetchInterceptorTest')); // ❌ Removed - component doesn't exist
 
-//  內容頁 - Lazy Load（SEO ���關頁面）
+//  內容頁 - Lazy Load（SEO 關頁面）
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
 const CookiesPolicyPage = lazy(() => import('./components/CookiesPolicyPage'));
 const DisclaimerPage = lazy(() => import('./components/DisclaimerPage'));
@@ -106,7 +134,7 @@ const SEOManagementCenter = lazy(() => import('./components/seo/SEOManagementCen
 // 💼 Wismachion - License Management Platform - ⚡ 直接導入以加快載入速度
 import WismachionApp from './wismachion/WismachionApp';
 
-// Loading fallback components - 🚀 ��化：移除刺眼的藍色載入器
+// Loading fallback components - 🚀 化：移除刺眼的藍色載入器
 function LoadingFallback() {
   return null; // 靜默載入不顯示任何內容
 }
@@ -695,7 +723,7 @@ function AppContent() {
         </div>
       ) : view === 'seo-content' ? (
         <>
-          {/* Dynamic SEO Content Page - 完全��� DynamicSEOPage 組件控制 SEO */}
+          {/* Dynamic SEO Content Page - 完全 DynamicSEOPage 組件控制 SEO */}
           <Suspense fallback={<PageLoadingFallback />}>
             <DynamicSEOPage 
               contentId={window.location.pathname.split('/seo-content/')[1] || ''}
