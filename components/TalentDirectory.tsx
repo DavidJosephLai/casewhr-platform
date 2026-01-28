@@ -255,7 +255,7 @@ export function TalentDirectory() {
         
         return (
           talent.full_name?.toLowerCase().includes(query) ||
-          talent.email.toLowerCase().includes(query) ||
+          talent.email?.toLowerCase().includes(query) ||
           talent.company?.toLowerCase().includes(query) ||
           talent.job_title?.toLowerCase().includes(query) ||
           skillsStr.toLowerCase().includes(query)

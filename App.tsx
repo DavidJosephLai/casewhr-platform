@@ -15,9 +15,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.0.95
+// 🔥 Version marker to force cache invalidation - v2.0.96-toLowerCase-fix
 // 🎯 Feature: Global fetch interceptor installed at module level
-console.log('🚀 [App v2.0.95] Feature: Global fetch interceptor installed at import time');
+console.log('🚀 [App v2.0.96-toLowerCase-fix] Critical fix: Added optional chaining to all toLowerCase() calls');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
@@ -81,7 +81,7 @@ const DeepDataDiagnostic = lazy(() => import('./components/DeepDataDiagnostic'))
 const ErrorDiagnosticPage = lazy(() => import('./components/ErrorDiagnosticPage'));
 // const FetchInterceptorTest = lazy(() => import('./components/FetchInterceptorTest')); // ❌ Removed - component doesn't exist
 
-// 📄 內容頁面 - Lazy Load（SEO 相關頁面）
+// �� 內容頁面 - Lazy Load（SEO 相關頁面）
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
 const CookiesPolicyPage = lazy(() => import('./components/CookiesPolicyPage'));
 const DisclaimerPage = lazy(() => import('./components/DisclaimerPage'));

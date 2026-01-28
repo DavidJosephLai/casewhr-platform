@@ -109,9 +109,9 @@ export function ProjectsMarketplace() {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         p =>
-          p.title.toLowerCase().includes(query) ||
-          p.description.toLowerCase().includes(query) ||
-          p.required_skills.some(skill => skill.toLowerCase().includes(query))
+          p.title?.toLowerCase().includes(query) ||
+          p.description?.toLowerCase().includes(query) ||
+          p.required_skills?.some(skill => skill?.toLowerCase().includes(query))
       );
     }
 
