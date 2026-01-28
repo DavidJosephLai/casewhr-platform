@@ -390,7 +390,7 @@ export function WithdrawalManagement() {
         w.user_email?.toLowerCase().includes(term) ||
         w.user_name?.toLowerCase().includes(term) ||
         w.amount.toString().includes(term) ||
-        w.method_details.toLowerCase().includes(term)
+        w.method_details?.toLowerCase().includes(term)
       );
     }
 

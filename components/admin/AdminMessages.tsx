@@ -268,8 +268,8 @@ export function AdminMessages() {
 
   const filteredConversations = conversations.filter(conv => {
     const matchesSearch = searchQuery === '' || 
-      conv.participants.client_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conv.participants.freelancer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      conv.participants?.client_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      conv.participants?.freelancer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       conv.project_title?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesFilter = !filterUnread || 
