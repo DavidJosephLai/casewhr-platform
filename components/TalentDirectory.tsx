@@ -251,14 +251,14 @@ export function TalentDirectory() {
       filtered = filtered.filter(talent => {
         const skillsStr = Array.isArray(talent.skills) 
           ? talent.skills.join(',') 
-          : (talent.skills || '');
+          : String(talent.skills || '');
         
         return (
           talent.full_name?.toLowerCase().includes(query) ||
           talent.email?.toLowerCase().includes(query) ||
           talent.company?.toLowerCase().includes(query) ||
           talent.job_title?.toLowerCase().includes(query) ||
-          skillsStr.toLowerCase().includes(query)
+          skillsStr?.toLowerCase().includes(query)
         );
       });
     }

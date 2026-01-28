@@ -15,9 +15,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.0.97-toLowerCase-fix-complete
+// 🔥 Version marker to force cache invalidation - v2.0.98-toLowerCase-fix-final
 // 🎯 Feature: Global fetch interceptor installed at module level
-console.log('🚀 [App v2.0.97-toLowerCase-fix-complete] All toLowerCase() calls fixed with optional chaining');
+console.log('🚀 [App v2.0.98-toLowerCase-fix-final] TalentDirectory skillsStr toLowerCase fixed with String() conversion');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
@@ -292,7 +292,7 @@ function AppContent() {
       console.log('🔧 [App] Blog admin page detected');
       
       // 🔐 暫時移除登入檢查，讓 BlogManagementPage 自己處理
-      // 因為��入後狀態更新需要時間
+      // 因為入後狀態更新需要時間
       
       setView('blog-admin');
       return;
