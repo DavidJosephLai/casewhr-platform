@@ -601,8 +601,8 @@ export function ECPayPaymentManager({ accessToken }: ECPayPaymentManagerProps) {
                       <TableCell>{getTypeBadge(payment.payment_type)}</TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">NT${payment.amount_twd.toLocaleString()}</div>
-                          <div className="text-sm text-gray-500">${payment.amount_usd}</div>
+                          <div className="font-medium">NT${payment.amount_twd?.toLocaleString() || 0}</div>
+                          <div className="text-sm text-gray-500">${payment.amount_usd || 0}</div>
                         </div>
                       </TableCell>
                       <TableCell>{getStatusBadge(payment.status)}</TableCell>
@@ -681,7 +681,7 @@ export function ECPayPaymentManager({ accessToken }: ECPayPaymentManagerProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label>付款類�� *</Label>
+                <Label>付款類 *</Label>
                 <Select
                   value={newPayment.payment_type}
                   onValueChange={(value: any) => setNewPayment({ ...newPayment, payment_type: value })}
@@ -782,8 +782,8 @@ export function ECPayPaymentManager({ accessToken }: ECPayPaymentManagerProps) {
                 <div className="flex justify-between">
                   <span className="text-sm text-gray-600">金額</span>
                   <div className="text-right">
-                    <div className="font-medium">NT${selectedPayment.amount_twd.toLocaleString()}</div>
-                    <div className="text-sm text-gray-500">${selectedPayment.amount_usd} USD</div>
+                    <div className="font-medium">NT${selectedPayment.amount_twd?.toLocaleString() || 0}</div>
+                    <div className="text-sm text-gray-500">${selectedPayment.amount_usd || 0} USD</div>
                   </div>
                 </div>
                 {selectedPayment.ecpay_transaction_id && (

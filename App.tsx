@@ -15,9 +15,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.02-toLowerCase-fix-unified-invoice
+// 🔥 Version marker to force cache invalidation - v2.1.03-toLocaleString-fix-ecpay
 // 🎯 Feature: Global fetch interceptor installed at module level
-console.log('🚀 [App v2.1.02-toLowerCase-fix-unified-invoice] Fixed UnifiedInvoiceManager toLowerCase error');
+console.log('🚀 [App v2.1.03-toLocaleString-fix-ecpay] Fixed ECPay payment manager toLocaleString errors');
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
@@ -81,7 +81,7 @@ const DeepDataDiagnostic = lazy(() => import('./components/DeepDataDiagnostic'))
 const ErrorDiagnosticPage = lazy(() => import('./components/ErrorDiagnosticPage'));
 // const FetchInterceptorTest = lazy(() => import('./components/FetchInterceptorTest')); // ❌ Removed - component doesn't exist
 
-//  內容頁面 - Lazy Load（SEO 相關頁面）
+//  內容頁��� - Lazy Load（SEO 相關頁面）
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
 const CookiesPolicyPage = lazy(() => import('./components/CookiesPolicyPage'));
 const DisclaimerPage = lazy(() => import('./components/DisclaimerPage'));
@@ -292,7 +292,7 @@ function AppContent() {
       console.log('🔧 [App] Blog admin page detected');
       
       // 🔐 暫時移除登入檢查，讓 BlogManagementPage 自己處
-      // 因為入後狀態更新需要時間
+      // 因為入後��態更新需要時間
       
       setView('blog-admin');
       return;
@@ -508,7 +508,7 @@ function AppContent() {
               toast.success(
                 language === 'en'
                   ? `🎉 Payment successful! $${data.amount?.toLocaleString() || '?'} added to your wallet.\n\n📄 E-invoice will be issued within 24 hours.\n🔍 Check at: Ministry of Finance E-Invoice Platform\nhttps://www.einvoice.nat.gov.tw/`
-                  : `🎉 付款成功！已將 $${data.amount?.toLocaleString() || '?'} 加入您的錢包。\n\n📄 電子發票將於 24 小時內開立\n🔍 查詢請至：財政部電發票整合服務平台\nhttps://www.einvoice.nat.gov.tw/`,
+                  : `🎉 付款成功！已將 $${data.amount?.toLocaleString() || '?'} 加入您的錢包。\n\n�� 電子發票將於 24 小時內開立\n🔍 查詢請至：財政部電發票整合服務平台\nhttps://www.einvoice.nat.gov.tw/`,
                 { duration: 8000 }
               );
               
@@ -582,7 +582,7 @@ function AppContent() {
       const customEvent = e as CustomEvent;
       console.log('📱 [App] showDashboard event received:', customEvent.detail);
       
-      // 🔥 FIX: 如果當前在 Blog 文章頁面，不要跳轉到 dashboard
+      // 🔥 FIX: 如果當前�� Blog 文章頁面，不要跳轉到 dashboard
       const currentPath = window.location.pathname;
       if (currentPath.startsWith('/blog/') && currentPath !== '/blog/admin') {
         console.log('🚫 [App] Ignoring showDashboard - user is reading a blog post');
