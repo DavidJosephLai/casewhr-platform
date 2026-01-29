@@ -1155,13 +1155,38 @@ console.log('✅ [SERVER] Internal Link Management APIs registered');
 app.get('/make-server-215f78a5/blog/posts', async (c) => {
   try {
     console.log('📥 [BLOG API] Loading all posts...');
+    
+    // 獲取 limit 參數（默認返回所有）
+    const limitParam = c.req.query('limit');
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+    console.log('📥 [BLOG API] Limit param:', limit);
+    
     const allItems = await kv.getByPrefix('blog_post_');
     console.log('📋 [BLOG API] Raw items from KV:', allItems.length);
-    console.log('📋 [BLOG API] Raw items data:', JSON.stringify(allItems, null, 2));
     
-    const posts = allItems.map(item => item.value);
+    // 轉換為文章對象並按發布日期排序（最新的在前）
+    let posts = allItems
+      .map(item => item.value)
+      .filter((post: any) => post && post.publishedAt) // 過濾掉無效數據
+      .sort((a: any, b: any) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    
+    console.log('📋 [BLOG API] Sorted posts:', posts.length);
+    
+    // 如果有 limit 參數，只返回前 N 篇
+    if (limit && limit > 0) {
+      posts = posts.slice(0, limit);
+      console.log(`📋 [BLOG API] Limited to ${limit} posts:`, posts.length);
+    }
+    
     console.log('✅ [BLOG API] Returning posts:', posts.length);
-    console.log('📋 [BLOG API] Posts data:', JSON.stringify(posts, null, 2));
+    if (posts.length > 0) {
+      console.log('📋 [BLOG API] First post:', {
+        id: posts[0].id,
+        slug: posts[0].slug,
+        title: posts[0].title,
+        publishedAt: posts[0].publishedAt
+      });
+    }
     
     return c.json({ posts: posts });
   } catch (error: any) {
@@ -20704,7 +20729,7 @@ app.post("/make-server-215f78a5/ai-seo/generate", async (c) => {
       
       const pageContexts: Record<string, string> = {
         '/': 'Casewhere 是一個全球接案平台，連接客戶與專業自由工作者。首頁應該突出平台的核心價值、服務範圍和用戶優勢。',
-        '/about': '關於我們頁面介紹 Casewhere 平台的使命、願景、團隊和發展歷程。',
+        '/about': '關於我們頁面���紹 Casewhere 平台的使命、願景、團隊和發展歷程。',
         '/services': '服務列表展示平台上可用的各種專業服務類別，包括設計、開發、營銷等。',
         '/pricing': '定價方案頁面說明平台的收費結構、服務費率和價值主張。',
         '/how-it-works': '運作方式頁面解釋如何使用平台發布項目、尋找專家和完成交易。',

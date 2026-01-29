@@ -15,9 +15,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.12-compact-benefits-top
-// 🎨 Update: Compacted PostProjectBenefits and moved to top of homepage
-console.log('🚀 [App v2.1.12-compact-benefits-top] Compact benefits section at top');
+// 🔥 Version marker to force cache invalidation - v2.1.35-edge-diagnostic
+// 📚 Update: Added Edge Function Diagnostic tool to diagnose API deployment issues
+console.log('🚀 [App v2.1.35-edge-diagnostic] Edge Function diagnostic tool added!');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -66,6 +66,7 @@ import { LatestSEOReports } from './components/LatestSEOReports';
 import { PlatformComparison } from './components/PlatformComparison';
 import { WhitepaperDownload } from './components/WhitepaperDownload';
 import { PostProjectBenefits } from './components/PostProjectBenefits';
+import { BlogFloatingCarousel } from './components/BlogFloatingCarousel';
 
 // ✅ 只對大型頁面使用 Lazy Load（真正需要代碼分割的）
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -108,6 +109,7 @@ const OpenAIKeyGuide = lazy(() => import('./components/OpenAIKeyGuide'));
 const DataSyncDiagnostic = lazy(() => import('./components/DataSyncDiagnostic'));
 const DeepDataDiagnostic = lazy(() => import('./components/DeepDataDiagnostic'));
 const ErrorDiagnosticPage = lazy(() => import('./components/ErrorDiagnosticPage'));
+const EdgeFunctionDiagnostic = lazy(() => import('./components/EdgeFunctionDiagnostic'));
 // const FetchInterceptorTest = lazy(() => import('./components/FetchInterceptorTest')); // ❌ Removed - component doesn't exist
 
 //  內容頁 - Lazy Load（SEO 關頁面）
@@ -187,7 +189,7 @@ function AppContent() {
     });
   }, [language]);
   
-  // 🔥 監聽用戶登入狀態變化，並為特殊用戶自動刷新訂閱
+  // 🔥 監戶登入狀態變化，並為特殊用戶自動刷新訂閱
   useEffect(() => {
     if (!user) return;
     
@@ -243,7 +245,7 @@ function AppContent() {
   // 初始化匯率系
   // Note: useExchangeRate hook 已在各組件按需使用
   
-  // 檢測團隊邀請 URL
+  // 檢測隊邀請 URL
   useEffect(() => {
     const urlPath = window.location.pathname;
     const urlParams = new URLSearchParams(window.location.search);
@@ -274,7 +276,7 @@ function AppContent() {
     
     // 檢查隱私政策和服務條款頁面（支持多種 URL 格式）
     if (urlPath === '/privacy' || urlPath === '/privacy-policy') {
-      console.log('📄 [App] Privacy policy page detected');
+      console.log(' [App] Privacy policy page detected');
       setView('privacy-policy');
       return;
     }
@@ -310,17 +312,17 @@ function AppContent() {
     if (urlPath === '/blog') {
       console.log('📝 [App] Blog list page detected');
       console.log('🔥🔥🔥 [App] Setting view to blog - NO REDIRECT TO POST PAGE!');
-      console.log('🔥🔥🔥 [App] Current view before setView:', view);
+      console.log('🔥🔥 [App] Current view before setView:', view);
       setView('blog');
       console.log('🔥🔥🔥 [App] setView(blog) called!');
       return;
     }
     
-    // 📝 檢查是否是 Blog 後台理頁面
+    // 📝 檢查是否是 Blog 後台管理頁面
     if (urlPath === '/blog/admin') {
       console.log('🔧 [App] Blog admin page detected');
       
-      // 🔐 暫時移除登入檢查，讓 BlogManagementPage 自己處
+      // 🔐 暫時移除登檢查，讓 BlogManagementPage 自己處理
       // 因為入後態更新需要時間
       
       setView('blog-admin');
@@ -335,7 +337,7 @@ function AppContent() {
       return;
     }
     
-    // 查是否是團隊邀連結
+    // 查是否是團隊連
     if (urlPath.includes('/team/accept-invitation') || urlParams.get('id')) {
       console.log('📧 [App] Team invitation link detected');
       setView('accept-invitation');
@@ -355,7 +357,7 @@ function AppContent() {
         { duration: 5000 }
       );
       
-      // 延遲登出，讓用戶看到提示
+      // 延遲登出，讓用戶看提示
       setTimeout(async () => {
         try {
           await signOut();
@@ -462,7 +464,7 @@ function AppContent() {
           toast.success(
             language === 'en'
               ? '🟢 LINE login successful! Redirecting to dashboard...'
-              : '🟢 LINE 登成功！正在跳轉到儀表板...',
+              : '🟢 LINE 登成功！正在跳轉到儀板...',
             { duration: 3000 }
           );
           
@@ -474,8 +476,8 @@ function AppContent() {
           console.error('❌ [LINE Callback] Error:', error);
           toast.error(
             language === 'en'
-              ? `❌ LINE login failed: ${error.message}`
-              : `❌ LINE 登���失敗：${error.message}`,
+              ? ` LINE login failed: ${error.message}`
+              : `❌ LINE 登失敗：${error.message}`,
             { duration: 5000 }
           );
           
@@ -537,7 +539,7 @@ function AppContent() {
               toast.success(
                 language === 'en'
                   ? `🎉 Payment successful! $${data.amount?.toLocaleString() || '?'} added to your wallet.\n\n📄 E-invoice will be issued within 24 hours.\n🔍 Check at: Ministry of Finance E-Invoice Platform\nhttps://www.einvoice.nat.gov.tw/`
-                  : `🎉 付款成功！已將 $${data.amount?.toLocaleString() || '?'} 加入您的錢包。\n\n 電子發票將於 24 小時內開立\n🔍 查詢請至：財政部電發票整合服務平台\nhttps://www.einvoice.nat.gov.tw/`,
+                  : `🎉 付款成功！已將 $${data.amount?.toLocaleString() || '?'} 加入您的錢包。\n\n 電子發將於 24 小時內開立\n🔍 查詢請至：財政部電票整合服務平台\nhttps://www.einvoice.nat.gov.tw/`,
                 { duration: 8000 }
               );
               
@@ -554,7 +556,7 @@ function AppContent() {
               toast.error(
                 language === 'en'
                   ? `Payment failed: ${errorData.error || 'Unknown error'}`
-                  : `付款失敗：${errorData.error || '未知錯誤'}`,
+                  : `付款失敗：${errorData.error || '知錯誤'}`,
                 { duration: 8000 }
               );
               
@@ -583,7 +585,7 @@ function AppContent() {
         toast.success(
           language === 'en'
             ? '🎉 Payment successful! Your wallet has been updated.'
-            : '🎉 款成功！您的錢包已更新。',
+            : '🎉 成功您的包更新。',
           { duration: 5000 }
         );
         // 清除 URL 參數
@@ -600,7 +602,7 @@ function AppContent() {
           : '❌ 付款已取消未產生任何費用。',
         { duration: 5000 }
       );
-      // 除 URL 參數
+      // 清除 URL 參數
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, [language, setView, accessToken, processingPayment]);
@@ -851,7 +853,7 @@ function AppContent() {
         <div className="pt-20">
           <SEO 
             title={language === 'en' ? 'Success Stories | Case Where' : '成功案例 | Case Where 接得準'}
-            description={language === 'en' ? 'View success stories and client testimonials on Case Where platform.' : '查看 Case Where 平台的成功案例和戶故事。'}
+            description={language === 'en' ? 'View success stories and client testimonials on Case Where platform.' : '查看 Case Where 台的成功案例和戶故事。'}
             keywords={language === 'en' ? 'success stories, testimonials, case studies' : '成功案例, 客戶見證, 案例研究'}
           />
           <Suspense fallback={<PageLoadingFallback />}>
@@ -949,6 +951,13 @@ function AppContent() {
             <ErrorDiagnosticPage />
           </Suspense>
         </div>
+      ) : view === 'edge-function-diagnostic' ? (
+        <div className="pt-20">
+          <SEO title="Edge Function Diagnostic" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <EdgeFunctionDiagnostic />
+          </Suspense>
+        </div>
       ) : view === 'wismachion' ? (
         <div className="pt-0">
           <SEO 
@@ -1024,10 +1033,15 @@ function AppContent() {
       {view !== 'wismachion' && <Footer />}
       {/* 🌐 网络错误提示 - 检测到 Supabase 错误时显示 */}
       <NetworkErrorNotice />
+      
       {/* ✅ 全局功能 - AI Chatbot */}
       <Suspense fallback={null}>
         <AIChatbot language={chatbotLanguage} />
       </Suspense>
+      
+      {/* 📚 全局功能 - Blog Floating Carousel - 所有頁面都顯示 */}
+      <BlogFloatingCarousel />
+      
       {/* 🧪 開發模式登錄 - 僅在開發環境顯示 */}
       {/* 🔧 臨時禁用以調試點擊問題 */}
       {false && <DevModeLogin />}
