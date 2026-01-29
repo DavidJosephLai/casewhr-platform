@@ -11108,6 +11108,16 @@ app.post("/make-server-215f78a5/branding/logo", async (c) => {
       branding.updated_at = new Date().toISOString();
       await kv.set(`branding:${userId}`, branding);
     }
+    
+    // 🌟 同時更新企業 LOGO 服務（用於案件卡片顯示）
+    try {
+      const companyName = branding?.company_name || branding?.workspace_name || 'Enterprise Client';
+      await enterpriseLogoService.setUserEnterpriseLogo(userId, logoUrl, companyName);
+      console.log('✅ [Branding] Also updated enterprise logo service');
+    } catch (error) {
+      console.error('⚠️ [Branding] Failed to update enterprise logo service:', error);
+      // 不阻止主流程
+    }
 
     console.log('✅ [Branding] Logo uploaded for user:', userId);
     if (isDevMode) {
@@ -11312,6 +11322,15 @@ app.delete("/make-server-215f78a5/branding/logo", async (c) => {
       branding.logo_url = undefined;
       branding.updated_at = new Date().toISOString();
       await kv.set(`branding:${user.id}`, branding);
+    }
+    
+    // 🌟 同時刪除企業 LOGO 服務中的 LOGO
+    try {
+      await enterpriseLogoService.deleteUserEnterpriseLogo(user.id);
+      console.log('✅ [Branding] Also deleted from enterprise logo service');
+    } catch (error) {
+      console.error('⚠️ [Branding] Failed to delete from enterprise logo service:', error);
+      // 不阻止主流程
     }
 
     console.log('✅ [Branding] Logo removed for user:', user.id);
