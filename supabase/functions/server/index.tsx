@@ -20576,6 +20576,37 @@ app.delete("/make-server-215f78a5/enterprise/logo", async (c) => {
   }
 });
 
+// 🔍 公開：獲取指定用戶的企業 LOGO（用於顯示在案件卡片中）
+app.get("/make-server-215f78a5/public/enterprise-logo/:userId", async (c) => {
+  try {
+    const userId = c.req.param('userId');
+    
+    if (!userId) {
+      return c.json({ error: 'User ID required' }, 400);
+    }
+    
+    // 獲取用戶的企業 LOGO
+    const logoUrl = await enterpriseLogoService.getUserEnterpriseLogo(userId);
+    
+    if (!logoUrl) {
+      return c.json({ 
+        success: true, 
+        hasLogo: false,
+        logoUrl: null 
+      });
+    }
+    
+    return c.json({
+      success: true,
+      hasLogo: true,
+      logoUrl,
+    });
+  } catch (error: any) {
+    console.error('❌ [Enterprise Logo] Error getting public logo:', error);
+    return c.json({ error: error.message || 'Failed to get logo' }, 500);
+  }
+});
+
 // 📊 管理員：查看所有企業 LOGO（管理員專用）
 app.get("/make-server-215f78a5/admin/enterprise-logos", async (c) => {
   try {

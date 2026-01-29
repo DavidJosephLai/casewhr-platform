@@ -1,11 +1,12 @@
-import { memo, useCallback, useMemo } from 'react'; // ✅ Added React hooks
+import { memo, useCallback, useMemo, useState, useEffect } from 'react'; // ✅ Added React hooks
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Calendar, DollarSign, User, Briefcase } from "lucide-react";
+import { Calendar, DollarSign, User, Briefcase, Building2 } from "lucide-react";
 import { useLanguage } from "../lib/LanguageContext";
 import { translations, getTranslation } from "../lib/translations";
 import { formatCurrency, formatCurrencyRange, Currency, getDefaultCurrency, convertCurrency } from "../lib/currency";
+import { projectId, publicAnonKey } from "../utils/supabase/info";
 
 interface Project {
   id: string;
@@ -35,6 +36,60 @@ interface ProjectCardProps {
 export const ProjectCard = memo(function ProjectCard({ project, onViewDetails }: ProjectCardProps) {
   const { language } = useLanguage();
   const t = getTranslation(language as any).projects;
+  
+  // 🌟 企業版 LOGO 狀態
+  const [enterpriseLogo, setEnterpriseLogo] = useState<string | null>(null);
+  const [isEnterpriseClient, setIsEnterpriseClient] = useState(false);
+
+  // 🔍 獲取企業客戶 LOGO
+  useEffect(() => {
+    const fetchEnterpriseLogo = async () => {
+      try {
+        // 獲取客戶訂閱狀態
+        const subscriptionResponse = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/subscription/status?userId=${project.client_id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${publicAnonKey}`,
+            },
+          }
+        );
+
+        if (subscriptionResponse.ok) {
+          const subscriptionData = await subscriptionResponse.json();
+          
+          // 檢查是否為企業版客戶
+          if (subscriptionData.plan === 'Enterprise') {
+            setIsEnterpriseClient(true);
+            
+            // 獲取企業 LOGO（使用公開 API）
+            const logoResponse = await fetch(
+              `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/public/enterprise-logo/${project.client_id}`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${publicAnonKey}`,
+                },
+              }
+            );
+
+            if (logoResponse.ok) {
+              const logoData = await logoResponse.json();
+              if (logoData.hasLogo && logoData.logoUrl) {
+                setEnterpriseLogo(logoData.logoUrl);
+                console.log('🌟 [ProjectCard] Enterprise logo loaded for:', project.client_name);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('❌ [ProjectCard] Error fetching enterprise logo:', error);
+      }
+    };
+
+    if (project.client_id) {
+      fetchEnterpriseLogo();
+    }
+  }, [project.client_id, project.client_name]);
 
   // ✅ Memoize formatBudget function
   const formatBudget = useCallback((project: Project) => {
@@ -100,7 +155,31 @@ export const ProjectCard = memo(function ProjectCard({ project, onViewDetails }:
     <Card className="hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <h3 className="flex-1 line-clamp-2">{project.title}</h3>
+          <div className="flex-1 flex items-start gap-2">
+            {/* 🌟 企業版客戶 LOGO */}
+            {isEnterpriseClient && enterpriseLogo && (
+              <div className="flex-shrink-0 mt-1">
+                <img 
+                  src={enterpriseLogo} 
+                  alt="Enterprise Logo" 
+                  className="h-8 w-8 rounded object-contain bg-white border border-gray-200 p-1"
+                  onError={(e) => {
+                    // 如果圖片加載失敗，隱藏圖片
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+            {/* 🌟 企業版徽章（無 LOGO 時顯示） */}
+            {isEnterpriseClient && !enterpriseLogo && (
+              <div className="flex-shrink-0 mt-1">
+                <div className="h-8 w-8 rounded bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
+                  <Building2 className="h-4 w-4 text-white" />
+                </div>
+              </div>
+            )}
+            <h3 className="flex-1 line-clamp-2">{project.title}</h3>
+          </div>
           <Badge className={getStatusColor()}>
             {t.statuses[project.status]}
           </Badge>

@@ -15,9 +15,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.40-removed-linepay
-// 🤖 Update: Removed LINE Pay from AI Chatbot (demo feature only, not production-ready)
-console.log('🚀 [App v2.1.40] AI Chatbot payment methods updated (PayPal + ECPay only)');
+// 🔥 Version marker to force cache invalidation - v2.1.41-enterprise-logo-cards
+// 🌟 Update: Enterprise client logos now displayed on project cards
+console.log('🚀 [App v2.1.41] Enterprise logos now visible on project cards!');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
