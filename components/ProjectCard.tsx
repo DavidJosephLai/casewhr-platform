@@ -37,15 +37,41 @@ export const ProjectCard = memo(function ProjectCard({ project, onViewDetails }:
   const { language } = useLanguage();
   const t = getTranslation(language as any).projects;
   
-  // 🌟 企業版 LOGO 狀態
+  // 🌟 企業版 LOGO 狀態 - 先硬編碼測試 UI
   const [enterpriseLogo, setEnterpriseLogo] = useState<string | null>(null);
-  const [isEnterpriseClient, setIsEnterpriseClient] = useState(false);
+  const [isEnterpriseClient, setIsEnterpriseClient] = useState(true); // ⚡ 強制設為 true 測試
 
-  // 🔍 獲取企業客戶 LOGO
+  // 🔍 獲取企業客戶 LOGO - 暫時註解
+  /*
   useEffect(() => {
     const fetchEnterpriseLogo = async () => {
       try {
-        // 獲取客戶訂閱狀態
+        // ⚡ 暫時硬編碼企業用戶測試
+        const ENTERPRISE_USER_EMAIL = 'davidlai234@hotmail.com';
+        
+        // 快速測試：如果是企業用戶，直接顯示
+        if (project.client_email === ENTERPRISE_USER_EMAIL) {
+          console.log('🔥 [HARDCODED] Enterprise user detected:', project.client_email);
+          setIsEnterpriseClient(true);
+          
+          // 獲取 LOGO
+          const logoResponse = await fetch(
+            `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/public/enterprise-logo/${project.client_id}`,
+            { headers: { 'Authorization': `Bearer ${publicAnonKey}` } }
+          );
+          
+          if (logoResponse.ok) {
+            const logoData = await logoResponse.json();
+            console.log('🖼️ [HARDCODED] Logo data:', logoData);
+            if (logoData?.hasLogo && logoData?.logoUrl) {
+              setEnterpriseLogo(logoData.logoUrl);
+              console.log('✅ [HARDCODED] Logo set:', logoData.logoUrl);
+            }
+          }
+          return;
+        }
+        
+        // 原有邏輯
         const subscriptionResponse = await fetch(
           `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/subscription/status?userId=${project.client_id}`,
           {
@@ -87,14 +113,15 @@ export const ProjectCard = memo(function ProjectCard({ project, onViewDetails }:
           }
         }
       } catch (error) {
-        // 靜默處理錯誤，不影響其他功能
+        console.error('❌ [ProjectCard] Error:', error);
       }
     };
 
     if (project.client_id) {
       fetchEnterpriseLogo();
     }
-  }, [project.client_id]);
+  }, [project.client_id, project.client_email]);
+  */
 
   // ✅ Memoize formatBudget function
   const formatBudget = useCallback((project: Project) => {
