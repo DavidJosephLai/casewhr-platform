@@ -61,6 +61,7 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
   // 🌟 企業版 LOGO 狀態
   const [enterpriseLogos, setEnterpriseLogos] = useState<Record<string, string | null>>({});
   const [enterpriseStatus, setEnterpriseStatus] = useState<Record<string, boolean>>({});
+  const [enterpriseNames, setEnterpriseNames] = useState<Record<string, string>>({});
 
   // 📄 Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -203,6 +204,19 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
                   setEnterpriseLogos(prev => ({ ...prev, [userId]: logoData.logoUrl }));
                 }
               }
+              
+              // 獲取企業名稱
+              const nameResponse = await fetch(
+                `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/public/enterprise-name/${userId}`,
+                { headers: { 'Authorization': `Bearer ${publicAnonKey}` } }
+              );
+              
+              if (nameResponse.ok) {
+                const nameData = await nameResponse.json();
+                if (nameData?.hasName && nameData?.name) {
+                  setEnterpriseNames(prev => ({ ...prev, [userId]: nameData.name }));
+                }
+              }
             }
           }
         } catch (error) {
@@ -330,29 +344,32 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
         {currentProjects.map((project) => (
           <Card key={project.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-2 flex-1">
-                  {/* 🌟 企業版客戶 LOGO */}
-                  {enterpriseStatus[project.user_id] && enterpriseLogos[project.user_id] && (
-                    <div className="flex-shrink-0 mt-1">
-                      <img 
-                        src={enterpriseLogos[project.user_id]} 
-                        alt="Enterprise Logo" 
-                        className="h-12 w-12 rounded object-contain bg-white border-2 border-purple-200 p-1.5 shadow-sm"
-                      />
+              {/* 🌟 第一行：企業 LOGO + 企業名稱 */}
+              {enterpriseStatus[project.user_id] && (
+                <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-100">
+                  {/* LOGO */}
+                  {enterpriseLogos[project.user_id] ? (
+                    <img 
+                      src={enterpriseLogos[project.user_id]} 
+                      alt="Enterprise Logo" 
+                      className="h-10 w-10 rounded object-contain bg-white border-2 border-purple-200 p-1 shadow-sm"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-sm">
+                      <Building2 className="h-5 w-5 text-white" />
                     </div>
                   )}
-                  {/* 🌟 企業版徽章（無 LOGO 時顯示） */}
-                  {enterpriseStatus[project.user_id] && !enterpriseLogos[project.user_id] && (
-                    <div className="flex-shrink-0 mt-1">
-                      <div className="h-12 w-12 rounded bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-sm">
-                        <Building2 className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                  )}
-                  <CardTitle className="line-clamp-2 flex-1">{project.title}</CardTitle>
+                  {/* 企業名稱 */}
+                  <span className="text-sm font-semibold text-purple-700">
+                    {enterpriseNames[project.user_id] || 'Enterprise Client'}
+                  </span>
                 </div>
-                <div className="flex gap-2">
+              )}
+              
+              {/* 第二行：案件標題 + 狀態 */}
+              <div className="flex items-start justify-between">
+                <CardTitle className="line-clamp-2 flex-1">{project.title}</CardTitle>
+                <div className="flex gap-2 ml-2">
                   <Badge className={getStatusColor(project.status)}>
                     {t.status[project.status as keyof typeof t.status]}
                   </Badge>
