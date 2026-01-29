@@ -87,6 +87,7 @@ const AISEOManager = lazy(() => import('./components/AISEOManager').then(module 
 
 // 🔧 測試和診斷頁面 - Lazy Load（不常用）
 const AISEOTestPage = lazy(() => import('./components/AISEOTestPage'));
+const EnterpriseLogoDiagnostic = lazy(() => import('./components/EnterpriseLogoDiagnostic').then(module => ({ default: module.EnterpriseLogoDiagnostic })));
 const BrevoTestPage = lazy(() => import('./components/BrevoTestPage'));
 const EmailTestPage = lazy(() => import('./components/EmailTestPage'));
 const GoogleOAuthTester = lazy(() => import('./components/GoogleOAuthTester'));
@@ -138,13 +139,16 @@ const BlogManagementPage = lazy(() => import('./components/BlogManagementPage'))
 // 💼 Wismachion - License Management Platform - ⚡ 直接導入以加快載入速度
 import WismachionApp from './wismachion/WismachionApp';
 
+// 🐛 臨時調試工具
+import { ViewDebugger } from './components/ViewDebugger';
+
 // Loading fallback components - 🚀 化：移除刺眼的藍色載入器
 function LoadingFallback() {
   return null; // 靜默載入不顯示任何內容
 }
 
 function PageLoadingFallback() {
-  return null; // 靜默載入，不顯示任何��容
+  return null; // 靜默載入，不顯示任何容
 }
 
 function AppContent() {
@@ -606,7 +610,7 @@ function AppContent() {
     };
 
     const handleShowPricing = () => {
-      console.log('��� [App] showPricing event received');
+      console.log(' [App] showPricing event received');
       setView('pricing');
     };
 
@@ -937,6 +941,13 @@ function AppContent() {
             <EdgeFunctionDiagnostic />
           </Suspense>
         </div>
+      ) : view === 'enterprise-logo-diagnostic' ? (
+        <div className="pt-20">
+          <SEO title="Enterprise Logo Diagnostic" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <EnterpriseLogoDiagnostic />
+          </Suspense>
+        </div>
       ) : view === 'wismachion' ? (
         <div className="pt-0">
           <SEO 
@@ -1030,6 +1041,8 @@ function AppContent() {
         onClose={() => setShowEmailModal(false)}
         userId={lineUserId}
       />
+      {/* 🐛 調試工具 */}
+      <ViewDebugger />
     </div>
   );
 }
