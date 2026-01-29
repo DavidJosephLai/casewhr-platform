@@ -15,9 +15,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.36-blog-carousel-fixed
-// 📚 Update: Fixed Blog Carousel multilingual title display with fallback logic + cleaned up test code
-console.log('🚀 [App v2.1.36] Blog carousel multilingual fallback fixed, test code removed!');
+// 🔥 Version marker to force cache invalidation - v2.1.37-blog-carousel-removed
+// 📚 Update: Removed BlogFloatingCarousel component as requested
+console.log('🚀 [App v2.1.37] Blog carousel removed!');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -66,7 +66,8 @@ import { LatestSEOReports } from './components/LatestSEOReports';
 import { PlatformComparison } from './components/PlatformComparison';
 import { WhitepaperDownload } from './components/WhitepaperDownload';
 import { PostProjectBenefits } from './components/PostProjectBenefits';
-import { BlogFloatingCarousel } from './components/BlogFloatingCarousel';
+// 🔥 REMOVED: BlogFloatingCarousel - 已移除左下角部落格輪播
+// import { BlogFloatingCarousel } from './components/BlogFloatingCarousel';
 
 // ✅ 只對大型頁面使用 Lazy Load（真正需要代碼分割的）
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -1038,9 +1039,6 @@ function AppContent() {
       <Suspense fallback={null}>
         <AIChatbot language={chatbotLanguage} />
       </Suspense>
-      
-      {/* 📚 全局功能 - Blog Floating Carousel - 所有頁面都顯示 */}
-      <BlogFloatingCarousel />
       
       {/* 🧪 開發模式登錄 - 僅在開發環境顯示 */}
       {/* 🔧 臨時禁用以調試點擊問題 */}
