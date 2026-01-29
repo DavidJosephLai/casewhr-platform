@@ -43,6 +43,8 @@ import * as internalLinkScanner from "./internal_link_scanner.tsx";
 import * as videoUploadService from "./video_upload_service.tsx";
 import * as subscriptionRecurring from "./subscription_recurring_service.tsx";
 import * as subscriptionMonitor from "./subscription_monitor.tsx";
+import { registerLogoDebuggerRoutes } from "./logo_debugger_routes.tsx";
+import { registerLogoSetupRoutes } from "./logo_setup_routes.tsx";
 
 console.log('🚀 [SERVER STARTUP] Edge Function v2.0.6 - LINE Auth Integration - Starting...');
 
@@ -606,6 +608,14 @@ console.log('✅ [SERVER] Internal transfer APIs registered');
 // Register SinoPac Bank (永豐銀行) APIs
 registerSinopacRoutes(app);
 console.log('✅ [SERVER] SinoPac Bank (永豐銀行寰宇金融) APIs registered');
+
+// Register Logo Debugger Diagnostic APIs
+registerLogoDebuggerRoutes(app);
+console.log('✅ [SERVER] Logo Debugger diagnostic APIs registered');
+
+// Register Logo Setup APIs
+registerLogoSetupRoutes(app);
+console.log('✅ [SERVER] Logo Setup APIs registered');
 
 // 🔍 診斷：查找用戶by 郵箱
 app.post('/make-server-215f78a5/debug/find-user', async (c) => {
@@ -10875,6 +10885,19 @@ app.post("/make-server-215f78a5/branding", async (c) => {
 
     console.log('✅ [Branding] Saved branding for user:', user.id);
 
+    // 🔥 自動同步到企業 LOGO 記錄（如果有 LOGO URL）
+    if (branding.logo_url) {
+      const enterpriseLogoInfo = {
+        userId: user.id,
+        logoUrl: branding.logo_url,
+        companyName: branding.company_name || branding.workspace_name,
+        syncedAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      };
+      await kv.set(`enterprise_logo_${user.id}`, enterpriseLogoInfo);
+      console.log('✅ [Branding] Auto-synced enterprise logo for user:', user.id);
+    }
+
     return c.json({ success: true, branding });
   } catch (error) {
     console.error('❌ [Branding] Error saving branding:', error);
@@ -10956,6 +10979,19 @@ app.put("/make-server-215f78a5/branding", async (c) => {
     await kv.set(`branding:${userId}`, branding);
 
     console.log('✅ [Branding PUT] Saved branding for user:', userId, branding);
+
+    // 🔥 自動同步到企業 LOGO 記錄（如果有 LOGO URL）
+    if (branding.logo_url) {
+      const enterpriseLogoInfo = {
+        userId: userId,
+        logoUrl: branding.logo_url,
+        companyName: branding.company_name || branding.workspace_name,
+        syncedAt: new Date().toISOString(),
+        created_at: existingBranding?.created_at || new Date().toISOString(),
+      };
+      await kv.set(`enterprise_logo_${userId}`, enterpriseLogoInfo);
+      console.log('✅ [Branding PUT] Auto-synced enterprise logo for user:', userId);
+    }
 
     return c.json({ success: true, branding, settings: branding });
   } catch (error) {

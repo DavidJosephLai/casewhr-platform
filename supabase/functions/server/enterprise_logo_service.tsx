@@ -75,8 +75,18 @@ export async function setUserEnterpriseLogo(
     
     await kv.set(KV_KEYS.userEnterpriseInfo(userId), enterpriseInfo);
     
+    // 🔥 同時保存到舊格式的 key，確保 ProjectCard 能讀取
+    await kv.set(`enterprise_logo_${userId}`, {
+      userId,
+      logoUrl,
+      companyName: enterpriseInfo.companyName,
+      syncedAt: new Date().toISOString(),
+      created_at: enterpriseInfo.uploadedAt,
+    });
+    
     console.log('✅ [Enterprise Logo] Set logo for user:', userId, '→', logoUrl);
     console.log('📋 [Enterprise Logo] Company:', enterpriseInfo.companyName);
+    console.log('🔄 [Enterprise Logo] Also synced to legacy key format');
   } catch (error) {
     console.error('❌ [Enterprise Logo] Error setting logo:', error);
     throw error;
