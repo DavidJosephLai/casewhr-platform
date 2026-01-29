@@ -12,7 +12,7 @@ import { Pagination } from "./Pagination";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Loader2, Briefcase, Calendar, DollarSign, MessageSquare, Trash2, Banknote, CheckCircle } from "lucide-react";
+import { Loader2, Briefcase, Calendar, DollarSign, MessageSquare, Trash2, Banknote, CheckCircle, Building2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Project {
@@ -57,6 +57,10 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
   const [dialogOpen, setDialogOpen] = useState(false);
   const [postDialogOpen, setPostDialogOpen] = useState(false);
   const [proposalDialogOpen, setProposalDialogOpen] = useState(false);
+  
+  // 🌟 企業版 LOGO 狀態
+  const [enterpriseLogos, setEnterpriseLogos] = useState<Record<string, string | null>>({});
+  const [enterpriseStatus, setEnterpriseStatus] = useState<Record<string, boolean>>({});
 
   // 📄 Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -161,6 +165,54 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
   useEffect(() => {
     loadProjects();
   }, [loadProjects, refreshKey]); // ✅ Use loadProjects in dependency
+  
+  // 🌟 獲取企業版 LOGO
+  useEffect(() => {
+    if (projects.length === 0) return;
+    
+    const fetchEnterpriseLogos = async () => {
+      // 獲取所有唯一的 user_id
+      const userIds = [...new Set(projects.map(p => p.user_id))];
+      
+      for (const userId of userIds) {
+        try {
+          // 檢查訂閱狀態
+          const subResponse = await fetch(
+            `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/subscription/status?userId=${userId}`,
+            { headers: { 'Authorization': `Bearer ${publicAnonKey}` } }
+          );
+          
+          if (subResponse.ok) {
+            const subData = await subResponse.json();
+            const isEnterprise = subData?.plan?.toLowerCase?.() === 'enterprise' ||
+                                subData?.hasEnterprise === true ||
+                                subData?.isEnterprise === true;
+            
+            setEnterpriseStatus(prev => ({ ...prev, [userId]: isEnterprise }));
+            
+            if (isEnterprise) {
+              // 獲取 LOGO
+              const logoResponse = await fetch(
+                `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/public/enterprise-logo/${userId}`,
+                { headers: { 'Authorization': `Bearer ${publicAnonKey}` } }
+              );
+              
+              if (logoResponse.ok) {
+                const logoData = await logoResponse.json();
+                if (logoData?.hasLogo && logoData?.logoUrl) {
+                  setEnterpriseLogos(prev => ({ ...prev, [userId]: logoData.logoUrl }));
+                }
+              }
+            }
+          }
+        } catch (error) {
+          // 靜默處理錯誤
+        }
+      }
+    };
+    
+    fetchEnterpriseLogos();
+  }, [projects]);
 
   const getStatusColor = (projectStatus: string) => {
     switch (projectStatus) {
@@ -279,7 +331,27 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
           <Card key={project.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-start justify-between">
-                <CardTitle className="line-clamp-2">{project.title}</CardTitle>
+                <div className="flex items-start gap-2 flex-1">
+                  {/* 🌟 企業版客戶 LOGO */}
+                  {enterpriseStatus[project.user_id] && enterpriseLogos[project.user_id] && (
+                    <div className="flex-shrink-0 mt-1">
+                      <img 
+                        src={enterpriseLogos[project.user_id]} 
+                        alt="Enterprise Logo" 
+                        className="h-12 w-12 rounded object-contain bg-white border-2 border-purple-200 p-1.5 shadow-sm"
+                      />
+                    </div>
+                  )}
+                  {/* 🌟 企業版徽章（無 LOGO 時顯示） */}
+                  {enterpriseStatus[project.user_id] && !enterpriseLogos[project.user_id] && (
+                    <div className="flex-shrink-0 mt-1">
+                      <div className="h-12 w-12 rounded bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-sm">
+                        <Building2 className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                  )}
+                  <CardTitle className="line-clamp-2 flex-1">{project.title}</CardTitle>
+                </div>
                 <div className="flex gap-2">
                   <Badge className={getStatusColor(project.status)}>
                     {t.status[project.status as keyof typeof t.status]}
