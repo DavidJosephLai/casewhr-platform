@@ -11342,6 +11342,55 @@ app.delete("/make-server-215f78a5/branding/logo", async (c) => {
   }
 });
 
+// 🔄 一鍵遷移 LOGO 到企業服務（用於已上傳但未同步的 LOGO）
+app.post("/make-server-215f78a5/branding/migrate-logo", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    if (!accessToken) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const userId = user.id;
+    console.log('🔄 [Branding] Migrating logo for user:', userId);
+
+    // 讀取現有的品牌設定
+    const branding = await kv.get(`branding:${userId}`) as any;
+    
+    if (!branding?.logo_url) {
+      return c.json({ 
+        success: false, 
+        message: 'No logo found to migrate' 
+      });
+    }
+
+    // 同步到企業 LOGO 服務
+    const companyName = branding.company_name || branding.workspace_name || 'Enterprise Client';
+    await enterpriseLogoService.setUserEnterpriseLogo(userId, branding.logo_url, companyName);
+    
+    console.log('✅ [Branding] Logo migrated successfully');
+    console.log('   - Company:', companyName);
+    console.log('   - Logo URL:', branding.logo_url);
+
+    return c.json({ 
+      success: true,
+      message: 'Logo migrated successfully',
+      logoUrl: branding.logo_url,
+      companyName
+    });
+  } catch (error: any) {
+    console.error('❌ [Branding] Migration error:', error);
+    return c.json({ 
+      error: 'Migration failed',
+      details: error.message 
+    }, 500);
+  }
+});
+
 // ============= PRIORITY SUPPORT ROUTES (ENTERPRISE) =============
 
 // Get support tickets for current user

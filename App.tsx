@@ -15,9 +15,10 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.42-enterprise-logo-sync
-// 🌟 Update: Enterprise LOGO now auto-syncs between branding settings and project cards
-console.log('🚀 [App v2.1.42] Enterprise logo synchronization enhanced!');
+// 🔥 Version marker to force cache invalidation - v2.1.43-logo-migration
+// 🌟 Update: Added one-click logo migration tool for enterprise clients
+// 🔄 New: Logo sync button in branding settings syncs existing logos to project cards
+console.log('🚀 [App v2.1.43] Logo migration tool added!');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -353,7 +354,7 @@ function AppContent() {
       toast.error(
         language === 'en'
           ? '🔒 Your session has expired. Please sign in again.'
-          : '🔒 您的登入已���期，請重新登入。',
+          : '🔒 您的登入已期，請重新登入。',
         { duration: 5000 }
       );
       

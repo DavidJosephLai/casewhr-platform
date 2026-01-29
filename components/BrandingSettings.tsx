@@ -75,6 +75,8 @@ export function BrandingSettings({ language = 'en' }: BrandingSettingsProps) {
       uploadLogo: 'Upload Logo',
       changeLogo: 'Change Logo',
       removeLogo: 'Remove Logo',
+      syncLogo: 'Sync Logo',
+      syncLogoDesc: 'Click to sync your logo to all project cards',
       logoSpecs: 'Recommended: PNG or JPG, max 2MB, 500x500px',
       brandColors: 'Brand Colors',
       primaryColor: 'Primary Color',
@@ -121,6 +123,8 @@ export function BrandingSettings({ language = 'en' }: BrandingSettingsProps) {
       uploadLogo: '上傳 Logo',
       changeLogo: '更換 Logo',
       removeLogo: '移除 Logo',
+      syncLogo: '同步 Logo',
+      syncLogoDesc: '點擊以將 Logo 同步到所有案件卡片',
       logoSpecs: '建議：PNG 或 JPG，最大 2MB，500x500px',
       brandColors: '品牌顏色',
       primaryColor: '主要顏色',
@@ -157,7 +161,7 @@ export function BrandingSettings({ language = 'en' }: BrandingSettingsProps) {
       }
     },
     'zh-TW': {
-      title: '自訂品牌',
+      title: '自��品牌',
       enterpriseOnly: '企業版專屬',
       upgrade: '升級至企業版',
       upgradeDesc: '使用您自己的 Logo、顏色和網域自訂品牌識別！僅限企業版案。',
@@ -451,9 +455,46 @@ export function BrandingSettings({ language = 'en' }: BrandingSettingsProps) {
     }
   };
 
+  // 🔄 一鍵同步 LOGO 到企業服務
+  const handleMigrateLogo = async () => {
+    try {
+      console.log('🔄 [BrandingSettings] Starting logo migration...');
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/branding/migrate-logo`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Migration failed');
+      }
+
+      console.log('✅ [BrandingSettings] Logo migrated:', data);
+      toast.success(
+        language === 'en' 
+          ? '✅ Logo synced! Now visible on all project cards.' 
+          : '✅ Logo 已同步！現在會顯示在所有案件卡片上。',
+        { duration: 5000 }
+      );
+    } catch (error: any) {
+      console.error('❌ [BrandingSettings] Migration error:', error);
+      toast.error(
+        language === 'en'
+          ? `Failed to sync logo: ${error.message}`
+          : `同步 Logo 失敗：${error.message}`
+      );
+    }
+  };
+
   const handleSave = async () => {
     if (!formData.company_name.trim()) {
-      toast.error(language === 'en' ? 'Company name is required' : '���司名稱為必填');
+      toast.error(language === 'en' ? 'Company name is required' : '司名稱為必填');
       return;
     }
 
@@ -633,6 +674,28 @@ export function BrandingSettings({ language = 'en' }: BrandingSettingsProps) {
                       {t.removeLogo}
                     </Button>
                   </div>
+                  
+                  {/* 🔄 同步 LOGO 按鈕 */}
+                  <Alert className="bg-blue-50 border-blue-200">
+                    <Info className="size-4 text-blue-600" />
+                    <AlertDescription className="text-sm text-blue-800">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="font-semibold mb-1">{t.syncLogo}</div>
+                          <div className="text-xs">{t.syncLogoDesc}</div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleMigrateLogo}
+                          className="bg-blue-600 text-white hover:bg-blue-700 border-blue-600 shrink-0"
+                        >
+                          <Copy className="size-3 mr-1" />
+                          {language === 'en' ? 'Sync Now' : '立即同步'}
+                        </Button>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
                 </div>
               ) : (
                 <Button
