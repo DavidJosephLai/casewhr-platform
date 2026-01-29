@@ -51,6 +51,13 @@ import { BrandingSettings } from './BrandingSettings';
 import { PostProjectDialog } from './PostProjectDialog';
 import { InternalTransfer } from './InternalTransfer';
 import { TransferHistory } from './TransferHistory';
+import { EnterpriseFeaturesPanel } from './EnterpriseFeaturesPanel';
+import { SLAMonitoring } from './SLAMonitoring';
+import { EnterpriseChat } from './EnterpriseChat';
+import { ExchangeRateIndicator } from './ExchangeRateIndicator';
+import { QuickSubscriptionCheck } from './QuickSubscriptionCheck';
+import { RecurringSubscriptionManager } from './RecurringSubscriptionManager';
+import { UnifiedInvoiceManager } from './UnifiedInvoiceManager';
 // ✅ 移除：已改用全自動 LOGO 同步 (v2.1.62)
 // import { QuickLogoFix } from './QuickLogoFix';
 // ❌ 移除：管理員面板應該是全局浮動按鈕，不應該在 Dashboard 內部
