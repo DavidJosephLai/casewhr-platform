@@ -59,6 +59,7 @@ import { BrandingSettings } from './BrandingSettings';
 import { PostProjectDialog } from './PostProjectDialog';
 import { InternalTransfer } from './InternalTransfer';
 import { TransferHistory } from './TransferHistory';
+import { QuickLogoFix } from './QuickLogoFix';
 // ❌ 移除：管理員面板應該是全局浮動按鈕，不應該在 Dashboard 內部
 // import { AdminPanel } from './AdminPanel';
 import { isAdmin } from '../lib/adminConfig';
@@ -532,6 +533,11 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
+          {/* 🔧 Quick Logo Fix Tool - 僅顯示給 davidlai234@hotmail.com */}
+          {user?.email === 'davidlai234@hotmail.com' && user?.id && (
+            <QuickLogoFix userId={user.id} userEmail={user.email} />
+          )}
+          
           <MembershipCard />
           <EnterpriseFeaturesPanel language={language} />
           

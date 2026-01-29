@@ -1,10 +1,26 @@
 import { Hono } from "npm:hono";
 import * as kv from "./kv_store.tsx";
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 /**
  * 🔍 LOGO 診斷工具專用路由
  * 這些是公開路由，用於診斷企業 LOGO 同步問題
  */
+
+// Initialize Supabase client
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
+
+// 🔐 ROOT ADMIN EMAILS - 這些用戶永遠擁有企業版權限
+const ROOT_ADMIN_EMAILS = [
+  'davidlai234@hotmail.com',
+  'davidjosephlai@gmail.com',
+  'davidjosephlai@casewhr.com',
+  'davidlai117@yahoo.com.tw',
+  'admin@casewhr.com',
+];
 
 export function registerLogoDebuggerRoutes(app: Hono) {
   
@@ -19,15 +35,37 @@ export function registerLogoDebuggerRoutes(app: Hono) {
 
       console.log('🔍 [Subscription Status] Checking for user:', userId);
 
+      // 🔐 檢查是否為 ROOT ADMIN
+      const { data: { user: userProfile } } = await supabase.auth.admin.getUserById(userId);
+      const userEmail = userProfile?.email?.toLowerCase();
+      
+      if (userEmail && ROOT_ADMIN_EMAILS.includes(userEmail)) {
+        console.log('👑 [Subscription Status] ROOT ADMIN detected:', userEmail);
+        return c.json({ 
+          success: true,
+          userId,
+          plan: 'Enterprise',
+          subscription: {
+            plan: 'Enterprise',
+            status: 'active',
+            user_id: userId,
+            is_root_admin: true,
+          },
+          hasEnterprise: true,
+          isRootAdmin: true,
+          timestamp: new Date().toISOString()
+        });
+      }
+
       // 獲取訂閱信息
       const subscription = await kv.get(`subscription:${userId}`) || await kv.get(`subscription_${userId}`);
 
       console.log('🔍 [Subscription Status] Found:', subscription);
 
       // 確定訂閱計劃
-      let plan = 'free';
+      let plan = 'Free';
       if (subscription) {
-        plan = subscription.plan || subscription.tier || 'free';
+        plan = subscription.plan || subscription.tier || 'Free';
         // 統一轉換為首字母大寫格式（與前端一致）
         plan = plan.charAt(0).toUpperCase() + plan.slice(1).toLowerCase();
       }
