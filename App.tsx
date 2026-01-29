@@ -15,9 +15,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.37-blog-carousel-removed
-// 📚 Update: Removed BlogFloatingCarousel component as requested
-console.log('🚀 [App v2.1.37] Blog carousel removed!');
+// 🔥 Version marker to force cache invalidation - v2.1.38-restored-blog-carousel
+// 📚 Update: Restored BlogFloatingCarousel component after fixing SEO duplicate key issue
+console.log('🚀 [App v2.1.38] Blog carousel restored, duplicate key issue fixed!');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -66,8 +66,7 @@ import { LatestSEOReports } from './components/LatestSEOReports';
 import { PlatformComparison } from './components/PlatformComparison';
 import { WhitepaperDownload } from './components/WhitepaperDownload';
 import { PostProjectBenefits } from './components/PostProjectBenefits';
-// 🔥 REMOVED: BlogFloatingCarousel - 已移除左下角部落格輪播
-// import { BlogFloatingCarousel } from './components/BlogFloatingCarousel';
+import { BlogFloatingCarousel } from './components/BlogFloatingCarousel';
 
 // ✅ 只對大型頁面使用 Lazy Load（真正需要代碼分割的）
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -1028,6 +1027,8 @@ function AppContent() {
           <PlatformComparison />
           <WhitepaperDownload />
           <LatestSEOReports />
+          {/* 📚 左下角部落格輪播 */}
+          <BlogFloatingCarousel />
         </>
       )}
       {/* ✅ Wismachion 頁面不顯示主站 Footer */}
