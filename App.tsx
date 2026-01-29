@@ -112,7 +112,6 @@ const DataSyncDiagnostic = lazy(() => import('./components/DataSyncDiagnostic'))
 const DeepDataDiagnostic = lazy(() => import('./components/DeepDataDiagnostic'));
 const ErrorDiagnosticPage = lazy(() => import('./components/ErrorDiagnosticPage'));
 const EdgeFunctionDiagnostic = lazy(() => import('./components/EdgeFunctionDiagnostic'));
-const BrandingDiagnosticTool = lazy(() => import('./components/BrandingDiagnosticTool').then(module => ({ default: module.BrandingDiagnosticTool })));
 
 //  內容頁 - Lazy Load（SEO 關頁面）
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
@@ -179,7 +178,7 @@ function AppContent() {
       toast.info(
         language === 'en'
           ? '🆕 New version available! Refresh to update.'
-          : '��� 發現新版本！請刷新頁面更新。',
+          : ' 發現新版本！請刷新頁面更新。',
         { 
           duration: 10000,
           action: {
@@ -289,7 +288,7 @@ function AppContent() {
       return;
     }
     
-    // 檢查是否���碼重設頁面
+    // 檢查是否碼重設頁面
     if (urlPath.includes('/reset-password')) {
       console.log('🔐 [App] Reset password page detected');
       setView('reset-password');
@@ -958,13 +957,6 @@ function AppContent() {
           <SEO title="Edge Function Diagnostic" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
             <EdgeFunctionDiagnostic />
-          </Suspense>
-        </div>
-      ) : view === 'branding-diagnostic' ? (
-        <div className="pt-20">
-          <SEO title="Branding Diagnostic Tool" description="" keywords="" noindex />
-          <Suspense fallback={<PageLoadingFallback />}>
-            <BrandingDiagnosticTool />
           </Suspense>
         </div>
       ) : view === 'wismachion' ? (
