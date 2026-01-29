@@ -6,6 +6,7 @@ import { projectId, publicAnonKey } from "../utils/supabase/info";
 import { ProjectDialog } from "./ProjectDialog";
 import { ProposalListDialog } from "./ProposalListDialog"; // ✅ 使用 ProposalListDialog（正確的提案列表組件）
 import { ProjectPostingDialog } from "./ProjectPostingDialog";
+import { ProjectCard } from "./ProjectCard"; // ✅ 使用 ProjectCard 組件
 import { formatCurrency, getDefaultCurrency } from "../lib/currency";
 import { projectApi } from "../lib/api";
 import { Pagination } from "./Pagination";
@@ -30,6 +31,27 @@ interface Project {
   updated_at: string;
   proposal_count?: number;
   pending_proposal_count?: number;
+}
+
+// 🔄 ProjectCard 需要的格式
+interface ProjectCardFormat {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  budget_min: number;
+  budget_max: number;
+  budget_type: "fixed" | "hourly";
+  currency?: any;
+  deadline: string | null;
+  required_skills: string;
+  status: "open" | "in_progress" | "completed" | "cancelled";
+  client_id: string;
+  client_name: string;
+  client_email: string;
+  proposal_count: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ProjectListProps {
@@ -144,6 +166,17 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
       console.log('🔍 [ProjectList] Response:', response);
       console.log('🔍 [ProjectList] Projects count:', response?.projects?.length);
       console.log('🔍 [ProjectList] Projects data:', response?.projects);
+      
+      // 🔍 詳細檢查每個案件的編碼
+      response?.projects?.forEach((p: any, index: number) => {
+        console.log(`🔍 [ProjectList] Project ${index}:`, {
+          title: p.title,
+          category: p.category,
+          required_skills: p.required_skills,
+          categoryBytes: p.category ? Array.from(new TextEncoder().encode(p.category)) : null,
+        });
+      });
+      
       console.log('🔍 [ProjectList] ====================================');
 
       if (response && response.projects) {
@@ -175,9 +208,44 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
       // 獲取所有唯一的 user_id
       const userIds = [...new Set(projects.map(p => p.user_id))];
       
+      console.log('🔍 [ProjectList] Fetching enterprise info for userIds:', userIds);
+      
       for (const userId of userIds) {
         try {
-          // 檢查訂閱狀態
+          // 1️⃣ 先獲取企業名稱（所有用戶都可能有）
+          const nameResponse = await fetch(
+            `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/public/enterprise-name/${userId}`,
+            { headers: { 'Authorization': `Bearer ${publicAnonKey}` } }
+          );
+          
+          if (nameResponse.ok) {
+            const nameData = await nameResponse.json();
+            console.log('🏢 [ProjectList] Name response for', userId, ':', nameData);
+            
+            if (nameData?.hasName && nameData?.name) {
+              setEnterpriseNames(prev => ({ ...prev, [userId]: nameData.name }));
+              console.log('✅ [ProjectList] Company name set:', nameData.name);
+            }
+          }
+          
+          // 2️⃣ 嘗試獲取 LOGO（不管訂閱狀態，先拿再說）
+          const logoResponse = await fetch(
+            `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/public/enterprise-logo/${userId}`,
+            { headers: { 'Authorization': `Bearer ${publicAnonKey}` } }
+          );
+          
+          if (logoResponse.ok) {
+            const logoData = await logoResponse.json();
+            console.log('🖼️ [ProjectList] Logo response for', userId, ':', logoData);
+            
+            if (logoData?.hasLogo && logoData?.logoUrl) {
+              setEnterpriseLogos(prev => ({ ...prev, [userId]: logoData.logoUrl }));
+              setEnterpriseStatus(prev => ({ ...prev, [userId]: true })); // 有 LOGO 就標記為企業版
+              console.log('✅ [ProjectList] Logo set:', logoData.logoUrl);
+            }
+          }
+          
+          // 3️⃣ 檢查訂閱狀態（用於其他用途）
           const subResponse = await fetch(
             `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/subscription/status?userId=${userId}`,
             { headers: { 'Authorization': `Bearer ${publicAnonKey}` } }
@@ -185,42 +253,20 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
           
           if (subResponse.ok) {
             const subData = await subResponse.json();
-            const isEnterprise = subData?.plan?.toLowerCase?.() === 'enterprise' ||
-                                subData?.hasEnterprise === true ||
-                                subData?.isEnterprise === true;
+            console.log('📊 [ProjectList] Subscription for', userId, ':', subData);
             
-            setEnterpriseStatus(prev => ({ ...prev, [userId]: isEnterprise }));
+            const isEnterprise = 
+              subData?.plan?.toLowerCase?.() === 'enterprise' ||
+              subData?.hasEnterprise === true ||
+              subData?.isEnterprise === true;
             
             if (isEnterprise) {
-              // 獲取 LOGO
-              const logoResponse = await fetch(
-                `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/public/enterprise-logo/${userId}`,
-                { headers: { 'Authorization': `Bearer ${publicAnonKey}` } }
-              );
-              
-              if (logoResponse.ok) {
-                const logoData = await logoResponse.json();
-                if (logoData?.hasLogo && logoData?.logoUrl) {
-                  setEnterpriseLogos(prev => ({ ...prev, [userId]: logoData.logoUrl }));
-                }
-              }
-              
-              // 獲取企業名稱
-              const nameResponse = await fetch(
-                `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/public/enterprise-name/${userId}`,
-                { headers: { 'Authorization': `Bearer ${publicAnonKey}` } }
-              );
-              
-              if (nameResponse.ok) {
-                const nameData = await nameResponse.json();
-                if (nameData?.hasName && nameData?.name) {
-                  setEnterpriseNames(prev => ({ ...prev, [userId]: nameData.name }));
-                }
-              }
+              setEnterpriseStatus(prev => ({ ...prev, [userId]: true }));
+              console.log('✅ [ProjectList] Enterprise status confirmed for:', userId);
             }
           }
         } catch (error) {
-          // 靜默處理錯誤
+          console.error('❌ [ProjectList] Error fetching for userId:', userId, error);
         }
       }
     };
@@ -345,23 +391,24 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
           <Card key={project.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               {/* 🌟 第一行：企業 LOGO + 企業名稱 */}
-              {enterpriseStatus[project.user_id] && (
+              {enterpriseNames[project.user_id] && (
                 <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-100">
-                  {/* LOGO */}
-                  {enterpriseLogos[project.user_id] ? (
+                  {/* LOGO：企業版顯示真實 LOGO，其他顯示預設圖標 */}
+                  {enterpriseStatus[project.user_id] && enterpriseLogos[project.user_id] ? (
                     <img 
                       src={enterpriseLogos[project.user_id]} 
-                      alt="Enterprise Logo" 
-                      className="h-10 w-10 rounded object-contain bg-white border-2 border-purple-200 p-1 shadow-sm"
+                      alt="Company Logo" 
+                      className="h-12 w-12 rounded object-contain bg-white border-2 border-purple-200 p-1 shadow-sm"
                     />
                   ) : (
-                    <div className="h-10 w-10 rounded bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-sm">
-                      <Building2 className="h-5 w-5 text-white" />
+                    // ✅ 預設圖標：只要有公司名稱就顯示
+                    <div className="h-12 w-12 rounded bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center shadow-sm">
+                      <Building2 className="h-6 w-6 text-white" />
                     </div>
                   )}
-                  {/* 企業名稱 */}
+                  {/* 公司名稱（所有用戶只要有就顯示） */}
                   <span className="text-sm font-semibold text-purple-700">
-                    {enterpriseNames[project.user_id] || 'Enterprise Client'}
+                    {enterpriseNames[project.user_id]}
                   </span>
                 </div>
               )}
@@ -379,172 +426,100 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
                       💰 {language === 'en' ? 'Action Needed' : '需要撥款'}
                     </Badge>
                   )}
-                  {/* 显示提案量 - 仅项目发布者可见 */}
-                  {user?.id === project.user_id && (project.proposal_count ?? 0) > 0 && (() => {
-                    // 已完成或进行中的项目：显示 "1/1 Proposal"（已接受）
-                    if (project.status === 'completed' || project.status === 'in_progress' || project.status === 'pending_review' || project.status === 'pending_payment') {
-                      return (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          1/{project.proposal_count} {language === 'en' ? 'Proposal' : '提案'}
-                        </Badge>
-                      );
-                    }
-                    // 开放状态的项目：显示 "X/Y New"（待审核）
-                    if (project.status === 'open' && (project.pending_proposal_count ?? 0) > 0) {
-                      return (
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                          {project.pending_proposal_count}/{project.proposal_count} {language === 'en' ? 'New' : '新'}
-                        </Badge>
-                      );
-                    }
-                    // 开放状态但没有新提案：只显示总数
-                    if (project.status === 'open') {
-                      return (
-                        <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">
-                          {project.proposal_count} {language === 'en' ? 'Proposal' + (project.proposal_count > 1 ? 's' : '') : '提案'}
-                        </Badge>
-                      );
-                    }
-                    return null;
-                  })()}
                 </div>
               </div>
-              <CardDescription className="line-clamp-2">
-                {project.description}
-              </CardDescription>
             </CardHeader>
-
-            <CardContent className="space-y-3">
-              {/* Budget */}
-              <div className="flex items-center text-sm text-gray-600">
-                <DollarSign className="h-4 w-4 mr-2" />
-                <span>{formatBudget(project.budget_min, project.budget_max)}</span>
-              </div>
-
-              {/* Deadline */}
-              {project.deadline && (
-                <div className="flex items-center text-sm text-gray-600">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  <span>{formatDate(project.deadline)}</span>
-                </div>
-              )}
-
-              {/* Category */}
-              {project.category && (
-                <div className="flex items-center text-sm text-gray-600">
-                  <Briefcase className="h-4 w-4 mr-2" />
-                  <span>{project.category}</span>
-                </div>
-              )}
-
-              {/* Skills */}
-              {project.required_skills && project.required_skills.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {project.required_skills.slice(0, 3).map((skill, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {skill}
-                    </Badge>
-                  ))}
-                  {project.required_skills.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{project.required_skills.length - 3}
-                    </Badge>
-                  )}
-                </div>
-              )}
+            <CardContent className="p-4">
+              <CardDescription className="text-sm text-gray-500">
+                {project.category ? (
+                  <Badge className="bg-gray-100 text-gray-800 mr-2">
+                    {project.category}
+                  </Badge>
+                ) : (
+                  <Badge className="bg-gray-100 text-gray-800 mr-2">
+                    {language === 'en' ? 'Uncategorized' : '未分類'}
+                  </Badge>
+                )}
+                {/* ✅ 安全處理 required_skills - 可能是 undefined 或空陣列 */}
+                {project.required_skills && Array.isArray(project.required_skills) && project.required_skills.map(skill => (
+                  <Badge key={skill} className="bg-gray-100 text-gray-800 mr-2">
+                    {skill}
+                  </Badge>
+                ))}
+              </CardDescription>
+              <CardDescription className="text-sm text-gray-500">
+                {project.deadline ? (
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 text-gray-500 mr-1" />
+                    {formatDate(project.deadline)}
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 text-gray-500 mr-1" />
+                    {language === 'en' ? 'No deadline' : '無截止日期'}
+                  </div>
+                )}
+              </CardDescription>
+              <CardDescription className="text-sm text-gray-500">
+                {project.budget_min || project.budget_max ? (
+                  <div className="flex items-center">
+                    <DollarSign className="h-4 w-4 text-gray-500 mr-1" />
+                    {formatBudget(project.budget_min, project.budget_max)}
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <DollarSign className="h-4 w-4 text-gray-500 mr-1" />
+                    {language === 'en' ? 'Budget not specified' : '未指定預算'}
+                  </div>
+                )}
+              </CardDescription>
+              <CardDescription className="text-sm text-gray-500">
+                {project.proposal_count ? (
+                  <div className="flex items-center">
+                    <MessageSquare className="h-4 w-4 text-gray-500 mr-1" />
+                    {project.proposal_count} {language === 'en' ? 'proposals' : '提案'}
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <MessageSquare className="h-4 w-4 text-gray-500 mr-1" />
+                    {language === 'en' ? 'No proposals' : '無提案'}
+                  </div>
+                )}
+              </CardDescription>
+              <CardDescription className="text-sm text-gray-500">
+                {project.pending_proposal_count ? (
+                  <div className="flex items-center">
+                    <MessageSquare className="h-4 w-4 text-gray-500 mr-1" />
+                    {project.pending_proposal_count} {language === 'en' ? 'pending proposals' : '待審核提案'}
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <MessageSquare className="h-4 w-4 text-gray-500 mr-1" />
+                    {language === 'en' ? 'No pending proposals' : '無審核提案'}
+                  </div>
+                )}
+              </CardDescription>
             </CardContent>
-
-            <CardFooter className="flex-col gap-3">
-              <div className="flex justify-between items-center w-full">
-                <span className="text-xs text-gray-500">
-                  {formatDate(project.created_at)}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleViewProject(project)}
-                    className="h-9 border-2 border-gray-600 hover:border-gray-800 font-semibold"
-                  >
-                    {language === 'en' ? 'View Details' : '查看詳情'}
-                  </Button>
-                  {/* 只为项目发布者显示"查看提案"按钮 */}
-                  {(() => {
-                    const isOwner = user?.id === project.user_id;
-                    const isOpen = project.status === 'open';
-                    const shouldShow = !!(isOwner && isOpen); // 強制轉換為布爾值
-                    
-                    console.log('🔍 [Proposal Button Check]', {
-                      projectTitle: project.title,
-                      projectId: project.id,
-                      projectUserId: project.user_id,
-                      currentUserId: user?.id,
-                      isOwner,
-                      projectStatus: project.status,
-                      isOpen,
-                      shouldShowRaw: (isOwner && isOpen),
-                      shouldShow,
-                      userIdType: typeof user?.id,
-                      projectUserIdType: typeof project.user_id,
-                    });
-                    
-                    return shouldShow;
-                  })() && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleViewProposals(project)}
-                      className="h-9"
-                    >
-                      <MessageSquare className="h-4 w-4 mr-1" />
-                      {language === 'en' ? 'Proposals' : '提案'}
-                    </Button>
-                  )}
-                  {/* 只为项目发布者示\"刪除\"按钮 */}
-                  {!hideActions && user?.id === project.user_id && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteProject(project)}
-                      className="h-9 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-              
-              {/* 案主快捷操作按钮 - 据项目状态显示 */}
-              {!hideActions && user?.id === project.user_id && (
-                <>
-                  {/* pending_payment: 显示撥款按钮 - 添加醒目的動畫效果 */}
-                  {project.status === 'pending_payment' && (
-                    <div className="relative">
-                      {/* 脈衝動畫背景 */}
-                      <div className="absolute -inset-0.5 bg-gradient-to-r from-green-600 to-emerald-600 rounded-lg opacity-75 blur animate-pulse"></div>
-                      <Button
-                        className="relative w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
-                        size="sm"
-                        onClick={() => handleViewProject(project)}
-                      >
-                        <Banknote className="h-4 w-4 mr-2" />
-                        {language === 'en' ? '💰 Release Payment Now' : '💰 立即撥款'}
-                      </Button>
-                    </div>
-                  )}
-                  
-                  {/* pending_review: 显示待审核提示 */}
-                  {project.status === 'pending_review' && (
-                    <Button
-                      className="w-full bg-yellow-600 hover:bg-yellow-700"
-                      size="sm"
-                      onClick={() => handleViewProject(project)}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      {language === 'en' ? '📋 Review Deliverable' : '📋 審核交付物'}
-                    </Button>
-                  )}
-                </>
+            <CardFooter className="p-4">
+              <Button
+                className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+                onClick={() => handleViewProject(project)}
+              >
+                {language === 'en' ? 'View Project' : '查看項目'}
+              </Button>
+              <Button
+                className="bg-gray-500 text-white px-4 py-2 rounded mr-2"
+                onClick={() => handleViewProposals(project)}
+              >
+                {language === 'en' ? 'View Proposals' : '查看提案'}
+              </Button>
+              {!hideActions && (
+                <Button
+                  className="bg-red-500 text-white px-4 py-2 rounded"
+                  onClick={() => handleDeleteProject(project)}
+                >
+                  {language === 'en' ? 'Delete Project' : '刪除項目'}
+                </Button>
               )}
             </CardFooter>
           </Card>
