@@ -6746,7 +6746,7 @@ app.post("/make-server-215f78a5/subscription/downgrade", async (c) => {
           }</p>
           
           <div style="background: #dbeafe; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <strong>${language === 'en' ? '📋 What this means:' : '📋 這意味著：'}</strong>
+            <strong>${language === 'en' ? '📋 What this means:' : '📋 這意���著：'}</strong>
             <ul style="margin: 10px 0;">
               <li>${language === 'en' 
                 ? 'Your account now has the features and limits of the new plan'
@@ -10810,11 +10810,8 @@ app.get("/make-server-215f78a5/branding", async (c) => {
     // Get branding settings
     const branding = await kv.get(`branding:${userId}`) || await kv.get(`branding_${userId}`);
 
-    console.log('📖 [Branding GET] Retrieved branding:', branding);
-
     return c.json({ branding: branding || null, settings: branding || null });
   } catch (error) {
-    console.error('❌ [Branding] Error fetching branding:', error);
     return c.json({ error: 'Failed to fetch branding settings' }, 500);
   }
 });
@@ -10883,24 +10880,18 @@ app.post("/make-server-215f78a5/branding", async (c) => {
 
     await kv.set(`branding:${user.id}`, branding);
 
-    console.log('✅ [Branding] Saved branding for user:', user.id);
-
-    // 🔥 自動同步到企業 LOGO 記錄（如果有 LOGO URL）
-    if (branding.logo_url) {
-      const enterpriseLogoInfo = {
-        userId: user.id,
-        logoUrl: branding.logo_url,
-        companyName: branding.company_name || branding.workspace_name,
-        syncedAt: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-      };
-      await kv.set(`enterprise_logo_${user.id}`, enterpriseLogoInfo);
-      console.log('✅ [Branding] Auto-synced enterprise logo for user:', user.id);
-    }
+    // 🔥 自動同步到企業 LOGO 記錄（包含公司名稱，無論是否有 LOGO）
+    const enterpriseLogoInfo = {
+      userId: user.id,
+      logoUrl: branding.logo_url || null,
+      companyName: branding.company_name || branding.workspace_name || 'Enterprise Client',
+      syncedAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+    };
+    await kv.set(`enterprise_logo_${user.id}`, enterpriseLogoInfo);
 
     return c.json({ success: true, branding });
   } catch (error) {
-    console.error('❌ [Branding] Error saving branding:', error);
     return c.json({ error: 'Failed to save branding settings' }, 500);
   }
 });
@@ -10920,7 +10911,6 @@ app.put("/make-server-215f78a5/branding", async (c) => {
     
     // 🎁 開發模式支持
     if (devToken && devToken.startsWith('dev-user-')) {
-      console.log('🎁 [Branding PUT] Dev mode detected, using dev token');
       userId = devToken;
       isDevMode = true;
     } else {
@@ -10943,7 +10933,6 @@ app.put("/make-server-215f78a5/branding", async (c) => {
     }
 
     const requestBody = await c.req.json();
-    console.log('📝 [Branding PUT] Request body:', requestBody);
     
     const { 
       company_name, 
@@ -10978,24 +10967,18 @@ app.put("/make-server-215f78a5/branding", async (c) => {
 
     await kv.set(`branding:${userId}`, branding);
 
-    console.log('✅ [Branding PUT] Saved branding for user:', userId, branding);
-
-    // 🔥 自動同步到企業 LOGO 記錄（如果有 LOGO URL）
-    if (branding.logo_url) {
-      const enterpriseLogoInfo = {
-        userId: userId,
-        logoUrl: branding.logo_url,
-        companyName: branding.company_name || branding.workspace_name,
-        syncedAt: new Date().toISOString(),
-        created_at: existingBranding?.created_at || new Date().toISOString(),
-      };
-      await kv.set(`enterprise_logo_${userId}`, enterpriseLogoInfo);
-      console.log('✅ [Branding PUT] Auto-synced enterprise logo for user:', userId);
-    }
+    // 🔥 自動同步到企業 LOGO 記錄（包含公司名稱，無論是否有 LOGO）
+    const enterpriseLogoInfo = {
+      userId: userId,
+      logoUrl: branding.logo_url || null,
+      companyName: branding.company_name || branding.workspace_name || 'Enterprise Client',
+      syncedAt: new Date().toISOString(),
+      created_at: existingBranding?.created_at || new Date().toISOString(),
+    };
+    await kv.set(`enterprise_logo_${userId}`, enterpriseLogoInfo);
 
     return c.json({ success: true, branding, settings: branding });
   } catch (error) {
-    console.error('❌ [Branding PUT] Error saving branding:', error);
     return c.json({ error: 'Failed to save branding settings' }, 500);
   }
 });
@@ -11015,7 +10998,6 @@ app.post("/make-server-215f78a5/branding/logo", async (c) => {
     
     // 🎁 開發模式支持
     if (devToken && devToken.startsWith('dev-user-')) {
-      console.log('🎁 [Branding Logo] Dev mode detected, using dev token');
       userId = devToken;
       isDevMode = true;
       // 開發模式下跳過認證，但繼續執行真實上傳
@@ -11023,7 +11005,6 @@ app.post("/make-server-215f78a5/branding/logo", async (c) => {
       // 真實模式：使用 Supabase Auth
       const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
       if (authError || !user?.id) {
-        console.error('❌ [Branding Logo] Auth error:', authError);
         return c.json({ error: 'Unauthorized' }, 401);
       }
       
@@ -11059,57 +11040,39 @@ app.post("/make-server-215f78a5/branding/logo", async (c) => {
       return c.json({ error: 'File size must be less than 2MB' }, 400);
     }
 
-    console.log('📤 [Branding] Processing file:', {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      userId,
-      isDevMode
-    });
-
     let logoUrl: string;
 
     // 🎁 開發模式：使用 Base64 編碼直接保存（避免 Storage 權限問題）
     if (isDevMode) {
-      console.log('🎁 [Branding] Dev mode: Converting to Base64...');
       const fileBuffer = await file.arrayBuffer();
       const base64 = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
       logoUrl = `data:${file.type};base64,${base64}`;
-      console.log('✅ [Branding] Dev mode: Base64 conversion successful, length:', logoUrl.length);
     } else {
       // 生產模式：上傳到 Supabase Storage
       const bucketName = 'make-215f78a5-branding';
       
-      console.log('📦 [Branding] Production mode: Checking bucket...');
       const { data: buckets, error: listError } = await supabase.storage.listBuckets();
       
       if (listError) {
-        console.error('❌ [Branding] Failed to list buckets:', listError);
         return c.json({ error: 'Storage access error: ' + listError.message }, 500);
       }
       
       const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
       
       if (!bucketExists) {
-        console.log('📦 [Branding] Creating bucket:', bucketName);
         const { error: createError } = await supabase.storage.createBucket(bucketName, {
           public: false,
           fileSizeLimit: 2097152
         });
         
         if (createError) {
-          console.error('❌ [Branding] Failed to create bucket:', createError);
           return c.json({ error: 'Failed to create storage bucket: ' + createError.message }, 500);
         }
-        
-        console.log('✅ [Branding] Created storage bucket:', bucketName);
       }
 
       // Upload to Supabase Storage
       const fileName = `${userId}/${Date.now()}-${file.name}`;
       const fileBuffer = await file.arrayBuffer();
-      
-      console.log('📤 [Branding] Uploading file:', fileName);
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from(bucketName)
         .upload(fileName, fileBuffer, {
@@ -11149,15 +11112,8 @@ app.post("/make-server-215f78a5/branding/logo", async (c) => {
     try {
       const companyName = branding?.company_name || branding?.workspace_name || 'Enterprise Client';
       await enterpriseLogoService.setUserEnterpriseLogo(userId, logoUrl, companyName);
-      console.log('✅ [Branding] Also updated enterprise logo service');
     } catch (error) {
-      console.error('⚠️ [Branding] Failed to update enterprise logo service:', error);
       // 不阻止主流程
-    }
-
-    console.log('✅ [Branding] Logo uploaded for user:', userId);
-    if (isDevMode) {
-      console.log('🎁 [Branding] Dev mode: Real file uploaded successfully!');
     }
 
     return c.json({ 
@@ -11166,7 +11122,6 @@ app.post("/make-server-215f78a5/branding/logo", async (c) => {
       dev_mode: isDevMode
     });
   } catch (error) {
-    console.error('❌ [Branding] Error uploading logo:', error);
     return c.json({ error: 'Failed to upload logo' }, 500);
   }
 });
@@ -20812,20 +20767,14 @@ app.get("/make-server-215f78a5/public/enterprise-logo/:userId", async (c) => {
   try {
     const userId = c.req.param('userId');
     
-    console.log('🔍 [Enterprise Logo API] Fetching logo for user:', userId);
-    
     if (!userId) {
-      console.error('❌ [Enterprise Logo API] No user ID provided');
       return c.json({ error: 'User ID required' }, 400);
     }
     
     // 獲取用戶的企業 LOGO
     const logoUrl = await enterpriseLogoService.getUserEnterpriseLogo(userId);
     
-    console.log('📊 [Enterprise Logo API] Logo URL retrieved:', logoUrl || 'None');
-    
     if (!logoUrl) {
-      console.log('ℹ️ [Enterprise Logo API] No logo found for user:', userId);
       return c.json({ 
         success: true, 
         hasLogo: false,
@@ -20833,15 +20782,50 @@ app.get("/make-server-215f78a5/public/enterprise-logo/:userId", async (c) => {
       });
     }
     
-    console.log('✅ [Enterprise Logo API] Logo found for user:', userId, '→', logoUrl);
     return c.json({
       success: true,
       hasLogo: true,
       logoUrl,
     });
   } catch (error: any) {
-    console.error('❌ [Enterprise Logo] Error getting public logo:', error);
     return c.json({ error: error.message || 'Failed to get logo' }, 500);
+  }
+});
+
+// 🔍 公開：獲取指定用戶的企業名稱（用於顯示在案件卡片中）
+app.get("/make-server-215f78a5/public/enterprise-name/:userId", async (c) => {
+  try {
+    const userId = c.req.param('userId');
+    
+    if (!userId) {
+      return c.json({ error: 'User ID required' }, 400);
+    }
+    
+    // 從 KV store 獲取企業資訊（優先從 enterprise_logo 獲取，因為這是最新的數據源）
+    let enterpriseInfo = await kv.get(`enterprise_logo_${userId}`);
+    
+    // 如果沒有找到，嘗試從舊的 enterprise_info 獲取（向後兼容）
+    if (!enterpriseInfo) {
+      enterpriseInfo = await kv.get(`enterprise_info_${userId}`);
+    }
+    
+    const companyName = enterpriseInfo?.companyName || enterpriseInfo?.name;
+    
+    if (!companyName) {
+      return c.json({ 
+        success: true, 
+        hasName: false,
+        name: null 
+      });
+    }
+    
+    return c.json({
+      success: true,
+      hasName: true,
+      name: companyName,
+    });
+  } catch (error: any) {
+    return c.json({ error: error.message || 'Failed to get name' }, 500);
   }
 });
 
@@ -20872,7 +20856,6 @@ app.get("/make-server-215f78a5/admin/enterprise-logos", async (c) => {
       stats,
     });
   } catch (error: any) {
-    console.error('❌ [Enterprise Logo] Error getting all logos:', error);
     return c.json({ error: error.message || 'Failed to get logos' }, 500);
   }
 });
@@ -20948,9 +20931,7 @@ app.post("/make-server-215f78a5/test-smart-email", async (c) => {
   }
 });
 
-console.log('✅ [SERVER] Enterprise Logo APIs registered');
-console.log('✅ [SERVER] Smart Email Sender registered');
-console.log('✅ [SERVER] Admin management APIs registered');
+// Enterprise Logo APIs, Smart Email Sender, and Admin management APIs registered
 
 // ==========================================
 // 🤖 AI SEO Routes

@@ -26,7 +26,6 @@ import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { BrandPreview } from './BrandPreview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { MembershipCard } from './MembershipCard';
-import { EnterpriseProfileSettings } from './EnterpriseProfileSettings';
 import { TeamInvitations } from './TeamInvitations';
 import { TeamManagement } from './TeamManagement';
 import { TransactionStats } from './TransactionStats';
@@ -48,19 +47,10 @@ import { PaymentMethodsCard } from './PaymentMethodsCard';
 import { UsageLimitsCard } from './UsageLimitsCard';
 import { MyProposals } from './MyProposals';
 import { UserProfile } from './UserProfile';
-import { EnterpriseFeaturesPanel } from './EnterpriseFeaturesPanel';
-import { EnterpriseChat } from './EnterpriseChat';
-import { ExchangeRateIndicator } from './ExchangeRateIndicator';
-import { QuickSubscriptionCheck } from './QuickSubscriptionCheck';
-import { RecurringSubscriptionManager } from './RecurringSubscriptionManager';
-import { ContractManager } from './ContractManager';
-import { UnifiedInvoiceManager } from './UnifiedInvoiceManager';
-import { SLAMonitoring } from './SLAMonitoring';
 import { BrandingSettings } from './BrandingSettings';
 import { PostProjectDialog } from './PostProjectDialog';
 import { InternalTransfer } from './InternalTransfer';
 import { TransferHistory } from './TransferHistory';
-import { LogoDebugPanel } from './LogoDebugPanel';
 // ✅ 移除：已改用全自動 LOGO 同步 (v2.1.62)
 // import { QuickLogoFix } from './QuickLogoFix';
 // ❌ 移除：管理員面板應該是全局浮動按鈕，不應該在 Dashboard 內部
@@ -565,22 +555,7 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
         <TabsContent value="overview" className="space-y-6">
           {/* ✅ 已移除手動 LOGO 同步工具 - 現已全自動化 (v2.1.62) */}
           
-          {/* 🔍 企業 LOGO 診斷工（僅超級管理員可見） */}
-          {user?.email === 'davidlai234@hotmail.com' && user?.id && (
-            <LogoDebugPanel userId={user.id} />
-          )}
-          
           <MembershipCard />
-          
-          {/* 🌟 企業版專屬：企業資料設定 */}
-          {isEnterpriseUser && (
-            <EnterpriseProfileSettings 
-              onUpdate={() => {
-                // 刷新頁面以顯示更新後的 LOGO
-                setRefreshKey(prev => prev + 1);
-              }}
-            />
-          )}
           
           <EnterpriseFeaturesPanel language={language} />
           
