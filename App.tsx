@@ -15,11 +15,12 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.45-LOGO-SYNC-FIX
+// 🔥 Version marker to force cache invalidation - v2.1.46-LOGO-DEBUG
 // 🐛 Fix: Resolved "Cannot access 'enterpriseInfo' before initialization" error
 // ✅ Fixed: Variable initialization order in enterprise_logo_service.tsx
 // 🔧 Update: Moved existingInfo fetch before enterpriseInfo creation
-console.log('🚀 [App v2.1.45] Logo sync initialization error fixed!');
+// 🔍 Debug: Added extensive logging to ProjectCard and enterprise logo API
+console.log('🚀 [App v2.1.46] Logo sync with enhanced debugging!');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -452,7 +453,7 @@ function AppContent() {
           toast.success(
             language === 'en'
               ? '🟢 LINE login successful! Redirecting to dashboard...'
-              : '🟢 LINE 登成功！正在跳轉到儀板...',
+              : '🟢 LINE 登成功！正在跳轉到��板...',
             { duration: 3000 }
           );
           

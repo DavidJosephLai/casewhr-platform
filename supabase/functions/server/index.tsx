@@ -20649,14 +20649,20 @@ app.get("/make-server-215f78a5/public/enterprise-logo/:userId", async (c) => {
   try {
     const userId = c.req.param('userId');
     
+    console.log('🔍 [Enterprise Logo API] Fetching logo for user:', userId);
+    
     if (!userId) {
+      console.error('❌ [Enterprise Logo API] No user ID provided');
       return c.json({ error: 'User ID required' }, 400);
     }
     
     // 獲取用戶的企業 LOGO
     const logoUrl = await enterpriseLogoService.getUserEnterpriseLogo(userId);
     
+    console.log('📊 [Enterprise Logo API] Logo URL retrieved:', logoUrl || 'None');
+    
     if (!logoUrl) {
+      console.log('ℹ️ [Enterprise Logo API] No logo found for user:', userId);
       return c.json({ 
         success: true, 
         hasLogo: false,
@@ -20664,6 +20670,7 @@ app.get("/make-server-215f78a5/public/enterprise-logo/:userId", async (c) => {
       });
     }
     
+    console.log('✅ [Enterprise Logo API] Logo found for user:', userId, '→', logoUrl);
     return c.json({
       success: true,
       hasLogo: true,
