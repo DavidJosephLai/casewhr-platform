@@ -89,7 +89,6 @@ const AISEOManager = lazy(() => import('./components/AISEOManager').then(module 
 
 // 🔧 測試和診斷頁面 - Lazy Load（不常用）
 const AISEOTestPage = lazy(() => import('./components/AISEOTestPage'));
-const EnterpriseLogoDiagnostic = lazy(() => import('./components/EnterpriseLogoDiagnostic').then(module => ({ default: module.EnterpriseLogoDiagnostic })));
 const BrevoTestPage = lazy(() => import('./components/BrevoTestPage'));
 const EmailTestPage = lazy(() => import('./components/EmailTestPage'));
 const GoogleOAuthTester = lazy(() => import('./components/GoogleOAuthTester'));
@@ -298,7 +297,7 @@ function AppContent() {
     // 📝 檢查是否是 Blog 頁面
     if (urlPath === '/blog') {
       console.log('📝 [App] Blog list page detected');
-      console.log('🔥🔥🔥 [App] Setting view to blog - NO REDIRECT TO POST PAGE!');
+      console.log('🔥��🔥 [App] Setting view to blog - NO REDIRECT TO POST PAGE!');
       console.log('🔥🔥 [App] Current view before setView:', view);
       setView('blog');
       console.log('🔥🔥🔥 [App] setView(blog) called!');
@@ -339,7 +338,7 @@ function AppContent() {
       toast.error(
         language === 'en'
           ? '🔒 Your session has expired. Please sign in again.'
-          : '🔒 您的登入已期，請重新登入。',
+          : '🔒 您的登入已期��請重新登入。',
         { duration: 5000 }
       );
       
@@ -439,7 +438,7 @@ function AppContent() {
             return;
           }
           
-          // 使用 magic link 自動登入
+          // 使用 magic link 自動��入
           if (data.magic_link) {
             console.log('🔗 [LINE Callback] Using magic link to establish session');
             window.location.href = data.magic_link;
@@ -938,13 +937,6 @@ function AppContent() {
           <SEO title="Edge Function Diagnostic" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
             <EdgeFunctionDiagnostic />
-          </Suspense>
-        </div>
-      ) : view === 'enterprise-logo-diagnostic' ? (
-        <div className="pt-20">
-          <SEO title="Enterprise Logo Diagnostic" description="" keywords="" noindex />
-          <Suspense fallback={<PageLoadingFallback />}>
-            <EnterpriseLogoDiagnostic />
           </Suspense>
         </div>
       ) : view === 'wismachion' ? (
