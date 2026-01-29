@@ -130,8 +130,10 @@ const PublicSEOReport = lazy(() => import('./components/PublicSEOReport').then(m
 // 🎯 SEO 管理中心
 const SEOManagementCenter = lazy(() => import('./components/seo/SEOManagementCenter'));
 
-// 🐛 企業 LOGO 調試器
-import { LogoDebugger } from './components/LogoDebugger';
+// 📝 Blog 相關組件
+const BlogListPage = lazy(() => import('./components/BlogListPage'));
+const BlogPostPage = lazy(() => import('./components/BlogPostPage'));
+const BlogManagementPage = lazy(() => import('./components/BlogManagementPage'));
 
 // 💼 Wismachion - License Management Platform - ⚡ 直接導入以加快載入速度
 import WismachionApp from './wismachion/WismachionApp';
@@ -142,16 +144,13 @@ function LoadingFallback() {
 }
 
 function PageLoadingFallback() {
-  return null; // 靜默載入，不顯示任何內容
+  return null; // 靜默載入，不顯示任何��容
 }
 
 function AppContent() {
   const { language } = useLanguage();
   const { view, setView } = useView();
   const { user, accessToken, signOut } = useAuth();
-  const [dashboardTab, setDashboardTab] = useState<string | undefined>(undefined);
-  const [processingPayment, setProcessingPayment] = useState(false);
-  const [isTeamInvitation, setIsTeamInvitation] = useState(false);
   
   // 🔍 調試：監控 view 狀態
   console.log('🔍 [App] Current view:', view);
@@ -199,7 +198,7 @@ function AppContent() {
       
       if (isSpecialUser) {
         console.log('🎁 [App] Special user detected:', user.email);
-        // 延遲觸發刷新事件，確保所有組件已載入
+        // 延遲觸發刷新事件保所有組件已載入
         setTimeout(() => {
           try {
             console.log('🔄 [App] Triggering refreshSubscription event for special user');
@@ -212,7 +211,7 @@ function AppContent() {
     }
   }, [user]);
   
-  // 🔥 NEW: 監聽自定義航（例如從錢包餘額不足對話框觸發）
+  // 🔥 NEW: 監聽自定義航（例從錢包餘額不足對話框觸發）
   useEffect(() => {
     const handleNavigate = (event: any) => {
       const targetView = event.detail?.view;
@@ -221,7 +220,6 @@ function AppContent() {
       if (targetView === 'wallet') {
         // 切換到儀表板錢包標籤
         setView('dashboard');
-        setDashboardTab('wallet');
         console.log('✅ [App] Navigated to wallet tab');
       }
     };
@@ -273,7 +271,7 @@ function AppContent() {
       return;
     }
     
-    // 檢查是否碼重設頁面
+    // 是否碼重設頁面
     if (urlPath.includes('/reset-password')) {
       console.log('🔐 [App] Reset password page detected');
       setView('reset-password');
@@ -309,13 +307,13 @@ function AppContent() {
       console.log('🔧 [App] Blog admin page detected');
       
       // 🔐 暫時移除登檢查，讓 BlogManagementPage 自己處理
-      // 因為入後���更新需要時間
+      // 因為入後更新需要時間
       
       setView('blog-admin');
       return;
     }
     
-    // 📝 檢查是否是 Blog 文章詳情頁
+    // 📝 檢查是否是 Blog 文章詳頁
     if (urlPath.startsWith('/blog/')) {
       console.log('📝 [App] Blog post page detected');
       console.log('🔥 [App] URL:', urlPath);
@@ -327,7 +325,6 @@ function AppContent() {
     if (urlPath.includes('/team/accept-invitation') || urlParams.get('id')) {
       console.log('📧 [App] Team invitation link detected');
       setView('accept-invitation');
-      setIsTeamInvitation(true);
     }
   }, [setView]);
 
@@ -350,7 +347,7 @@ function AppContent() {
           setView('home');
         } catch (error) {
           console.error('Error signing out:', error);
-          // 即使出錯也要清除並返回首頁
+          // 即使出錯也要清除並回首頁
           window.location.href = '/';
         }
       }, 2000);
@@ -432,7 +429,7 @@ function AppContent() {
           // 檢查是否需要提示用戶新 email
           if (data.needsEmailUpdate) {
             console.log('⚠️ [LINE Callback] User needs to update email');
-            // 設定 LINE User ID 並顯示 Email Modal
+            // 定 LINE User ID 並顯示 Email Modal
             setLineUserId(data.user.id);
             setShowEmailModal(true);
             // 不繼續後續的自動登入流程，等待用戶輸入 email
@@ -467,7 +464,7 @@ function AppContent() {
             { duration: 5000 }
           );
           
-          // 重定向回首頁
+          // 重向回首頁
           setTimeout(() => {
             window.location.href = '/';
           }, 2000);
@@ -497,10 +494,9 @@ function AppContent() {
       fullURL: window.location.href,
     });
 
-    if (paymentStatus === 'success' && !processingPayment) {
+    if (paymentStatus === 'success') {
       // 處理 PayPal 支付
       if (provider === 'paypal' && token) {
-        setProcessingPayment(true);
         console.log('🅿️ [PayPal] Processing payment callback...', { token });
         
         // 調用後端 capture API
@@ -534,7 +530,7 @@ function AppContent() {
               
               // 導航到錢包頁面
               setView('dashboard');
-              setDashboardTab('wallet');
+              console.log('✅ [App] Navigated to wallet tab');
             } else {
               const errorData = await response.json();
               console.error('❌ [PayPal] Capture failed:', errorData);
@@ -561,9 +557,6 @@ function AppContent() {
             
             // 清除 URL 參數
             window.history.replaceState({}, '', window.location.pathname);
-          })
-          .finally(() => {
-            setProcessingPayment(false);
           });
       }
       // 處理 Stripe 支付（保留原有邏輯）
@@ -578,7 +571,7 @@ function AppContent() {
         window.history.replaceState({}, '', window.location.pathname);
         // 導航到錢包頁面
         setView('dashboard');
-        setDashboardTab('wallet');
+        console.log('✅ [App] Navigated to wallet tab');
       }
     } else if (paymentStatus === 'cancel') {
       console.log('❌ [Payment] Payment cancelled');
@@ -591,7 +584,7 @@ function AppContent() {
       // 清除 URL 參數
       window.history.replaceState({}, '', window.location.pathname);
     }
-  }, [language, setView, accessToken, processingPayment]);
+  }, [language, setView, accessToken]);
 
   // 監聽導航事件
   useEffect(() => {
@@ -608,12 +601,12 @@ function AppContent() {
       
       setView('dashboard');
       if (customEvent.detail?.tab) {
-        setDashboardTab(customEvent.detail.tab);
+        console.log('🔧 [App] Setting dashboard tab:', customEvent.detail.tab);
       }
     };
 
     const handleShowPricing = () => {
-      console.log('💰 [App] showPricing event received');
+      console.log('��� [App] showPricing event received');
       setView('pricing');
     };
 
@@ -642,7 +635,7 @@ function AppContent() {
           <SEO {...getPageSEO('dashboard', language)} noindex />
           <ErrorBoundary>
             <Suspense fallback={<PageLoadingFallback />}>
-              <Dashboard initialTab={dashboardTab} onTabChange={() => setDashboardTab(undefined)} />
+              <Dashboard />
             </Suspense>
           </ErrorBoundary>
         </div>
@@ -1037,9 +1030,6 @@ function AppContent() {
         onClose={() => setShowEmailModal(false)}
         userId={lineUserId}
       />
-      
-      {/* 🐛 企業 LOGO 調試器 - 僅顯示給已登入用戶 */}
-      {user && <LogoDebugger />}
     </div>
   );
 }
