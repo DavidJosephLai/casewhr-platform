@@ -15,11 +15,11 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.44-ENTERPRISE-LOGO-SYNC
-// 🌟 Update: Integrated logo sync tool directly into enterprise branding settings
-// 🔄 New: Enterprise users now see logo sync button in their brand settings tab
-// ✨ Feature: One-click logo migration from branding settings to all project cards
-console.log('🚀 [App v2.1.44] Enterprise logo sync integrated!');
+// 🔥 Version marker to force cache invalidation - v2.1.45-LOGO-SYNC-FIX
+// 🐛 Fix: Resolved "Cannot access 'enterpriseInfo' before initialization" error
+// ✅ Fixed: Variable initialization order in enterprise_logo_service.tsx
+// 🔧 Update: Moved existingInfo fetch before enterpriseInfo creation
+console.log('🚀 [App v2.1.45] Logo sync initialization error fixed!');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -272,19 +272,6 @@ function AppContent() {
       // 直接顯示驗證內容
       document.body.innerHTML = `google-site-verification: ${fileName}`;
       document.title = 'Google Site Verification';
-      return;
-    }
-    
-    // 檢查隱私政策和服務條款頁面（支持多種 URL 格式）
-    if (urlPath === '/privacy' || urlPath === '/privacy-policy') {
-      console.log(' [App] Privacy policy page detected');
-      setView('privacy-policy');
-      return;
-    }
-    
-    if (urlPath === '/terms' || urlPath === '/terms-of-service') {
-      console.log(' [App] Terms of service page detected');
-      setView('terms-of-service');
       return;
     }
     

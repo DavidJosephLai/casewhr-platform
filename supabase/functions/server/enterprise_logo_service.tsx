@@ -61,23 +61,17 @@ export async function setUserEnterpriseLogo(
     // 保存 LOGO URL
     await kv.set(KV_KEYS.userEnterpriseLogo(userId), logoUrl);
     
+    // 嘗試獲取現有資訊
+    const existingInfo = await kv.get(KV_KEYS.userEnterpriseInfo(userId)) as EnterpriseInfo | undefined;
+    
     // 保存企業資訊
     const enterpriseInfo: EnterpriseInfo = {
       userId,
-      companyName: companyName || 'Enterprise Client',
+      companyName: companyName || existingInfo?.companyName || 'Enterprise Client',
       logoUrl,
-      uploadedAt: enterpriseInfo?.uploadedAt || new Date().toISOString(),
+      uploadedAt: existingInfo?.uploadedAt || new Date().toISOString(),
       lastUpdated: new Date().toISOString(),
     };
-    
-    // 嘗試獲取現有資訊
-    const existingInfo = await kv.get(KV_KEYS.userEnterpriseInfo(userId)) as EnterpriseInfo | undefined;
-    if (existingInfo) {
-      enterpriseInfo.uploadedAt = existingInfo.uploadedAt;
-      if (!companyName) {
-        enterpriseInfo.companyName = existingInfo.companyName;
-      }
-    }
     
     await kv.set(KV_KEYS.userEnterpriseInfo(userId), enterpriseInfo);
     
