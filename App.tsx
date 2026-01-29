@@ -15,12 +15,13 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.46-LOGO-DEBUG
+// 🔥 Version marker to force cache invalidation - v2.1.47-LOGO-DEBUGGER
 // 🐛 Fix: Resolved "Cannot access 'enterpriseInfo' before initialization" error
 // ✅ Fixed: Variable initialization order in enterprise_logo_service.tsx
 // 🔧 Update: Moved existingInfo fetch before enterpriseInfo creation
 // 🔍 Debug: Added extensive logging to ProjectCard and enterprise logo API
-console.log('🚀 [App v2.1.46] Logo sync with enhanced debugging!');
+// 🛠️ New: Added LogoDebugger tool for troubleshooting enterprise logo sync
+console.log('🚀 [App v2.1.47] Logo debugger ready!');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -123,18 +124,14 @@ const CaseStudies = lazy(() => import('./components/CaseStudies'));
 const TermsOfServicePage = lazy(() => import('./components/TermsOfServicePage'));
 const ApiDocumentation = lazy(() => import('./components/ApiDocumentation').then(module => ({ default: module.ApiDocumentation })));
 
-// 📝 Blog 頁面 - 🔥 臨時改為直接導入以調試問題
-import BlogListPage from './components/BlogListPage';
-// 🔥 臨時改為直接導入以調試問題
-import { BlogPostPage } from './components/BlogPostPage';
-// 🔥 臨時改為直接導入以調試問題
-import BlogManagementPage from './components/BlogManagementPage';
-
 // 🌍 公開 SEO 報告頁面
 const PublicSEOReport = lazy(() => import('./components/PublicSEOReport').then(module => ({ default: module.PublicSEOReport })));
 
 // 🎯 SEO 管理中心
 const SEOManagementCenter = lazy(() => import('./components/seo/SEOManagementCenter'));
+
+// 🐛 企業 LOGO 調試器
+import { LogoDebugger } from './components/LogoDebugger';
 
 // 💼 Wismachion - License Management Platform - ⚡ 直接導入以加快載入速度
 import WismachionApp from './wismachion/WismachionApp';
@@ -312,7 +309,7 @@ function AppContent() {
       console.log('🔧 [App] Blog admin page detected');
       
       // 🔐 暫時移除登檢查，讓 BlogManagementPage 自己處理
-      // 因為入後態更新需要時間
+      // 因為入後���更新需要時間
       
       setView('blog-admin');
       return;
@@ -453,7 +450,7 @@ function AppContent() {
           toast.success(
             language === 'en'
               ? '🟢 LINE login successful! Redirecting to dashboard...'
-              : '🟢 LINE 登成功！正在跳轉到��板...',
+              : '🟢 LINE 登成功！正在跳轉到板...',
             { duration: 3000 }
           );
           
@@ -1040,6 +1037,9 @@ function AppContent() {
         onClose={() => setShowEmailModal(false)}
         userId={lineUserId}
       />
+      
+      {/* 🐛 企業 LOGO 調試器 - 僅顯示給已登入用戶 */}
+      {user && <LogoDebugger />}
     </div>
   );
 }
