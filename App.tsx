@@ -15,9 +15,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.35-edge-diagnostic
-// 📚 Update: Added Edge Function Diagnostic tool to diagnose API deployment issues
-console.log('🚀 [App v2.1.35-edge-diagnostic] Edge Function diagnostic tool added!');
+// 🔥 Version marker to force cache invalidation - v2.1.36-blog-carousel-fixed
+// 📚 Update: Fixed Blog Carousel multilingual title display with fallback logic + cleaned up test code
+console.log('🚀 [App v2.1.36] Blog carousel multilingual fallback fixed, test code removed!');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
