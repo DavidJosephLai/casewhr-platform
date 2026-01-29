@@ -63,8 +63,13 @@ export const ProjectCard = memo(function ProjectCard({ project, onViewDetails }:
           const subscriptionData = await subscriptionResponse.json();
           console.log('📊 [ProjectCard] Subscription data:', subscriptionData);
           
-          // 檢查是否為企業版客戶
-          if (subscriptionData.plan === 'Enterprise') {
+          // 🔥 檢查是否為企業版客戶（不區分大小寫，並支持多種字段）
+          const isEnterprise = 
+            subscriptionData.plan?.toLowerCase() === 'enterprise' ||
+            subscriptionData.hasEnterprise === true ||
+            subscriptionData.isEnterprise === true;
+          
+          if (isEnterprise) {
             setIsEnterpriseClient(true);
             console.log('🌟 [ProjectCard] Enterprise client detected!');
             

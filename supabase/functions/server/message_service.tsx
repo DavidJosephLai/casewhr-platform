@@ -412,32 +412,21 @@ export async function getUnreadCount(userId: string): Promise<number> {
       return 0;
     }
     
+    // 🚀 並行讀取所有對話（而非逐個讀取）
+    const conversations = await kv.mget(conversationIds.map(id => `conversation:${id}`));
+    
     let totalUnread = 0;
-
-    for (const convId of conversationIds) {
-      try {
-        const conv = await kv.get(`conversation:${convId}`);
-        if (conv) {
-          const isClient = userId === conv.participants?.client_id;
-          const unreadCount = isClient ? (conv.unread_count_client || 0) : (conv.unread_count_freelancer || 0);
-          totalUnread += unreadCount;
-          
-          if (unreadCount > 0) {
-            console.log('📬 [getUnreadCount] Conversation', convId, 'has', unreadCount, 'unread messages');
-          }
-        } else {
-          console.warn('⚠️ [getUnreadCount] Conversation not found:', convId);
+    conversations.forEach((conv, index) => {
+      if (conv) {
+        const isClient = userId === conv.participants?.client_id;
+        const unreadCount = isClient ? (conv.unread_count_client || 0) : (conv.unread_count_freelancer || 0);
+        totalUnread += unreadCount;
+        
+        if (unreadCount > 0) {
+          console.log('📬 [getUnreadCount] Conversation', conversationIds[index], 'has', unreadCount, 'unread messages');
         }
-      } catch (convError: any) {
-        // Handle network/Cloudflare errors gracefully
-        if (convError?.message?.includes('<html>') || convError?.message?.includes('Internal Server Error')) {
-          console.warn('⚠️ [getUnreadCount] Network error loading conversation:', convId, '- skipping');
-        } else {
-          console.error('❌ [getUnreadCount] Error loading conversation:', convId, convError);
-        }
-        // Continue with other conversations
       }
-    }
+    });
 
     console.log('✅ [getUnreadCount] Total unread:', totalUnread);
     return totalUnread;
