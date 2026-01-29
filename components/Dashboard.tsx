@@ -26,6 +26,7 @@ import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { BrandPreview } from './BrandPreview';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { MembershipCard } from './MembershipCard';
+import { EnterpriseProfileSettings } from './EnterpriseProfileSettings';
 import { TeamInvitations } from './TeamInvitations';
 import { TeamManagement } from './TeamManagement';
 import { TransactionStats } from './TransactionStats';
@@ -80,6 +81,7 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
   const [showPostDialog, setShowPostDialog] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isEnterpriseUser, setIsEnterpriseUser] = useState(false);
   const [stats, setStats] = useState({
     activeProjects: 0,
     completedProjects: 0,
@@ -297,6 +299,32 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
+
+  // 🌟 檢查企業版訂閱
+  useEffect(() => {
+    const checkEnterpriseStatus = async () => {
+      if (!user?.id || !accessToken) return;
+      
+      try {
+        const response = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/subscription/status?userId=${user.id}`,
+          { headers: { 'Authorization': `Bearer ${accessToken}` } }
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          const isEnterprise = data?.plan?.toLowerCase?.() === 'enterprise' ||
+                              data?.hasEnterprise === true ||
+                              data?.isEnterprise === true;
+          setIsEnterpriseUser(isEnterprise);
+        }
+      } catch (error) {
+        console.error('Failed to check enterprise status:', error);
+      }
+    };
+    
+    checkEnterpriseStatus();
+  }, [user, accessToken]);
 
   const handleProjectSubmitted = () => {
     setShowPostDialog(false);
@@ -537,12 +565,23 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
         <TabsContent value="overview" className="space-y-6">
           {/* ✅ 已移除手動 LOGO 同步工具 - 現已全自動化 (v2.1.62) */}
           
-          {/* 🔍 企業 LOGO 診斷工��（僅超級管理員可見） */}
+          {/* 🔍 企業 LOGO 診斷工（僅超級管理員可見） */}
           {user?.email === 'davidlai234@hotmail.com' && user?.id && (
             <LogoDebugPanel userId={user.id} />
           )}
           
           <MembershipCard />
+          
+          {/* 🌟 企業版專屬：企業資料設定 */}
+          {isEnterpriseUser && (
+            <EnterpriseProfileSettings 
+              onUpdate={() => {
+                // 刷新頁面以顯示更新後的 LOGO
+                setRefreshKey(prev => prev + 1);
+              }}
+            />
+          )}
+          
           <EnterpriseFeaturesPanel language={language} />
           
           {/* SLA Documentation Card */}
