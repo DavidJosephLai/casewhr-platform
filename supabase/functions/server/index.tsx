@@ -46,6 +46,11 @@ import * as subscriptionMonitor from "./subscription_monitor.tsx";
 import { registerLogoDebuggerRoutes } from "./logo_debugger_routes.tsx";
 import { registerLogoSetupRoutes } from "./logo_setup_routes.tsx";
 
+// ✅ 驗證關鍵服務已正確導入
+if (!enterpriseLogoService || typeof enterpriseLogoService.getUserEnterpriseLogo !== 'function') {
+  throw new Error('❌ enterpriseLogoService not properly imported!');
+}
+
 console.log('🚀 [SERVER STARTUP] Edge Function v2.0.6 - LINE Auth Integration - Starting...');
 
 // Log environment variable status (without exposing the actual keys)
