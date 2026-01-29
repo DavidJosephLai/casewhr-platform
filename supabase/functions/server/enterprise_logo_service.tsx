@@ -37,7 +37,20 @@ export interface EnterpriseInfo {
  */
 export async function getUserEnterpriseLogo(userId: string): Promise<string | undefined> {
   try {
-    const logoUrl = await kv.get(KV_KEYS.userEnterpriseLogo(userId)) as string | undefined;
+    // 🔥 優先讀取新格式
+    let logoUrl = await kv.get(KV_KEYS.userEnterpriseLogo(userId)) as string | undefined;
+    
+    // 🔥 如果新格式沒有，嘗試讀取舊格式
+    if (!logoUrl) {
+      const legacyData = await kv.get(`enterprise_logo_${userId}`) as any;
+      if (legacyData && legacyData.logoUrl) {
+        logoUrl = legacyData.logoUrl;
+        console.log('🔄 [Enterprise Logo] Found logo in legacy format, migrating...', userId);
+        // 自動遷移到新格式
+        await setUserEnterpriseLogo(userId, logoUrl, legacyData.companyName);
+      }
+    }
+    
     console.log('🔍 [Enterprise Logo] Get logo for user:', userId, '→', logoUrl || 'None');
     return logoUrl;
   } catch (error) {
