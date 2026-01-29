@@ -43,8 +43,6 @@ import * as internalLinkScanner from "./internal_link_scanner.tsx";
 import * as videoUploadService from "./video_upload_service.tsx";
 import * as subscriptionRecurring from "./subscription_recurring_service.tsx";
 import * as subscriptionMonitor from "./subscription_monitor.tsx";
-import { registerLogoDebuggerRoutes } from "./logo_debugger_routes.tsx";
-import { registerLogoSetupRoutes } from "./logo_setup_routes.tsx";
 
 // ✅ 驗證關鍵服務已正確導入
 if (!enterpriseLogoService || typeof enterpriseLogoService.getUserEnterpriseLogo !== 'function') {
@@ -613,14 +611,6 @@ console.log('✅ [SERVER] Internal transfer APIs registered');
 // Register SinoPac Bank (永豐銀行) APIs
 registerSinopacRoutes(app);
 console.log('✅ [SERVER] SinoPac Bank (永豐銀行寰宇金融) APIs registered');
-
-// Register Logo Debugger Diagnostic APIs
-registerLogoDebuggerRoutes(app);
-console.log('✅ [SERVER] Logo Debugger diagnostic APIs registered');
-
-// Register Logo Setup APIs
-registerLogoSetupRoutes(app);
-console.log('✅ [SERVER] Logo Setup APIs registered');
 
 // 🔍 診斷：查找用戶by 郵箱
 app.post('/make-server-215f78a5/debug/find-user', async (c) => {
@@ -6347,7 +6337,7 @@ app.get("/make-server-215f78a5/subscription/:userId", async (c) => {
     ];
     
     if (userEmail && ROOT_ADMIN_EMAILS.includes(userEmail)) {
-      console.log('👑 [Subscription API] Root admin detected:', userEmail);
+      console.log('���� [Subscription API] Root admin detected:', userEmail);
       
       // Root admins always have enterprise subscription
       return c.json({
