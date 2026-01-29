@@ -59,6 +59,7 @@ import { BrandingSettings } from './BrandingSettings';
 import { PostProjectDialog } from './PostProjectDialog';
 import { InternalTransfer } from './InternalTransfer';
 import { TransferHistory } from './TransferHistory';
+import { LogoDebugPanel } from './LogoDebugPanel';
 // ✅ 移除：已改用全自動 LOGO 同步 (v2.1.62)
 // import { QuickLogoFix } from './QuickLogoFix';
 // ❌ 移除：管理員面板應該是全局浮動按鈕，不應該在 Dashboard 內部
@@ -535,6 +536,11 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
 
         <TabsContent value="overview" className="space-y-6">
           {/* ✅ 已移除手動 LOGO 同步工具 - 現已全自動化 (v2.1.62) */}
+          
+          {/* 🔍 企業 LOGO 診斷工��（僅超級管理員可見） */}
+          {user?.email === 'davidlai234@hotmail.com' && user?.id && (
+            <LogoDebugPanel userId={user.id} />
+          )}
           
           <MembershipCard />
           <EnterpriseFeaturesPanel language={language} />
