@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useMemo, useCallback, useEffect } from 'react';
 
-type ViewType = 'home' | 'dashboard' | 'pricing' | 'admin' | 'brevo-test' | 'email-test' | 'env-check' | 'email-management' | 'email-integration' | 'stripe-env-check' | 'accept-invitation' | 'auth-callback' | 'reset-password' | 'auth-verify' | 'privacy-policy' | 'cookies-policy' | 'disclaimer' | 'about' | 'cases' | 'terms-of-service' | 'google-dns-verifier' | 'sla-documentation' | 'api-documentation' | 'auth-diagnostic' | 'simple-login-test' | 'figma-env-diagnostic' | 'ecpay-diagnostic' | 'google-oauth-test' | 'ai-seo' | 'ai-seo-test' | 'public-seo-report' | 'ai-seo-diagnostic' | 'keyword-research-test' | 'keyword-deployment-check' | 'openai-key-guide' | 'data-sync-diagnostic' | 'deep-data-diagnostic' | 'transfer-debug' | 'seo-content' | 'wismachion' | 'blog' | 'blog-post' | 'blog-admin';
+type ViewType = 'home' | 'dashboard' | 'pricing' | 'admin' | 'brevo-test' | 'email-test' | 'env-check' | 'email-management' | 'email-integration' | 'stripe-env-check' | 'accept-invitation' | 'auth-callback' | 'reset-password' | 'auth-verify' | 'privacy-policy' | 'cookies-policy' | 'disclaimer' | 'about' | 'cases' | 'terms-of-service' | 'google-dns-verifier' | 'sla-documentation' | 'api-documentation' | 'auth-diagnostic' | 'simple-login-test' | 'figma-env-diagnostic' | 'ecpay-diagnostic' | 'google-oauth-test' | 'ai-seo' | 'ai-seo-test' | 'public-seo-report' | 'ai-seo-diagnostic' | 'keyword-research-test' | 'keyword-deployment-check' | 'openai-key-guide' | 'data-sync-diagnostic' | 'deep-data-diagnostic' | 'transfer-debug' | 'seo-content' | 'wismachion' | 'blog' | 'blog-post' | 'blog-admin' | 'edge-function-diagnostic' | 'error-diagnostic-page' | 'logo-debugger' | 'logo-setup' | 'paypal-plan-creator' | 'subscription-guarantee' | 'enterprise-logo-diagnostic';
 
 interface ViewContextType {
   view: ViewType;
@@ -61,7 +61,10 @@ export function ViewProvider({ children }: { children: ReactNode }) {
           'ai-seo', 'ai-seo-test', 'public-seo-report', 'ai-seo-diagnostic',
           'keyword-research-test', 'keyword-deployment-check', 'openai-key-guide',
           'data-sync-diagnostic', 'deep-data-diagnostic', 'transfer-debug',
-          'seo-content', 'wismachion', 'blog', 'blog-post', 'blog-admin'
+          'seo-content', 'wismachion', 'blog', 'blog-post', 'blog-admin',
+          'edge-function-diagnostic', 'error-diagnostic-page', 'logo-debugger',
+          'logo-setup', 'paypal-plan-creator', 'subscription-guarantee',
+          'enterprise-logo-diagnostic'
         ];
         
         if (validViews.includes(viewParam as ViewType)) {
@@ -78,7 +81,7 @@ export function ViewProvider({ children }: { children: ReactNode }) {
         return;
       }
       
-      // 🆕 檢查 seo-content 動態路由 (必須在其他路由之前)
+      // 🆕 檢查 seo-content 動態路徑 (必須在其他路由之前)
       if (pathname.startsWith('/seo-content/')) {
         setView('seo-content');
         setManualOverride(true);
@@ -165,6 +168,13 @@ export function ViewProvider({ children }: { children: ReactNode }) {
         'blog': 'blog',
         'blog-post': 'blog-post',
         'blog-admin': 'blog-admin',
+        'edge-function-diagnostic': 'edge-function-diagnostic',
+        'error-diagnostic-page': 'error-diagnostic-page',
+        'logo-debugger': 'logo-debugger',
+        'logo-setup': 'logo-setup',
+        'paypal-plan-creator': 'paypal-plan-creator',
+        'subscription-guarantee': 'subscription-guarantee',
+        'enterprise-logo-diagnostic': 'enterprise-logo-diagnostic'
       };
       
       if (hash && hashToView[hash]) {
