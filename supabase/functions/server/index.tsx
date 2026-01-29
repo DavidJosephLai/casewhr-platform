@@ -11242,6 +11242,62 @@ app.post("/make-server-215f78a5/sync-enterprise-logo", async (c) => {
   }
 });
 
+// 🔄 Public logo sync API (for auto-fix, no auth required)
+app.post("/make-server-215f78a5/sync-enterprise-logo-public", async (c) => {
+  try {
+    const { userId } = await c.req.json();
+    
+    if (!userId) {
+      return c.json({ error: 'userId is required' }, 400);
+    }
+
+    console.log('🔄 [Public Logo Sync] Starting sync for user:', userId);
+
+    // 獲取品牌設定
+    const branding = await kv.get(`branding:${userId}`) || await kv.get(`branding_${userId}`);
+    
+    if (!branding || !branding.logo_url) {
+      return c.json({ 
+        error: 'No branding logo found',
+        message: 'Please upload a logo in branding settings first'
+      }, 404);
+    }
+
+    // 同步到企業 LOGO 記錄
+    const enterpriseLogoInfo = {
+      userId: userId,
+      logoUrl: branding.logo_url,
+      companyName: branding.company_name || branding.workspace_name || 'Enterprise Client',
+      syncedAt: new Date().toISOString(),
+      created_at: branding.created_at || new Date().toISOString(),
+    };
+
+    await kv.set(`enterprise_logo_${userId}`, enterpriseLogoInfo);
+    console.log('✅ [Public Logo Sync] Synced enterprise logo:', enterpriseLogoInfo);
+
+    // 同時使用新格式的 key
+    try {
+      await enterpriseLogoService.setUserEnterpriseLogo(
+        userId, 
+        branding.logo_url, 
+        enterpriseLogoInfo.companyName
+      );
+      console.log('✅ [Public Logo Sync] Also updated enterprise logo service');
+    } catch (error) {
+      console.error('⚠️ [Public Logo Sync] Failed to update enterprise logo service:', error);
+    }
+
+    return c.json({ 
+      success: true,
+      message: 'Enterprise logo synced successfully (public API)',
+      logoInfo: enterpriseLogoInfo
+    });
+  } catch (error) {
+    console.error('❌ [Public Logo Sync] Error syncing logo:', error);
+    return c.json({ error: 'Failed to sync logo' }, 500);
+  }
+});
+
 // 📧 Upload email template logo (admin only)
 app.post("/make-server-215f78a5/admin/upload-email-logo", async (c) => {
   try {

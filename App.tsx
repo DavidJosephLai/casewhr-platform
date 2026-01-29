@@ -15,13 +15,15 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.61-LOGO-SYNC
-// 🔄 NEW: Manual logo sync API for existing branding settings
-// 🔧 FIX: Subscription status API now recognizes ROOT ADMIN emails
-// 🔥 FIX: Enterprise logo service saves to both old and new key formats
-// ✅ FIX: Branding POST/PUT APIs auto-sync to enterprise_logo_${userId}
-// 🛠️ NEW: QuickLogoFix component with one-click sync button
-console.log('🚀 [App v2.1.61] Enterprise LOGO auto-sync + manual sync ready!');
+// 🔄 自動修復企業 LOGO 同步問題
+import { AutoLogoSyncFix } from './components/AutoLogoSyncFix';
+
+// 🔥 Version marker to force cache invalidation - v2.1.62-AUTO-LOGO-SYNC
+// 🎯 NEW: AutoLogoSyncFix - 自動在背景檢測並修復企業 LOGO 同步問題
+// 🔄 NEW: Public sync API - 不需要授權即可同步 LOGO（僅用於自動修復）
+// ✅ FIX: 用戶登錄後自動執行，無需任何手動操作
+// 🚀 IMPROVED: 延遲 2 秒執行，避免影響頁面初始載入性能
+console.log('🚀 [App v2.1.62] Enterprise LOGO 全自動修復 - 零操作！');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -833,7 +835,7 @@ function AppContent() {
         <div className="pt-20">
           <SEO 
             title={language === 'en' ? 'Success Stories | Case Where' : '成功案例 | Case Where 接得準'}
-            description={language === 'en' ? 'View success stories and client testimonials on Case Where platform.' : '查看 Case Where 台的成功案例和��故事。'}
+            description={language === 'en' ? 'View success stories and client testimonials on Case Where platform.' : '查看 Case Where 台的成功案例和故事。'}
             keywords={language === 'en' ? 'success stories, testimonials, case studies' : '成功案例, 客戶見證, 案例研究'}
           />
           <Suspense fallback={<PageLoadingFallback />}>
@@ -1022,6 +1024,9 @@ function AppContent() {
       {view !== 'wismachion' && <Footer />}
       {/* 🌐 网络错误提示 - 检测到 Supabase 错误时显示 */}
       <NetworkErrorNotice />
+      
+      {/* 🔄 自動修復企業 LOGO 同步（用戶登錄後自動執行） */}
+      {user?.id && <AutoLogoSyncFix userId={user.id} />}
       
       {/* ✅ 全局功能 - AI Chatbot */}
       <Suspense fallback={null}>
