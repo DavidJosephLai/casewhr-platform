@@ -45,8 +45,6 @@ export const ProjectCard = memo(function ProjectCard({ project, onViewDetails }:
   useEffect(() => {
     const fetchEnterpriseLogo = async () => {
       try {
-        console.log('🔍 [ProjectCard] Fetching logo for client:', project.client_id, project.client_name);
-        
         // 獲取客戶訂閱狀態
         const subscriptionResponse = await fetch(
           `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/subscription/status?userId=${project.client_id}`,
@@ -57,21 +55,17 @@ export const ProjectCard = memo(function ProjectCard({ project, onViewDetails }:
           }
         );
 
-        console.log('📊 [ProjectCard] Subscription response status:', subscriptionResponse.status);
-
         if (subscriptionResponse.ok) {
           const subscriptionData = await subscriptionResponse.json();
-          console.log('📊 [ProjectCard] Subscription data:', subscriptionData);
           
-          // 🔥 檢查是否為企業版客戶（不區分大小寫，並支持多種字段）
+          // 🔥 檢查是否為企業版客戶
           const isEnterprise = 
-            subscriptionData.plan?.toLowerCase() === 'enterprise' ||
-            subscriptionData.hasEnterprise === true ||
-            subscriptionData.isEnterprise === true;
+            subscriptionData?.plan?.toLowerCase?.() === 'enterprise' ||
+            subscriptionData?.hasEnterprise === true ||
+            subscriptionData?.isEnterprise === true;
           
           if (isEnterprise) {
             setIsEnterpriseClient(true);
-            console.log('🌟 [ProjectCard] Enterprise client detected!');
             
             // 獲取企業 LOGO（使用公開 API）
             const logoResponse = await fetch(
@@ -83,36 +77,24 @@ export const ProjectCard = memo(function ProjectCard({ project, onViewDetails }:
               }
             );
 
-            console.log('🖼️ [ProjectCard] Logo response status:', logoResponse.status);
-
             if (logoResponse.ok) {
               const logoData = await logoResponse.json();
-              console.log('🖼️ [ProjectCard] Logo data:', logoData);
               
-              if (logoData.hasLogo && logoData.logoUrl) {
+              if (logoData?.hasLogo && logoData?.logoUrl) {
                 setEnterpriseLogo(logoData.logoUrl);
-                console.log('🌟 [ProjectCard] Enterprise logo loaded for:', project.client_name, '→', logoData.logoUrl);
-              } else {
-                console.log('⚠️ [ProjectCard] No logo found in response');
               }
-            } else {
-              console.error('❌ [ProjectCard] Logo fetch failed:', await logoResponse.text());
             }
-          } else {
-            console.log('ℹ️ [ProjectCard] Not an enterprise client, plan:', subscriptionData.plan);
           }
-        } else {
-          console.error('❌ [ProjectCard] Subscription fetch failed:', await subscriptionResponse.text());
         }
       } catch (error) {
-        console.error('❌ [ProjectCard] Error fetching enterprise logo:', error);
+        // 靜默處理錯誤，不影響其他功能
       }
     };
 
     if (project.client_id) {
       fetchEnterpriseLogo();
     }
-  }, [project.client_id, project.client_name]);
+  }, [project.client_id]);
 
   // ✅ Memoize formatBudget function
   const formatBudget = useCallback((project: Project) => {
