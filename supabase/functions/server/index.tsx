@@ -11171,6 +11171,77 @@ app.post("/make-server-215f78a5/branding/logo", async (c) => {
   }
 });
 
+// 🔄 Sync enterprise logo from branding settings (手動同步 API)
+app.post("/make-server-215f78a5/sync-enterprise-logo", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const { userId } = await c.req.json();
+    
+    // 確保只能同步自己的 LOGO（除非是管理員）
+    if (userId !== user.id) {
+      const isAdmin = await adminCheck.isAnyAdminAsync(user.email);
+      if (!isAdmin) {
+        return c.json({ error: 'Forbidden: Can only sync your own logo' }, 403);
+      }
+    }
+
+    console.log('🔄 [Logo Sync] Starting sync for user:', userId);
+
+    // 獲取品牌設定
+    const branding = await kv.get(`branding:${userId}`) || await kv.get(`branding_${userId}`);
+    
+    if (!branding || !branding.logo_url) {
+      return c.json({ 
+        error: 'No branding logo found',
+        message: 'Please upload a logo in branding settings first'
+      }, 404);
+    }
+
+    // 同步到企業 LOGO 記錄
+    const enterpriseLogoInfo = {
+      userId: userId,
+      logoUrl: branding.logo_url,
+      companyName: branding.company_name || branding.workspace_name || 'Enterprise Client',
+      syncedAt: new Date().toISOString(),
+      created_at: branding.created_at || new Date().toISOString(),
+    };
+
+    await kv.set(`enterprise_logo_${userId}`, enterpriseLogoInfo);
+    console.log('✅ [Logo Sync] Synced enterprise logo:', enterpriseLogoInfo);
+
+    // 同時使用新格式的 key
+    try {
+      await enterpriseLogoService.setUserEnterpriseLogo(
+        userId, 
+        branding.logo_url, 
+        enterpriseLogoInfo.companyName
+      );
+      console.log('✅ [Logo Sync] Also updated enterprise logo service');
+    } catch (error) {
+      console.error('⚠️ [Logo Sync] Failed to update enterprise logo service:', error);
+    }
+
+    return c.json({ 
+      success: true,
+      message: 'Enterprise logo synced successfully',
+      logoInfo: enterpriseLogoInfo
+    });
+  } catch (error) {
+    console.error('❌ [Logo Sync] Error syncing logo:', error);
+    return c.json({ error: 'Failed to sync logo' }, 500);
+  }
+});
+
 // 📧 Upload email template logo (admin only)
 app.post("/make-server-215f78a5/admin/upload-email-logo", async (c) => {
   try {

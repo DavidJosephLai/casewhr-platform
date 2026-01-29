@@ -15,13 +15,13 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.47-LOGO-DEBUGGER
-// 🐛 Fix: Resolved "Cannot access 'enterpriseInfo' before initialization" error
-// ✅ Fixed: Variable initialization order in enterprise_logo_service.tsx
-// 🔧 Update: Moved existingInfo fetch before enterpriseInfo creation
-// 🔍 Debug: Added extensive logging to ProjectCard and enterprise logo API
-// 🛠️ New: Added LogoDebugger tool for troubleshooting enterprise logo sync
-console.log('🚀 [App v2.1.47] Logo debugger ready!');
+// 🔥 Version marker to force cache invalidation - v2.1.61-LOGO-SYNC
+// 🔄 NEW: Manual logo sync API for existing branding settings
+// 🔧 FIX: Subscription status API now recognizes ROOT ADMIN emails
+// 🔥 FIX: Enterprise logo service saves to both old and new key formats
+// ✅ FIX: Branding POST/PUT APIs auto-sync to enterprise_logo_${userId}
+// 🛠️ NEW: QuickLogoFix component with one-click sync button
+console.log('🚀 [App v2.1.61] Enterprise LOGO auto-sync + manual sync ready!');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
