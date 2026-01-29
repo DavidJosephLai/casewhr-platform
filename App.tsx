@@ -139,9 +139,6 @@ const BlogManagementPage = lazy(() => import('./components/BlogManagementPage'))
 // 💼 Wismachion - License Management Platform - ⚡ 直接導入以加快載入速度
 import WismachionApp from './wismachion/WismachionApp';
 
-// 🐛 臨時調試工具
-import { ViewDebugger } from './components/ViewDebugger';
-
 // Loading fallback components - 🚀 化：移除刺眼的藍色載入器
 function LoadingFallback() {
   return null; // 靜默載入不顯示任何內容
@@ -836,7 +833,7 @@ function AppContent() {
         <div className="pt-20">
           <SEO 
             title={language === 'en' ? 'Success Stories | Case Where' : '成功案例 | Case Where 接得準'}
-            description={language === 'en' ? 'View success stories and client testimonials on Case Where platform.' : '查看 Case Where 台的成功案例和戶故事。'}
+            description={language === 'en' ? 'View success stories and client testimonials on Case Where platform.' : '查看 Case Where 台的成功案例和��故事。'}
             keywords={language === 'en' ? 'success stories, testimonials, case studies' : '成功案例, 客戶見證, 案例研究'}
           />
           <Suspense fallback={<PageLoadingFallback />}>
@@ -1041,8 +1038,7 @@ function AppContent() {
         onClose={() => setShowEmailModal(false)}
         userId={lineUserId}
       />
-      {/* 🐛 調試工具 */}
-      <ViewDebugger />
+      {/* 🐛 調試工具 - 已移除 */}
     </div>
   );
 }
