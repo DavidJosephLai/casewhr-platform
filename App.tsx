@@ -18,12 +18,12 @@ import { EmailRequiredModal } from './components/EmailRequiredModal';
 // 🔄 自動修復企業 LOGO 同步問題
 import { AutoLogoSyncFix } from './components/AutoLogoSyncFix';
 
-// 🔥 Version marker to force cache invalidation - v2.1.62-AUTO-LOGO-SYNC
-// 🎯 NEW: AutoLogoSyncFix - 自動在背景檢測並修復企業 LOGO 同步問題
-// 🔄 NEW: Public sync API - 不需要授權即可同步 LOGO（僅用於自動修復）
-// ✅ FIX: 用戶登錄後自動執行，無需任何手動操作
-// 🚀 IMPROVED: 延遲 2 秒執行，避免影響頁面初始載入性能
-console.log('🚀 [App v2.1.62] Enterprise LOGO 全自動修復 - 零操作！');
+// 🔥 Version marker to force cache invalidation - v2.1.63-REMOVE-DIAGNOSTIC-ROUTES
+// 🎯 FIX: Removed duplicate enterprise logo routes causing ReferenceError
+// ✅ REMOVED: logo_debugger_routes.tsx and logo_setup_routes.tsx
+// 🧹 CLEANUP: Removed EnterpriseLogoDiagnostic component references
+// 🚀 CACHE: Force browser cache invalidation
+console.log('🚀 [App v2.1.63] 移除重複路由和診斷組件 - 緩存已清除！');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -297,7 +297,7 @@ function AppContent() {
     // 📝 檢查是否是 Blog 頁面
     if (urlPath === '/blog') {
       console.log('📝 [App] Blog list page detected');
-      console.log('🔥��🔥 [App] Setting view to blog - NO REDIRECT TO POST PAGE!');
+      console.log('🔥🔥 [App] Setting view to blog - NO REDIRECT TO POST PAGE!');
       console.log('🔥🔥 [App] Current view before setView:', view);
       setView('blog');
       console.log('🔥🔥🔥 [App] setView(blog) called!');
@@ -338,7 +338,7 @@ function AppContent() {
       toast.error(
         language === 'en'
           ? '🔒 Your session has expired. Please sign in again.'
-          : '🔒 您的登入已期��請重新登入。',
+          : '🔒 您的登入已期請重新登入。',
         { duration: 5000 }
       );
       
@@ -438,7 +438,7 @@ function AppContent() {
             return;
           }
           
-          // 使用 magic link 自動��入
+          // 使用 magic link 自動入
           if (data.magic_link) {
             console.log('🔗 [LINE Callback] Using magic link to establish session');
             window.location.href = data.magic_link;
