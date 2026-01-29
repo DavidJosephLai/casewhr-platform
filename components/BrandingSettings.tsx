@@ -50,6 +50,7 @@ export function BrandingSettings({ language = 'en' }: BrandingSettingsProps) {
   const [subscription, setSubscription] = useState<any>(null);
   const [branding, setBranding] = useState<BrandingConfig | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'checking' | 'synced' | 'not-synced' | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   console.log('🎨 [BrandingSettings] Component rendered!', { user: user?.id, accessToken: accessToken?.substring(0, 20), language });
@@ -161,7 +162,7 @@ export function BrandingSettings({ language = 'en' }: BrandingSettingsProps) {
       }
     },
     'zh-TW': {
-      title: '自��品牌',
+      title: '自品牌',
       enterpriseOnly: '企業版專屬',
       upgrade: '升級至企業版',
       upgradeDesc: '使用您自己的 Logo、顏色和網域自訂品牌識別！僅限企業版案。',
@@ -193,7 +194,7 @@ export function BrandingSettings({ language = 'en' }: BrandingSettingsProps) {
         title: '企業版品牌優勢：',
         items: [
           '所有通訊中顯示自訂 Logo',
-          '平台全面使用品牌顏色',
+          '平��全面使用品牌顏色',
           '工作區自訂網域',
           '品牌化郵件模板',
           '品牌化發票和文件',

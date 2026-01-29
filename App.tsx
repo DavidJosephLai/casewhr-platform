@@ -15,10 +15,11 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { EmailRequiredModal } from './components/EmailRequiredModal';
 
-// 🔥 Version marker to force cache invalidation - v2.1.43-logo-migration
-// 🌟 Update: Added one-click logo migration tool for enterprise clients
-// 🔄 New: Logo sync button in branding settings syncs existing logos to project cards
-console.log('🚀 [App v2.1.43] Logo migration tool added!');
+// 🔥 Version marker to force cache invalidation - v2.1.44-ENTERPRISE-LOGO-SYNC
+// 🌟 Update: Integrated logo sync tool directly into enterprise branding settings
+// 🔄 New: Enterprise users now see logo sync button in their brand settings tab
+// ✨ Feature: One-click logo migration from branding settings to all project cards
+console.log('🚀 [App v2.1.44] Enterprise logo sync integrated!');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -111,7 +112,7 @@ const DataSyncDiagnostic = lazy(() => import('./components/DataSyncDiagnostic'))
 const DeepDataDiagnostic = lazy(() => import('./components/DeepDataDiagnostic'));
 const ErrorDiagnosticPage = lazy(() => import('./components/ErrorDiagnosticPage'));
 const EdgeFunctionDiagnostic = lazy(() => import('./components/EdgeFunctionDiagnostic'));
-// const FetchInterceptorTest = lazy(() => import('./components/FetchInterceptorTest')); // ❌ Removed - component doesn't exist
+const BrandingDiagnosticTool = lazy(() => import('./components/BrandingDiagnosticTool').then(module => ({ default: module.BrandingDiagnosticTool })));
 
 //  內容頁 - Lazy Load（SEO 關頁面）
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
@@ -178,7 +179,7 @@ function AppContent() {
       toast.info(
         language === 'en'
           ? '🆕 New version available! Refresh to update.'
-          : '🆕 發現新版本！請刷新頁面更新。',
+          : '��� 發現新版本！請刷新頁面更新。',
         { 
           duration: 10000,
           action: {
@@ -288,7 +289,7 @@ function AppContent() {
       return;
     }
     
-    // 檢查是否密碼重設頁面
+    // 檢查是否���碼重設頁面
     if (urlPath.includes('/reset-password')) {
       console.log('🔐 [App] Reset password page detected');
       setView('reset-password');
@@ -957,6 +958,13 @@ function AppContent() {
           <SEO title="Edge Function Diagnostic" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
             <EdgeFunctionDiagnostic />
+          </Suspense>
+        </div>
+      ) : view === 'branding-diagnostic' ? (
+        <div className="pt-20">
+          <SEO title="Branding Diagnostic Tool" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <BrandingDiagnosticTool />
           </Suspense>
         </div>
       ) : view === 'wismachion' ? (
