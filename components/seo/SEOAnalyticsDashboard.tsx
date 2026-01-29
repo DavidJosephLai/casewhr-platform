@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../lib/LanguageContext';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 interface SEOMetrics {
   indexedPages: {
@@ -138,7 +138,7 @@ export function SEOAnalyticsDashboard() {
       ctr: 'CTR',
       change: 'Change',
       page: 'Page',
-      title: 'Title',
+      pageTitle: 'Title', // 改名避免與 'title' 重複
       priority: 'Priority',
       affectedPages: 'Affected Pages',
       high: 'High',
@@ -187,7 +187,7 @@ export function SEOAnalyticsDashboard() {
       ctr: '點擊率',
       change: '變化',
       page: '頁面',
-      title: '標題',
+      pageTitle: '標題', // 改名避免與 'title' 重複
       priority: '優先級',
       affectedPages: '受影響頁面',
       high: '高',
@@ -236,7 +236,7 @@ export function SEOAnalyticsDashboard() {
       ctr: '点击率',
       change: '变化',
       page: '页面',
-      title: '标题',
+      pageTitle: '标题', // 改名避免與 'title' 重複
       priority: '优先级',
       affectedPages: '受影响页面',
       high: '高',
