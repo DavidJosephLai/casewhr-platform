@@ -1,6 +1,19 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from "../contexts/AuthContext";
+import { useLanguage } from "../lib/LanguageContext";
 import { projectId, publicAnonKey } from "../utils/supabase/info";
 import { toast } from "sonner"; // ✅ 移除版本号
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { Textarea } from "./ui/textarea";
 import { 
   Loader2, 
   CheckCircle, 
