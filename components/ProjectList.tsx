@@ -398,7 +398,7 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
                     <img 
                       src={enterpriseLogos[project.user_id]} 
                       alt="Company Logo" 
-                      className="h-12 w-12 rounded object-contain bg-white border-2 border-purple-200 p-1 shadow-sm"
+                      className="h-12 w-12 object-contain"
                     />
                   ) : (
                     // ✅ 預設圖標：只要有公司名稱就顯示
@@ -495,7 +495,7 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
                 ) : (
                   <div className="flex items-center">
                     <MessageSquare className="h-4 w-4 text-gray-500 mr-1" />
-                    {language === 'en' ? 'No pending proposals' : '無審核提案'}
+                    {language === 'en' ? 'No pending proposals' : '無待審核提案'}
                   </div>
                 )}
               </CardDescription>
