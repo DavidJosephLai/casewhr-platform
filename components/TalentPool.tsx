@@ -57,6 +57,10 @@ export default function TalentPool() {
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [availability, setAvailability] = useState<string>('all');
   const [experienceLevel, setExperienceLevel] = useState<string>('all');
+  
+  // 📄 分頁狀態
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(12); // 每頁顯示 12 個人才
 
   const t = {
     title: language === 'en' ? 'Advanced Talent Search' : language === 'zh-CN' ? '进阶人才搜索' : '進階人才搜尋',
@@ -258,6 +262,18 @@ export default function TalentPool() {
   const allSkills = Object.values(SKILL_CATEGORIES).flat();
   const uniqueLocations = Array.from(new Set(freelancers.map(f => f.location).filter(Boolean))) as string[];
 
+  // 📄 分頁計算
+  const totalPages = Math.ceil(filteredFreelancers.length / itemsPerPage);
+  const paginatedFreelancers = filteredFreelancers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // 🔄 當篩選條件改變時，重置到第一頁
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedSkills, minRating, priceRange, selectedLocations, sortBy]);
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -533,113 +549,176 @@ export default function TalentPool() {
                 <p className="text-gray-500 text-lg">{t.noResults}</p>
               </div>
             ) : (
-              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
-                {filteredFreelancers.map(freelancer => (
-                  <div
-                    key={freelancer.id}
-                    className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow ${
-                      viewMode === 'list' ? 'flex items-center gap-6 p-4' : 'p-6'
-                    }`}
-                  >
-                    {/* Avatar */}
-                    <div className={`${viewMode === 'list' ? 'flex-shrink-0' : 'mb-4'}`}>
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-xl font-bold">
-                        {freelancer.name?.charAt(0).toUpperCase() || 'F'}
-                      </div>
-                    </div>
-
-                    <div className="flex-1">
-                      {/* Header */}
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="font-semibold text-lg text-gray-900">{freelancer.name}</h3>
-                          <p className="text-sm text-gray-600">{freelancer.title || 'Freelancer'}</p>
+              <>
+                <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
+                  {paginatedFreelancers.map(freelancer => (
+                    <div
+                      key={freelancer.id}
+                      className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+                        viewMode === 'list' ? 'flex items-center gap-6 p-4' : 'p-6'
+                      }`}
+                    >
+                      {/* Avatar */}
+                      <div className={`${viewMode === 'list' ? 'flex-shrink-0' : 'mb-4'}`}>
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-blue-400 flex items-center justify-center text-white text-xl font-bold">
+                          {freelancer.name?.charAt(0).toUpperCase() || 'F'}
                         </div>
-                        <button
-                          onClick={() => toggleFavorite(freelancer.id)}
-                          className="p-2 hover:bg-gray-100 rounded-full"
-                        >
-                          <Star
-                            className={`w-5 h-5 ${
-                              freelancer.is_favorite ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400'
-                            }`}
-                          />
-                        </button>
                       </div>
 
-                      {/* Bio */}
-                      {freelancer.bio && viewMode === 'grid' && (
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{freelancer.bio}</p>
-                      )}
+                      <div className="flex-1">
+                        {/* Header */}
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h3 className="font-semibold text-lg text-gray-900">{freelancer.name}</h3>
+                            <p className="text-sm text-gray-600">{freelancer.title || 'Freelancer'}</p>
+                          </div>
+                          <button
+                            onClick={() => toggleFavorite(freelancer.id)}
+                            className="p-2 hover:bg-gray-100 rounded-full"
+                          >
+                            <Star
+                              className={`w-5 h-5 ${
+                                freelancer.is_favorite ? 'fill-yellow-400 text-yellow-400' : 'text-gray-400'
+                              }`}
+                            />
+                          </button>
+                        </div>
 
-                      {/* Skills */}
-                      {freelancer.skills && freelancer.skills.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {freelancer.skills.slice(0, 3).map((skill, idx) => (
-                            <span
-                              key={idx}
-                              className="px-2 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded"
-                            >
-                              {skill}
-                            </span>
-                          ))}
-                          {freelancer.skills.length > 3 && (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                              +{freelancer.skills.length - 3}
-                            </span>
+                        {/* Bio */}
+                        {freelancer.bio && viewMode === 'grid' && (
+                          <p className="text-sm text-gray-600 mb-3 line-clamp-2">{freelancer.bio}</p>
+                        )}
+
+                        {/* Skills */}
+                        {freelancer.skills && freelancer.skills.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {freelancer.skills.slice(0, 3).map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                            {freelancer.skills.length > 3 && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                                +{freelancer.skills.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Stats */}
+                        <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+                          {freelancer.rating && (
+                            <div className="flex items-center gap-1 text-gray-600">
+                              <Award className="w-3 h-3 text-yellow-500" />
+                              <span className="font-semibold">{freelancer.rating.toFixed(1)}</span>
+                              <span className="text-gray-400">({freelancer.review_count || 0})</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1 text-gray-600">
+                            <Briefcase className="w-3 h-3" />
+                            <span>{freelancer.completed_projects || 0} projects</span>
+                          </div>
+                          {freelancer.location && (
+                            <div className="flex items-center gap-1 text-gray-600">
+                              <MapPin className="w-3 h-3" />
+                              <span className="truncate">{freelancer.location}</span>
+                            </div>
+                          )}
+                          {freelancer.hourly_rate_min && (
+                            <div className="flex items-center gap-1 text-gray-600">
+                              <DollarSign className="w-3 h-3" />
+                              <span>{freelancer.hourly_rate_min}/hr</span>
+                            </div>
                           )}
                         </div>
-                      )}
 
-                      {/* Stats */}
-                      <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
-                        {freelancer.rating && (
-                          <div className="flex items-center gap-1 text-gray-600">
-                            <Award className="w-3 h-3 text-yellow-500" />
-                            <span className="font-semibold">{freelancer.rating.toFixed(1)}</span>
-                            <span className="text-gray-400">({freelancer.review_count || 0})</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-1 text-gray-600">
-                          <Briefcase className="w-3 h-3" />
-                          <span>{freelancer.completed_projects || 0} projects</span>
+                        {/* Actions */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              sessionStorage.setItem('current_freelancer_id', freelancer.id);
+                              setView('freelancer-profile');
+                            }}
+                            className="flex-1 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm transition-colors"
+                          >
+                            {t.viewProfile}
+                          </button>
+                          <button
+                            onClick={() => toast.success('Contact feature coming soon!')}
+                            className="px-4 py-2 border border-purple-600 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                          >
+                            <Send className="w-4 h-4" />
+                          </button>
                         </div>
-                        {freelancer.location && (
-                          <div className="flex items-center gap-1 text-gray-600">
-                            <MapPin className="w-3 h-3" />
-                            <span className="truncate">{freelancer.location}</span>
-                          </div>
-                        )}
-                        {freelancer.hourly_rate_min && (
-                          <div className="flex items-center gap-1 text-gray-600">
-                            <DollarSign className="w-3 h-3" />
-                            <span>{freelancer.hourly_rate_min}/hr</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            sessionStorage.setItem('current_freelancer_id', freelancer.id);
-                            setView('freelancer-profile');
-                          }}
-                          className="flex-1 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm transition-colors"
-                        >
-                          {t.viewProfile}
-                        </button>
-                        <button
-                          onClick={() => toast.success('Contact feature coming soon!')}
-                          className="px-4 py-2 border border-purple-600 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                        >
-                          <Send className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
+                  ))}
+                </div>
+
+                {/* 📄 分頁組件 */}
+                {totalPages > 1 && (
+                  <div className="mt-8 flex items-center justify-center gap-2">
+                    {/* 上一頁按鈕 */}
+                    <button
+                      onClick={() => {
+                        setCurrentPage(prev => Math.max(1, prev - 1));
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      disabled={currentPage === 1}
+                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronDown className="w-5 h-5 rotate-90" />
+                    </button>
+
+                    {/* 頁碼按鈕 */}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(page => {
+                        // 顯示邏輯：首頁、尾頁、當前頁及其前後各一頁
+                        return (
+                          page === 1 ||
+                          page === totalPages ||
+                          Math.abs(page - currentPage) <= 1
+                        );
+                      })
+                      .map((page, index, array) => (
+                        <React.Fragment key={page}>
+                          {/* 在需要的地方插入省略號 */}
+                          {index > 0 && array[index - 1] !== page - 1 && (
+                            <span className="px-2 text-gray-400">...</span>
+                          )}
+                          <button
+                            onClick={() => {
+                              setCurrentPage(page);
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            className={`px-4 py-2 rounded-lg transition-colors ${
+                              currentPage === page
+                                ? 'bg-purple-600 text-white font-semibold'
+                                : 'border border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        </React.Fragment>
+                      ))}
+
+                    {/* 下一頁按鈕 */}
+                    <button
+                      onClick={() => {
+                        setCurrentPage(prev => Math.min(totalPages, prev + 1));
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      disabled={currentPage === totalPages}
+                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronDown className="w-5 h-5 -rotate-90" />
+                    </button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         </div>
