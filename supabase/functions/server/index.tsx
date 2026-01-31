@@ -5994,6 +5994,17 @@ app.get("/make-server-215f78a5/profiles/freelancers", async (c) => {
         subscription_plan: subscriptionMap.get(profile.user_id) || 'free',
       }));
     
+    // 🔥 為每個 profile 添加 portfolio_count
+    for (const profile of freelancerProfiles) {
+      try {
+        const portfolioData = await kv.get(`portfolio:user:${profile.user_id}`) || { items: [] };
+        profile.portfolio_count = Array.isArray(portfolioData.items) ? portfolioData.items.length : 0;
+      } catch (error) {
+        console.log(`⚠️ [GET /profiles/freelancers] Failed to get portfolio for user ${profile.user_id}`);
+        profile.portfolio_count = 0;
+      }
+    }
+    
     console.log('📥 [GET /profiles/freelancers] Freelancer profiles:', freelancerProfiles.length);
     console.log('🎯 [GET /profiles/freelancers] Sample subscription plans:', freelancerProfiles.slice(0, 3).map((p: any) => ({
       name: p.full_name,
