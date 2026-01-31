@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useMemo, useCallback, useEffect } from 'react';
 
-type ViewType = 'home' | 'dashboard' | 'pricing' | 'admin' | 'brevo-test' | 'email-test' | 'env-check' | 'email-management' | 'email-integration' | 'stripe-env-check' | 'accept-invitation' | 'auth-callback' | 'reset-password' | 'auth-verify' | 'privacy-policy' | 'cookies-policy' | 'disclaimer' | 'about' | 'cases' | 'terms-of-service' | 'google-dns-verifier' | 'sla-documentation' | 'api-documentation' | 'auth-diagnostic' | 'simple-login-test' | 'figma-env-diagnostic' | 'ecpay-diagnostic' | 'google-oauth-test' | 'ai-seo' | 'ai-seo-test' | 'public-seo-report' | 'ai-seo-diagnostic' | 'keyword-research-test' | 'keyword-deployment-check' | 'openai-key-guide' | 'data-sync-diagnostic' | 'deep-data-diagnostic' | 'transfer-debug' | 'seo-content' | 'wismachion' | 'blog' | 'blog-post' | 'blog-admin' | 'edge-function-diagnostic' | 'error-diagnostic-page' | 'logo-debugger' | 'logo-setup' | 'paypal-plan-creator' | 'subscription-guarantee' | 'enterprise-logo-diagnostic';
+type ViewType = 'home' | 'dashboard' | 'pricing' | 'admin' | 'brevo-test' | 'email-test' | 'env-check' | 'email-management' | 'email-integration' | 'stripe-env-check' | 'accept-invitation' | 'auth-callback' | 'reset-password' | 'auth-verify' | 'privacy-policy' | 'cookies-policy' | 'disclaimer' | 'about' | 'cases' | 'terms-of-service' | 'google-dns-verifier' | 'sla-documentation' | 'api-documentation' | 'auth-diagnostic' | 'simple-login-test' | 'figma-env-diagnostic' | 'ecpay-diagnostic' | 'google-oauth-test' | 'ai-seo' | 'ai-seo-test' | 'public-seo-report' | 'ai-seo-diagnostic' | 'keyword-research-test' | 'keyword-deployment-check' | 'openai-key-guide' | 'data-sync-diagnostic' | 'deep-data-diagnostic' | 'transfer-debug' | 'seo-content' | 'wismachion' | 'blog' | 'blog-post' | 'blog-admin' | 'edge-function-diagnostic' | 'error-diagnostic-page' | 'logo-debugger' | 'logo-setup' | 'paypal-plan-creator' | 'subscription-guarantee' | 'enterprise-logo-diagnostic' | 'talent-pool' | 'freelancer-profile';
 
 interface ViewContextType {
   view: ViewType;
@@ -64,7 +64,7 @@ export function ViewProvider({ children }: { children: ReactNode }) {
           'seo-content', 'wismachion', 'blog', 'blog-post', 'blog-admin',
           'edge-function-diagnostic', 'error-diagnostic-page', 'logo-debugger',
           'logo-setup', 'paypal-plan-creator', 'subscription-guarantee',
-          'enterprise-logo-diagnostic'
+          'enterprise-logo-diagnostic', 'talent-pool', 'freelancer-profile'
         ];
         
         if (validViews.includes(viewParam as ViewType)) {
@@ -174,7 +174,9 @@ export function ViewProvider({ children }: { children: ReactNode }) {
         'logo-setup': 'logo-setup',
         'paypal-plan-creator': 'paypal-plan-creator',
         'subscription-guarantee': 'subscription-guarantee',
-        'enterprise-logo-diagnostic': 'enterprise-logo-diagnostic'
+        'enterprise-logo-diagnostic': 'enterprise-logo-diagnostic',
+        'talent-pool': 'talent-pool',
+        'freelancer-profile': 'freelancer-profile'
       };
       
       if (hash && hashToView[hash]) {

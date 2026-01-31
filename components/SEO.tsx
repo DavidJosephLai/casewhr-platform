@@ -410,6 +410,23 @@ export function getPageSEO(page: string, language: string): SEOProps {
         keywords: 'API 文档, REST API, API 参考, 开发者文档, API 整合, CaseWHR API, 接案 API, 付款 API, 发票 API',
       },
     },
+    'talent-pool': {
+      en: {
+        title: 'Advanced Talent Search - Find Top Freelancers',
+        description: 'Search and filter thousands of verified freelancers. Advanced filters for skills, ratings, location, and hourly rates. Multi-currency support. Find the perfect talent for your project.',
+        keywords: 'talent search, find freelancers, hire freelancer, freelancer database, talent pool, remote workers, skilled professionals, freelance marketplace',
+      },
+      'zh-TW': {
+        title: '進階人才搜尋 - 尋找頂尖接案者',
+        description: '搜尋並篩選數千位經過驗證的接案者。提供技能、評分、地點、時薪等進階篩選功能。支援多幣別計價。為您的專案找到完美人才。',
+        keywords: '人才搜尋, 尋找接案者, 聘僱自由工作者, 人才庫, 人才資料庫, 遠端工作者, 專業人才, 接案市場',
+      },
+      'zh-CN': {
+        title: '进阶人才搜索 - 寻找顶尖接案者',
+        description: '搜索并筛选数千位经过验证的接案者。提供技能、评分、地点、时薪等进阶筛选功能。支持多币别计价。为您的项目找到完美人才。',
+        keywords: '人才搜索, 寻找接案者, 聘雇自由工作者, 人才库, 人才数据库, 远程工作者, 专业人才, 接案市场',
+      },
+    },
   };
 
   const lang = language === 'zh' ? 'zh-TW' : language;
