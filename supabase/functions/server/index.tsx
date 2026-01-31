@@ -22691,8 +22691,12 @@ app.get("/make-server-215f78a5/freelancer/:id/profile", async (c) => {
 
     console.log('✅ [Freelancer Profile] Profile found:', profile.full_name || profile.email);
 
+    // 🔥 使用 profile 中的 user_id 來讀取作品集（而不是 freelancerId）
+    const userId = profile.user_id || freelancerId; // Fallback to freelancerId if user_id not set
+    console.log('✅ [Freelancer Profile] Using user_id for portfolio:', userId);
+    
     // 獲取作品集（統一使用 portfolio:user: 格式）
-    const portfolioData = await kv.get(`portfolio:user:${freelancerId}`) || { items: [] };
+    const portfolioData = await kv.get(`portfolio:user:${userId}`) || { items: [] };
     const portfolio = Array.isArray(portfolioData.items) ? portfolioData.items : [];
     console.log('✅ [Freelancer Profile] Portfolio items:', portfolio.length);
 
@@ -22891,8 +22895,8 @@ app.post("/make-server-215f78a5/invite/:freelancerId/:projectId", async (c) => {
       return c.json({ error: 'Not your project' }, 403);
     }
 
-    // 檢查接案者是否存在
-    const freelancer = await kv.get(`user:${freelancerId}`);
+    // 檢查接案者是否存在 (使用 profile_ key)
+    const freelancer = await kv.get(`profile_${freelancerId}`);
     if (!freelancer) {
       return c.json({ error: 'Freelancer not found' }, 404);
     }

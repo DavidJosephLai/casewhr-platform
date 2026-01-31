@@ -173,10 +173,16 @@ export default function FreelancerProfile() {
     }
   };
 
-  const sendInvite = async (projectId: string) => {
+  const sendInvite = async (selectedProjectId: string) => {
     try {
+      console.log('📤 [FreelancerProfile] Sending invite:', {
+        freelancerId: id,
+        projectId: selectedProjectId,
+        hasAccessToken: !!accessToken
+      });
+
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/invite/${id}/${projectId}`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/invite/${id}/${selectedProjectId}`,
         {
           method: 'POST',
           headers: {
@@ -187,14 +193,17 @@ export default function FreelancerProfile() {
       );
 
       if (response.ok) {
+        const result = await response.json();
+        console.log('✅ [FreelancerProfile] Invitation sent successfully:', result);
         toast.success(language === 'en' ? 'Invitation sent!' : '已發送邀請！');
         setShowInviteModal(false);
       } else {
         const error = await response.json();
-        toast.error(error.message || (language === 'en' ? 'Failed to send invitation' : '發送邀請失敗'));
+        console.error('❌ [FreelancerProfile] Failed to send invitation:', error);
+        toast.error(error.error || (language === 'en' ? 'Failed to send invitation' : '發送邀請失敗'));
       }
     } catch (error) {
-      console.error('Error sending invite:', error);
+      console.error('❌ [FreelancerProfile] Error sending invite:', error);
       toast.error(language === 'en' ? 'Failed to send invitation' : '發送邀請失敗');
     }
   };
