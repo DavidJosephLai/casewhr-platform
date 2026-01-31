@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Search, Filter, X, Users, Loader2, Code, Palette, PenTool, TrendingUp, Video, Smartphone, BarChart, Headphones, Calculator, Scale, Building2, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Filter, X, Users, Loader2, Code, Palette, PenTool, TrendingUp, Video, Smartphone, BarChart, Headphones, Calculator, Scale, Building2, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { useLanguage } from "../lib/LanguageContext";
 import { getTranslation } from "../lib/translations";
 import { projectId, publicAnonKey } from "../utils/supabase/info";
@@ -50,16 +50,17 @@ export function TalentDirectory() {
   const t = getTranslation(language as any).talent;
   const categories = getTranslation(language as any).categories.items;
 
-  const [talents, setTalents] = useState<Profile[]>([]);
-  const [filteredTalents, setFilteredTalents] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(false);
-  const [showLoader, setShowLoader] = useState(false); // 延遲顯示載入器
+  const [showLoader, setShowLoader] = useState(false);
+  const [tableNotFound, setTableNotFound] = useState(false);
+  const [edgeFunctionError, setEdgeFunctionError] = useState(false);
+  const [talents, setTalents] = useState<Talent[]>([]);
+  const [filteredTalents, setFilteredTalents] = useState<Profile[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedTalent, setSelectedTalent] = useState<Profile | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [tableNotFound, setTableNotFound] = useState(false);
   const [selectedCategoryInfo, setSelectedCategoryInfo] = useState<CategoryInfo | null>(null);
   const [filtersExpanded, setFiltersExpanded] = useState(true);
   const [talentsExpanded, setTalentsExpanded] = useState(false);
@@ -90,6 +91,7 @@ export function TalentDirectory() {
   const loadTalents = useCallback(async () => {
     setLoading(true);
     setTableNotFound(false);
+    setEdgeFunctionError(false);
     
     // 延遲顯示載入器 - 只有在載入時間超過 300ms 時才顯示
     const loaderTimeout = setTimeout(() => {
@@ -120,6 +122,9 @@ export function TalentDirectory() {
       console.error('Exception loading talents:', error);
       setTalents([]);
       setFilteredTalents([]);
+      if (error instanceof Error && error.message.includes('Failed to fetch freelancers')) {
+        setEdgeFunctionError(true);
+      }
     } finally {
       clearTimeout(loaderTimeout);
       setLoading(false);
@@ -669,6 +674,54 @@ export function TalentDirectory() {
             <p className="text-gray-600">
               {language === 'en' ? 'Loading talents...' : '載入人才中...'}
             </p>
+          </div>
+        ) : edgeFunctionError ? (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
+            <div className="max-w-md mx-auto">
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <AlertCircle className="h-8 w-8 text-yellow-600" />
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {language === 'en' 
+                  ? 'Service Temporarily Unavailable' 
+                  : language === 'zh-CN'
+                  ? '服务暂时不可用'
+                  : '服務暫時不可用'}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {language === 'en' 
+                  ? 'The backend service is currently unavailable. This is normal during development or when the Edge Function needs to be redeployed.' 
+                  : language === 'zh-CN'
+                  ? '后端服务当前不可用。这在开发期间或需要重新部署 Edge Function 时是正常的。'
+                  : '後端服務目前不可用。這在開發期間或需要重新部署 Edge Function 時是正常的。'}
+              </p>
+              <div className="flex gap-3 justify-center">
+                <Button 
+                  onClick={loadTalents}
+                  className="bg-blue-500 hover:bg-blue-600"
+                >
+                  <Loader2 className="h-4 w-4 mr-2" />
+                  {language === 'en' ? 'Retry' : language === 'zh-CN' ? '重试' : '重試'}
+                </Button>
+                <Button 
+                  onClick={() => window.location.reload()}
+                  variant="outline"
+                >
+                  {language === 'en' ? 'Refresh Page' : language === 'zh-CN' ? '刷新页面' : '重新整理頁面'}
+                </Button>
+              </div>
+              <div className="mt-4 text-sm text-gray-500">
+                <p>
+                  {language === 'en' 
+                    ? 'If the problem persists, please contact support or check the Supabase Edge Functions dashboard.' 
+                    : language === 'zh-CN'
+                    ? '如果问题持续存在，请联系支持或检查 Supabase Edge Functions 仪表板。'
+                    : '如果問題持續存在，請聯繫支援或檢查 Supabase Edge Functions 儀表板。'}
+                </p>
+              </div>
+            </div>
           </div>
         ) : filteredTalents.length === 0 ? (
           <div>
