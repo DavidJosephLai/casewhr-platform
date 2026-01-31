@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useLanguage } from './LanguageContext';
+import { useLanguage } from '../lib/LanguageContext';
+import { useView } from '../contexts/ViewContext';
 import { 
   Star, MapPin, Briefcase, Award, Calendar, DollarSign, 
   Mail, Send, ArrowLeft, ExternalLink, Heart, CheckCircle 
 } from 'lucide-react';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 interface FreelancerProfile {
   id: string;
@@ -42,19 +42,28 @@ interface FreelancerProfile {
 }
 
 export default function FreelancerProfile() {
-  const { id } = useParams();
-  const navigate = useNavigate();
   const { language } = useLanguage();
+  const { setView } = useView();
+  // Get freelancer ID from sessionStorage
+  const id = sessionStorage.getItem('current_freelancer_id');
   const [profile, setProfile] = useState<FreelancerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [myProjects, setMyProjects] = useState<any[]>([]);
 
   useEffect(() => {
-    loadProfile();
+    if (id) {
+      loadProfile();
+    }
   }, [id]);
 
   const loadProfile = async () => {
+    if (!id) {
+      toast.error(language === 'en' ? 'Freelancer not found' : '找不到接案者');
+      setView('talent-pool');
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await fetch(
@@ -71,7 +80,7 @@ export default function FreelancerProfile() {
         setProfile(data.profile);
       } else {
         toast.error(language === 'en' ? 'Freelancer not found' : '找不到接案者');
-        navigate('/talent-pool');
+        setView('talent-pool');
       }
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -220,7 +229,7 @@ export default function FreelancerProfile() {
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <button
-            onClick={() => navigate('/talent-pool')}
+            onClick={() => setView('talent-pool')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

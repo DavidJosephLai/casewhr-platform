@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useLanguage } from './LanguageContext';
+import { useLanguage } from '../lib/LanguageContext';
+import { useView } from '../contexts/ViewContext';
 import { Search, Filter, Star, MapPin, DollarSign, Briefcase, Award } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 interface Freelancer {
   id: string;
@@ -25,7 +25,7 @@ interface Freelancer {
 
 export default function TalentPool() {
   const { language } = useLanguage();
-  const navigate = useNavigate();
+  const { setView } = useView();
   const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -292,7 +292,11 @@ export default function TalentPool() {
                 key={freelancer.id}
                 freelancer={freelancer}
                 onToggleFavorite={toggleFavorite}
-                onViewProfile={() => navigate(`/freelancer/${freelancer.id}`)}
+                onViewProfile={() => {
+                  // Store freelancer ID for profile view
+                  sessionStorage.setItem('current_freelancer_id', freelancer.id);
+                  setView('freelancer-profile');
+                }}
                 language={language}
               />
             ))}

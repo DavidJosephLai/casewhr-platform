@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useLanguage } from './LanguageContext';
+import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { projectId } from '../utils/supabase/info';
-import { toast } from 'sonner';
-import { Star, MapPin, DollarSign, Briefcase, Award, Heart, Loader2 } from 'lucide-react';
 import { useView } from '../contexts/ViewContext';
+import { projectId } from '../utils/supabase/info';
+import { toast } from 'sonner@2.0.3';
+import { Star, MapPin, DollarSign, Briefcase, Award, Heart, Loader2 } from 'lucide-react';
 
 interface Freelancer {
   id: string;
@@ -117,8 +117,8 @@ export function FavoritesList() {
   };
 
   const viewProfile = (freelancerId: string) => {
-    // 更新 URL
-    window.history.pushState({}, '', `/freelancer/${freelancerId}`);
+    // Store freelancer ID for profile view
+    sessionStorage.setItem('current_freelancer_id', freelancerId);
     // 切換視圖
     setView('freelancer-profile');
   };
