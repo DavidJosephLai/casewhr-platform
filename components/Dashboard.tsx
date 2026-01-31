@@ -13,7 +13,8 @@ import {
   Loader2,
   Shield,
   FileText,
-  Info
+  Info,
+  Heart
 } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -49,6 +50,7 @@ import { MyProposals } from './MyProposals';
 import { UserProfile } from './UserProfile';
 import { BrandingSettings } from './BrandingSettings';
 import { PostProjectDialog } from './PostProjectDialog';
+import { FavoritesList } from './FavoritesList';
 import { InternalTransfer } from './InternalTransfer';
 import { TransferHistory } from './TransferHistory';
 import { EnterpriseFeaturesPanel } from './EnterpriseFeaturesPanel';
@@ -503,7 +505,7 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className={`grid w-full ${isFreelancer ? 'grid-cols-2 lg:grid-cols-7' : 'grid-cols-2 lg:grid-cols-6'} bg-blue-50 p-1`}>
+        <TabsList className={`grid w-full ${isFreelancer ? 'grid-cols-2 lg:grid-cols-8' : 'grid-cols-2 lg:grid-cols-7'} bg-blue-50 p-1`}>
           <TabsTrigger 
             value="overview"
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-blue-700 data-[state=inactive]:hover:bg-blue-100"
@@ -529,6 +531,14 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
               {language === 'en' ? 'My Proposals' : language === 'zh-CN' ? '我的提案' : '我的提案'}
             </TabsTrigger>
           )}
+          
+          <TabsTrigger 
+            value="favorites"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=inactive]:text-blue-700 data-[state=inactive]:hover:bg-blue-100"
+          >
+            <Heart className="h-4 w-4 mr-2" />
+            {language === 'en' ? 'My Favorites' : language === 'zh-CN' ? '我的收藏' : '我的收藏'}
+          </TabsTrigger>
           
           <TabsTrigger 
             value="wallet"
@@ -662,6 +672,10 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
             <MyProposals />
           </TabsContent>
         )}
+
+        <TabsContent value="favorites" className="space-y-6">
+          <FavoritesList />
+        </TabsContent>
 
         <TabsContent value="wallet" className="space-y-6">
           <ExchangeRateIndicator />

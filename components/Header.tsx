@@ -1,7 +1,7 @@
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
-import { Crown, ChevronDown, Menu, X, Globe, User, Settings, LogOut, MessageSquare, Bell, LayoutDashboard, Briefcase, Target, Shield, MessageCircle } from "lucide-react";
+import { Crown, ChevronDown, Menu, X, Globe, User, Settings, LogOut, MessageSquare, Bell, LayoutDashboard, Briefcase, Target, Shield, MessageCircle, Users } from "lucide-react";
 import { useLanguage } from '../lib/LanguageContext';
 import { translations, getTranslation } from "../lib/translations";
 import { AuthDialogs } from "./AuthDialogs";
@@ -286,6 +286,16 @@ export function Header() {
               </button>
               <button onClick={() => scrollToSection('talents')} className="text-[#111827] hover:text-blue-600 transition-colors font-medium">
                 {language === 'en' ? 'Browse Talent' : '瀏覽人才'}
+              </button>
+              <button 
+                onClick={() => {
+                  setView('talent-pool');
+                  setManualOverride(true);
+                }} 
+                className="text-[#111827] hover:text-blue-600 transition-colors flex items-center gap-2 font-medium"
+              >
+                <Users className="h-4 w-4" />
+                {language === 'en' ? 'Talent Pool' : language === 'zh-CN' ? '人才库' : '人才庫'}
               </button>
               <button onClick={() => scrollToSection('projects')} className="text-[#111827] hover:text-blue-600 transition-colors font-medium">
                 {language === 'en' ? 'Browse Posted Projects' : '瀏覽發案項目'}

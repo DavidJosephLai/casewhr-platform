@@ -4210,34 +4210,144 @@ app.post("/make-server-215f78a5/milestones/plan/:proposalId/approve", async (c) 
       return c.json({ error: 'Forbidden: Only client can approve' }, 403);
     }
 
+    // 🔥 獲取所有里程碑並計算總金額
+    const milestoneIds = await kv.get(`milestones:proposal:${proposalId}`) || [];
+    if (!Array.isArray(milestoneIds) || milestoneIds.length === 0) {
+      return c.json({ error: 'No milestones found' }, 400);
+    }
+
+    const milestones = await kv.mget(milestoneIds.map(id => `milestone:${id}`));
+    const validMilestones = milestones.filter(m => m && m.amount);
+    
+    if (validMilestones.length === 0) {
+      return c.json({ error: 'No valid milestones found' }, 400);
+    }
+
+    const totalAmount = validMilestones.reduce((sum, m) => sum + (m.amount || 0), 0);
+    const currency = proposal.currency || 'TWD';
+
+    console.log('💰 [Approve Milestone Plan] Total amount:', totalAmount, currency);
+
+    // 🔥 檢查客戶錢包餘額
+    const walletKey = `wallet:${user.id}`;
+    const wallet = await kv.get(walletKey) || {
+      user_id: user.id,
+      balances: { TWD: 0, USD: 0, CNY: 0 },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    const availableBalance = wallet.balances?.[currency] || 0;
+
+    console.log('💰 [Approve Milestone Plan] Available balance:', availableBalance, currency);
+
+    // 🔥 檢查餘額是否足夠
+    if (availableBalance < totalAmount) {
+      const shortfall = totalAmount - availableBalance;
+      console.log('❌ [Approve Milestone Plan] Insufficient balance!');
+      
+      return c.json({
+        error: 'insufficient_balance',
+        message: 'Insufficient wallet balance',
+        user_message: {
+          'en': `You need to deposit at least ${shortfall.toFixed(2)} ${currency} to approve this milestone plan.`,
+          'zh-TW': `您需要至少儲值 ${shortfall.toFixed(2)} ${currency} 才能批准此里程碑計劃。`,
+          'zh-CN': `您需要至少充值 ${shortfall.toFixed(2)} ${currency} 才能批准此里程碑计划。`,
+        },
+        required_amount: totalAmount,
+        available_balance: availableBalance,
+        shortfall_amount: shortfall,
+        currency: currency,
+      }, 400);
+    }
+
+    // 🔥 創建託管記錄
+    const escrowId = crypto.randomUUID();
+    const escrow = {
+      id: escrowId,
+      proposal_id: proposalId,
+      project_id: proposal.project_id,
+      client_id: user.id,
+      freelancer_id: proposal.freelancer_id,
+      amount: totalAmount,
+      currency: currency,
+      status: 'locked',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    await kv.set(`escrow:${escrowId}`, escrow);
+    await kv.set(`escrow:proposal:${proposalId}`, escrowId);
+
+    console.log('🔒 [Approve Milestone Plan] Escrow created:', escrowId);
+
+    // 🔥 扣除客戶錢包餘額
+    wallet.balances[currency] = availableBalance - totalAmount;
+    wallet.updated_at = new Date().toISOString();
+    await kv.set(walletKey, wallet);
+
+    console.log('💸 [Approve Milestone Plan] Deducted from wallet:', totalAmount, currency);
+
+    // 🔥 創建交易記錄
+    const transactionId = crypto.randomUUID();
+    const transaction = {
+      id: transactionId,
+      user_id: user.id,
+      type: 'escrow_lock',
+      amount: -totalAmount,
+      currency: currency,
+      status: 'completed',
+      description: `Locked ${totalAmount} ${currency} in escrow for proposal ${proposalId}`,
+      created_at: new Date().toISOString(),
+      related_id: escrowId,
+    };
+
+    await kv.set(`transaction:${transactionId}`, transaction);
+
+    // 添加到用戶交易列表
+    const userTransactionsKey = `transactions:user:${user.id}`;
+    const userTransactions = await kv.get(userTransactionsKey) || [];
+    userTransactions.unshift(transactionId);
+    await kv.set(userTransactionsKey, userTransactions.slice(0, 100));
+
+    console.log('📝 [Approve Milestone Plan] Transaction created:', transactionId);
+
     // 更新提案狀態
     const updatedProposal = {
       ...proposal,
       milestone_plan_status: 'approved',
       milestone_plan_reviewed_at: new Date().toISOString(),
+      escrow_id: escrowId,
       updated_at: new Date().toISOString(),
     };
 
     await kv.set(`proposal:${proposalId}`, updatedProposal);
 
-    // 🔥 更新所有里程碑狀態為 approved
-    const milestoneIds = await kv.get(`milestones:proposal:${proposalId}`) || [];
-    if (Array.isArray(milestoneIds) && milestoneIds.length > 0) {
-      const milestones = await kv.mget(milestoneIds.map(id => `milestone:${id}`));
-      for (const milestone of milestones) {
-        if (milestone) {
-          milestone.status = 'approved';
-          milestone.updated_at = new Date().toISOString();
-          await kv.set(`milestone:${milestone.id}`, milestone);
-        }
-      }
+    // 🔥 更新所有里程碑狀態為 pending（等待開始）
+    for (const milestone of validMilestones) {
+      milestone.status = 'pending';
+      milestone.updated_at = new Date().toISOString();
+      await kv.set(`milestone:${milestone.id}`, milestone);
     }
 
-    console.log('✅ [Approve Milestone Plan] Plan approved!');
-    return c.json({ success: true });
+    console.log('✅ [Approve Milestone Plan] Plan approved and funds locked!');
+    
+    return c.json({ 
+      success: true,
+      escrow: {
+        id: escrowId,
+        amount: totalAmount,
+        currency: currency,
+        status: 'locked',
+      },
+      wallet: {
+        available_balance: wallet.balances[currency],
+        currency: currency,
+      }
+    });
   } catch (error) {
     console.error('❌ [Approve Milestone Plan] Error:', error);
-    return c.json({ error: 'Failed to approve plan' }, 500);
+    return c.json({ error: 'Failed to approve plan', message: error.message }, 500);
   }
 });
 
@@ -22337,6 +22447,310 @@ app.delete('/make-server-215f78a5/delete-hero-video/:path', async (c) => {
 });
 
 console.log('✅ [SERVER] Video upload routes registered');
+
+// ============= TALENT POOL & HR ROUTES =============
+
+// 🔥 獲取人才庫列表
+app.get("/make-server-215f78a5/talent-pool", async (c) => {
+  try {
+    console.log('✅ [Talent Pool] Loading freelancers...');
+
+    // 獲取所有用戶
+    const allUserKeys = await kv.getByPrefix('user:');
+    const users = allUserKeys || [];
+
+    const freelancers = [];
+
+    for (const user of users) {
+      if (!user || !user.id) continue;
+
+      // 檢查是否有接案者資料（profile 或完成的項目）
+      const profile = await kv.get(`user_profile:${user.id}`);
+      const completedProjectsKey = await kv.get(`freelancer_completed_projects:${user.id}`) || [];
+      const reviewsKey = await kv.get(`reviews:freelancer:${user.id}`) || [];
+
+      // 計算評分
+      let rating = 0;
+      let reviewCount = 0;
+      if (Array.isArray(reviewsKey) && reviewsKey.length > 0) {
+        const reviews = await kv.mget(reviewsKey);
+        const validReviews = reviews.filter(r => r && r.rating);
+        if (validReviews.length > 0) {
+          rating = validReviews.reduce((sum, r) => sum + r.rating, 0) / validReviews.length;
+          reviewCount = validReviews.length;
+        }
+      }
+
+      freelancers.push({
+        id: user.id,
+        email: user.email,
+        name: user.name || user.email.split('@')[0],
+        avatar: profile?.avatar,
+        title: profile?.title || profile?.job_title,
+        bio: profile?.bio || profile?.description,
+        skills: profile?.skills || [],
+        hourly_rate_min: profile?.hourly_rate_min,
+        hourly_rate_max: profile?.hourly_rate_max,
+        currency: profile?.currency || 'TWD',
+        location: profile?.location,
+        rating: rating > 0 ? rating : undefined,
+        review_count: reviewCount,
+        completed_projects: Array.isArray(completedProjectsKey) ? completedProjectsKey.length : 0,
+      });
+    }
+
+    console.log(`✅ [Talent Pool] Found ${freelancers.length} freelancers`);
+    return c.json({ freelancers });
+
+  } catch (error) {
+    console.error('❌ [Talent Pool] Error:', error);
+    return c.json({ error: 'Failed to load talent pool' }, 500);
+  }
+});
+
+// 🔥 獲取接案者詳細檔案
+app.get("/make-server-215f78a5/freelancer/:id/profile", async (c) => {
+  try {
+    const freelancerId = c.req.param('id');
+    console.log('✅ [Freelancer Profile] Loading profile for:', freelancerId);
+
+    // 獲取用戶基本資料
+    const user = await kv.get(`user:${freelancerId}`);
+    if (!user) {
+      return c.json({ error: 'Freelancer not found' }, 404);
+    }
+
+    // 獲取詳細檔案
+    const profile = await kv.get(`user_profile:${freelancerId}`) || {};
+
+    // 獲取作品集
+    const portfolioKeys = await kv.get(`portfolio:${freelancerId}`) || [];
+    const portfolio = Array.isArray(portfolioKeys) ? await kv.mget(portfolioKeys) : [];
+
+    // 獲取評價
+    const reviewKeys = await kv.get(`reviews:freelancer:${freelancerId}`) || [];
+    const reviews = [];
+    if (Array.isArray(reviewKeys) && reviewKeys.length > 0) {
+      const reviewData = await kv.mget(reviewKeys);
+      for (const review of reviewData) {
+        if (review) {
+          const reviewer = await kv.get(`user:${review.reviewer_id}`);
+          reviews.push({
+            id: review.id,
+            rating: review.rating,
+            comment: review.comment,
+            reviewer_name: reviewer?.name || 'Anonymous',
+            created_at: review.created_at,
+          });
+        }
+      }
+    }
+
+    // 計算統計數據
+    let rating = 0;
+    if (reviews.length > 0) {
+      rating = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+    }
+
+    const completedProjectsKey = await kv.get(`freelancer_completed_projects:${freelancerId}`) || [];
+
+    // 檢查是否已收藏（需要登入）
+    let isFavorite = false;
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    if (accessToken) {
+      try {
+        const { data: { user: currentUser } } = await supabase.auth.getUser(accessToken);
+        if (currentUser?.id) {
+          const favorites = await kv.get(`favorites:${currentUser.id}`) || [];
+          isFavorite = Array.isArray(favorites) && favorites.includes(freelancerId);
+        }
+      } catch (error) {
+        // 忽略認證錯誤
+      }
+    }
+
+    const profileData = {
+      id: user.id,
+      email: user.email,
+      name: user.name || user.email.split('@')[0],
+      avatar: profile.avatar,
+      title: profile.title || profile.job_title,
+      bio: profile.bio || profile.description,
+      skills: profile.skills || [],
+      hourly_rate_min: profile.hourly_rate_min,
+      hourly_rate_max: profile.hourly_rate_max,
+      currency: profile.currency || 'TWD',
+      location: profile.location,
+      rating: rating > 0 ? rating : undefined,
+      review_count: reviews.length,
+      completed_projects: Array.isArray(completedProjectsKey) ? completedProjectsKey.length : 0,
+      joined_date: user.created_at,
+      portfolio: portfolio.filter(p => p),
+      reviews: reviews,
+      is_favorite: isFavorite,
+    };
+
+    console.log('✅ [Freelancer Profile] Profile loaded');
+    return c.json({ profile: profileData });
+
+  } catch (error) {
+    console.error('❌ [Freelancer Profile] Error:', error);
+    return c.json({ error: 'Failed to load profile' }, 500);
+  }
+});
+
+// 🔥 添加收藏
+app.post("/make-server-215f78a5/favorites/add", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const { freelancer_id } = await c.req.json();
+    if (!freelancer_id) {
+      return c.json({ error: 'Missing freelancer_id' }, 400);
+    }
+
+    const favoritesKey = `favorites:${user.id}`;
+    const favorites = await kv.get(favoritesKey) || [];
+    
+    if (!Array.isArray(favorites)) {
+      await kv.set(favoritesKey, [freelancer_id]);
+    } else if (!favorites.includes(freelancer_id)) {
+      favorites.push(freelancer_id);
+      await kv.set(favoritesKey, favorites);
+    }
+
+    console.log(`✅ [Favorites] User ${user.id} added freelancer ${freelancer_id}`);
+    return c.json({ success: true });
+
+  } catch (error) {
+    console.error('❌ [Favorites] Error adding:', error);
+    return c.json({ error: 'Failed to add favorite' }, 500);
+  }
+});
+
+// 🔥 移除收藏
+app.post("/make-server-215f78a5/favorites/remove", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const { freelancer_id } = await c.req.json();
+    if (!freelancer_id) {
+      return c.json({ error: 'Missing freelancer_id' }, 400);
+    }
+
+    const favoritesKey = `favorites:${user.id}`;
+    const favorites = await kv.get(favoritesKey) || [];
+    
+    if (Array.isArray(favorites)) {
+      const filtered = favorites.filter(id => id !== freelancer_id);
+      await kv.set(favoritesKey, filtered);
+    }
+
+    console.log(`✅ [Favorites] User ${user.id} removed freelancer ${freelancer_id}`);
+    return c.json({ success: true });
+
+  } catch (error) {
+    console.error('❌ [Favorites] Error removing:', error);
+    return c.json({ error: 'Failed to remove favorite' }, 500);
+  }
+});
+
+// 🔥 獲取收藏列表
+app.get("/make-server-215f78a5/favorites/list", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const favoritesKey = `favorites:${user.id}`;
+    const favorites = await kv.get(favoritesKey) || [];
+
+    console.log(`✅ [Favorites] User ${user.id} has ${Array.isArray(favorites) ? favorites.length : 0} favorites`);
+    return c.json({ favorites: Array.isArray(favorites) ? favorites : [] });
+
+  } catch (error) {
+    console.error('❌ [Favorites] Error loading list:', error);
+    return c.json({ error: 'Failed to load favorites' }, 500);
+  }
+});
+
+// 🔥 邀請接案者參與項目
+app.post("/make-server-215f78a5/invite/:freelancerId/:projectId", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const freelancerId = c.req.param('freelancerId');
+    const projectId = c.req.param('projectId');
+
+    // 檢查項目是否存在且屬於該用戶
+    const project = await kv.get(`project:${projectId}`);
+    if (!project) {
+      return c.json({ error: 'Project not found' }, 404);
+    }
+
+    if (project.user_id !== user.id) {
+      return c.json({ error: 'Not your project' }, 403);
+    }
+
+    // 檢查接案者是否存在
+    const freelancer = await kv.get(`user:${freelancerId}`);
+    if (!freelancer) {
+      return c.json({ error: 'Freelancer not found' }, 404);
+    }
+
+    // 創建邀請記錄
+    const invitationId = crypto.randomUUID();
+    const invitation = {
+      id: invitationId,
+      project_id: projectId,
+      freelancer_id: freelancerId,
+      client_id: user.id,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+    };
+
+    await kv.set(`invitation:${invitationId}`, invitation);
+
+    // 添加到接案者的邀請列表
+    const freelancerInvitationsKey = `invitations:freelancer:${freelancerId}`;
+    const freelancerInvitations = await kv.get(freelancerInvitationsKey) || [];
+    if (Array.isArray(freelancerInvitations)) {
+      freelancerInvitations.unshift(invitationId);
+      await kv.set(freelancerInvitationsKey, freelancerInvitations);
+    } else {
+      await kv.set(freelancerInvitationsKey, [invitationId]);
+    }
+
+    // TODO: 發送郵件通知接案者
+
+    console.log(`✅ [Invite] Client ${user.id} invited freelancer ${freelancerId} to project ${projectId}`);
+    return c.json({ success: true, invitation_id: invitationId });
+
+  } catch (error) {
+    console.error('❌ [Invite] Error:', error);
+    return c.json({ error: 'Failed to send invitation' }, 500);
+  }
+});
+
+console.log('✅ [SERVER] Talent pool and HR routes registered');
 
 console.log('🎉 [SERVER] All routes registered, starting server...');
 
