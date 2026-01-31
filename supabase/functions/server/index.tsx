@@ -22459,6 +22459,23 @@ app.get("/make-server-215f78a5/talent-pool", async (c) => {
     const allUserKeys = await kv.getByPrefix('user:');
     const users = allUserKeys || [];
 
+    // 🔥 檢查當前用戶的收藏列表
+    let currentUserFavorites: string[] = [];
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    if (accessToken) {
+      try {
+        const { data: { user: currentUser } } = await supabase.auth.getUser(accessToken);
+        if (currentUser?.id) {
+          const favorites = await kv.get(`favorites:${currentUser.id}`) || [];
+          currentUserFavorites = Array.isArray(favorites) ? favorites : [];
+          console.log(`✅ [Talent Pool] User ${currentUser.id} has ${currentUserFavorites.length} favorites`);
+        }
+      } catch (error) {
+        // 忽略認證錯誤，繼續載入人才庫
+        console.log('⚠️ [Talent Pool] User not authenticated or token invalid');
+      }
+    }
+
     const freelancers = [];
 
     for (const user of users) {
@@ -22496,6 +22513,7 @@ app.get("/make-server-215f78a5/talent-pool", async (c) => {
         rating: rating > 0 ? rating : undefined,
         review_count: reviewCount,
         completed_projects: Array.isArray(completedProjectsKey) ? completedProjectsKey.length : 0,
+        is_favorite: currentUserFavorites.includes(user.id), // 🔥 添加收藏狀態
       });
     }
 
