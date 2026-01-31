@@ -73,6 +73,11 @@ export default function TalentPool() {
   const [contactSubject, setContactSubject] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   
+  // 🎯 邀請功能狀態
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteFreelancer, setInviteFreelancer] = useState<Freelancer | null>(null);
+  const [myProjects, setMyProjects] = useState<any[]>([]);
+
   const t = {
     title: language === 'en' ? 'Advanced Talent Search' : language === 'zh-CN' ? '进阶人才搜索' : '進階人才搜尋',
     subtitle: language === 'en' ? 'Find, filter, and recruit the perfect freelancer with powerful search tools' : language === 'zh-CN' ? '用强大的搜索工具查找、筛选和招募完美的自由职业者' : '使用強大的搜尋工具查找、篩選和招募完美的接案者',
@@ -108,6 +113,9 @@ export default function TalentPool() {
     clearFilters: language === 'en' ? 'Clear All' : language === 'zh-CN' ? '清除全部' : '清除全部',
     noResults: language === 'en' ? 'No freelancers match your criteria' : language === 'zh-CN' ? '没有符合条件的自由职业者' : '沒有符合條件的接案者',
     loading: language === 'en' ? 'Loading talent pool...' : language === 'zh-CN' ? '加载人才库中...' : '載入人才庫中...',
+    inviteToProject: language === 'en' ? 'Invite to Project' : language === 'zh-CN' ? '邀请参与项目' : '邀請參與專案',
+    selectProject: language === 'en' ? 'Select a project to invite this freelancer' : language === 'zh-CN' ? '选择一个项目邀请此自由职业者' : '選擇一個專案邀請此接案者',
+    noProjects: language === 'en' ? 'You have no active projects' : language === 'zh-CN' ? '您没有活跃的项目' : '您沒有活躍的專案',
   };
 
   useEffect(() => {
@@ -228,6 +236,75 @@ export default function TalentPool() {
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
+    }
+  };
+
+  // 🎯 邀請功能
+  const openInviteModal = async (freelancer: Freelancer) => {
+    if (!accessToken) {
+      toast.error(language === 'en' ? 'Please login first' : '請先登入');
+      return;
+    }
+
+    setInviteFreelancer(freelancer);
+
+    // Load user's projects
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/projects/my`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const activeProjects = data.projects.filter((p: any) => p.status === 'open');
+        setMyProjects(activeProjects);
+        setShowInviteModal(true);
+      }
+    } catch (error) {
+      console.error('Error loading projects:', error);
+      toast.error(language === 'en' ? 'Failed to load projects' : '載入專案失敗');
+    }
+  };
+
+  const sendInvite = async (selectedProjectId: string) => {
+    if (!inviteFreelancer) return;
+
+    try {
+      console.log('📤 [TalentPool] Sending invite:', {
+        freelancerId: inviteFreelancer.id,
+        projectId: selectedProjectId,
+        hasAccessToken: !!accessToken
+      });
+
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/invite/${inviteFreelancer.id}/${selectedProjectId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ [TalentPool] Invitation sent successfully:', result);
+        toast.success(language === 'en' ? 'Invitation sent!' : '已發送邀請！');
+        setShowInviteModal(false);
+      } else {
+        const error = await response.json();
+        console.error('❌ [TalentPool] Failed to send invitation:', error);
+        toast.error(error.error || (language === 'en' ? 'Failed to send invitation' : '發送邀請失敗'));
+      }
+    } catch (error) {
+      console.error('❌ [TalentPool] Error sending invite:', error);
+      toast.error(language === 'en' ? 'Failed to send invitation' : '發送邀請失敗');
     }
   };
 
@@ -700,6 +777,12 @@ export default function TalentPool() {
                           >
                             <Send className="w-4 h-4" />
                           </button>
+                          <button
+                            onClick={() => openInviteModal(freelancer)}
+                            className="px-4 py-2 border border-purple-600 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                          >
+                            <Mail className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -859,6 +942,56 @@ export default function TalentPool() {
                 disabled={sendingMessage || !contactMessage.trim()}
               >
                 {sendingMessage ? t.sending : t.send}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 邀請對話框 */}
+      {showInviteModal && inviteFreelancer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">{t.contact} {inviteFreelancer.name}</h3>
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-gray-600">{t.selectProject}:</p>
+              <select
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                {myProjects.map(project => (
+                  <option key={project.id} value={project.id}>
+                    {project.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg"
+              >
+                {t.cancel}
+              </button>
+              <button
+                onClick={async () => {
+                  const selectedProjectId = (document.querySelector('select') as HTMLSelectElement)?.value;
+                  if (!selectedProjectId) return;
+
+                  await sendInvite(selectedProjectId);
+                }}
+                className="ml-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm transition-colors"
+              >
+                {t.send}
               </button>
             </div>
           </div>
