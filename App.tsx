@@ -79,6 +79,8 @@ const Dashboard = lazy(() => import('./components/Dashboard'));
 const PricingPage = lazy(() => import('./components/PricingPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const DynamicSEOPage = lazy(() => import('./components/DynamicSEOPage').then(module => ({ default: module.DynamicSEOPage })));
+const TalentPool = lazy(() => import('./components/TalentPool').then(module => ({ default: module.default })));
+const FreelancerProfile = lazy(() => import('./components/FreelancerProfile').then(module => ({ default: module.default })));
 
 // 🎯 全局組件 - 使用 lazy 但保持輕量級（這些組件需要 default export）
 const AdminFloatingButton = lazy(() => import('./components/AdminFloatingButton'));
@@ -132,7 +134,7 @@ const PublicSEOReport = lazy(() => import('./components/PublicSEOReport').then(m
 // 🎯 SEO 管理中心
 const SEOManagementCenter = lazy(() => import('./components/seo/SEOManagementCenter'));
 
-// 📝 Blog 相關組件
+// ��� Blog 相關組件
 const BlogListPage = lazy(() => import('./components/BlogListPage'));
 const BlogPostPage = lazy(() => import('./components/BlogPostPage'));
 const BlogManagementPage = lazy(() => import('./components/BlogManagementPage'));
@@ -151,11 +153,16 @@ function PageLoadingFallback() {
 
 function AppContent() {
   const { language } = useLanguage();
-  const { view, setView } = useView();
+  const { view, setView, manualOverride } = useView();
   const { user, accessToken, signOut } = useAuth();
   
   // 🔍 調試：監控 view 狀態
-  console.log('🔍 [App] Current view:', view);
+  console.log('🔍 [App] Current view:', view, '| manualOverride:', manualOverride);
+  
+  // 🔥 監控 view 變化
+  useEffect(() => {
+    console.log('🔥 [App] View changed to:', view, '| manualOverride:', manualOverride);
+  }, [view, manualOverride]);
   
   // 🟢 LINE OAuth Email 狀態
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -466,7 +473,7 @@ function AppContent() {
             { duration: 5000 }
           );
           
-          // 重向回首頁
+          // ��向回首頁
           setTimeout(() => {
             window.location.href = '/';
           }, 2000);
@@ -982,6 +989,24 @@ function AppContent() {
               </div>
             }>
               <BlogManagementPage />
+            </Suspense>
+          </ErrorBoundary>
+        </div>
+      ) : view === 'talent-pool' ? (
+        <div className="pt-20">
+          <SEO {...getPageSEO('talent-pool', language)} />
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <TalentPool />
+            </Suspense>
+          </ErrorBoundary>
+        </div>
+      ) : view === 'freelancer-profile' ? (
+        <div className="pt-20">
+          <SEO title="Freelancer Profile" description="" keywords="" noindex />
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <FreelancerProfile />
             </Suspense>
           </ErrorBoundary>
         </div>
