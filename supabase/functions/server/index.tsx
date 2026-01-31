@@ -22990,6 +22990,103 @@ app.post("/make-server-215f78a5/invite/:freelancerId/:projectId", async (c) => {
       await kv.set(userNotificationsKey, [notificationId]);
     }
 
+    // 📧 發送郵件通知給接案者
+    try {
+      const clientProfile = await kv.get(`profile_${user.id}`);
+      const clientName = clientProfile?.name || 'A client';
+      const freelancerEmail = freelancer.email;
+      const freelancerName = freelancer.name || 'Freelancer';
+
+      if (freelancerEmail) {
+        const brevoApiKey = Deno.env.get('BREVO_API_KEY');
+        if (brevoApiKey) {
+          const emailData = {
+            sender: { name: 'CaseWHR', email: 'noreply@casewhr.com' },
+            to: [{ email: freelancerEmail, name: freelancerName }],
+            subject: `🎯 New Project Invitation: ${project.title}`,
+            htmlContent: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                  <h1 style="color: white; margin: 0; font-size: 28px;">🎯 New Project Invitation</h1>
+                </div>
+                
+                <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px;">
+                  <p style="font-size: 16px; color: #333; margin-bottom: 20px;">
+                    Hi <strong>${freelancerName}</strong>,
+                  </p>
+                  
+                  <p style="font-size: 16px; color: #333; margin-bottom: 20px;">
+                    <strong>${clientName}</strong> has invited you to submit a proposal for their project:
+                  </p>
+                  
+                  <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; margin: 20px 0;">
+                    <h2 style="color: #667eea; margin: 0 0 10px 0; font-size: 22px;">${project.title}</h2>
+                    <p style="color: #666; margin: 0; line-height: 1.6;">${project.description || 'No description provided'}</p>
+                    
+                    ${project.budget ? `
+                      <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                        <p style="color: #333; margin: 0;">
+                          <strong>💰 Budget:</strong> ${project.budget} ${project.currency || 'TWD'}
+                        </p>
+                      </div>
+                    ` : ''}
+                    
+                    ${project.required_skills && project.required_skills.length > 0 ? `
+                      <div style="margin-top: 15px;">
+                        <p style="color: #333; margin: 0 0 10px 0;"><strong>🔧 Required Skills:</strong></p>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                          ${project.required_skills.map(skill => 
+                            `<span style="background: #ede9fe; color: #7c3aed; padding: 4px 12px; border-radius: 9999px; font-size: 14px;">${skill}</span>`
+                          ).join('')}
+                        </div>
+                      </div>
+                    ` : ''}
+                  </div>
+                  
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="https://casewhr.com" 
+                       style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold;">
+                      View Invitation & Submit Proposal
+                    </a>
+                  </div>
+                  
+                  <p style="font-size: 14px; color: #666; text-align: center; margin: 20px 0 0 0;">
+                    This is a great opportunity to work on an exciting project!
+                  </p>
+                </div>
+                
+                <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+                  <p>© 2025 CaseWHR. All rights reserved.</p>
+                </div>
+              </div>
+            `,
+          };
+
+          const emailResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+              'accept': 'application/json',
+              'api-key': brevoApiKey,
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify(emailData),
+          });
+
+          if (emailResponse.ok) {
+            console.log(`✅ [Invite] Email sent to ${freelancerEmail}`);
+          } else {
+            const errorText = await emailResponse.text();
+            console.error(`❌ [Invite] Failed to send email:`, errorText);
+          }
+        } else {
+          console.warn('⚠️ [Invite] BREVO_API_KEY not configured, skipping email');
+        }
+      }
+    } catch (emailError) {
+      console.error('❌ [Invite] Error sending email:', emailError);
+      // Don't fail the invitation if email fails
+    }
+
     console.log(`✅ [Invite] Client ${user.id} invited freelancer ${freelancerId} to project ${projectId}`);
     console.log(`🔔 [Notification] Created notification ${notificationId} for user ${freelancerId}`);
     return c.json({ success: true, invitation_id: invitationId });
