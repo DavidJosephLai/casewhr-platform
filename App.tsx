@@ -134,7 +134,7 @@ const PublicSEOReport = lazy(() => import('./components/PublicSEOReport').then(m
 // 🎯 SEO 管理中心
 const SEOManagementCenter = lazy(() => import('./components/seo/SEOManagementCenter'));
 
-// ��� Blog 相關組件
+//  Blog 相關組件
 const BlogListPage = lazy(() => import('./components/BlogListPage'));
 const BlogPostPage = lazy(() => import('./components/BlogPostPage'));
 const BlogManagementPage = lazy(() => import('./components/BlogManagementPage'));
@@ -155,14 +155,6 @@ function AppContent() {
   const { language } = useLanguage();
   const { view, setView, manualOverride } = useView();
   const { user, accessToken, signOut } = useAuth();
-  
-  // 🔍 調試：監控 view 狀態
-  console.log('🔍 [App] Current view:', view, '| manualOverride:', manualOverride);
-  
-  // 🔥 監控 view 變化
-  useEffect(() => {
-    console.log('🔥 [App] View changed to:', view, '| manualOverride:', manualOverride);
-  }, [view, manualOverride]);
   
   // 🟢 LINE OAuth Email 狀態
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -301,7 +293,7 @@ function AppContent() {
       return;
     }
     
-    // 📝 檢查是否是 Blog 頁面
+    // 📝 檢查是否�� Blog 頁面
     if (urlPath === '/blog') {
       console.log('📝 [App] Blog list page detected');
       console.log('🔥🔥 [App] Setting view to blog - NO REDIRECT TO POST PAGE!');
@@ -473,7 +465,7 @@ function AppContent() {
             { duration: 5000 }
           );
           
-          // ��向回首頁
+          // 向回首頁
           setTimeout(() => {
             window.location.href = '/';
           }, 2000);
