@@ -52,7 +52,6 @@ export default function FreelancerProfile() {
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [myProjects, setMyProjects] = useState<any[]>([]);
-  const [debugInfo, setDebugInfo] = useState<any>(null); // 🔥 Debug 信息
 
   useEffect(() => {
     console.log('🔍 [FreelancerProfile] useEffect triggered, ID:', id);
@@ -90,14 +89,6 @@ export default function FreelancerProfile() {
           name: data.profile?.name,
           portfolio_count: data.profile?.portfolio?.length || 0,
           portfolio_items: data.profile?.portfolio
-        });
-        
-        // 🔥 設置 Debug 信息
-        setDebugInfo({
-          freelancerId: id,
-          portfolioKey: `portfolio:user:${id}`,
-          portfolioCount: data.profile?.portfolio?.length || 0,
-          portfolioItems: data.profile?.portfolio || []
         });
         
         setProfile(data.profile);
@@ -447,22 +438,6 @@ export default function FreelancerProfile() {
           </div>
         </div>
       </div>
-
-      {/* 🔥 Debug Panel */}
-      {debugInfo && (
-        <div className="fixed bottom-4 right-4 bg-red-600 text-white p-4 rounded-lg shadow-2xl max-w-md z-50">
-          <h3 className="font-bold text-lg mb-2">🔍 Debug Info</h3>
-          <div className="text-xs space-y-1 font-mono">
-            <p><strong>Freelancer ID:</strong> {debugInfo.freelancerId}</p>
-            <p><strong>Portfolio Key:</strong> {debugInfo.portfolioKey}</p>
-            <p><strong>Portfolio Count:</strong> {debugInfo.portfolioCount}</p>
-            <p><strong>Portfolio Items:</strong></p>
-            <pre className="bg-red-700 p-2 rounded text-white overflow-auto max-h-40">
-              {JSON.stringify(debugInfo.portfolioItems, null, 2)}
-            </pre>
-          </div>
-        </div>
-      )}
 
       {/* Invite Modal */}
       {showInviteModal && (
