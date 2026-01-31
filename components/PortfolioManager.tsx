@@ -155,11 +155,7 @@ export default function PortfolioManager() {
     setPortfolio(updatedPortfolio);
     resetForm();
     setShowAddForm(false);
-    
-    // Auto-save with updated portfolio
-    setTimeout(() => {
-      savePortfolioWithData(updatedPortfolio);
-    }, 100);
+    toast.success(language === 'en' ? 'Project added! Click Save to persist changes.' : '專案已新增！點擊儲存按鈕以保存更改。');
   };
 
   const updateProject = () => {
@@ -184,22 +180,13 @@ export default function PortfolioManager() {
     setPortfolio(updatedPortfolio);
     resetForm();
     setEditingId(null);
-    
-    // Auto-save with updated portfolio
-    setTimeout(() => {
-      savePortfolioWithData(updatedPortfolio);
-    }, 100);
+    toast.success(language === 'en' ? 'Project updated! Click Save to persist changes.' : '專案已更新！點擊儲存按鈕以保存更改。');
   };
 
   const deleteProject = (id: string) => {
     const updatedPortfolio = portfolio.filter(item => item.id !== id);
     setPortfolio(updatedPortfolio);
     toast.success(t.deleteConfirm);
-    
-    // Auto-save with updated portfolio
-    setTimeout(() => {
-      savePortfolioWithData(updatedPortfolio);
-    }, 100);
   };
 
   // Helper function to save portfolio with specific data
@@ -453,16 +440,35 @@ export default function PortfolioManager() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Add Project Button */}
-        {!showAddForm && !editingId && (
+        {/* Save Button - Fixed at top */}
+        <div className="mb-6 flex items-center justify-between gap-4">
           <button
             onClick={() => setShowAddForm(true)}
-            className="mb-6 w-full md:w-auto px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+            disabled={showAddForm || editingId !== null}
+            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
           >
             <Plus className="w-5 h-5" />
             {t.addProject}
           </button>
-        )}
+          
+          <button
+            onClick={() => savePortfolioWithData(portfolio)}
+            disabled={saving}
+            className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium flex items-center justify-center gap-2 transition-colors min-w-[120px]"
+          >
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                {t.saving}
+              </>
+            ) : (
+              <>
+                <Save className="w-5 h-5" />
+                {t.save}
+              </>
+            )}
+          </button>
+        </div>
 
         {/* Add/Edit Form */}
         {(showAddForm || editingId) && (
