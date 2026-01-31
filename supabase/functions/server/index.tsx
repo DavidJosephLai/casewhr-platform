@@ -22739,9 +22739,38 @@ app.post("/make-server-215f78a5/invite/:freelancerId/:projectId", async (c) => {
       await kv.set(freelancerInvitationsKey, [invitationId]);
     }
 
-    // TODO: 發送郵件通知接案者
+    // 🔔 創建通知給接案者
+    const notificationId = crypto.randomUUID();
+    const notification = {
+      id: notificationId,
+      user_id: freelancerId,
+      type: 'project_invite',
+      title: 'New Project Invitation',
+      message: `You have been invited to submit a proposal for "${project.title}"`,
+      data: {
+        project_id: projectId,
+        project_title: project.title,
+        client_id: user.id,
+        invitation_id: invitationId,
+      },
+      read: false,
+      created_at: new Date().toISOString(),
+    };
+
+    await kv.set(`notification:${notificationId}`, notification);
+
+    // 添加到接案者的通知列表
+    const userNotificationsKey = `notifications:${freelancerId}`;
+    const userNotifications = await kv.get(userNotificationsKey) || [];
+    if (Array.isArray(userNotifications)) {
+      userNotifications.unshift(notificationId);
+      await kv.set(userNotificationsKey, userNotifications);
+    } else {
+      await kv.set(userNotificationsKey, [notificationId]);
+    }
 
     console.log(`✅ [Invite] Client ${user.id} invited freelancer ${freelancerId} to project ${projectId}`);
+    console.log(`🔔 [Notification] Created notification ${notificationId} for user ${freelancerId}`);
     return c.json({ success: true, invitation_id: invitationId });
 
   } catch (error) {
@@ -22750,7 +22779,151 @@ app.post("/make-server-215f78a5/invite/:freelancerId/:projectId", async (c) => {
   }
 });
 
+// 🔔 獲取用戶通知列表
+app.get("/make-server-215f78a5/notifications", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const userNotificationsKey = `notifications:${user.id}`;
+    const notificationIds = await kv.get(userNotificationsKey) || [];
+
+    const notifications = [];
+    if (Array.isArray(notificationIds)) {
+      for (const id of notificationIds) {
+        const notification = await kv.get(`notification:${id}`);
+        if (notification) {
+          notifications.push(notification);
+        }
+      }
+    }
+
+    // 計算未讀數量
+    const unreadCount = notifications.filter(n => !n.read).length;
+
+    console.log(`✅ [Notifications] User ${user.id} has ${notifications.length} notifications (${unreadCount} unread)`);
+    return c.json({ notifications, unread_count: unreadCount });
+
+  } catch (error) {
+    console.error('❌ [Notifications] Error loading:', error);
+    return c.json({ error: 'Failed to load notifications' }, 500);
+  }
+});
+
+// 🔔 標記通知為已讀
+app.post("/make-server-215f78a5/notifications/:id/read", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const notificationId = c.req.param('id');
+    const notification = await kv.get(`notification:${notificationId}`);
+
+    if (!notification) {
+      return c.json({ error: 'Notification not found' }, 404);
+    }
+
+    if (notification.user_id !== user.id) {
+      return c.json({ error: 'Not your notification' }, 403);
+    }
+
+    notification.read = true;
+    await kv.set(`notification:${notificationId}`, notification);
+
+    console.log(`✅ [Notifications] Marked notification ${notificationId} as read`);
+    return c.json({ success: true });
+
+  } catch (error) {
+    console.error('❌ [Notifications] Error marking as read:', error);
+    return c.json({ error: 'Failed to mark as read' }, 500);
+  }
+});
+
+// 🔔 標記所有通知為已讀
+app.post("/make-server-215f78a5/notifications/read-all", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const userNotificationsKey = `notifications:${user.id}`;
+    const notificationIds = await kv.get(userNotificationsKey) || [];
+
+    if (Array.isArray(notificationIds)) {
+      for (const id of notificationIds) {
+        const notification = await kv.get(`notification:${id}`);
+        if (notification && !notification.read) {
+          notification.read = true;
+          await kv.set(`notification:${id}`, notification);
+        }
+      }
+    }
+
+    console.log(`✅ [Notifications] Marked all notifications as read for user ${user.id}`);
+    return c.json({ success: true });
+
+  } catch (error) {
+    console.error('❌ [Notifications] Error marking all as read:', error);
+    return c.json({ error: 'Failed to mark all as read' }, 500);
+  }
+});
+
+// 🔔 回應項目邀請（接受/拒絕）
+app.post("/make-server-215f78a5/invitations/:id/respond", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const invitationId = c.req.param('id');
+    const { action } = await c.req.json(); // 'accept' or 'decline'
+
+    const invitation = await kv.get(`invitation:${invitationId}`);
+    if (!invitation) {
+      return c.json({ error: 'Invitation not found' }, 404);
+    }
+
+    if (invitation.freelancer_id !== user.id) {
+      return c.json({ error: 'Not your invitation' }, 403);
+    }
+
+    if (invitation.status !== 'pending') {
+      return c.json({ error: 'Invitation already responded to' }, 400);
+    }
+
+    // 更新邀請狀態
+    invitation.status = action === 'accept' ? 'accepted' : 'declined';
+    invitation.responded_at = new Date().toISOString();
+    await kv.set(`invitation:${invitationId}`, invitation);
+
+    // 如果接受邀請，可以自動創建提案或跳轉到提案頁面
+    // 這裡先簡單記錄狀態
+
+    console.log(`✅ [Invitation] User ${user.id} ${action}ed invitation ${invitationId}`);
+    return c.json({ success: true, status: invitation.status });
+
+  } catch (error) {
+    console.error('❌ [Invitation] Error responding:', error);
+    return c.json({ error: 'Failed to respond to invitation' }, 500);
+  }
+});
+
 console.log('✅ [SERVER] Talent pool and HR routes registered');
+console.log('✅ [SERVER] Notification routes registered');
 
 console.log('🎉 [SERVER] All routes registered, starting server...');
 

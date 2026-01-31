@@ -14,7 +14,8 @@ import {
   Shield,
   FileText,
   Info,
-  Heart
+  Heart,
+  Bell
 } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -60,6 +61,7 @@ import { ExchangeRateIndicator } from './ExchangeRateIndicator';
 import { QuickSubscriptionCheck } from './QuickSubscriptionCheck';
 import { RecurringSubscriptionManager } from './RecurringSubscriptionManager';
 import { UnifiedInvoiceManager } from './UnifiedInvoiceManager';
+import { InvitationNotifications } from './InvitationNotifications';
 // ✅ 移除：已改用全自動 LOGO 同步 (v2.1.62)
 // import { QuickLogoFix } from './QuickLogoFix';
 // ❌ 移除：管理員面板應該是全局浮動按鈕，不應該在 Dashboard 內部
@@ -380,7 +382,7 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
               className="border-2 border-blue-500 text-blue-600 hover:bg-blue-50 font-medium"
             >
               <Crown className="h-4 w-4 mr-2" />
-              {language === 'en' ? 'View Plans' : '查看方案'}
+              {language === 'en' ? 'View Plans' : '查��方案'}
             </Button>
             
             <Button 
@@ -571,6 +573,28 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
 
         <TabsContent value="overview" className="space-y-6">
           {/* ✅ 已移除手動 LOGO 同步工具 - 現已全自動化 (v2.1.62) */}
+          
+          {/* 🔔 邀請通知區塊 - 僅對接案者顯示 */}
+          {isFreelancer && (
+            <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-purple-600" />
+                  {language === 'en' ? 'Project Invitations' : language === 'zh-CN' ? '项目邀请' : '專案邀請'}
+                </CardTitle>
+                <CardDescription>
+                  {language === 'en' 
+                    ? 'You have been invited to submit proposals for these projects' 
+                    : language === 'zh-CN'
+                    ? '您收到了这些项目的投标邀请'
+                    : '您收到了這些專案的投標邀請'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <InvitationNotifications />
+              </CardContent>
+            </Card>
+          )}
           
           <MembershipCard />
           
