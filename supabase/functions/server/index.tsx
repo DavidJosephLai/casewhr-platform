@@ -2510,6 +2510,42 @@ app.post("/make-server-215f78a5/projects", async (c) => {
   }
 });
 
+// Get current user's projects
+app.get("/make-server-215f78a5/projects/my", async (c) => {
+  try {
+    console.log('📥 [GET /projects/my] Request received');
+    
+    const accessToken = getAccessToken(c);
+    const { user, error: authError } = await getUserFromToken(accessToken);
+    
+    if (!user?.id || authError) {
+      console.error('❌ [GET /projects/my] Unauthorized:', authError);
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    console.log('✅ [GET /projects/my] User authenticated:', user.id);
+
+    // Get user's project IDs
+    const projectIds = await kv.get(`projects:user:${user.id}`) || [];
+    console.log('📦 [GET /projects/my] Found project IDs:', projectIds);
+
+    // Fetch full project details
+    const projects = [];
+    for (const projectId of projectIds) {
+      const project = await kv.get(`project:${projectId}`);
+      if (project) {
+        projects.push(project);
+      }
+    }
+
+    console.log('✅ [GET /projects/my] Returning', projects.length, 'projects');
+    return c.json({ projects });
+  } catch (error) {
+    console.error('❌ [GET /projects/my] Error:', error);
+    return c.json({ error: 'Failed to load projects' }, 500);
+  }
+});
+
 // Get all projects (with optional filters)
 app.get("/make-server-215f78a5/projects", async (c) => {
   try {
