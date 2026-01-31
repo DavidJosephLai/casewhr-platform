@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useView } from '../contexts/ViewContext';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   Plus, Trash2, Edit, X, Save, ExternalLink, Image as ImageIcon,
   Upload, Link as LinkIcon, FileText, ArrowLeft
@@ -20,6 +21,7 @@ interface PortfolioItem {
 export default function PortfolioManager() {
   const { language } = useLanguage();
   const { setView } = useView();
+  const { user, accessToken } = useAuth();
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -72,7 +74,6 @@ export default function PortfolioManager() {
   const loadPortfolio = async () => {
     try {
       setLoading(true);
-      const accessToken = localStorage.getItem('access_token');
       if (!accessToken) {
         toast.error(language === 'en' ? 'Please login first' : '請先登入');
         setView('login');
@@ -120,7 +121,6 @@ export default function PortfolioManager() {
   const savePortfolio = async () => {
     try {
       setSaving(true);
-      const accessToken = localStorage.getItem('access_token');
       if (!accessToken) {
         toast.error(language === 'en' ? 'Please login first' : '請先登入');
         return;
@@ -274,7 +274,6 @@ export default function PortfolioManager() {
 
     try {
       setUploadingImage(true);
-      const accessToken = localStorage.getItem('access_token');
       if (!accessToken) {
         toast.error(language === 'en' ? 'Please login first' : '請先登入');
         return;
