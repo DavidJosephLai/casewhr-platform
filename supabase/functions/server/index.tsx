@@ -22615,6 +22615,10 @@ app.get("/make-server-215f78a5/talent-pool", async (c) => {
       const profile = await kv.get(`user_profile:${user.id}`);
       const completedProjectsKey = await kv.get(`freelancer_completed_projects:${user.id}`) || [];
       const reviewsKey = await kv.get(`reviews:freelancer:${user.id}`) || [];
+      
+      // 獲取作品集數量
+      const portfolioData = await kv.get(`portfolio_${user.id}`) || { items: [] };
+      const portfolioCount = Array.isArray(portfolioData.items) ? portfolioData.items.length : 0;
 
       // 計算評分
       let rating = 0;
@@ -22643,6 +22647,7 @@ app.get("/make-server-215f78a5/talent-pool", async (c) => {
         rating: rating > 0 ? rating : undefined,
         review_count: reviewCount,
         completed_projects: Array.isArray(completedProjectsKey) ? completedProjectsKey.length : 0,
+        portfolio_count: portfolioCount, // 🔥 添加作品集數量
         is_favorite: currentUserFavorites.includes(user.id), // 🔥 添加收藏狀態
       });
     }

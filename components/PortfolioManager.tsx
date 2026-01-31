@@ -29,16 +29,6 @@ export default function PortfolioManager() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   
-  // 調試日誌狀態 - 直接顯示在頁面上
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
-  const [showDebug, setShowDebug] = useState(true);
-  
-  // 添加日誌的函數
-  const addLog = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString();
-    setDebugLogs(prev => [...prev, `[${timestamp}] ${message}`]);
-  };
-  
   // 表單狀態
   const [formData, setFormData] = useState({
     title: '',
@@ -203,20 +193,13 @@ export default function PortfolioManager() {
   const savePortfolioWithData = async (portfolioData: PortfolioItem[]) => {
     try {
       setSaving(true);
-      setDebugLogs([]); // 清空舊日誌
-      addLog('💾 開始儲存作品集...');
-      addLog(`💾 Access Token 存在: ${!!accessToken}`);
-      addLog(`💾 作品數量: ${portfolioData.length}`);
-      
       if (!accessToken) {
-        addLog('❌ 錯誤: 沒有 Access Token');
         toast.error(language === 'en' ? 'Please login first' : '請先登入');
         setSaving(false);
         return;
       }
 
       // Get current user ID
-      addLog('📡 正在獲取用戶資料...');
       const profileResponse = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/profile`,
         {
@@ -226,12 +209,8 @@ export default function PortfolioManager() {
         }
       );
 
-      addLog(`📡 用戶資料響應狀態: ${profileResponse.status}`);
-
       if (!profileResponse.ok) {
         const errorText = await profileResponse.text();
-        addLog(`❌ 獲取用戶資料失敗: ${profileResponse.status}`);
-        addLog(`❌ 錯誤詳情: ${errorText}`);
         toast.error(t.saveFailed + ': Profile fetch failed');
         setSaving(false);
         return;
@@ -240,22 +219,14 @@ export default function PortfolioManager() {
       const profileData = await profileResponse.json();
       const userId = profileData.profile?.user_id;
       
-      addLog(`📦 完整的 Profile 響應: ${JSON.stringify(profileData, null, 2)}`);
-      addLog(`👤 用戶 ID: ${userId}`);
-
       if (!userId) {
-        addLog('❌ 錯誤: 找不到用戶 ID');
         toast.error(t.saveFailed + ': No user ID');
         setSaving(false);
         return;
       }
 
-      addLog(`💾 正在儲存用戶 ${userId} 的作品集...`);
-      addLog(`💾 作品項目: ${JSON.stringify(portfolioData, null, 2)}`);
-
       // Save portfolio
       const saveUrl = `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/portfolio/${userId}`;
-      addLog(`📡 儲存 URL: ${saveUrl}`);
       
       const response = await fetch(saveUrl, {
         method: 'PUT',
@@ -268,12 +239,8 @@ export default function PortfolioManager() {
         }),
       });
 
-      addLog(`📡 儲存響應狀態: ${response.status}`);
-
       if (response.ok) {
         const result = await response.json();
-        addLog(`✅ 作品集儲存成功!`);
-        addLog(`✅ 響應: ${JSON.stringify(result, null, 2)}`);
         toast.success(t.saved);
       } else {
         // Get error details from backend
@@ -281,22 +248,16 @@ export default function PortfolioManager() {
         try {
           const errorJson = await response.json();
           errorDetails = JSON.stringify(errorJson, null, 2);
-          addLog(`❌ 儲存失敗 - 錯誤 JSON: ${errorDetails}`);
         } catch {
           errorDetails = await response.text();
-          addLog(`❌ 儲存失敗 - 錯誤文字: ${errorDetails}`);
         }
         
-        addLog(`❌ 儲存失敗，狀態碼: ${response.status}`);
         toast.error(t.saveFailed + ' (Status: ' + response.status + ')');
       }
     } catch (error) {
-      addLog(`❌ 儲存時發生例外: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      addLog(`❌ 錯誤堆疊: ${error instanceof Error ? error.stack : 'No stack trace'}`);
       toast.error(t.saveFailed + ': ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setSaving(false);
-      addLog('💾 儲存流程結束');
     }
   };
 
@@ -742,18 +703,6 @@ export default function PortfolioManager() {
                 </div>
               </div>
             ))}
-          </div>
-        )}
-        
-        {/* Debug Logs */}
-        {showDebug && (
-          <div className="mt-6 bg-gray-100 p-4 rounded-lg">
-            <h4 className="text-sm font-bold mb-2">Debug Logs</h4>
-            <ul className="text-xs text-gray-500">
-              {debugLogs.map((log, idx) => (
-                <li key={idx}>{log}</li>
-              ))}
-            </ul>
           </div>
         )}
       </div>

@@ -4,7 +4,7 @@ import { useView } from '../contexts/ViewContext';
 import { 
   Search, Filter, Star, MapPin, DollarSign, Briefcase, Award, 
   Grid, List, Users, TrendingUp, Clock, CheckCircle, BookmarkPlus,
-  Sliders, ChevronDown, X, Download, Send, Building2, Mail, MessageSquare
+  Sliders, ChevronDown, X, Download, Send, Building2, Mail, MessageSquare, Image as ImageIcon
 } from 'lucide-react';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { toast } from 'sonner';
@@ -24,6 +24,7 @@ interface Freelancer {
   rating?: number;
   review_count?: number;
   completed_projects?: number;
+  portfolio_count?: number; // 🔥 添加作品集數量
   is_favorite?: boolean;
   availability?: string;
   response_time?: string;
@@ -149,6 +150,7 @@ export default function TalentPool() {
           rating: profile.rating,
           review_count: profile.review_count || 0,
           completed_projects: profile.completed_projects || 0,
+          portfolio_count: profile.portfolio_count || 0, // 🔥 添加作品集數量
           is_favorite: false, // 🔥 稍後會更新
           created_at: profile.created_at,
         }));
@@ -655,6 +657,12 @@ export default function TalentPool() {
                             <Briefcase className="w-3 h-3" />
                             <span>{freelancer.completed_projects || 0} projects</span>
                           </div>
+                          {(freelancer.portfolio_count || 0) > 0 && (
+                            <div className="flex items-center gap-1 text-gray-600">
+                              <ImageIcon className="w-3 h-3 text-purple-500" />
+                              <span>{freelancer.portfolio_count} portfolio</span>
+                            </div>
+                          )}
                           {freelancer.location && (
                             <div className="flex items-center gap-1 text-gray-600">
                               <MapPin className="w-3 h-3" />
