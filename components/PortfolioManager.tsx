@@ -28,6 +28,7 @@ export default function PortfolioManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<any>(null); // 🔥 Debug 信息
   
   // 表單狀態
   const [formData, setFormData] = useState({
@@ -112,7 +113,21 @@ export default function PortfolioManager() {
 
           if (portfolioResponse.ok) {
             const portfolioData = await portfolioResponse.json();
-            console.log('✅ [PortfolioManager] Portfolio loaded:', portfolioData);
+            console.log('✅ [PortfolioManager] Portfolio loaded:', {
+              userId: userId,
+              portfolio_key: `portfolio:user:${userId}`,
+              items_count: portfolioData.portfolio?.items?.length || 0,
+              items: portfolioData.portfolio?.items
+            });
+            
+            // 🔥 設置 Debug 信息
+            setDebugInfo({
+              userId: userId,
+              portfolioKey: `portfolio:user:${userId}`,
+              portfolioCount: portfolioData.portfolio?.items?.length || 0,
+              portfolioItems: portfolioData.portfolio?.items || []
+            });
+            
             setPortfolio(portfolioData.portfolio?.items || []);
           } else {
             console.warn('⚠️ [PortfolioManager] Failed to load portfolio:', portfolioResponse.status);
@@ -706,6 +721,22 @@ export default function PortfolioManager() {
           </div>
         )}
       </div>
+
+      {/* 🔥 Debug Panel */}
+      {debugInfo && (
+        <div className="fixed bottom-4 left-4 bg-blue-600 text-white p-4 rounded-lg shadow-2xl max-w-md z-50">
+          <h3 className="font-bold text-lg mb-2">🔍 PortfolioManager Debug</h3>
+          <div className="text-xs space-y-1 font-mono">
+            <p><strong>User ID:</strong> {debugInfo.userId}</p>
+            <p><strong>Portfolio Key:</strong> {debugInfo.portfolioKey}</p>
+            <p><strong>Portfolio Count:</strong> {debugInfo.portfolioCount}</p>
+            <p><strong>Portfolio Items:</strong></p>
+            <pre className="bg-blue-700 p-2 rounded text-white overflow-auto max-h-40">
+              {JSON.stringify(debugInfo.portfolioItems, null, 2)}
+            </pre>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
