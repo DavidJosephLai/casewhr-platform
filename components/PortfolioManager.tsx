@@ -136,65 +136,6 @@ export default function PortfolioManager() {
     }
   };
 
-  const savePortfolio = async () => {
-    try {
-      setSaving(true);
-      if (!accessToken) {
-        toast.error(language === 'en' ? 'Please login first' : '請先登入');
-        return;
-      }
-
-      // Get current user ID
-      const profileResponse = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/profile`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      if (!profileResponse.ok) {
-        toast.error(t.saveFailed);
-        return;
-      }
-
-      const profileData = await profileResponse.json();
-      const userId = profileData.profile?.user_id;
-
-      if (!userId) {
-        toast.error(t.saveFailed);
-        return;
-      }
-
-      // Save portfolio
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/portfolio/${userId}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            portfolio_items: portfolio,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        toast.success(t.saved);
-      } else {
-        toast.error(t.saveFailed);
-      }
-    } catch (error) {
-      console.error('❌ [PortfolioManager] Error saving portfolio:', error);
-      toast.error(t.saveFailed);
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const addProject = () => {
     if (!formData.title.trim() || !formData.description.trim()) {
       toast.error(t.fillRequired);
@@ -210,12 +151,15 @@ export default function PortfolioManager() {
       tags: formData.tags.length > 0 ? formData.tags : undefined,
     };
 
-    setPortfolio([...portfolio, newProject]);
+    const updatedPortfolio = [...portfolio, newProject];
+    setPortfolio(updatedPortfolio);
     resetForm();
     setShowAddForm(false);
     
-    // Auto-save after adding
-    setTimeout(() => savePortfolio(), 100);
+    // Auto-save with updated portfolio
+    setTimeout(() => {
+      savePortfolioWithData(updatedPortfolio);
+    }, 100);
   };
 
   const updateProject = () => {
@@ -224,7 +168,7 @@ export default function PortfolioManager() {
       return;
     }
 
-    setPortfolio(portfolio.map(item => 
+    const updatedPortfolio = portfolio.map(item => 
       item.id === editingId 
         ? {
             ...item,
@@ -235,21 +179,100 @@ export default function PortfolioManager() {
             tags: formData.tags.length > 0 ? formData.tags : undefined,
           }
         : item
-    ));
+    );
     
+    setPortfolio(updatedPortfolio);
     resetForm();
     setEditingId(null);
     
-    // Auto-save after updating
-    setTimeout(() => savePortfolio(), 100);
+    // Auto-save with updated portfolio
+    setTimeout(() => {
+      savePortfolioWithData(updatedPortfolio);
+    }, 100);
   };
 
   const deleteProject = (id: string) => {
-    setPortfolio(portfolio.filter(item => item.id !== id));
+    const updatedPortfolio = portfolio.filter(item => item.id !== id);
+    setPortfolio(updatedPortfolio);
     toast.success(t.deleteConfirm);
     
-    // Auto-save after deleting
-    setTimeout(() => savePortfolio(), 100);
+    // Auto-save with updated portfolio
+    setTimeout(() => {
+      savePortfolioWithData(updatedPortfolio);
+    }, 100);
+  };
+
+  // Helper function to save portfolio with specific data
+  const savePortfolioWithData = async (portfolioData: PortfolioItem[]) => {
+    try {
+      setSaving(true);
+      console.log('💾 [PortfolioManager] Starting save portfolio...');
+      
+      if (!accessToken) {
+        console.warn('⚠️ [PortfolioManager] No access token for save');
+        // Don't show error toast for auto-save
+        return;
+      }
+
+      // Get current user ID
+      const profileResponse = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/profile`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!profileResponse.ok) {
+        console.error('❌ [PortfolioManager] Failed to get profile:', profileResponse.status);
+        const errorText = await profileResponse.text();
+        console.error('Error details:', errorText);
+        toast.error(t.saveFailed);
+        return;
+      }
+
+      const profileData = await profileResponse.json();
+      const userId = profileData.profile?.user_id;
+
+      if (!userId) {
+        console.error('❌ [PortfolioManager] No user ID found');
+        toast.error(t.saveFailed);
+        return;
+      }
+
+      console.log('💾 [PortfolioManager] Saving portfolio for user:', userId);
+      console.log('Portfolio items count:', portfolioData.length);
+
+      // Save portfolio
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/portfolio/${userId}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            portfolio_items: portfolioData,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        console.log('✅ [PortfolioManager] Portfolio saved successfully');
+        toast.success(t.saved);
+      } else {
+        const errorText = await response.text();
+        console.error('❌ [PortfolioManager] Save failed:', response.status, errorText);
+        toast.error(t.saveFailed);
+      }
+    } catch (error) {
+      console.error('❌ [PortfolioManager] Error saving portfolio:', error);
+      toast.error(t.saveFailed);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const startEdit = (item: PortfolioItem) => {
