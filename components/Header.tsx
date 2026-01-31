@@ -289,8 +289,14 @@ export function Header() {
               </button>
               <button 
                 onClick={() => {
+                  alert('人才庫按鈕被點擊了！ View 將切換到 talent-pool');
+                  console.log('🔥 [Header] Talent Pool button clicked!');
+                  console.log('🔥 [Header] Current view:', view);
+                  console.log('🔥 [Header] Setting view to: talent-pool');
                   setView('talent-pool');
                   setManualOverride(true);
+                  console.log('🔥 [Header] View set complete');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }} 
                 className="text-[#111827] hover:text-blue-600 transition-colors flex items-center gap-2 font-medium"
               >
