@@ -5779,9 +5779,24 @@ app.get("/make-server-215f78a5/profile", async (c) => {
       } catch (kvError) {
         console.error('❌ [GET /profile] Failed to create profile:', kvError);
       }
+    } else {
+      // Ensure profile has user_id field (fix for legacy profiles)
+      if (!profile.user_id) {
+        console.log('⚠️ [GET /profile] Profile missing user_id, adding it now');
+        profile.user_id = userId;
+        
+        // Save the updated profile
+        try {
+          await kv.set(profileKeyUnderscore, profile);
+          console.log('✅ [GET /profile] Profile updated with user_id');
+        } catch (kvError) {
+          console.error('❌ [GET /profile] Failed to update profile with user_id:', kvError);
+        }
+      }
     }
     
     console.log('✅ [GET /profile] Returning profile for user:', userId);
+    console.log('✅ [GET /profile] Profile has user_id:', profile.user_id);
     return c.json({ profile });
   } catch (error) {
     console.error('❌ [GET /profile] Error:', error);
