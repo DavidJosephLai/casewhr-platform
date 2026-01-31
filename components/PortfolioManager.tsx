@@ -304,6 +304,13 @@ export default function PortfolioManager() {
 
       const { upload_url, file_path, bucket } = await uploadUrlResponse.json();
 
+      console.log('📤 [PortfolioManager] Upload details:', { 
+        file_path, 
+        bucket, 
+        fileName: file.name,
+        fileSize: file.size 
+      });
+
       // Step 2: Upload file to Supabase Storage
       const uploadResponse = await fetch(upload_url, {
         method: 'PUT',
@@ -313,9 +320,20 @@ export default function PortfolioManager() {
         body: file,
       });
 
+      console.log('📤 [PortfolioManager] Upload response:', {
+        ok: uploadResponse.ok,
+        status: uploadResponse.status,
+        statusText: uploadResponse.statusText
+      });
+
       if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        console.error('❌ [PortfolioManager] Upload failed:', errorText);
         throw new Error('Failed to upload file');
       }
+
+      // Wait a bit for Storage to process the file
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Step 3: Get public URL for the uploaded file
       const publicUrlResponse = await fetch(
@@ -328,12 +346,19 @@ export default function PortfolioManager() {
           },
           body: JSON.stringify({
             file_path,
-            bucket,
+            bucket_type: 'AVATARS', // Pass bucket_type instead of bucket name
           }),
         }
       );
 
+      console.log('📥 [PortfolioManager] Download URL response:', {
+        ok: publicUrlResponse.ok,
+        status: publicUrlResponse.status
+      });
+
       if (!publicUrlResponse.ok) {
+        const errorText = await publicUrlResponse.text();
+        console.error('❌ [PortfolioManager] Failed to get download URL:', errorText);
         throw new Error('Failed to get public URL');
       }
 

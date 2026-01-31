@@ -17810,12 +17810,35 @@ app.post("/make-server-215f78a5/files/download-url", async (c) => {
     const body = await c.req.json();
     const { file_path, bucket_type = 'ATTACHMENTS' } = body;
 
+    console.log('📥 [Files] Download URL request:', { file_path, bucket_type, userId: user.id });
+
     if (!file_path) {
       return c.json({ error: 'File path is required' }, 400);
     }
 
     // Get bucket name
     const bucketName = fileService.BUCKETS[bucket_type] || fileService.BUCKETS.ATTACHMENTS;
+
+    console.log('📥 [Files] Using bucket:', { bucketName, bucket_type });
+
+    // First, check if file exists
+    const folderPath = file_path.substring(0, file_path.lastIndexOf('/'));
+    const fileName = file_path.substring(file_path.lastIndexOf('/') + 1);
+    
+    console.log('📥 [Files] Checking file:', { folderPath, fileName });
+    
+    const { data: fileList, error: listError } = await supabase.storage
+      .from(bucketName)
+      .list(folderPath, {
+        search: fileName,
+      });
+
+    console.log('📥 [Files] File existence check:', { 
+      found: fileList && fileList.length > 0,
+      fileCount: fileList?.length || 0,
+      listError: listError?.message,
+      files: fileList?.map(f => f.name)
+    });
 
     // Create signed download URL (valid for 1 hour)
     const downloadResult = await fileService.createDownloadUrl({
@@ -17825,6 +17848,7 @@ app.post("/make-server-215f78a5/files/download-url", async (c) => {
     });
 
     if (downloadResult.error) {
+      console.error('❌ [Files] Download URL creation failed:', downloadResult.error);
       return c.json({ error: downloadResult.error }, 500);
     }
 
