@@ -1,3 +1,5 @@
+import { InvitationNotifications } from './InvitationNotifications';
+import { NotificationDebugPanel } from './NotificationDebugPanel';
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -61,11 +63,6 @@ import { ExchangeRateIndicator } from './ExchangeRateIndicator';
 import { QuickSubscriptionCheck } from './QuickSubscriptionCheck';
 import { RecurringSubscriptionManager } from './RecurringSubscriptionManager';
 import { UnifiedInvoiceManager } from './UnifiedInvoiceManager';
-import { InvitationNotifications } from './InvitationNotifications';
-// ✅ 移除：已改用全自動 LOGO 同步 (v2.1.62)
-// import { QuickLogoFix } from './QuickLogoFix';
-// ❌ 移除：管理員面板應該是全局浮動按鈕，不應該在 Dashboard 內部
-// import { AdminPanel } from './AdminPanel';
 import { isAdmin } from '../lib/adminConfig';
 
 interface DashboardProps {
@@ -382,7 +379,7 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
               className="border-2 border-blue-500 text-blue-600 hover:bg-blue-50 font-medium"
             >
               <Crown className="h-4 w-4 mr-2" />
-              {language === 'en' ? 'View Plans' : '查��方案'}
+              {language === 'en' ? 'View Plans' : '查方案'}
             </Button>
             
             <Button 
@@ -573,6 +570,9 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
 
         <TabsContent value="overview" className="space-y-6">
           {/* ✅ 已移除手動 LOGO 同步工具 - 現已全自動化 (v2.1.62) */}
+          
+          {/* 🔍 偵錯面板 - 幫助診斷通知顯示問題 */}
+          <NotificationDebugPanel />
           
           {/* 🔔 邀請通知區塊 - 僅對接案者顯示 */}
           {isFreelancer && (
