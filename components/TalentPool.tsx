@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useView } from '../contexts/ViewContext';
-import { Search, Filter, Star, MapPin, DollarSign, Briefcase, Award } from 'lucide-react';
+import { Search, Filter, Star, MapPin, DollarSign, Briefcase, Award, Grid, List, Users } from 'lucide-react';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { toast } from 'sonner@2.0.3';
 
@@ -23,6 +23,58 @@ interface Freelancer {
   is_favorite?: boolean;
 }
 
+// 🎯 技能分類定義
+const SKILL_CATEGORIES = {
+  development: {
+    en: '💻 Development',
+    'zh-CN': '💻 开发',
+    'zh-TW': '💻 開發',
+    skills: ['React', 'TypeScript', 'Node.js', 'Python', 'Java', 'PHP', 'Ruby', 'Go', 'Swift', 'Kotlin']
+  },
+  design: {
+    en: '🎨 Design',
+    'zh-CN': '🎨 设计',
+    'zh-TW': '🎨 設計',
+    skills: ['UI/UX Design', 'Graphic Design', 'Web Design', 'Product Design', 'Illustration', 'Branding']
+  },
+  mobile: {
+    en: '📱 Mobile',
+    'zh-CN': '📱 移动开发',
+    'zh-TW': '📱 行動開發',
+    skills: ['Mobile Development', 'iOS Development', 'Android Development', 'React Native', 'Flutter']
+  },
+  data: {
+    en: '📊 Data & AI',
+    'zh-CN': '📊 数据与人工智能',
+    'zh-TW': '📊 資料與人工智慧',
+    skills: ['Data Science', 'Machine Learning', 'AI', 'Data Analysis', 'Big Data', 'Deep Learning']
+  },
+  devops: {
+    en: '⚙️ DevOps',
+    'zh-CN': '⚙️ 运维',
+    'zh-TW': '⚙️ 維運',
+    skills: ['DevOps', 'AWS', 'Docker', 'Kubernetes', 'CI/CD', 'Cloud Architecture']
+  },
+  marketing: {
+    en: '📢 Marketing',
+    'zh-CN': '📢 营销',
+    'zh-TW': '📢 行銷',
+    skills: ['Marketing', 'SEO', 'Content Writing', 'Social Media', 'Email Marketing', 'Copywriting']
+  },
+  multimedia: {
+    en: '🎬 Multimedia',
+    'zh-CN': '🎬 多媒体',
+    'zh-TW': '🎬 多媒體',
+    skills: ['Video Editing', 'Animation', '3D Modeling', 'Photography', 'Audio Production']
+  },
+  other: {
+    en: '🔧 Other',
+    'zh-CN': '🔧 其他',
+    'zh-TW': '🔧 其他',
+    skills: ['Project Management', 'Business Analysis', 'Consulting', 'Translation', 'Virtual Assistant']
+  }
+};
+
 export default function TalentPool() {
   const { language } = useLanguage();
   const { setView } = useView();
@@ -32,12 +84,11 @@ export default function TalentPool() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [minRating, setMinRating] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'category'>('category'); // 🎯 新增：顯示模式
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // 🎯 新增：選中的分類
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false); // 🎯 新增：只顯示收藏
 
-  const allSkills = [
-    'React', 'TypeScript', 'Node.js', 'Python', 'UI/UX Design',
-    'Mobile Development', 'DevOps', 'Data Science', 'Machine Learning',
-    'Graphic Design', 'Content Writing', 'Marketing', 'SEO', 'Video Editing'
-  ];
+  const allSkills = Object.values(SKILL_CATEGORIES).flatMap(cat => cat.skills);
 
   useEffect(() => {
     loadFreelancers();
@@ -133,6 +184,11 @@ export default function TalentPool() {
       return false;
     }
 
+    // 收藏過濾
+    if (showFavoritesOnly && !freelancer.is_favorite) {
+      return false;
+    }
+
     return true;
   });
 
@@ -149,6 +205,10 @@ export default function TalentPool() {
     hourly: language === 'en' ? 'Hourly Rate' : language === 'zh-CN' ? '时薪' : '時薪',
     viewProfile: language === 'en' ? 'View Profile' : language === 'zh-CN' ? '查看档案' : '查看檔案',
     noResults: language === 'en' ? 'No freelancers found' : language === 'zh-CN' ? '未找到自由职业者' : '未找到接案者',
+    viewMode: language === 'en' ? 'View Mode' : language === 'zh-CN' ? '查看模式' : '查看模式',
+    grid: language === 'en' ? 'Grid' : language === 'zh-CN' ? '网格' : '網格',
+    category: language === 'en' ? 'Category' : language === 'zh-CN' ? '分类' : '分類',
+    favoritesOnly: language === 'en' ? 'Favorites Only' : language === 'zh-CN' ? '仅显示收藏' : '僅顯示收藏',
   };
 
   if (loading) {
@@ -177,7 +237,7 @@ export default function TalentPool() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Search & Filters */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex flex-col lg:flex-row gap-4 mb-4">
             {/* Search Bar */}
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -197,6 +257,49 @@ export default function TalentPool() {
             >
               <Filter className="w-5 h-5" />
               {t.filters}
+            </button>
+          </div>
+
+          {/* View Mode & Favorites Toggle */}
+          <div className="flex flex-wrap gap-3">
+            {/* View Mode Buttons */}
+            <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
+              <button
+                onClick={() => setViewMode('category')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'category'
+                    ? 'bg-white text-purple-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                {t.category}
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  viewMode === 'grid'
+                    ? 'bg-white text-purple-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Grid className="w-4 h-4" />
+                {t.grid}
+              </button>
+            </div>
+
+            {/* Favorites Only Toggle */}
+            <button
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                showFavoritesOnly
+                  ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-400'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <Star className={`w-4 h-4 ${showFavoritesOnly ? 'fill-yellow-500' : ''}`} />
+              {t.favoritesOnly}
+              {showFavoritesOnly && ` (${freelancers.filter(f => f.is_favorite).length})`}
             </button>
           </div>
 
@@ -285,7 +388,50 @@ export default function TalentPool() {
             <Briefcase className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 text-lg">{t.noResults}</p>
           </div>
+        ) : viewMode === 'category' ? (
+          // 🎯 分類視圖
+          <div className="space-y-8">
+            {Object.entries(SKILL_CATEGORIES).map(([categoryKey, category]) => {
+              // 獲取該分類的人才
+              const categoryFreelancers = filteredFreelancers.filter(freelancer =>
+                freelancer.skills?.some(skill => category.skills.includes(skill))
+              );
+
+              if (categoryFreelancers.length === 0) return null;
+
+              const categoryName = category[language as 'en' | 'zh-CN' | 'zh-TW'] || category.en;
+
+              return (
+                <div key={categoryKey} className="bg-white rounded-lg shadow-sm p-6">
+                  {/* 分類標題 */}
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">{categoryName}</h2>
+                    <span className="px-4 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                      {categoryFreelancers.length} {language === 'en' ? 'Talents' : language === 'zh-CN' ? '位人才' : '位人才'}
+                    </span>
+                  </div>
+
+                  {/* 人才卡片 */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {categoryFreelancers.map(freelancer => (
+                      <FreelancerCard
+                        key={freelancer.id}
+                        freelancer={freelancer}
+                        onToggleFavorite={toggleFavorite}
+                        onViewProfile={() => {
+                          sessionStorage.setItem('current_freelancer_id', freelancer.id);
+                          setView('freelancer-profile');
+                        }}
+                        language={language}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
+          // 🎯 網格視圖（原有）
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredFreelancers.map(freelancer => (
               <FreelancerCard

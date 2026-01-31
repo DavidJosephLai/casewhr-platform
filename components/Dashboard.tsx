@@ -434,7 +434,7 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
                     }}
                     className="bg-yellow-600 hover:bg-yellow-700"
                   >
-                    {language === 'en' ? 'Complete Profile' : '完成個人資料'}
+                    {language === 'en' ? 'Complete Profile' : '完成個��資料'}
                   </Button>
                 </div>
               </div>
@@ -570,9 +570,6 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
 
         <TabsContent value="overview" className="space-y-6">
           {/* ✅ 已移除手動 LOGO 同步工具 - 現已全自動化 (v2.1.62) */}
-          
-          {/* 🔍 偵錯面板 - 幫助診斷通知顯示問題 */}
-          <NotificationDebugPanel />
           
           {/* 🔔 邀請通知區塊 - 僅對接案者顯示 */}
           {isFreelancer && (
