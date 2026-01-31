@@ -1,5 +1,4 @@
 import { InvitationNotifications } from './InvitationNotifications';
-import { NotificationDebugPanel } from './NotificationDebugPanel';
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
