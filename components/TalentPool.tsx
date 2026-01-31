@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useView } from '../contexts/ViewContext';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   Search, Filter, Star, MapPin, DollarSign, Briefcase, Award, 
   Grid, List, Users, TrendingUp, Clock, CheckCircle, BookmarkPlus,
@@ -47,6 +48,7 @@ const SKILL_CATEGORIES = {
 export default function TalentPool() {
   const { language } = useLanguage();
   const { setView } = useView();
+  const { user, accessToken } = useAuth();
   const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -115,7 +117,6 @@ export default function TalentPool() {
   const loadFreelancers = async () => {
     try {
       setLoading(true);
-      const accessToken = localStorage.getItem('access_token');
       const headers: Record<string, string> = {
         'Authorization': `Bearer ${accessToken || publicAnonKey}`
       };
@@ -196,7 +197,6 @@ export default function TalentPool() {
     const endpoint = freelancer.is_favorite ? 'remove' : 'add';
     
     try {
-      const accessToken = localStorage.getItem('access_token');
       if (!accessToken) {
         toast.error(language === 'en' ? 'Please login first' : '請先登入');
         return;
@@ -813,7 +813,6 @@ export default function TalentPool() {
                 onClick={async () => {
                   setSendingMessage(true);
                   try {
-                    const accessToken = localStorage.getItem('access_token');
                     if (!accessToken) {
                       toast.error(t.loginRequired);
                       return;

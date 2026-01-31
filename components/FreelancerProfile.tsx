@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useView } from '../contexts/ViewContext';
+import { useAuth } from '../contexts/AuthContext';
 import { 
-  Star, MapPin, Briefcase, Award, Calendar, DollarSign, 
-  Mail, Send, ArrowLeft, ExternalLink, Heart, CheckCircle 
+  ArrowLeft, Star, MapPin, DollarSign, Briefcase, Award, Send, Heart, 
+  Mail, ExternalLink, Calendar, Users, CheckCircle, MessageSquare, X,
+  Link as LinkIcon, FileText, Image as ImageIcon
 } from 'lucide-react';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { toast } from 'sonner';
@@ -44,6 +46,7 @@ interface FreelancerProfile {
 export default function FreelancerProfile() {
   const { language } = useLanguage();
   const { setView } = useView();
+  const { user, accessToken } = useAuth();
   // Get freelancer ID from sessionStorage
   const id = sessionStorage.getItem('current_freelancer_id');
   console.log('🔍 [FreelancerProfile] Component mounted, ID:', id);
@@ -110,7 +113,6 @@ export default function FreelancerProfile() {
     const endpoint = profile.is_favorite ? 'remove' : 'add';
     
     try {
-      const accessToken = localStorage.getItem('access_token');
       if (!accessToken) {
         toast.error(language === 'en' ? 'Please login first' : '請先登入');
         return;
@@ -143,7 +145,6 @@ export default function FreelancerProfile() {
   };
 
   const openInviteModal = async () => {
-    const accessToken = localStorage.getItem('access_token');
     if (!accessToken) {
       toast.error(language === 'en' ? 'Please login first' : '請先登入');
       return;
@@ -174,7 +175,6 @@ export default function FreelancerProfile() {
 
   const sendInvite = async (projectId: string) => {
     try {
-      const accessToken = localStorage.getItem('access_token');
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/invite/${id}/${projectId}`,
         {
