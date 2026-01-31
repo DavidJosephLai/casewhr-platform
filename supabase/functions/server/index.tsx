@@ -23243,6 +23243,93 @@ app.post("/make-server-215f78a5/invitations/:id/respond", async (c) => {
 console.log('✅ [SERVER] Talent pool and HR routes registered');
 console.log('✅ [SERVER] Notification routes registered');
 
+// 🔐 SSO Email Verification API
+app.post("/make-server-215f78a5/auth/verify-sso-email", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized', approved: false }, 401);
+    }
+
+    const { email, provider, user_id } = await c.req.json();
+    
+    console.log(`🔐 [SSO Verify] Checking email: ${email}, provider: ${provider}, user_id: ${user_id}`);
+    
+    // Define email validation rules
+    const emailValidation = {
+      whitelist: [
+        'davidlai234@hotmail.com',
+        'davidlai117@yahoo.com.tw',
+      ],
+      whitelistDomains: [],
+      blacklist: [],
+      blacklistDomains: [
+        '@tempmail.com',
+        '@guerrillamail.com',
+        '@10minutemail.com',
+      ],
+    };
+    
+    const emailLower = email?.toLowerCase() || '';
+    const emailDomain = emailLower.split('@')[1];
+    
+    // Check blacklist first
+    if (emailValidation.blacklist.includes(emailLower)) {
+      console.warn(`⚠️ [SSO Verify] Email ${email} is blacklisted`);
+      return c.json({
+        approved: false,
+        reason: 'This email address is not authorized to access this platform.',
+      });
+    }
+    
+    // Check blacklisted domains
+    if (emailDomain && emailValidation.blacklistDomains.some(domain => emailDomain.endsWith(domain.replace('@', '')))) {
+      console.warn(`⚠️ [SSO Verify] Email domain ${emailDomain} is blacklisted`);
+      return c.json({
+        approved: false,
+        reason: 'Disposable email addresses are not allowed.',
+      });
+    }
+    
+    // Check whitelist
+    if (emailValidation.whitelist.includes(emailLower)) {
+      console.log(`✅ [SSO Verify] Email ${email} is whitelisted`);
+      return c.json({
+        approved: true,
+        reason: 'Email is whitelisted',
+      });
+    }
+    
+    // Default: AUTO-APPROVE all SSO logins
+    const autoApprove = true;
+    
+    if (autoApprove) {
+      console.log(`✅ [SSO Verify] Email ${email} auto-approved`);
+      return c.json({
+        approved: true,
+        reason: 'Auto-approved',
+      });
+    }
+    
+    // Not approved
+    return c.json({
+      approved: false,
+      reason: 'Your account is pending approval.',
+    });
+    
+  } catch (error) {
+    console.error('❌ [SSO Verify] Error:', error);
+    return c.json({ 
+      error: 'Verification failed', 
+      approved: false 
+    }, 500);
+  }
+});
+
+console.log('✅ [SERVER] SSO verification route registered');
+
 console.log('🎉 [SERVER] All routes registered, starting server...');
 
 // 禁用 JWT 验证（允许匿名访问测试端点）

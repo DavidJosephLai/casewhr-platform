@@ -177,7 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // Listen for auth state changes
-    const { data: { subscription } } = auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = auth.onAuthStateChange(async (_event, session) => {
       if (!mounted) return;
       
       console.log('🔄 [AuthContext] Auth state changed:', _event, session ? 'Session exists' : 'No session');
@@ -202,6 +202,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setLoading(false);
         return;
+      }
+      
+      // 🔐 SSO Email Detection and Approval
+      if (_event === 'SIGNED_IN' && session?.user) {
+        const userEmail = session.user.email;
+        const authProvider = session.user.app_metadata?.provider; // google, github, facebook, etc.
+        
+        console.log('🔐 [SSO] User signed in via:', authProvider, 'Email:', userEmail);
+        
+        // Check if this is an SSO login (not email/password)
+        if (authProvider && authProvider !== 'email') {
+          try {
+            // Call backend API to verify email
+            const response = await fetch(
+              `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/auth/verify-sso-email`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                  email: userEmail,
+                  provider: authProvider,
+                  user_id: session.user.id,
+                }),
+              }
+            );
+            
+            const result = await response.json();
+            
+            if (!response.ok || !result.approved) {
+              console.warn('⚠️ [SSO] Email not approved:', userEmail, result.reason);
+              
+              // Sign out the user
+              await auth.signOut();
+              setUser(null);
+              setAccessToken(null);
+              setProfile(null);
+              setLoading(false);
+              
+              // Show error message
+              const errorMessage = result.reason || 'Your email is not authorized to access this platform.';
+              // Use toast to show error
+              setTimeout(() => {
+                if (typeof window !== 'undefined' && (window as any).toast) {
+                  (window as any).toast.error(errorMessage);
+                }
+              }, 100);
+              
+              return;
+            }
+            
+            console.log('✅ [SSO] Email approved:', userEmail);
+          } catch (error) {
+            console.error('❌ [SSO] Error verifying email:', error);
+            // If verification fails, allow login but log the error
+            // You can make this stricter by blocking login on error
+          }
+        }
       }
       
       setUser(session?.user ?? null);
