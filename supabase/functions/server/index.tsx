@@ -5132,20 +5132,35 @@ app.post("/make-server-215f78a5/deliverables/:id/review", async (c) => {
 // Update user portfolio
 app.put("/make-server-215f78a5/portfolio/:userId", async (c) => {
   try {
+    console.log('📥 [Portfolio PUT] Request received');
+    
     const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    console.log('🔑 [Portfolio PUT] Access token exists:', !!accessToken);
+    
     const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
     
+    console.log('👤 [Portfolio PUT] Auth user:', user?.id);
+    console.log('❌ [Portfolio PUT] Auth error:', authError);
+    
     if (!user?.id || authError) {
+      console.error('❌ [Portfolio PUT] Unauthorized - no user ID or auth error');
       return c.json({ error: 'Unauthorized' }, 401);
     }
 
     const userId = c.req.param('userId');
+    console.log('🆔 [Portfolio PUT] Requested userId:', userId);
+    console.log('🆔 [Portfolio PUT] Authenticated userId:', user.id);
 
     if (user.id !== userId) {
+      console.error('❌ [Portfolio PUT] Forbidden - user ID mismatch');
       return c.json({ error: 'Forbidden' }, 403);
     }
 
-    const { portfolio_items } = await c.req.json();
+    const body = await c.req.json();
+    const { portfolio_items } = body;
+    
+    console.log('📦 [Portfolio PUT] Portfolio items count:', portfolio_items?.length || 0);
+    console.log('📦 [Portfolio PUT] Portfolio items:', JSON.stringify(portfolio_items, null, 2));
 
     await kv.set(`portfolio:user:${userId}`, {
       user_id: userId,
@@ -5153,10 +5168,11 @@ app.put("/make-server-215f78a5/portfolio/:userId", async (c) => {
       updated_at: new Date().toISOString(),
     });
 
+    console.log('✅ [Portfolio PUT] Portfolio saved successfully for user:', userId);
     return c.json({ message: 'Portfolio updated successfully' });
   } catch (error) {
-    console.error('Error updating portfolio:', error);
-    return c.json({ error: 'Failed to update portfolio' }, 500);
+    console.error('❌ [Portfolio PUT] Error updating portfolio:', error);
+    return c.json({ error: 'Failed to update portfolio', details: error.message }, 500);
   }
 });
 
@@ -5695,6 +5711,81 @@ app.post("/make-server-215f78a5/signup", async (c) => {
       details: error?.message || 'Unknown error',
       errorType: error?.name || 'UnknownError'
     }, 500);
+  }
+});
+
+// Get current user profile (from token)
+app.get("/make-server-215f78a5/profile", async (c) => {
+  try {
+    console.log('📥 [GET /profile] Request received - getting current user profile');
+    
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      console.error('❌ [GET /profile] No access token provided');
+      return c.json({ error: 'Unauthorized - No access token' }, 401);
+    }
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    
+    if (!user?.id || authError) {
+      console.error('❌ [GET /profile] Auth failed:', authError?.message);
+      return c.json({ error: 'Unauthorized - Invalid token' }, 401);
+    }
+    
+    const userId = user.id;
+    console.log('👤 [GET /profile] User ID from token:', userId);
+    
+    // Try both key formats
+    const profileKeyUnderscore = `profile_${userId}`;
+    const profileKeyColon = `profile:${userId}`;
+    let profile = null;
+    
+    try {
+      // Try underscore format first (new standard)
+      profile = await kv.get(profileKeyUnderscore);
+      
+      if (profile) {
+        console.log('✅ [GET /profile] Profile found (underscore format)');
+      } else {
+        // Fall back to colon format (legacy)
+        profile = await kv.get(profileKeyColon);
+        
+        if (profile) {
+          console.log('📦 [GET /profile] Profile found (colon format), migrating...');
+          await kv.set(profileKeyUnderscore, profile);
+          console.log('✅ [GET /profile] Profile migrated successfully');
+        }
+      }
+    } catch (kvError) {
+      console.error('❌ [GET /profile] KV error:', kvError);
+    }
+    
+    // If no profile exists, create a minimal one
+    if (!profile) {
+      console.log('⚠️ [GET /profile] No profile found, creating minimal profile');
+      profile = {
+        user_id: userId,
+        email: user.email || '',
+        name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+        is_client: false,
+        is_freelancer: false,
+        created_at: new Date().toISOString(),
+      };
+      
+      try {
+        await kv.set(profileKeyUnderscore, profile);
+        console.log('✅ [GET /profile] Minimal profile created');
+      } catch (kvError) {
+        console.error('❌ [GET /profile] Failed to create profile:', kvError);
+      }
+    }
+    
+    console.log('✅ [GET /profile] Returning profile for user:', userId);
+    return c.json({ profile });
+  } catch (error) {
+    console.error('❌ [GET /profile] Error:', error);
+    return c.json({ error: 'Failed to get profile' }, 500);
   }
 });
 
