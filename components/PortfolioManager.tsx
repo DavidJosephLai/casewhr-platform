@@ -75,10 +75,13 @@ export default function PortfolioManager() {
     try {
       setLoading(true);
       if (!accessToken) {
+        console.log('⚠️ [PortfolioManager] No access token, skipping portfolio load');
         toast.error(language === 'en' ? 'Please login first' : '請先登入');
         setView('login');
         return;
       }
+
+      console.log('📂 [PortfolioManager] Loading portfolio...');
 
       // Get current user ID from token
       const response = await fetch(
@@ -94,6 +97,8 @@ export default function PortfolioManager() {
         const data = await response.json();
         const userId = data.profile?.user_id;
         
+        console.log('👤 [PortfolioManager] User ID:', userId);
+        
         if (userId) {
           // Load portfolio
           const portfolioResponse = await fetch(
@@ -107,12 +112,25 @@ export default function PortfolioManager() {
 
           if (portfolioResponse.ok) {
             const portfolioData = await portfolioResponse.json();
+            console.log('✅ [PortfolioManager] Portfolio loaded:', portfolioData);
             setPortfolio(portfolioData.portfolio?.items || []);
+          } else {
+            console.warn('⚠️ [PortfolioManager] Failed to load portfolio:', portfolioResponse.status);
+            // Set empty portfolio instead of failing
+            setPortfolio([]);
           }
+        } else {
+          console.warn('⚠️ [PortfolioManager] No user ID found');
+          setPortfolio([]);
         }
+      } else {
+        console.warn('⚠️ [PortfolioManager] Failed to load profile:', response.status);
+        setPortfolio([]);
       }
     } catch (error) {
       console.error('❌ [PortfolioManager] Error loading portfolio:', error);
+      // Don't show error toast here, just set empty portfolio
+      setPortfolio([]);
     } finally {
       setLoading(false);
     }
