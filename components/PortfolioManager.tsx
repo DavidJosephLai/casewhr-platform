@@ -194,14 +194,18 @@ export default function PortfolioManager() {
     try {
       setSaving(true);
       console.log('💾 [PortfolioManager] Starting save portfolio...');
+      console.log('💾 [PortfolioManager] Access token exists:', !!accessToken);
+      console.log('💾 [PortfolioManager] Portfolio data length:', portfolioData.length);
       
       if (!accessToken) {
-        console.warn('⚠️ [PortfolioManager] No access token for save');
-        // Don't show error toast for auto-save
+        console.error('❌ [PortfolioManager] No access token for save');
+        toast.error(language === 'en' ? 'Please login first' : '請先登入');
+        setSaving(false);
         return;
       }
 
       // Get current user ID
+      console.log('📡 [PortfolioManager] Fetching profile...');
       const profileResponse = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/profile`,
         {
@@ -211,54 +215,64 @@ export default function PortfolioManager() {
         }
       );
 
+      console.log('📡 [PortfolioManager] Profile response status:', profileResponse.status);
+
       if (!profileResponse.ok) {
-        console.error('❌ [PortfolioManager] Failed to get profile:', profileResponse.status);
         const errorText = await profileResponse.text();
-        console.error('Error details:', errorText);
-        toast.error(t.saveFailed);
+        console.error('❌ [PortfolioManager] Failed to get profile:', profileResponse.status);
+        console.error('❌ [PortfolioManager] Error details:', errorText);
+        toast.error(t.saveFailed + ': Profile fetch failed');
+        setSaving(false);
         return;
       }
 
       const profileData = await profileResponse.json();
       const userId = profileData.profile?.user_id;
+      
+      console.log('👤 [PortfolioManager] User ID for save:', userId);
 
       if (!userId) {
-        console.error('❌ [PortfolioManager] No user ID found');
-        toast.error(t.saveFailed);
+        console.error('❌ [PortfolioManager] No user ID found in profile');
+        toast.error(t.saveFailed + ': No user ID');
+        setSaving(false);
         return;
       }
 
       console.log('💾 [PortfolioManager] Saving portfolio for user:', userId);
-      console.log('Portfolio items count:', portfolioData.length);
+      console.log('💾 [PortfolioManager] Saving items:', JSON.stringify(portfolioData, null, 2));
 
       // Save portfolio
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/portfolio/${userId}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            portfolio_items: portfolioData,
-          }),
-        }
-      );
+      const saveUrl = `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/portfolio/${userId}`;
+      console.log('📡 [PortfolioManager] Save URL:', saveUrl);
+      
+      const response = await fetch(saveUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          portfolio_items: portfolioData,
+        }),
+      });
+
+      console.log('📡 [PortfolioManager] Save response status:', response.status);
 
       if (response.ok) {
         console.log('✅ [PortfolioManager] Portfolio saved successfully');
         toast.success(t.saved);
       } else {
         const errorText = await response.text();
-        console.error('❌ [PortfolioManager] Save failed:', response.status, errorText);
-        toast.error(t.saveFailed);
+        console.error('❌ [PortfolioManager] Save failed with status:', response.status);
+        console.error('❌ [PortfolioManager] Error response:', errorText);
+        toast.error(t.saveFailed + ': ' + response.status);
       }
     } catch (error) {
-      console.error('❌ [PortfolioManager] Error saving portfolio:', error);
-      toast.error(t.saveFailed);
+      console.error('❌ [PortfolioManager] Exception during save:', error);
+      toast.error(t.saveFailed + ': ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setSaving(false);
+      console.log('💾 [PortfolioManager] Save completed (finally block)');
     }
   };
 
@@ -609,7 +623,10 @@ export default function PortfolioManager() {
                   onClick={editingId ? updateProject : addProject}
                   className="flex-1 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
                 >
-                  {t.save}
+                  {editingId 
+                    ? (language === 'en' ? 'Update' : language === 'zh-CN' ? '更新' : '更新')
+                    : (language === 'en' ? 'Add' : language === 'zh-CN' ? '添加' : '新增')
+                  }
                 </button>
                 <button
                   onClick={() => {
