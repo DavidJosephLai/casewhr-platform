@@ -3,7 +3,7 @@ import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useView } from '../contexts/ViewContext';
 import { projectId } from '../utils/supabase/info';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { Star, MapPin, DollarSign, Briefcase, Award, Heart, Loader2 } from 'lucide-react';
 
 interface Freelancer {
