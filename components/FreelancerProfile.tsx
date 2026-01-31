@@ -145,13 +145,19 @@ export default function FreelancerProfile() {
   };
 
   const openInviteModal = async () => {
+    console.log('🎯🎯🎯 [FreelancerProfile] openInviteModal called!');
+    console.log('🔑 [FreelancerProfile] accessToken:', accessToken ? 'EXISTS' : 'MISSING');
+    
     if (!accessToken) {
       toast.error(language === 'en' ? 'Please login first' : '請先登入');
       return;
     }
 
+    toast.info(language === 'en' ? 'Loading projects...' : '載入專案中...');
+
     // Load user's projects
     try {
+      console.log('📡 [FreelancerProfile] Loading projects...');
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/projects/my`,
         {
@@ -161,15 +167,27 @@ export default function FreelancerProfile() {
         }
       );
 
+      console.log('📡 [FreelancerProfile] Response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ [FreelancerProfile] Projects loaded:', data.projects);
         const activeProjects = data.projects.filter((p: any) => p.status === 'open');
+        console.log('✅ [FreelancerProfile] Active projects:', activeProjects.length);
+        
+        toast.success(language === 'en' ? `Found ${activeProjects.length} projects` : `找到 ${activeProjects.length} 個專案`);
+        
         setMyProjects(activeProjects);
         setShowInviteModal(true);
+        console.log('✅ [FreelancerProfile] Modal should be visible now');
+      } else {
+        const errorText = await response.text();
+        console.error('❌ [FreelancerProfile] Failed to load projects:', errorText);
+        toast.error(language === 'en' ? 'Failed to load projects' : '載入專案失敗');
       }
     } catch (error) {
-      console.error('Error loading projects:', error);
-      toast.error(language === 'en' ? 'Failed to load projects' : '載入專案失敗');
+      console.error('❌ [FreelancerProfile] Error loading projects:', error);
+      toast.error(language === 'en' ? `Error: ${error}` : `錯誤: ${error}`);
     }
   };
 
