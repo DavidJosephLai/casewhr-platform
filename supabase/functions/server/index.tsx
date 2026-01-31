@@ -22545,9 +22545,10 @@ app.get("/make-server-215f78a5/freelancer/:id/profile", async (c) => {
 
     console.log('✅ [Freelancer Profile] Profile found:', profile.full_name || profile.email);
 
-    // 獲取作品集
-    const portfolioKeys = await kv.get(`portfolio:${freelancerId}`) || [];
-    const portfolio = Array.isArray(portfolioKeys) ? await kv.mget(portfolioKeys) : [];
+    // 獲取作品集（統一使用 portfolio:user: 格式）
+    const portfolioData = await kv.get(`portfolio:user:${freelancerId}`) || { items: [] };
+    const portfolio = Array.isArray(portfolioData.items) ? portfolioData.items : [];
+    console.log('✅ [Freelancer Profile] Portfolio items:', portfolio.length);
 
     // 獲取評價
     const reviewKeys = await kv.get(`reviews:freelancer:${freelancerId}`) || [];

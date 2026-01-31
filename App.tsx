@@ -81,6 +81,7 @@ const AdminPage = lazy(() => import('./pages/AdminPage'));
 const DynamicSEOPage = lazy(() => import('./components/DynamicSEOPage').then(module => ({ default: module.DynamicSEOPage })));
 const TalentPool = lazy(() => import('./components/TalentPool').then(module => ({ default: module.default })));
 const FreelancerProfile = lazy(() => import('./components/FreelancerProfile').then(module => ({ default: module.default })));
+const PortfolioManager = lazy(() => import('./components/PortfolioManager').then(module => ({ default: module.default })));
 
 // 🎯 全局組件 - 使用 lazy 但保持輕量級（這些組件需要 default export）
 const AdminFloatingButton = lazy(() => import('./components/AdminFloatingButton'));
@@ -293,7 +294,7 @@ function AppContent() {
       return;
     }
     
-    // 📝 檢查是否�� Blog 頁面
+    // 📝 檢查是否 Blog 頁面
     if (urlPath === '/blog') {
       console.log('📝 [App] Blog list page detected');
       console.log('🔥🔥 [App] Setting view to blog - NO REDIRECT TO POST PAGE!');
@@ -999,6 +1000,15 @@ function AppContent() {
           <ErrorBoundary>
             <Suspense fallback={<PageLoadingFallback />}>
               <FreelancerProfile />
+            </Suspense>
+          </ErrorBoundary>
+        </div>
+      ) : view === 'portfolio-manager' ? (
+        <div className="pt-20">
+          <SEO title="Portfolio Manager" description="" keywords="" noindex />
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <PortfolioManager />
             </Suspense>
           </ErrorBoundary>
         </div>

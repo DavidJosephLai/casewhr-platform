@@ -433,7 +433,7 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
                     }}
                     className="bg-yellow-600 hover:bg-yellow-700"
                   >
-                    {language === 'en' ? 'Complete Profile' : '完成個��資料'}
+                    {language === 'en' ? 'Complete Profile' : '完成個資料'}
                   </Button>
                 </div>
               </div>
@@ -743,6 +743,29 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* 🎨 作品集管理按鈕 */}
+              <div className="flex items-center justify-between p-4 border border-purple-200 rounded-lg bg-purple-50">
+                <div>
+                  <h4 className="font-medium text-gray-900">
+                    {language === 'en' ? 'Portfolio' : language === 'zh-CN' ? '作品集' : '作品集'}
+                  </h4>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {language === 'en' 
+                      ? 'Showcase your best work to attract clients' 
+                      : language === 'zh-CN' 
+                      ? '展示您的最佳作品以吸引客户' 
+                      : '展示您的最佳作品以吸引客戶'}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setView('portfolio-manager')}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  <Briefcase className="h-4 w-4 mr-2" />
+                  {language === 'en' ? 'Manage Portfolio' : language === 'zh-CN' ? '管理作品集' : '管理作品集'}
+                </Button>
+              </div>
+              
               <RoleSwitcher />
               <NotificationPreferences />
               <PaymentMethodsCard />
