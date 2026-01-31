@@ -29,6 +29,7 @@ interface Freelancer {
   response_time?: string;
   languages?: string[];
   experience_years?: number;
+  created_at?: string;
 }
 
 const SKILL_CATEGORIES = {
@@ -52,7 +53,7 @@ export default function TalentPool() {
   const [minRating, setMinRating] = useState(0);
   const [showFilters, setShowFilters] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortBy, setSortBy] = useState<'relevance' | 'rating' | 'rate' | 'projects'>('relevance');
+  const [sortBy, setSortBy] = useState<'relevance' | 'rating' | 'rate-low' | 'rate-high' | 'projects' | 'newest'>('relevance');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [availability, setAvailability] = useState<string>('all');
@@ -74,6 +75,12 @@ export default function TalentPool() {
     availability: language === 'en' ? 'Availability' : language === 'zh-CN' ? '可用性' : '可用性',
     experience: language === 'en' ? 'Experience Level' : language === 'zh-CN' ? '经验水平' : '經驗水平',
     sortBy: language === 'en' ? 'Sort By' : language === 'zh-CN' ? '排序方式' : '排序方式',
+    sortRelevance: language === 'en' ? 'Relevance' : language === 'zh-CN' ? '相关性' : '相關性',
+    sortRating: language === 'en' ? 'Highest Rated' : language === 'zh-CN' ? '评分最高' : '評分最高',
+    sortRateLow: language === 'en' ? 'Lowest Rate' : language === 'zh-CN' ? '时薪最低' : '時薪最低',
+    sortRateHigh: language === 'en' ? 'Highest Rate' : language === 'zh-CN' ? '时薪最高' : '時薪最高',
+    sortProjects: language === 'en' ? 'Most Projects' : language === 'zh-CN' ? '项目最多' : '專案最多',
+    sortNewest: language === 'en' ? 'Newest Members' : language === 'zh-CN' ? '最新加入' : '最新加入',
     results: language === 'en' ? 'results' : language === 'zh-CN' ? '个结果' : '個結果',
     viewProfile: language === 'en' ? 'View Profile' : language === 'zh-CN' ? '查看档案' : '查看檔案',
     contact: language === 'en' ? 'Contact' : language === 'zh-CN' ? '联系' : '聯繫',
@@ -127,6 +134,7 @@ export default function TalentPool() {
           review_count: profile.review_count || 0,
           completed_projects: profile.completed_projects || 0,
           is_favorite: false, // 🔥 稍後會更新
+          created_at: profile.created_at,
         }));
 
         console.log('✅ [TalentPool] Converted freelancers:', freelancerData.length);
@@ -250,10 +258,18 @@ export default function TalentPool() {
       switch (sortBy) {
         case 'rating':
           return (b.rating || 0) - (a.rating || 0);
-        case 'rate':
+        case 'rate-low':
           return (a.hourly_rate_min || 0) - (b.hourly_rate_min || 0);
+        case 'rate-high':
+          return (b.hourly_rate_min || 0) - (a.hourly_rate_min || 0);
         case 'projects':
           return (b.completed_projects || 0) - (a.completed_projects || 0);
+        case 'newest':
+          // 按加入時間排序（最新的在前）
+          if (!a.created_at && !b.created_at) return 0;
+          if (!a.created_at) return 1;
+          if (!b.created_at) return -1;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         default:
           return 0;
       }
@@ -465,10 +481,12 @@ export default function TalentPool() {
                   onChange={(e) => setSortBy(e.target.value as any)}
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                 >
-                  <option value="relevance">Relevance</option>
-                  <option value="rating">Highest Rated</option>
-                  <option value="rate">Lowest Rate</option>
-                  <option value="projects">Most Projects</option>
+                  <option value="relevance">{t.sortRelevance}</option>
+                  <option value="rating">{t.sortRating}</option>
+                  <option value="rate-low">{t.sortRateLow}</option>
+                  <option value="rate-high">{t.sortRateHigh}</option>
+                  <option value="projects">{t.sortProjects}</option>
+                  <option value="newest">{t.sortNewest}</option>
                 </select>
 
                 {/* View Toggle */}
