@@ -260,7 +260,7 @@ export function Header() {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
           <div className="flex items-center justify-between py-4">
             <button onClick={scrollToTop} className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
               <img 
@@ -305,12 +305,6 @@ export function Header() {
               </button>
               <button onClick={() => scrollToSection('categories')} className="text-[#111827] hover:text-blue-600 transition-colors font-medium">
                 {t.nav.categories}
-              </button>
-              <button 
-                onClick={() => window.location.href = '/blog'} 
-                className="text-[#111827] hover:text-blue-600 transition-colors font-medium"
-              >
-                {language === 'en' ? 'Blog' : language === 'zh-CN' ? '博客' : '部落格'}
               </button>
               <button 
                 onClick={handleShowPricing} 
