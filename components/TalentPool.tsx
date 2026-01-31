@@ -4,7 +4,7 @@ import { useView } from '../contexts/ViewContext';
 import { 
   Search, Filter, Star, MapPin, DollarSign, Briefcase, Award, 
   Grid, List, Users, TrendingUp, Clock, CheckCircle, BookmarkPlus,
-  Sliders, ChevronDown, X, Download, Send, Building2
+  Sliders, ChevronDown, X, Download, Send, Building2, Mail, MessageSquare
 } from 'lucide-react';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { toast } from 'sonner';
@@ -63,6 +63,13 @@ export default function TalentPool() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12); // 每頁顯示 12 個人才
 
+  // 📧 聯繫對話框狀態
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [selectedFreelancer, setSelectedFreelancer] = useState<Freelancer | null>(null);
+  const [contactMessage, setContactMessage] = useState('');
+  const [contactSubject, setContactSubject] = useState('');
+  const [sendingMessage, setSendingMessage] = useState(false);
+  
   const t = {
     title: language === 'en' ? 'Advanced Talent Search' : language === 'zh-CN' ? '进阶人才搜索' : '進階人才搜尋',
     subtitle: language === 'en' ? 'Find, filter, and recruit the perfect freelancer with powerful search tools' : language === 'zh-CN' ? '用强大的搜索工具查找、筛选和招募完美的自由职业者' : '使用強大的搜尋工具查找、篩選和招募完美的接案者',
@@ -84,6 +91,15 @@ export default function TalentPool() {
     results: language === 'en' ? 'results' : language === 'zh-CN' ? '个结果' : '個結果',
     viewProfile: language === 'en' ? 'View Profile' : language === 'zh-CN' ? '查看档案' : '查看檔案',
     contact: language === 'en' ? 'Contact' : language === 'zh-CN' ? '联系' : '聯繫',
+    contactFreelancer: language === 'en' ? 'Contact Freelancer' : language === 'zh-CN' ? '联系接案者' : '聯繫接案者',
+    messageSubject: language === 'en' ? 'Subject' : language === 'zh-CN' ? '主题' : '主題',
+    messagePlaceholder: language === 'en' ? 'Write your message here...' : language === 'zh-CN' ? '在这里写下您的消息...' : '在這裡寫下您的訊息...',
+    send: language === 'en' ? 'Send Message' : language === 'zh-CN' ? '发送消息' : '發送訊息',
+    sending: language === 'en' ? 'Sending...' : language === 'zh-CN' ? '发送中...' : '發送中...',
+    cancel: language === 'en' ? 'Cancel' : language === 'zh-CN' ? '取消' : '取消',
+    messageSent: language === 'en' ? 'Message sent successfully!' : language === 'zh-CN' ? '消息发送成功！' : '訊息發送成功！',
+    messageFailed: language === 'en' ? 'Failed to send message' : language === 'zh-CN' ? '消息发送失败' : '訊息發送失敗',
+    loginRequired: language === 'en' ? 'Please login first' : language === 'zh-CN' ? '请先登录' : '請先登入',
     saveCandidate: language === 'en' ? 'Save' : language === 'zh-CN' ? '保存' : '儲存',
     exportResults: language === 'en' ? 'Export Results' : language === 'zh-CN' ? '导出结果' : '匯出結果',
     clearFilters: language === 'en' ? 'Clear All' : language === 'zh-CN' ? '清除全部' : '清除全部',
@@ -668,7 +684,10 @@ export default function TalentPool() {
                             {t.viewProfile}
                           </button>
                           <button
-                            onClick={() => toast.success('Contact feature coming soon!')}
+                            onClick={() => {
+                              setSelectedFreelancer(freelancer);
+                              setShowContactModal(true);
+                            }}
                             className="px-4 py-2 border border-purple-600 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                           >
                             <Send className="w-4 h-4" />
@@ -744,6 +763,100 @@ export default function TalentPool() {
           </div>
         </div>
       </div>
+
+      {/* 聯繫對話框 */}
+      {showContactModal && selectedFreelancer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">{t.contact} {selectedFreelancer.name}</h3>
+              <button
+                onClick={() => setShowContactModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <input
+                type="text"
+                value={contactSubject}
+                onChange={(e) => setContactSubject(e.target.value)}
+                placeholder={t.messageSubject}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+              <textarea
+                value={contactMessage}
+                onChange={(e) => setContactMessage(e.target.value)}
+                placeholder={t.messagePlaceholder}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent h-32"
+              />
+            </div>
+
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => setShowContactModal(false)}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg"
+              >
+                {t.cancel}
+              </button>
+              <button
+                onClick={async () => {
+                  setSendingMessage(true);
+                  try {
+                    const accessToken = localStorage.getItem('access_token');
+                    if (!accessToken) {
+                      toast.error(t.loginRequired);
+                      return;
+                    }
+
+                    // 組合主題和訊息內容
+                    const fullMessage = contactSubject 
+                      ? `**${contactSubject}**\n\n${contactMessage}` 
+                      : contactMessage;
+
+                    const response = await fetch(
+                      `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/messages/send`,
+                      {
+                        method: 'POST',
+                        headers: {
+                          'Authorization': `Bearer ${accessToken}`,
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          receiver_id: selectedFreelancer.id,
+                          content: fullMessage,
+                        }),
+                      }
+                    );
+
+                    if (response.ok) {
+                      toast.success(t.messageSent);
+                      setShowContactModal(false);
+                      setContactMessage('');
+                      setContactSubject('');
+                    } else {
+                      const errorData = await response.json();
+                      console.error('❌ [TalentPool] Error response:', errorData);
+                      toast.error(t.messageFailed);
+                    }
+                  } catch (error) {
+                    console.error('❌ [TalentPool] Error sending message:', error);
+                    toast.error(t.messageFailed);
+                  } finally {
+                    setSendingMessage(false);
+                  }
+                }}
+                className="ml-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm transition-colors"
+                disabled={sendingMessage || !contactMessage.trim()}
+              >
+                {sendingMessage ? t.sending : t.send}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
