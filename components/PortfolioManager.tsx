@@ -240,6 +240,7 @@ export default function PortfolioManager() {
       const profileData = await profileResponse.json();
       const userId = profileData.profile?.user_id;
       
+      addLog(`📦 完整的 Profile 響應: ${JSON.stringify(profileData, null, 2)}`);
       addLog(`👤 用戶 ID: ${userId}`);
 
       if (!userId) {
