@@ -22532,14 +22532,18 @@ app.get("/make-server-215f78a5/freelancer/:id/profile", async (c) => {
     const freelancerId = c.req.param('id');
     console.log('✅ [Freelancer Profile] Loading profile for:', freelancerId);
 
-    // 獲取用戶基本資料
-    const user = await kv.get(`user:${freelancerId}`);
-    if (!user) {
+    // 🔥 嘗試從新格式和舊格式獲取 profile
+    let profile = await kv.get(`profile_${freelancerId}`);
+    if (!profile) {
+      profile = await kv.get(`profile:${freelancerId}`);
+    }
+    
+    if (!profile) {
+      console.log('❌ [Freelancer Profile] Profile not found for:', freelancerId);
       return c.json({ error: 'Freelancer not found' }, 404);
     }
 
-    // 獲取詳細檔案
-    const profile = await kv.get(`user_profile:${freelancerId}`) || {};
+    console.log('✅ [Freelancer Profile] Profile found:', profile.full_name || profile.email);
 
     // 獲取作品集
     const portfolioKeys = await kv.get(`portfolio:${freelancerId}`) || [];
@@ -22552,12 +22556,24 @@ app.get("/make-server-215f78a5/freelancer/:id/profile", async (c) => {
       const reviewData = await kv.mget(reviewKeys);
       for (const review of reviewData) {
         if (review) {
+          // 嘗試獲取評論者資訊
+          let reviewerName = 'Anonymous';
           const reviewer = await kv.get(`user:${review.reviewer_id}`);
+          if (reviewer) {
+            reviewerName = reviewer.name || reviewer.email?.split('@')[0] || 'Anonymous';
+          } else {
+            // 如果 user: 格式找不到，嘗試從 profile 獲取
+            const reviewerProfile = await kv.get(`profile_${review.reviewer_id}`) || await kv.get(`profile:${review.reviewer_id}`);
+            if (reviewerProfile) {
+              reviewerName = reviewerProfile.full_name || reviewerProfile.email?.split('@')[0] || 'Anonymous';
+            }
+          }
+          
           reviews.push({
             id: review.id,
             rating: review.rating,
             comment: review.comment,
-            reviewer_name: reviewer?.name || 'Anonymous',
+            reviewer_name: reviewerName,
             created_at: review.created_at,
           });
         }
@@ -22588,13 +22604,13 @@ app.get("/make-server-215f78a5/freelancer/:id/profile", async (c) => {
     }
 
     const profileData = {
-      id: user.id,
-      email: user.email,
-      name: user.name || user.email.split('@')[0],
-      avatar: profile.avatar,
-      title: profile.title || profile.job_title,
+      id: profile.user_id || freelancerId,
+      email: profile.email,
+      name: profile.full_name || profile.name || profile.email?.split('@')[0] || 'Freelancer',
+      avatar: profile.avatar_url || profile.avatar,
+      title: profile.job_title || profile.title,
       bio: profile.bio || profile.description,
-      skills: profile.skills || [],
+      skills: Array.isArray(profile.skills) ? profile.skills : [],
       hourly_rate_min: profile.hourly_rate_min,
       hourly_rate_max: profile.hourly_rate_max,
       currency: profile.currency || 'TWD',
@@ -22602,7 +22618,7 @@ app.get("/make-server-215f78a5/freelancer/:id/profile", async (c) => {
       rating: rating > 0 ? rating : undefined,
       review_count: reviews.length,
       completed_projects: Array.isArray(completedProjectsKey) ? completedProjectsKey.length : 0,
-      joined_date: user.created_at,
+      joined_date: profile.created_at,
       portfolio: portfolio.filter(p => p),
       reviews: reviews,
       is_favorite: isFavorite,

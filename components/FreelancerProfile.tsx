@@ -46,14 +46,19 @@ export default function FreelancerProfile() {
   const { setView } = useView();
   // Get freelancer ID from sessionStorage
   const id = sessionStorage.getItem('current_freelancer_id');
+  console.log('🔍 [FreelancerProfile] Component mounted, ID:', id);
+  
   const [profile, setProfile] = useState<FreelancerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [myProjects, setMyProjects] = useState<any[]>([]);
 
   useEffect(() => {
+    console.log('🔍 [FreelancerProfile] useEffect triggered, ID:', id);
     if (id) {
       loadProfile();
+    } else {
+      console.log('❌ [FreelancerProfile] No ID found in sessionStorage');
     }
   }, [id]);
 

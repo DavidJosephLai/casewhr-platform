@@ -639,8 +639,11 @@ export default function TalentPool() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => {
+                              console.log('🔍 [TalentPool] Viewing profile for:', freelancer.id, freelancer.name);
                               sessionStorage.setItem('current_freelancer_id', freelancer.id);
+                              console.log('✅ [TalentPool] Stored in sessionStorage:', sessionStorage.getItem('current_freelancer_id'));
                               setView('freelancer-profile');
+                              console.log('✅ [TalentPool] View set to: freelancer-profile');
                             }}
                             className="flex-1 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm transition-colors"
                           >
