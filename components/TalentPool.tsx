@@ -82,7 +82,7 @@ export default function TalentPool() {
     title: language === 'en' ? 'Advanced Talent Search' : language === 'zh-CN' ? '进阶人才搜索' : '進階人才搜尋',
     subtitle: language === 'en' ? 'Find, filter, and recruit the perfect freelancer with powerful search tools' : language === 'zh-CN' ? '用强大的搜索工具查找、筛选和招募完美的自由职业者' : '使用強大的搜尋工具查找、篩選和招募完美的接案者',
     search: language === 'en' ? 'Search by name, skills, or keywords...' : language === 'zh-CN' ? '按姓名、技能或关键词搜索...' : '按姓名、技能或關鍵字搜尋...',
-    filters: language === 'en' ? 'Filters' : language === 'zh-CN' ? '筛���' : '篩選',
+    filters: language === 'en' ? 'Filters' : language === 'zh-CN' ? '筛' : '篩選',
     skills: language === 'en' ? 'Skills' : language === 'zh-CN' ? '技能' : '技能',
     rating: language === 'en' ? 'Minimum Rating' : language === 'zh-CN' ? '最低评分' : '最低評分',
     priceRange: language === 'en' ? 'Hourly Rate Range' : language === 'zh-CN' ? '时薪范围' : '時薪範圍',
@@ -160,7 +160,7 @@ export default function TalentPool() {
           review_count: profile.review_count || 0,
           completed_projects: profile.completed_projects || 0,
           portfolio_count: profile.portfolio_count || 0, // 🔥 添加作品集數量
-          is_favorite: false, // 🔥 稍後��更新
+          is_favorite: false, // 🔥 稍後更新
           created_at: profile.created_at,
         }));
 
@@ -762,12 +762,17 @@ export default function TalentPool() {
                         {/* Actions */}
                         <div className="flex gap-2">
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               console.log('🔍 [TalentPool] Viewing profile for:', freelancer.id, freelancer.name);
                               sessionStorage.setItem('current_freelancer_id', freelancer.id);
                               console.log('✅ [TalentPool] Stored in sessionStorage:', sessionStorage.getItem('current_freelancer_id'));
-                              setView('freelancer-profile');
-                              console.log('✅ [TalentPool] View set to: freelancer-profile');
+                              // 使用 setTimeout 確保狀態更新完成後再切換視圖
+                              requestAnimationFrame(() => {
+                                setView('freelancer-profile');
+                                console.log('✅ [TalentPool] View set to: freelancer-profile');
+                              });
                             }}
                             className="flex-1 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm transition-colors"
                           >

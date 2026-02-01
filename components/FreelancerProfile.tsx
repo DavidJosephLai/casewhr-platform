@@ -55,32 +55,39 @@ export default function FreelancerProfile() {
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [myProjects, setMyProjects] = useState<any[]>([]);
-  const [isMounted, setIsMounted] = useState(true);
 
   useEffect(() => {
-    setIsMounted(true);
+    let isCancelled = false;
+    
     console.log('🔍 [FreelancerProfile] useEffect triggered, ID:', id);
     if (id) {
-      loadProfile();
+      loadProfile(isCancelled);
     } else {
       console.log('❌ [FreelancerProfile] No ID found in sessionStorage');
+      if (!isCancelled) {
+        setLoading(false);
+      }
     }
 
     return () => {
-      setIsMounted(false);
+      isCancelled = true;
       console.log('🧹 [FreelancerProfile] Component unmounting, cleaning up');
     };
   }, [id]);
 
-  const loadProfile = async () => {
+  const loadProfile = async (isCancelled: boolean) => {
     if (!id) {
-      toast.error(language === 'en' ? 'Freelancer not found' : '找不到接案者');
-      setView('talent-pool');
+      if (!isCancelled) {
+        toast.error(language === 'en' ? 'Freelancer not found' : '找不到接案者');
+        setTimeout(() => setView('talent-pool'), 100);
+      }
       return;
     }
 
     try {
-      setLoading(true);
+      if (!isCancelled) {
+        setLoading(true);
+      }
       console.log('🔍 [FreelancerProfile] Loading profile for ID:', id);
       
       const response = await fetch(
@@ -92,25 +99,31 @@ export default function FreelancerProfile() {
         }
       );
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ [FreelancerProfile] Profile loaded:', {
-          id: data.profile?.id,
-          name: data.profile?.name,
-          portfolio_count: data.profile?.portfolio?.length || 0,
-          portfolio_items: data.profile?.portfolio
-        });
-        
-        setProfile(data.profile);
-      } else {
-        toast.error(language === 'en' ? 'Freelancer not found' : '找不到接案者');
-        setView('talent-pool');
+      if (!isCancelled) {
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ [FreelancerProfile] Profile loaded:', {
+            id: data.profile?.id,
+            name: data.profile?.name,
+            portfolio_count: data.profile?.portfolio?.length || 0,
+            portfolio_items: data.profile?.portfolio
+          });
+          
+          setProfile(data.profile);
+        } else {
+          toast.error(language === 'en' ? 'Freelancer not found' : '找不到接案者');
+          setTimeout(() => setView('talent-pool'), 100);
+        }
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
-      toast.error(language === 'en' ? 'Failed to load profile' : '載入檔案失敗');
+      if (!isCancelled) {
+        console.error('Error loading profile:', error);
+        toast.error(language === 'en' ? 'Failed to load profile' : '載入檔案失敗');
+      }
     } finally {
-      setLoading(false);
+      if (!isCancelled) {
+        setLoading(false);
+      }
     }
   };
 
