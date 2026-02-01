@@ -55,14 +55,21 @@ export default function FreelancerProfile() {
   const [loading, setLoading] = useState(true);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [myProjects, setMyProjects] = useState<any[]>([]);
+  const [isMounted, setIsMounted] = useState(true);
 
   useEffect(() => {
+    setIsMounted(true);
     console.log('🔍 [FreelancerProfile] useEffect triggered, ID:', id);
     if (id) {
       loadProfile();
     } else {
       console.log('❌ [FreelancerProfile] No ID found in sessionStorage');
     }
+
+    return () => {
+      setIsMounted(false);
+      console.log('🧹 [FreelancerProfile] Component unmounting, cleaning up');
+    };
   }, [id]);
 
   const loadProfile = async () => {
@@ -468,9 +475,25 @@ export default function FreelancerProfile() {
 
       {/* Invite Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            // 點擊背景關閉模態框
+            if (e.target === e.currentTarget) {
+              setShowInviteModal(false);
+            }
+          }}
+        >
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">{t.inviteToProject}</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">{t.inviteToProject}</h3>
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
             <p className="text-gray-600 mb-6">{t.selectProject}</p>
 
             {myProjects.length === 0 ? (
