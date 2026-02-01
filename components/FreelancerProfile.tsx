@@ -227,7 +227,7 @@ export default function FreelancerProfile() {
   };
 
   const t = {
-    backToTalentPool: language === 'en' ? 'Back to Talent Pool' : language === 'zh-CN' ? '返回人才库' : '返回人才庫',
+    backToTalentPool: language === 'en' ? 'Back to Advanced Talent Pool' : language === 'zh-CN' ? '返回进阶人才库' : '返回進階人才庫',
     addToFavorites: language === 'en' ? 'Add to Favorites' : language === 'zh-CN' ? '添加收藏' : '添加收藏',
     removeFromFavorites: language === 'en' ? 'Remove from Favorites' : language === 'zh-CN' ? '取消收藏' : '取消收藏',
     inviteToProject: language === 'en' ? 'Invite to Project' : language === 'zh-CN' ? '邀请参与项目' : '邀請參與專案',

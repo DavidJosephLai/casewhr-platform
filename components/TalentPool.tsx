@@ -82,7 +82,7 @@ export default function TalentPool() {
     title: language === 'en' ? 'Advanced Talent Search' : language === 'zh-CN' ? '进阶人才搜索' : '進階人才搜尋',
     subtitle: language === 'en' ? 'Find, filter, and recruit the perfect freelancer with powerful search tools' : language === 'zh-CN' ? '用强大的搜索工具查找、筛选和招募完美的自由职业者' : '使用強大的搜尋工具查找、篩選和招募完美的接案者',
     search: language === 'en' ? 'Search by name, skills, or keywords...' : language === 'zh-CN' ? '按姓名、技能或关键词搜索...' : '按姓名、技能或關鍵字搜尋...',
-    filters: language === 'en' ? 'Filters' : language === 'zh-CN' ? '筛选' : '篩選',
+    filters: language === 'en' ? 'Filters' : language === 'zh-CN' ? '筛���' : '篩選',
     skills: language === 'en' ? 'Skills' : language === 'zh-CN' ? '技能' : '技能',
     rating: language === 'en' ? 'Minimum Rating' : language === 'zh-CN' ? '最低评分' : '最低評分',
     priceRange: language === 'en' ? 'Hourly Rate Range' : language === 'zh-CN' ? '时薪范围' : '時薪範圍',
@@ -112,7 +112,7 @@ export default function TalentPool() {
     exportResults: language === 'en' ? 'Export Results' : language === 'zh-CN' ? '导出结果' : '匯出結果',
     clearFilters: language === 'en' ? 'Clear All' : language === 'zh-CN' ? '清除全部' : '清除全部',
     noResults: language === 'en' ? 'No freelancers match your criteria' : language === 'zh-CN' ? '没有符合条件的自由职业者' : '沒有符合條件的接案者',
-    loading: language === 'en' ? 'Loading talent pool...' : language === 'zh-CN' ? '加载人才库中...' : '載入人才庫中...',
+    loading: language === 'en' ? 'Loading advanced talent pool...' : language === 'zh-CN' ? '加载进阶人才库中...' : '載入進階人才庫中...',
     inviteToProject: language === 'en' ? 'Invite to Project' : language === 'zh-CN' ? '邀请参与项目' : '邀請參與專案',
     selectProject: language === 'en' ? 'Select a project to invite this freelancer' : language === 'zh-CN' ? '选择一个项目邀请此自由职业者' : '選擇一個專案邀請此接案者',
     noProjects: language === 'en' ? 'You have no active projects' : language === 'zh-CN' ? '您没有活跃的项目' : '您沒有活躍的專案',
@@ -160,7 +160,7 @@ export default function TalentPool() {
           review_count: profile.review_count || 0,
           completed_projects: profile.completed_projects || 0,
           portfolio_count: profile.portfolio_count || 0, // 🔥 添加作品集數量
-          is_favorite: false, // 🔥 稍後會更新
+          is_favorite: false, // 🔥 稍後��更新
           created_at: profile.created_at,
         }));
 
@@ -241,6 +241,8 @@ export default function TalentPool() {
 
   // 🎯 邀請功能
   const openInviteModal = async (freelancer: Freelancer) => {
+    console.log('🎯🎯🎯 [TalentPool] openInviteModal called!', freelancer);
+    
     if (!accessToken) {
       toast.error(language === 'en' ? 'Please login first' : '請先登入');
       return;
@@ -250,6 +252,7 @@ export default function TalentPool() {
 
     // Load user's projects
     try {
+      console.log('📡 [TalentPool] Loading projects...');
       const response = await fetch(
         `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/projects/my`,
         {
@@ -261,12 +264,14 @@ export default function TalentPool() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('✅ [TalentPool] Projects loaded:', data.projects);
         const activeProjects = data.projects.filter((p: any) => p.status === 'open');
+        console.log('✅ [TalentPool] Active projects:', activeProjects.length);
         setMyProjects(activeProjects);
         setShowInviteModal(true);
       }
     } catch (error) {
-      console.error('Error loading projects:', error);
+      console.error('❌ [TalentPool] Error loading projects:', error);
       toast.error(language === 'en' ? 'Failed to load projects' : '載入專案失敗');
     }
   };
@@ -778,8 +783,12 @@ export default function TalentPool() {
                             <Send className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => openInviteModal(freelancer)}
+                            onClick={() => {
+                              console.log('📩 [TalentPool] Mail button clicked for:', freelancer.name);
+                              openInviteModal(freelancer);
+                            }}
                             className="px-4 py-2 border border-purple-600 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                            title={t.inviteToProject}
                           >
                             <Mail className="w-4 h-4" />
                           </button>
@@ -953,7 +962,7 @@ export default function TalentPool() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold">{t.contact} {inviteFreelancer.name}</h3>
+              <h3 className="text-xl font-bold">{t.inviteToProject} - {inviteFreelancer.name}</h3>
               <button
                 onClick={() => setShowInviteModal(false)}
                 className="p-2 hover:bg-gray-100 rounded-full"
@@ -963,36 +972,52 @@ export default function TalentPool() {
             </div>
 
             <div className="space-y-4">
-              <p className="text-gray-600">{t.selectProject}:</p>
-              <select
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              >
-                {myProjects.map(project => (
-                  <option key={project.id} value={project.id}>
-                    {project.title}
-                  </option>
-                ))}
-              </select>
+              <p className="text-gray-600">{t.selectProject}</p>
+              
+              {myProjects.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  {t.noProjects}
+                </div>
+              ) : (
+                <select
+                  id="project-select"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  {myProjects.map(project => (
+                    <option key={project.id} value={project.id}>
+                      {project.title}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-end gap-2 mt-6">
               <button
                 onClick={() => setShowInviteModal(false)}
                 className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg"
               >
                 {t.cancel}
               </button>
-              <button
-                onClick={async () => {
-                  const selectedProjectId = (document.querySelector('select') as HTMLSelectElement)?.value;
-                  if (!selectedProjectId) return;
+              {myProjects.length > 0 && (
+                <button
+                  onClick={async () => {
+                    const selectElement = document.getElementById('project-select') as HTMLSelectElement;
+                    const selectedProjectId = selectElement?.value;
+                    console.log('🎯 [TalentPool] Selected project ID:', selectedProjectId);
+                    
+                    if (!selectedProjectId) {
+                      toast.error(language === 'en' ? 'Please select a project' : '請選擇專案');
+                      return;
+                    }
 
-                  await sendInvite(selectedProjectId);
-                }}
-                className="ml-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium text-sm transition-colors"
-              >
-                {t.send}
-              </button>
+                    await sendInvite(selectedProjectId);
+                  }}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  {t.send}
+                </button>
+              )}
             </div>
           </div>
         </div>

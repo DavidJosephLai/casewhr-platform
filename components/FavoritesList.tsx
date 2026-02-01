@@ -127,7 +127,7 @@ export function FavoritesList() {
     title: language === 'en' ? 'My Favorites' : language === 'zh-CN' ? '我的收藏' : '我的收藏',
     subtitle: language === 'en' ? 'Freelancers you have favorited' : language === 'zh-CN' ? '您收藏的自由职业者' : '您收藏的接案者',
     noFavorites: language === 'en' ? 'No favorites yet' : language === 'zh-CN' ? '暂无收藏' : '暫無收藏',
-    browseTalent: language === 'en' ? 'Browse Talent Pool' : language === 'zh-CN' ? '浏览人才库' : '瀏覽人才庫',
+    browseTalent: language === 'en' ? 'Browse Advanced Talent Pool' : language === 'zh-CN' ? '浏览进阶人才库' : '瀏覽進階人才庫',
     viewProfile: language === 'en' ? 'View Profile' : language === 'zh-CN' ? '查看档案' : '查看檔案',
     remove: language === 'en' ? 'Remove' : language === 'zh-CN' ? '移除' : '移除',
   };

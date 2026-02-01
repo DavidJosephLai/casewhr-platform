@@ -296,7 +296,7 @@ export function Header() {
                 className="text-[#111827] hover:text-blue-600 transition-colors flex items-center gap-2 font-medium"
               >
                 <Users className="h-4 w-4" />
-                {language === 'en' ? 'Talent Pool' : language === 'zh-CN' ? '人才库' : '人才庫'}
+                {language === 'en' ? 'Advanced Talent Pool' : language === 'zh-CN' ? '进阶人才库' : '進階人才庫'}
               </button>
               <button onClick={() => scrollToSection('projects')} className="text-[#111827] hover:text-blue-600 transition-colors font-medium">
                 {language === 'en' ? 'Browse Posted Projects' : '瀏覽發案項目'}
@@ -399,7 +399,7 @@ export function Header() {
                       variant="ghost"
                       size="sm"
                       onClick={() => {
-                        // 🔥 企業版用戶點擊徽章時，顯示企業聊天而不是方案頁面
+                        // ���� 企業版用戶點擊徽章時，顯示企業聊天而不是方案頁面
                         if (limits.plan === 'enterprise') {
                           window.dispatchEvent(new CustomEvent('showDashboard', { detail: { tab: 'enterprise-chat' } }));
                         } else {
