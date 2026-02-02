@@ -119,84 +119,71 @@ export default function TalentPool() {
   };
 
   useEffect(() => {
-    loadFreelancers();
-  }, []);
+    let isCancelled = false;
+    
+    const load = async () => {
+      try {
+        setLoading(true);
+        const headers: Record<string, string> = {
+          'Authorization': `Bearer ${accessToken || publicAnonKey}`
+        };
 
-  const loadFreelancers = async () => {
-    try {
-      setLoading(true);
-      const headers: Record<string, string> = {
-        'Authorization': `Bearer ${accessToken || publicAnonKey}`
-      };
+        // 🔥 使用與 TalentDirectory 相同的 API 端點
+        const response = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/profiles/freelancers`,
+          { headers }
+        );
 
-      // 🔥 使用與 TalentDirectory 相同的 API 端點
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/profiles/freelancers`,
-        { headers }
-      );
+        if (!isCancelled && response.ok) {
+          const data = await response.json();
+          console.log('✅ [TalentPool] Loaded profiles:', data.profiles?.length);
+          
+          // 🔄 轉換資料格式以符合 Freelancer 介面
+          const freelancerData = (data.profiles || []).map((profile: any) => ({
+            id: profile.user_id || profile.id,
+            email: profile.email,
+            name: profile.full_name || profile.name || profile.email?.split('@')[0],
+            avatar: profile.avatar_url,
+            title: profile.job_title || profile.title,
+            bio: profile.bio,
+            skills: profile.skills || [],
+            hourly_rate_min: profile.hourly_rate_min,
+            hourly_rate_max: profile.hourly_rate_max,
+            currency: profile.currency || 'TWD',
+            location: profile.location,
+            rating: profile.rating || 0,
+            review_count: profile.review_count || 0,
+            completed_projects: profile.completed_projects || 0,
+            portfolio_count: profile.portfolio_count || 0,
+            is_favorite: profile.is_favorite || false,
+            availability: profile.availability,
+            response_time: profile.response_time,
+            languages: profile.languages || [],
+            experience_years: profile.experience_years,
+            created_at: profile.created_at
+          }));
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ [TalentPool] Loaded profiles:', data.profiles?.length);
-        
-        // 🔄 轉換資料格式以符合 Freelancer 介面
-        const freelancerData = (data.profiles || []).map((profile: any) => ({
-          id: profile.user_id || profile.id,
-          email: profile.email,
-          name: profile.full_name || profile.name || profile.email?.split('@')[0],
-          avatar: profile.avatar_url,
-          title: profile.job_title || profile.title,
-          bio: profile.bio,
-          skills: Array.isArray(profile.skills) 
-            ? profile.skills 
-            : typeof profile.skills === 'string' 
-              ? profile.skills.split(',').map((s: string) => s.trim())
-              : [],
-          hourly_rate_min: profile.hourly_rate_min,
-          hourly_rate_max: profile.hourly_rate_max,
-          currency: profile.currency || 'TWD',
-          location: profile.location,
-          rating: profile.rating,
-          review_count: profile.review_count || 0,
-          completed_projects: profile.completed_projects || 0,
-          portfolio_count: profile.portfolio_count || 0, // 🔥 添加作品集數量
-          is_favorite: false, // 🔥 稍後更新
-          created_at: profile.created_at,
-        }));
-
-        console.log('✅ [TalentPool] Converted freelancers:', freelancerData.length);
-        console.log('✅ [TalentPool] Sample names:', freelancerData.slice(0, 5).map((f: any) => f.name));
-        
-        // 🔥 如果用戶已登入，載入收藏狀態
-        if (accessToken && accessToken !== publicAnonKey) {
-          try {
-            const favResponse = await fetch(
-              `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/favorites/list`,
-              { headers: { 'Authorization': `Bearer ${accessToken}` } }
-            );
-            
-            if (favResponse.ok) {
-              const { favorites } = await favResponse.json();
-              const favoriteIds = new Set(favorites || []);
-              
-              // 更新收藏狀態
-              freelancerData.forEach((f: any) => {
-                f.is_favorite = favoriteIds.has(f.id);
-              });
-            }
-          } catch (error) {
-            console.log('⚠️ [TalentPool] Could not load favorites:', error);
-          }
+          setFreelancers(freelancerData);
         }
-        
-        setFreelancers(freelancerData);
+      } catch (error) {
+        if (!isCancelled) {
+          console.error('Error loading freelancers:', error);
+          toast.error(language === 'en' ? 'Failed to load freelancers' : '載入接案者失敗');
+        }
+      } finally {
+        if (!isCancelled) {
+          setLoading(false);
+        }
       }
-    } catch (error) {
-      console.error('❌ [TalentPool] Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    load();
+
+    return () => {
+      isCancelled = true;
+      console.log('🧹 [TalentPool] Component unmounting, cleaning up');
+    };
+  }, []);
 
   const toggleFavorite = async (freelancerId: string) => {
     const freelancer = freelancers.find(f => f.id === freelancerId);
@@ -881,12 +868,24 @@ export default function TalentPool() {
 
       {/* 聯繫對話框 */}
       {showContactModal && selectedFreelancer && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={(e) => {
+            // 點擊背景關閉模態框
+            if (e.target === e.currentTarget) {
+              setShowContactModal(false);
+            }
+          }}
+        >
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold">{t.contact} {selectedFreelancer.name}</h3>
               <button
-                onClick={() => setShowContactModal(false)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowContactModal(false);
+                }}
                 className="p-2 hover:bg-gray-100 rounded-full"
               >
                 <X className="w-5 h-5 text-gray-500" />
