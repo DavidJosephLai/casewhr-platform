@@ -780,6 +780,11 @@ export default function TalentPool() {
                           </button>
                           <button
                             onClick={() => {
+                              // 檢查是否已登入
+                              if (!accessToken) {
+                                toast.error(t.loginRequired);
+                                return;
+                              }
                               setSelectedFreelancer(freelancer);
                               setShowContactModal(true);
                             }}
@@ -789,6 +794,11 @@ export default function TalentPool() {
                           </button>
                           <button
                             onClick={() => {
+                              // 檢查是否已登入
+                              if (!accessToken) {
+                                toast.error(t.loginRequired);
+                                return;
+                              }
                               console.log('📩 [TalentPool] Mail button clicked for:', freelancer.name);
                               openInviteModal(freelancer);
                             }}

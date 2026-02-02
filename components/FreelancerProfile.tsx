@@ -344,13 +344,19 @@ export default function FreelancerProfile() {
                   {profile.is_favorite ? t.removeFromFavorites : t.addToFavorites}
                 </button>
 
-                <a
-                  href={`mailto:${profile.email}`}
+                <button
+                  onClick={() => {
+                    if (!accessToken) {
+                      toast.error(language === 'en' ? 'Please login first' : '請先登入');
+                      return;
+                    }
+                    window.location.href = `mailto:${profile.email}`;
+                  }}
                   className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <Mail className="w-5 h-5" />
                   {t.contactFreelancer}
-                </a>
+                </button>
               </div>
 
               {/* Stats */}
