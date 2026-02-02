@@ -164,11 +164,49 @@ function AppContent() {
   // 將語言轉換為 AIChatbot 支持的格式
   const chatbotLanguage = language === 'zh' ? 'zh-TW' : language as 'en' | 'zh-TW' | 'zh-CN';
   
+  // 🛡️ 全局頁面卸載處理 - 防止 beforeunload 時的 DOM 操作錯誤
+  useEffect(() => {
+    let isUnloading = false;
+
+    const handleBeforeUnload = () => {
+      console.log('🧹 [App] Page is unloading, cleaning up...');
+      isUnloading = true;
+      
+      // 清除所有 toast 通知
+      try {
+        const toastElements = document.querySelectorAll('[data-sonner-toast]');
+        toastElements.forEach(el => {
+          try {
+            el.remove();
+          } catch (e) {
+            // 忽略錯誤
+          }
+        });
+      } catch (e) {
+        // 忽略錯誤
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        console.log('🧹 [App] Page is hidden, preparing for potential unload...');
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+  
   // 🔧 註冊 Service Worker (性能優化)
   useEffect(() => {
     // autoRegisterServiceWorker();
     
-    // ⚡ 啟動性能監
+    // ⚡ 啟動性能監控
     // startPerformanceMonitoring();
     
     // 監聽 Service Worker 更新
@@ -177,7 +215,7 @@ function AppContent() {
       toast.info(
         language === 'en'
           ? '🆕 New version available! Refresh to update.'
-          : ' 發現新版本！請刷新頁面更新。',
+          : '🆕 發現新版本！請刷新頁面更新。',
         { 
           duration: 10000,
           action: {
