@@ -51,6 +51,18 @@ window.addEventListener('error', (event) => {
     
     event.preventDefault();
   }
+  
+  // 🛡️ Catch and suppress removeChild errors (DOM cleanup race conditions)
+  if (
+    event.message?.includes('removeChild') ||
+    event.message?.includes('NotFoundError') ||
+    event.error?.name === 'NotFoundError'
+  ) {
+    console.warn('⚠️ [App] Suppressed DOM cleanup error (race condition):', event.message);
+    event.preventDefault();
+    event.stopPropagation();
+    return false;
+  }
 });
 
 // ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
@@ -342,7 +354,7 @@ function AppContent() {
       return;
     }
     
-    // 📝 檢查是否是 Blog 後台管理頁面
+    // 📝 ��查是否是 Blog 後台管理頁面
     if (urlPath === '/blog/admin') {
       console.log('🔧 [App] Blog admin page detected');
       
