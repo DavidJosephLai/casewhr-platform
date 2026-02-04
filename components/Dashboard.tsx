@@ -164,13 +164,32 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
         if (response.ok) {
           const projectData = await response.json();
           console.log('✅ [Dashboard] Fetched project from API:', projectData);
-          setSelectedProject(projectData);
+          // 🔥 FIX: API 返回 { project: {...} }，需要提取 project 屬性
+          const project = projectData.project || projectData;
+          setSelectedProject(project);
           setProjectDialogOpen(true);
         } else {
-          console.error('❌ [Dashboard] Failed to fetch project from API');
+          const errorText = await response.text();
+          console.error('❌ [Dashboard] Failed to fetch project from API:', response.status, errorText);
+          // ❌ 顯示錯誤提示
+          import('sonner').then(({ toast }) => {
+            toast.error(
+              language === 'en' 
+                ? `Failed to load project (${response.status})` 
+                : `載入專案失敗 (${response.status})`
+            );
+          });
         }
       } catch (error) {
         console.error('❌ [Dashboard] Error fetching project:', error);
+        // ❌ 顯示錯誤提示
+        import('sonner').then(({ toast }) => {
+          toast.error(
+            language === 'en' 
+              ? 'Network error while loading project' 
+              : '載入專案時發生網路錯誤'
+          );
+        });
       }
     };
 
