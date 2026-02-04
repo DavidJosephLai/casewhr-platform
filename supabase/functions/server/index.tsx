@@ -23228,6 +23228,49 @@ app.post("/make-server-215f78a5/invitations/:id/respond", async (c) => {
     invitation.responded_at = new Date().toISOString();
     await kv.set(`invitation:${invitationId}`, invitation);
 
+    // 🔔 發送通知給發案者
+    try {
+      const freelancerProfile = await kv.get(`profile_${user.id}`) || {};
+      const freelancerName = freelancerProfile.display_name || freelancerProfile.full_name || user.email;
+      const project = await kv.get(`project:${invitation.project_id}`) || {};
+      
+      const notificationId = `notification:${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const notification = {
+        id: notificationId,
+        user_id: invitation.client_id, // 發送給發案者
+        type: 'invitation_response',
+        title: action === 'accept' 
+          ? `${freelancerName} accepted your invitation` 
+          : `${freelancerName} declined your invitation`,
+        message: action === 'accept'
+          ? `${freelancerName} has accepted your invitation for project "${project.title}"`
+          : `${freelancerName} has declined your invitation for project "${project.title}"`,
+        data: {
+          invitation_id: invitationId,
+          project_id: invitation.project_id,
+          project_title: project.title,
+          freelancer_id: user.id,
+          freelancer_name: freelancerName,
+          action: action,
+        },
+        read: false,
+        created_at: new Date().toISOString(),
+      };
+
+      await kv.set(notificationId, notification);
+
+      // 將通知 ID 添加到發案者的通知列表
+      const clientNotificationsKey = `notifications:${invitation.client_id}`;
+      const clientNotifications = await kv.get(clientNotificationsKey) || [];
+      clientNotifications.unshift(notificationId);
+      await kv.set(clientNotificationsKey, clientNotifications);
+
+      console.log(`✅ [Invitation] Notification sent to client ${invitation.client_id}`);
+    } catch (notifError) {
+      console.error('❌ [Invitation] Failed to send notification:', notifError);
+      // 不阻擋主流程
+    }
+
     // 如果接受邀請，可以自動創建提案或跳轉到提案頁面
     // 這裡先簡單記錄狀態
 
@@ -23237,6 +23280,77 @@ app.post("/make-server-215f78a5/invitations/:id/respond", async (c) => {
   } catch (error) {
     console.error('❌ [Invitation] Error responding:', error);
     return c.json({ error: 'Failed to respond to invitation' }, 500);
+  }
+});
+
+// 🔔 獲取用戶發送的所有邀請（發案者查看）
+app.get("/make-server-215f78a5/invitations/sent", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    
+    if (!user?.id || authError) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    // 從 KV 獲取所有邀請
+    const allInvitations = (await kv.getByPrefix('invitation:') || [])
+      .map(item => item.value)
+      .filter((inv: any) => inv.client_id === user.id); // 只返回當前用戶發送的邀請
+
+    console.log(`📬 [Invitations] Found ${allInvitations.length} sent invitations for user ${user.id}`);
+
+    // 豐富邀請數據：添加接案者和專案信息
+    const enrichedInvitations = await Promise.all(
+      allInvitations.map(async (inv: any) => {
+        try {
+          // 獲取專案信息
+          const project = await kv.get(`project:${inv.project_id}`) || {};
+          
+          // 獲取接案者信息
+          const freelancerProfile = await kv.get(`profile_${inv.freelancer_id}`) || {};
+          
+          return {
+            invitation_id: inv.invitation_id,
+            project_id: inv.project_id,
+            project_title: project.title || 'Unknown Project',
+            freelancer_id: inv.freelancer_id,
+            freelancer_name: freelancerProfile.display_name || freelancerProfile.full_name || 'Unknown',
+            freelancer_email: inv.freelancer_email,
+            status: inv.status || 'pending',
+            created_at: inv.created_at,
+            responded_at: inv.responded_at,
+            message: inv.message,
+          };
+        } catch (error) {
+          console.error('❌ [Invitations] Error enriching invitation:', error);
+          return {
+            invitation_id: inv.invitation_id,
+            project_id: inv.project_id,
+            project_title: 'Unknown Project',
+            freelancer_id: inv.freelancer_id,
+            freelancer_name: 'Unknown',
+            freelancer_email: inv.freelancer_email,
+            status: inv.status || 'pending',
+            created_at: inv.created_at,
+            responded_at: inv.responded_at,
+            message: inv.message,
+          };
+        }
+      })
+    );
+
+    // 按創建時間倒序排列
+    enrichedInvitations.sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+
+    console.log(`✅ [Invitations] Returning ${enrichedInvitations.length} enriched invitations`);
+    return c.json({ invitations: enrichedInvitations });
+
+  } catch (error) {
+    console.error('❌ [Invitations] Error fetching sent invitations:', error);
+    return c.json({ error: 'Failed to fetch sent invitations' }, 500);
   }
 });
 

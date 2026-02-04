@@ -1,4 +1,5 @@
 import { InvitationNotifications } from './InvitationNotifications';
+import { SentInvitations } from './SentInvitations';
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -653,6 +654,11 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
                 <InvitationNotifications />
               </CardContent>
             </Card>
+          )}
+          
+          {/* 📤 我發送的邀請 - 僅對發案者顯示 */}
+          {isClient && (
+            <SentInvitations />
           )}
           
           <MembershipCard />
