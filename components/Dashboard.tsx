@@ -34,6 +34,7 @@ import { TeamManagement } from './TeamManagement';
 import { TransactionStats } from './TransactionStats';
 import { DiagnosticPanel } from './DiagnosticPanel';
 import { ProjectList } from './ProjectList';
+import { ProjectDialog } from './ProjectDialog'; // 🎯 添加 ProjectDialog 導入
 import { Wallet } from './Wallet';
 import { WithdrawalRequest } from './WithdrawalRequest';
 import { WithdrawalHistory } from './WithdrawalHistory';
@@ -89,6 +90,10 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
     acceptedProposals: 0,  // ✅ Add missing property
   });
   const [loading, setLoading] = useState(true);
+  
+  // 🎯 專案詳情對話框狀態
+  const [selectedProject, setSelectedProject] = useState<any | null>(null);
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
 
   // ✅ Memoize role checks
   const isClient = useMemo(() => {
@@ -132,14 +137,53 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
       }
     };
 
+    // 🎯 監聽打開專案詳情事件
+    const handleOpenProjectDetail = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const targetProjectId = customEvent.detail?.projectId;
+      
+      console.log('🎯 [Dashboard] Received openProjectDetail event for projectId:', targetProjectId);
+      
+      if (!targetProjectId) {
+        console.warn('⚠️ [Dashboard] No projectId in event detail');
+        return;
+      }
+
+      // 從 API 獲取專案詳情
+      try {
+        console.log('🔍 [Dashboard] Fetching project from API...');
+        const response = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/projects/${targetProjectId}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken || publicAnonKey}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const projectData = await response.json();
+          console.log('✅ [Dashboard] Fetched project from API:', projectData);
+          setSelectedProject(projectData);
+          setProjectDialogOpen(true);
+        } else {
+          console.error('❌ [Dashboard] Failed to fetch project from API');
+        }
+      } catch (error) {
+        console.error('❌ [Dashboard] Error fetching project:', error);
+      }
+    };
+
     window.addEventListener('openPostProject', handleOpenPostProject as EventListener);
     window.addEventListener('showDashboard', handleShowDashboard as EventListener);
+    window.addEventListener('openProjectDetail', handleOpenProjectDetail as EventListener);
 
     return () => {
       window.removeEventListener('openPostProject', handleOpenPostProject as EventListener);
       window.removeEventListener('showDashboard', handleShowDashboard as EventListener);
+      window.removeEventListener('openProjectDetail', handleOpenProjectDetail as EventListener);
     };
-  }, []);
+  }, [accessToken]);
 
   useEffect(() => {
     if (initialTab) {
@@ -791,6 +835,13 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
         open={showPostDialog}
         onOpenChange={setShowPostDialog}
         onSuccess={handleProjectSubmitted}
+      />
+      
+      {/* 🔥 專案詳情對話框 */}
+      <ProjectDialog
+        open={projectDialogOpen}
+        onOpenChange={setProjectDialogOpen}
+        project={selectedProject}
       />
     </div>
   );

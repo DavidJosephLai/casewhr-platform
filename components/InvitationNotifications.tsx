@@ -3,7 +3,7 @@ import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useView } from '../contexts/ViewContext';
 import { projectId } from '../utils/supabase/info';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 import { Bell, Check, X, Briefcase, Calendar, User, Loader2, Eye } from 'lucide-react';
 
 interface Notification {
