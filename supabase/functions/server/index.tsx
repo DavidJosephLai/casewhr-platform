@@ -23307,16 +23307,49 @@ app.get("/make-server-215f78a5/invitations/sent", async (c) => {
           // 獲取專案信息
           const project = await kv.get(`project:${inv.project_id}`) || {};
           
-          // 獲取接案者信息
-          const freelancerProfile = await kv.get(`profile_${inv.freelancer_id}`) || {};
+          // 🔧 優先從 invitation 中獲取 freelancer_email，然後嘗試從多個來源獲取個人資料
+          let freelancerName = 'Unknown';
+          let freelancerEmail = inv.freelancer_email || 'unknown@example.com';
+          
+          // 方法 1: 嘗試從 KV 獲取個人資料 (profile_userId)
+          const freelancerProfile = await kv.get(`profile_${inv.freelancer_id}`) || null;
+          if (freelancerProfile) {
+            freelancerName = freelancerProfile.display_name || freelancerProfile.full_name || freelancerName;
+            freelancerEmail = freelancerProfile.email || freelancerEmail;
+            console.log(`✅ [Invitations] Found profile from KV for ${inv.freelancer_id}:`, freelancerName);
+          } else {
+            console.log(`⚠️ [Invitations] No profile in KV for ${inv.freelancer_id}, trying auth API`);
+            
+            // 方法 2: 使用 Supabase Admin API 獲取用戶信息
+            try {
+              const { data: userData, error: userError } = await supabase.auth.admin.getUserById(inv.freelancer_id);
+              if (userData?.user && !userError) {
+                freelancerEmail = userData.user.email || freelancerEmail;
+                freelancerName = userData.user.user_metadata?.display_name || 
+                                userData.user.user_metadata?.full_name || 
+                                userData.user.email?.split('@')[0] || 
+                                'Unknown';
+                console.log(`✅ [Invitations] Found user from Auth API for ${inv.freelancer_id}:`, freelancerName);
+              } else {
+                console.log(`⚠️ [Invitations] Auth API failed for ${inv.freelancer_id}:`, userError?.message);
+              }
+            } catch (authError) {
+              console.error(`❌ [Invitations] Auth API error for ${inv.freelancer_id}:`, authError);
+            }
+          }
+          
+          // 如果還是沒有名字，使用 email 的前綴
+          if (freelancerName === 'Unknown' && freelancerEmail !== 'unknown@example.com') {
+            freelancerName = freelancerEmail.split('@')[0];
+          }
           
           return {
             invitation_id: inv.invitation_id,
             project_id: inv.project_id,
             project_title: project.title || 'Unknown Project',
             freelancer_id: inv.freelancer_id,
-            freelancer_name: freelancerProfile.display_name || freelancerProfile.full_name || 'Unknown',
-            freelancer_email: inv.freelancer_email,
+            freelancer_name: freelancerName,
+            freelancer_email: freelancerEmail,
             status: inv.status || 'pending',
             created_at: inv.created_at,
             responded_at: inv.responded_at,
@@ -23329,8 +23362,8 @@ app.get("/make-server-215f78a5/invitations/sent", async (c) => {
             project_id: inv.project_id,
             project_title: 'Unknown Project',
             freelancer_id: inv.freelancer_id,
-            freelancer_name: 'Unknown',
-            freelancer_email: inv.freelancer_email,
+            freelancer_name: inv.freelancer_email?.split('@')[0] || 'Unknown',
+            freelancer_email: inv.freelancer_email || 'unknown@example.com',
             status: inv.status || 'pending',
             created_at: inv.created_at,
             responded_at: inv.responded_at,
