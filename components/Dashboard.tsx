@@ -656,10 +656,8 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
             </Card>
           )}
           
-          {/* 📤 我發送的邀請 - 僅對發案者顯示 */}
-          {isClient && (
-            <SentInvitations />
-          )}
+          {/* 📤 我發送的邀請 - 對所有用戶顯示（如果有發送邀請的話） */}
+          <SentInvitations />
           
           <MembershipCard />
           
