@@ -198,8 +198,63 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
 
   useEffect(() => {
     loadProjects();
-  }, [loadProjects, refreshKey]); // ✅ Use loadProjects in dependency
-  
+  }, [loadProjects]);
+
+  // 🎯 監聽從 InvitationNotifications 觸發的打開專案詳情事件
+  useEffect(() => {
+    const handleOpenProjectDetail = async (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const targetProjectId = customEvent.detail?.projectId;
+      
+      console.log('🎯 [ProjectList] Received openProjectDetail event for projectId:', targetProjectId);
+      
+      if (!targetProjectId) {
+        console.warn('⚠️ [ProjectList] No projectId in event detail');
+        return;
+      }
+
+      // 查找專案
+      const project = projects.find(p => p.id === targetProjectId);
+      
+      if (project) {
+        console.log('✅ [ProjectList] Found project in current list, opening dialog');
+        handleViewProject(project);
+      } else {
+        console.log('🔍 [ProjectList] Project not in current list, fetching from API...');
+        
+        // 如果專案不在當前列表中，從 API 獲取
+        try {
+          const response = await fetch(
+            `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/projects/${targetProjectId}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${accessToken || publicAnonKey}`,
+              },
+            }
+          );
+
+          if (response.ok) {
+            const projectData = await response.json();
+            console.log('✅ [ProjectList] Fetched project from API:', projectData);
+            handleViewProject(projectData);
+          } else {
+            console.error('❌ [ProjectList] Failed to fetch project from API');
+            toast.error(language === 'en' ? 'Failed to load project' : '載入專案失敗');
+          }
+        } catch (error) {
+          console.error('❌ [ProjectList] Error fetching project:', error);
+          toast.error(language === 'en' ? 'Failed to load project' : '載入專案失敗');
+        }
+      }
+    };
+
+    window.addEventListener('openProjectDetail', handleOpenProjectDetail);
+
+    return () => {
+      window.removeEventListener('openProjectDetail', handleOpenProjectDetail);
+    };
+  }, [projects, accessToken, language]);
+
   // 🌟 獲取企業版 LOGO
   useEffect(() => {
     if (projects.length === 0) return;

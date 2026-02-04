@@ -163,9 +163,11 @@ export function InvitationNotifications({ onUnreadCountChange }: InvitationNotif
     // 標記為已讀
     markAsRead(notificationId);
     
-    // 跳轉到項目詳情
-    sessionStorage.setItem('selected_project_id', projectId);
-    setView('project-detail');
+    // 🔥 FIX: 觸發打開專案詳情對話框的事件，而不是切換 view
+    console.log('🎯 [InvitationNotifications] Opening project detail for:', projectId);
+    window.dispatchEvent(new CustomEvent('openProjectDetail', { 
+      detail: { projectId } 
+    }));
   };
 
   const t = {
