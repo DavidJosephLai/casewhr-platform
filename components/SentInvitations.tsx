@@ -347,8 +347,12 @@ export function SentInvitations() {
                         size="sm"
                         className="bg-green-600 hover:bg-green-700 whitespace-nowrap"
                         onClick={() => {
-                          // TODO: Navigate to freelancer profile or proposals
-                          toast.info('View proposal feature coming soon');
+                          // 🔥 跳轉到接案者的個人資料頁面
+                          window.dispatchEvent(
+                            new CustomEvent('navigate-to-freelancer-profile', {
+                              detail: { freelancerId: invitation.freelancer_id }
+                            })
+                          );
                         }}
                       >
                         <User className="w-3 h-3 mr-1" />

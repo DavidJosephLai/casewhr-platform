@@ -65,7 +65,7 @@ window.addEventListener('error', (event) => {
   }
 });
 
-// ⚡ 首頁組件 - 直接導入（不使用 lazy）以提升首屏性能
+// ⚡ 首頁組件 - 直接��入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
 import { Services } from './components/Services';
 import { MilestoneFeature } from './components/MilestoneFeature';
@@ -263,7 +263,7 @@ function AppContent() {
     }
   }, [user]);
   
-  // 🔥 NEW: 監聽自定義航（例從錢包餘額不足對話框觸發）
+  // 🔥 NEW: 監聽自定義導航（例如從錢包餘額不足對話框觸發）
   useEffect(() => {
     const handleNavigate = (event: any) => {
       const targetView = event.detail?.view;
@@ -280,6 +280,30 @@ function AppContent() {
     
     return () => {
       window.removeEventListener('navigate', handleNavigate);
+    };
+  }, [setView]);
+  
+  // 🔥 NEW: 監聽跳轉到接案者個人資料頁面
+  useEffect(() => {
+    const handleNavigateToFreelancerProfile = (event: any) => {
+      const freelancerId = event.detail?.freelancerId;
+      console.log('🧭 [App] Navigate to freelancer profile event received:', freelancerId);
+      
+      if (freelancerId) {
+        // 設置接案者 ID 到 sessionStorage
+        sessionStorage.setItem('current_freelancer_id', freelancerId);
+        console.log('✅ [App] Set current_freelancer_id:', freelancerId);
+        
+        // 跳轉到接案者個人資料頁面
+        setView('freelancer-profile');
+        console.log('✅ [App] Navigated to freelancer-profile view');
+      }
+    };
+    
+    window.addEventListener('navigate-to-freelancer-profile', handleNavigateToFreelancerProfile);
+    
+    return () => {
+      window.removeEventListener('navigate-to-freelancer-profile', handleNavigateToFreelancerProfile);
     };
   }, [setView]);
   
@@ -354,7 +378,7 @@ function AppContent() {
       return;
     }
     
-    // 📝 ��查是否是 Blog 後台管理頁面
+    // 📝 查是否是 Blog 後台管理頁面
     if (urlPath === '/blog/admin') {
       console.log('🔧 [App] Blog admin page detected');
       
@@ -677,7 +701,7 @@ function AppContent() {
       <SEO 
         {...getPageSEO(view === 'home' ? 'home' : view, language)}
       />
-      {/* 🌐 多域名 SEO 優化 */}
+      {/* 🌐 ��域名 SEO 優化 */}
       <SEOHead />
       
       {/* ✅ Wismachion 頁面不顯示主站 Header */}
