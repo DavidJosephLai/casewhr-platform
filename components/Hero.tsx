@@ -94,22 +94,36 @@ export function Hero() {
   return (
     <>
       <div className="min-h-[70vh] py-20 relative overflow-hidden">
-        {/* 🎬 背景影片層 - 自動播放循環 */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover z-0"
-        >
-          <source 
-            src="https://bihplitfentxioxyjalb.supabase.co/storage/v1/object/public/Background/7693400-hd_1920_1080_25fps.mp4" 
-            type="video/mp4" 
-          />
-        </video>
-        
-        {/* 半透明深色疊加層讓文字清晰可讀 */}
-        <div className="absolute inset-0 bg-black/50 z-0" />
+        {/* 🎬 背景影片層 - Ken Burns 縮放特效 + 電影級色彩濾鏡 */}
+        <div className="absolute inset-0 w-full h-full z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover animate-ken-burns"
+            style={{
+              filter: 'saturate(1.2) contrast(1.1) brightness(0.9)',
+              transform: 'scale(1.1)',
+            }}
+          >
+            <source 
+              src="https://bihplitfentxioxyjalb.supabase.co/storage/v1/object/public/Background/7693400-hd_1920_1080_25fps.mp4" 
+              type="video/mp4" 
+            />
+          </video>
+          
+          {/* 電影級漸層疊加 - 從深藍到暖色 */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/60 via-purple-900/40 to-orange-900/30 z-[1]" />
+          
+          {/* 深色底層確保文字可讀性 */}
+          <div className="absolute inset-0 bg-black/30 z-[2]" />
+          
+          {/* 電影暗角效果 */}
+          <div className="absolute inset-0 z-[3]" style={{
+            background: 'radial-gradient(ellipse at center, transparent 0%, transparent 40%, rgba(0,0,0,0.4) 100%)'
+          }} />
+        </div>
         
         {/* 內容層 */}
         <div className="container mx-auto px-4 relative z-10">

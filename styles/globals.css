@@ -405,4 +405,27 @@
     margin-bottom: 0.6666667em;
     line-height: 1.3333333;
   }
+
+  /* 🎬 Ken Burns 縮放動畫 - 電影級背景影片特效 */
+  @keyframes ken-burns {
+    0% {
+      transform: scale(1.1) translateX(0) translateY(0);
+    }
+    25% {
+      transform: scale(1.15) translateX(-2%) translateY(-1%);
+    }
+    50% {
+      transform: scale(1.2) translateX(2%) translateY(1%);
+    }
+    75% {
+      transform: scale(1.15) translateX(-1%) translateY(2%);
+    }
+    100% {
+      transform: scale(1.1) translateX(0) translateY(0);
+    }
+  }
+
+  .animate-ken-burns {
+    animation: ken-burns 30s ease-in-out infinite;
+  }
 }
