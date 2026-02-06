@@ -4,6 +4,7 @@ import { Badge } from "./ui/badge";
 import { Card } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Alert, AlertDescription } from "./ui/alert";
 import { useLanguage } from "../lib/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
 import { translations, getTranslation } from "../lib/translations";
@@ -17,12 +18,15 @@ import {
   MessageCircle,
   UserPlus,
   ExternalLink,
-  User
+  User,
+  Crown,
+  Lock
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { ReviewList } from "./rating/ReviewList";
 import { StartMessageDialog } from "./StartMessageDialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { projectId, publicAnonKey } from "../utils/supabase/info";
 
 interface TalentDetailDialogProps {
   open: boolean;
@@ -40,6 +44,7 @@ interface TalentDetailDialogProps {
     website?: string;
     created_at: string;
     avatar_url?: string;
+    subscription_plan?: 'free' | 'pro' | 'enterprise';
   } | null;
 }
 
@@ -49,9 +54,55 @@ export function TalentDetailDialog({
   talent,
 }: TalentDetailDialogProps) {
   const { language } = useLanguage();
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
   const t = getTranslation(language as any).talent.detail;
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
+  const [contactLimit, setContactLimit] = useState<{
+    canContact: boolean;
+    isUnlimited: boolean;
+    contactsThisMonth: number;
+    limit: number;
+  } | null>(null);
+  const [showUpgradeAlert, setShowUpgradeAlert] = useState(false);
+
+  // Check contact limit when dialog opens
+  useEffect(() => {
+    const checkContactLimit = async () => {
+      if (!user || !accessToken || !talent || !open) {
+        return;
+      }
+
+      // Only check if talent is premium (Pro or Enterprise)
+      const isPremiumTalent = talent.subscription_plan === 'pro' || talent.subscription_plan === 'enterprise';
+      
+      if (!isPremiumTalent) {
+        // Not a premium talent, no restrictions
+        setContactLimit({ canContact: true, isUnlimited: true, contactsThisMonth: 0, limit: -1 });
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/premium-contacts/check`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setContactLimit(data);
+          setShowUpgradeAlert(!data.canContact && !data.isUnlimited);
+        }
+      } catch (error) {
+        console.error('Failed to check contact limit:', error);
+      }
+    };
+
+    checkContactLimit();
+  }, [user, accessToken, talent, open]);
 
   if (!talent) return null;
 
@@ -212,25 +263,69 @@ export function TalentDetailDialog({
           </TabsContent>
         </Tabs>
 
+        {/* Premium Contact Limit Warning */}
+        {showUpgradeAlert && (talent.subscription_plan === 'pro' || talent.subscription_plan === 'enterprise') && (
+          <Alert className="bg-amber-50 border-amber-200 mt-4">
+            <Lock className="h-4 w-4 text-amber-600" />
+            <AlertDescription className="text-amber-800">
+              {language === 'en' ? (
+                <>
+                  <strong>Premium Talent Contact Limit Reached</strong>
+                  <br />
+                  You've used your free monthly contact with premium talents. Upgrade to <strong>Pro</strong> or <strong>Enterprise</strong> for unlimited contacts.
+                </>
+              ) : language === 'zh-CN' ? (
+                <>
+                  <strong>进阶人才联络次数已用完</strong>
+                  <br />
+                  您已使用本月免费联络进阶人才的次数。升级至 <strong>Pro</strong> 或 <strong>Enterprise</strong> 方案以解锁无限联络。
+                </>
+              ) : (
+                <>
+                  <strong>進階人才聯絡次數已用完</strong>
+                  <br />
+                  您已使用本月免費聯絡進階人才的次數。升級至 <strong>Pro</strong> 或 <strong>Enterprise</strong> 方案以解鎖無限聯絡。
+                </>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Action Buttons */}
         <div className="flex gap-3 mt-6 pt-6 border-t">
+          {showUpgradeAlert ? (
+            <Button
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+              onClick={() => {
+                onOpenChange(false);
+                setTimeout(() => {
+                  window.dispatchEvent(new CustomEvent('openSubscriptionDialog'));
+                }, 200);
+              }}
+            >
+              <Crown className="h-4 w-4 mr-2" />
+              {language === 'en' ? 'Upgrade to Contact' : language === 'zh-CN' ? '升级以联络' : '升級以聯絡'}
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              className="flex-1 border-blue-600 text-blue-600 hover:bg-blue-50"
+              disabled={contactLimit !== null && !contactLimit.canContact}
+              onClick={() => {
+                if (!user) {
+                  window.dispatchEvent(new CustomEvent('openAuthDialog', { detail: 'login' }));
+                  return;
+                }
+                // Open the message dialog
+                setIsMessageDialogOpen(true);
+              }}
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              {t.contactButton}
+            </Button>
+          )}
           <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => {
-              if (!user) {
-                window.dispatchEvent(new CustomEvent('openAuthDialog', { detail: 'login' }));
-                return;
-              }
-              // Open the message dialog
-              setIsMessageDialogOpen(true);
-            }}
-          >
-            <MessageCircle className="h-4 w-4 mr-2" />
-            {t.contactButton}
-          </Button>
-          <Button
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
             onClick={() => {
               if (!user) {
                 window.dispatchEvent(new CustomEvent('openAuthDialog', { detail: 'login' }));

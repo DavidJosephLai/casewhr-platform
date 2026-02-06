@@ -10367,6 +10367,131 @@ app.post("/make-server-215f78a5/team/send-message", async (c) => {
   }
 });
 
+// ============= PREMIUM TALENT CONTACT LIMITS =============
+
+// Check if user can contact premium talents this month
+app.get("/make-server-215f78a5/premium-contacts/check", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    // Get user profile to check subscription
+    const profile = await kv.get(`profile:${user.id}`);
+    const subscriptionPlan = profile?.subscription_plan || 'free';
+
+    // Pro and Enterprise users have unlimited contacts
+    if (subscriptionPlan === 'pro' || subscriptionPlan === 'enterprise') {
+      return c.json({ 
+        canContact: true,
+        isUnlimited: true,
+        subscriptionPlan,
+        contactsThisMonth: 0,
+        limit: -1
+      });
+    }
+
+    // Free users get 1 contact per month
+    const now = new Date();
+    const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const contactKey = `premium_contact:${user.id}:${yearMonth}`;
+    
+    const contacts = await kv.get(contactKey) || [];
+    const contactCount = Array.isArray(contacts) ? contacts.length : 0;
+
+    return c.json({
+      canContact: contactCount < 1,
+      isUnlimited: false,
+      subscriptionPlan,
+      contactsThisMonth: contactCount,
+      limit: 1
+    });
+  } catch (error) {
+    console.error('❌ [Premium Contacts] Error checking contact limit:', error);
+    return c.json({ error: 'Failed to check contact limit' }, 500);
+  }
+});
+
+// Record a premium talent contact
+app.post("/make-server-215f78a5/premium-contacts/record", async (c) => {
+  try {
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    
+    if (!accessToken) {
+      return c.json({ error: 'Authorization required' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user?.id) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const { talentUserId } = await c.req.json();
+    
+    if (!talentUserId) {
+      return c.json({ error: 'Talent user ID is required' }, 400);
+    }
+
+    // Get user profile to check subscription
+    const profile = await kv.get(`profile:${user.id}`);
+    const subscriptionPlan = profile?.subscription_plan || 'free';
+
+    // Pro and Enterprise users don't need recording (unlimited)
+    if (subscriptionPlan === 'pro' || subscriptionPlan === 'enterprise') {
+      return c.json({ 
+        success: true,
+        message: 'Contact recorded (unlimited)',
+        isUnlimited: true
+      });
+    }
+
+    // Record contact for free users
+    const now = new Date();
+    const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const contactKey = `premium_contact:${user.id}:${yearMonth}`;
+    
+    const contacts = await kv.get(contactKey) || [];
+    const contactArray = Array.isArray(contacts) ? contacts : [];
+    
+    // Check if already at limit
+    if (contactArray.length >= 1) {
+      return c.json({ 
+        error: 'Monthly contact limit reached',
+        contactsThisMonth: contactArray.length,
+        limit: 1
+      }, 403);
+    }
+
+    // Add new contact record
+    contactArray.push({
+      talentUserId,
+      contactedAt: new Date().toISOString(),
+      userEmail: user.email
+    });
+
+    await kv.set(contactKey, contactArray);
+
+    console.log(`✅ [Premium Contacts] Recorded contact: ${user.email} -> ${talentUserId}`);
+
+    return c.json({ 
+      success: true,
+      message: 'Contact recorded successfully',
+      contactsThisMonth: contactArray.length,
+      limit: 1
+    });
+  } catch (error) {
+    console.error('❌ [Premium Contacts] Error recording contact:', error);
+    return c.json({ error: 'Failed to record contact' }, 500);
+  }
+});
+
 // ============= ACCOUNT MANAGER ROUTES (ENTERPRISE) =============
 
 // Get assigned account manager (Enterprise only)
