@@ -722,21 +722,21 @@ export function TalentDirectory() {
               </div>
             </div>
           </div>
-        ) : filteredTalents.length === 0 ? (
+        ) : filteredTalents.length === 0 && hasActiveFilters ? (
           <div className="text-center py-20">
             <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="mb-2 text-gray-900">
-              {hasActiveFilters ? t.empty.title : t.empty.noTalents}
+              {t.empty.title}
             </h3>
             <p className="text-gray-600 mb-6">
-              {hasActiveFilters ? t.empty.description : t.empty.noTalentsDescription}
+              {t.empty.description}
             </p>
-            {hasActiveFilters && (
-              <Button onClick={clearFilters} variant="outline">
-                {t.filters.clear}
-              </Button>
-            )}
+            <Button onClick={clearFilters} variant="outline">
+              {t.filters.clear}
+            </Button>
           </div>
+        ) : filteredTalents.length === 0 ? (
+          <div className="py-20"></div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTalents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((talent, index) => {
