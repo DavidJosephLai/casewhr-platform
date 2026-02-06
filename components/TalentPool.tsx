@@ -73,6 +73,15 @@ export default function TalentPool() {
   const [contactSubject, setContactSubject] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
   
+  // 🔒 進階人才聯絡限制
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [premiumContactLimit, setPremiumContactLimit] = useState<{
+    canContact: boolean;
+    isUnlimited: boolean;
+    contactsThisMonth: number;
+    limit: number;
+  } | null>(null);
+  
   // 🎯 邀請功能狀態
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteFreelancer, setInviteFreelancer] = useState<Freelancer | null>(null);
@@ -766,12 +775,39 @@ export default function TalentPool() {
                             {t.viewProfile}
                           </button>
                           <button
-                            onClick={() => {
+                            onClick={async () => {
                               // 檢查是否已登入
                               if (!accessToken) {
                                 toast.error(t.loginRequired);
                                 return;
                               }
+                              
+                              // 🔒 檢查進階人才聯絡限制
+                              try {
+                                const checkResponse = await fetch(
+                                  `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/premium-contacts/check`,
+                                  {
+                                    headers: {
+                                      'Authorization': `Bearer ${accessToken}`,
+                                    },
+                                  }
+                                );
+                                
+                                if (checkResponse.ok) {
+                                  const limitData = await checkResponse.json();
+                                  
+                                  // 如果無法聯絡且不是無限制用戶，顯示升級對話框
+                                  if (!limitData.canContact && !limitData.isUnlimited) {
+                                    setPremiumContactLimit(limitData);
+                                    setSelectedFreelancer(freelancer);
+                                    setShowUpgradeModal(true);
+                                    return;
+                                  }
+                                }
+                              } catch (error) {
+                                console.error('Error checking contact limit:', error);
+                              }
+                              
                               setSelectedFreelancer(freelancer);
                               setShowContactModal(true);
                             }}
@@ -1032,6 +1068,62 @@ export default function TalentPool() {
                   {t.send}
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🔒 升級對話框 - 進階人才聯絡限制 */}
+      {showUpgradeModal && selectedFreelancer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 mb-4">
+                <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {language === 'en' ? 'Monthly Contact Limit Reached' : language === 'zh-CN' ? '已达每月联络次数上限' : '已達每月聯絡次數上限'}
+              </h3>
+              <p className="text-sm text-gray-600 mb-6">
+                {language === 'en' ? (
+                  <>
+                    You've used your free monthly contact with advanced talents ({premiumContactLimit?.contactsThisMonth || 0}/{premiumContactLimit?.limit || 1}).
+                    <br /><br />
+                    <strong>Upgrade to Pro or Enterprise</strong> for unlimited contacts with all talents!
+                  </>
+                ) : language === 'zh-CN' ? (
+                  <>
+                    您已使用本月免费联络进阶人才的次数 ({premiumContactLimit?.contactsThisMonth || 0}/{premiumContactLimit?.limit || 1})。
+                    <br /><br />
+                    <strong>升级至 Pro 或 Enterprise 方案</strong>以解锁无限联络所有人才！
+                  </>
+                ) : (
+                  <>
+                    您已使用本月免費聯絡進階人才的次數 ({premiumContactLimit?.contactsThisMonth || 0}/{premiumContactLimit?.limit || 1})。
+                    <br /><br />
+                    <strong>升級至 Pro 或 Enterprise 方案</strong>以解鎖無限聯絡所有人才！
+                  </>
+                )}
+              </p>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    setShowUpgradeModal(false);
+                    window.dispatchEvent(new CustomEvent('openSubscriptionDialog'));
+                  }}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  {language === 'en' ? '⭐ Upgrade Now' : language === 'zh-CN' ? '⭐ 立即升级' : '⭐ 立即升級'}
+                </button>
+                <button
+                  onClick={() => setShowUpgradeModal(false)}
+                  className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+                >
+                  {language === 'en' ? 'Maybe Later' : language === 'zh-CN' ? '稍后再说' : '稍後再說'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
