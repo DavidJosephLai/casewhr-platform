@@ -571,7 +571,7 @@ export function TalentDirectory() {
                     <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-56 max-h-80 overflow-y-auto" align="start">
+                <PopoverContent className="w-56 max-h-80 overflow-y-auto bg-white shadow-lg border border-gray-200" align="start">
                   <div className="space-y-2">
                     {/* Select All Option */}
                     <div className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded">
