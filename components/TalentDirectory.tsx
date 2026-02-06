@@ -6,7 +6,6 @@ import { projectId, publicAnonKey } from "../utils/supabase/info";
 import { TalentCard } from "./TalentCard";
 import { TalentDetailDialog } from "./TalentDetailDialog";
 import { DatabaseSetupBanner } from "./DatabaseSetupBanner";
-import { SeedTalentData } from "./SeedTalentData";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -724,28 +723,19 @@ export function TalentDirectory() {
             </div>
           </div>
         ) : filteredTalents.length === 0 ? (
-          <div>
-            {/* Show seed data component if no talents exist at all */}
-            {talents.length === 0 && !hasActiveFilters && (
-              <div className="mb-8">
-                <SeedTalentData />
-              </div>
+          <div className="text-center py-20">
+            <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="mb-2 text-gray-900">
+              {hasActiveFilters ? t.empty.title : t.empty.noTalents}
+            </h3>
+            <p className="text-gray-600 mb-6">
+              {hasActiveFilters ? t.empty.description : t.empty.noTalentsDescription}
+            </p>
+            {hasActiveFilters && (
+              <Button onClick={clearFilters} variant="outline">
+                {t.filters.clear}
+              </Button>
             )}
-            
-            <div className="text-center py-20">
-              <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="mb-2 text-gray-900">
-                {hasActiveFilters ? t.empty.title : t.empty.noTalents}
-              </h3>
-              <p className="text-gray-600 mb-6">
-                {hasActiveFilters ? t.empty.description : t.empty.noTalentsDescription}
-              </p>
-              {hasActiveFilters && (
-                <Button onClick={clearFilters} variant="outline">
-                  {t.filters.clear}
-                </Button>
-              )}
-            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
