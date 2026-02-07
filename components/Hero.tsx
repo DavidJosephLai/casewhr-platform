@@ -186,29 +186,6 @@ export function Hero() {
             </div>
           </div>
         </div>
-
-        {/* 統計數據區域 */}
-        <div className="bg-white/10 py-8 mt-12">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
-              <div>
-                <Users className="size-8 text-yellow-300 mx-auto mb-2" />
-                <div className="text-3xl font-bold text-white">15,847+</div>
-                <div className="text-white/80 text-sm">{t.statsFreelancers}</div>
-              </div>
-              <div>
-                <Briefcase className="size-8 text-green-300 mx-auto mb-2" />
-                <div className="text-3xl font-bold text-white">42,389+</div>
-                <div className="text-white/80 text-sm">{t.statsProjects}</div>
-              </div>
-              <div>
-                <Crown className="size-8 text-purple-300 mx-auto mb-2" />
-                <div className="text-3xl font-bold text-white">8,932+</div>
-                <div className="text-white/80 text-sm">{t.statsClients}</div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <PostProjectDialog 
