@@ -89,7 +89,7 @@ export default function TalentPool() {
 
   const t = {
     title: language === 'en' ? 'Advanced Talent Search' : language === 'zh-CN' ? '进阶人才搜索' : '進階人才搜尋',
-    subtitle: language === 'en' ? 'Find, filter, and recruit the perfect freelancer with powerful search tools' : language === 'zh-CN' ? '用强大的搜索工具查找、筛选和招募完美的自由职业者' : '使用強大的搜尋工具查���、篩選和招募完美的接案者',
+    subtitle: language === 'en' ? 'Find, filter, and recruit the perfect freelancer with powerful search tools' : language === 'zh-CN' ? '用强大的搜索工具查找、筛选和招募完美的自由职业者' : '使用強大的搜尋工具查、篩選和招募完美的接案者',
     search: language === 'en' ? 'Search by name, skills, or keywords...' : language === 'zh-CN' ? '按姓名、技能或关键词搜索...' : '按姓名、技能或關鍵字搜尋...',
     filters: language === 'en' ? 'Filters' : language === 'zh-CN' ? '筛' : '篩選',
     skills: language === 'en' ? 'Skills' : language === 'zh-CN' ? '技能' : '技能',
@@ -1137,7 +1137,7 @@ export default function TalentPool() {
                 <button
                   onClick={() => {
                     setShowUpgradeModal(false);
-                    window.dispatchEvent(new CustomEvent('openSubscriptionDialog'));
+                    setView('pricing'); // ✅ 正確的跳轉方式
                   }}
                   className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-colors"
                 >

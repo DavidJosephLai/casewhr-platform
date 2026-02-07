@@ -1,11 +1,5 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import { Card } from "./ui/card";
-import { Separator } from "./ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { Alert, AlertDescription } from "./ui/alert";
 import { useLanguage } from "../lib/LanguageContext";
+import { useView } from "../contexts/ViewContext"; // ✅ 添加 useView
 import { useAuth } from "../contexts/AuthContext";
 import { translations, getTranslation } from "../lib/translations";
 import { 
@@ -55,6 +49,7 @@ export function TalentDetailDialog({
 }: TalentDetailDialogProps) {
   const { language } = useLanguage();
   const { user, accessToken } = useAuth();
+  const { setView } = useView(); // ✅ 添加 setView
   const t = getTranslation(language as any).talent.detail;
   const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const [contactLimit, setContactLimit] = useState<{
@@ -299,7 +294,7 @@ export function TalentDetailDialog({
               onClick={() => {
                 onOpenChange(false);
                 setTimeout(() => {
-                  window.dispatchEvent(new CustomEvent('openSubscriptionDialog'));
+                  setView('pricing'); // ✅ 正確的跳轉方式
                 }, 200);
               }}
             >
@@ -334,6 +329,7 @@ export function TalentDetailDialog({
               onOpenChange(false);
               // 觸發打開發布項目對話框
               setTimeout(() => {
+                setView('postProject'); // ✅ 使用 setView
                 window.dispatchEvent(new CustomEvent('openPostProject', { 
                   detail: { prefilledFreelancerId: talent.id, freelancerName: talent.full_name }
                 }));
