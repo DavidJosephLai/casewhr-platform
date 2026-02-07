@@ -21,6 +21,28 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   public static getDerivedStateFromError(error: Error): State {
+    // 🛡️ 檢查是否為可疑的第三方擴充功能錯誤
+    const errorString = error.toString().toLowerCase();
+    const errorStack = (error.stack || '').toLowerCase();
+    const suspiciousSources = [
+      'crawler.com',
+      'newpublid',
+      'dynamicid',
+      'chrome-extension://',
+      'moz-extension://',
+      'safari-extension://',
+    ];
+    
+    const isSuspicious = suspiciousSources.some(source => 
+      errorString.includes(source) || errorStack.includes(source)
+    );
+    
+    if (isSuspicious) {
+      console.warn('⚠️ [ErrorBoundary] Ignoring error from suspicious source:', error.message);
+      // 返回不改變狀態，讓應用繼續運行
+      return { hasError: false, error: null, errorInfo: null };
+    }
+    
     return { hasError: true, error, errorInfo: null };
   }
 
