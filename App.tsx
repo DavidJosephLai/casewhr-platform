@@ -27,6 +27,29 @@ console.log('🚀 [App v2.1.63] 移除重複路由和診斷組件 - 緩存已清
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
+  // 🛡️ 首先過濾可疑的第三方擴充功能錯誤
+  const errorMessage = event.message?.toLowerCase() || '';
+  const errorStack = event.error?.stack?.toLowerCase() || '';
+  const suspiciousSources = [
+    'crawler.com',
+    'newpublid',
+    'dynamicid',
+    'chrome-extension://',
+    'moz-extension://',
+    'safari-extension://',
+  ];
+  
+  const isSuspicious = suspiciousSources.some(source => 
+    errorMessage.includes(source) || errorStack.includes(source)
+  );
+  
+  if (isSuspicious) {
+    console.warn('⚠️ [App] Blocked error from suspicious source (likely browser extension):', event.message);
+    event.preventDefault();
+    event.stopPropagation();
+    return false;
+  }
+  
   // Check if it's a chunk loading error
   if (
     event.message?.includes('Failed to fetch dynamically imported module') ||
@@ -65,7 +88,32 @@ window.addEventListener('error', (event) => {
   }
 });
 
-// ⚡ 首頁組件 - 直接��入（不使用 lazy）以提升首屏性能
+// 🛡️ Global Promise rejection handler for suspicious sources
+window.addEventListener('unhandledrejection', (event) => {
+  const reason = event.reason?.toString()?.toLowerCase() || '';
+  const stack = event.reason?.stack?.toLowerCase() || '';
+  
+  const suspiciousSources = [
+    'crawler.com',
+    'newpublid',
+    'dynamicid',
+    'chrome-extension://',
+    'moz-extension://',
+    'safari-extension://',
+  ];
+  
+  const isSuspicious = suspiciousSources.some(source => 
+    reason.includes(source) || stack.includes(source)
+  );
+  
+  if (isSuspicious) {
+    console.warn('⚠️ [App] Blocked promise rejection from suspicious source:', event.reason);
+    event.preventDefault();
+    return false;
+  }
+});
+
+// ⚡ 首頁組件 - 直接入（不使用 lazy）以提升首屏性能
 import { CoreValues } from './components/CoreValues';
 import { Services } from './components/Services';
 import { MilestoneFeature } from './components/MilestoneFeature';
@@ -176,7 +224,7 @@ function AppContent() {
   // 將語言轉換為 AIChatbot 支持的格式
   const chatbotLanguage = language === 'zh' ? 'zh-TW' : language as 'en' | 'zh-TW' | 'zh-CN';
   
-  // 🛡️ 全局頁面卸載處理 - 防止 beforeunload 時的 DOM 操作錯誤
+  // 🛡️ 全局頁面卸載處理 - 防止 beforeunload 時的 DOM ��作錯誤
   useEffect(() => {
     let isUnloading = false;
 
@@ -701,10 +749,10 @@ function AppContent() {
       <SEO 
         {...getPageSEO(view === 'home' ? 'home' : view, language)}
       />
-      {/* 🌐 ��域名 SEO 優化 */}
+      {/* 🌐 域名 SEO 優化 */}
       <SEOHead />
       
-      {/* ✅ Wismachion 頁面不顯示主站 Header */}
+      {/* ✅ Wismachion 頁面不顯示主�� Header */}
       {view !== 'wismachion' && <Header />}
       {view === 'dashboard' ? (
         <div className="pt-32">
