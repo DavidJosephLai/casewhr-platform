@@ -89,7 +89,7 @@ export default function TalentPool() {
 
   const t = {
     title: language === 'en' ? 'Advanced Talent Search' : language === 'zh-CN' ? '进阶人才搜索' : '進階人才搜尋',
-    subtitle: language === 'en' ? 'Find, filter, and recruit the perfect freelancer with powerful search tools' : language === 'zh-CN' ? '用强大的搜索工具查找、筛选和招募完美的自由职业者' : '使用強大的搜尋工具查找、篩選和招募完美的接案者',
+    subtitle: language === 'en' ? 'Find, filter, and recruit the perfect freelancer with powerful search tools' : language === 'zh-CN' ? '用强大的搜索工具查找、筛选和招募完美的自由职业者' : '使用強大的搜尋工具查���、篩選和招募完美的接案者',
     search: language === 'en' ? 'Search by name, skills, or keywords...' : language === 'zh-CN' ? '按姓名、技能或关键词搜索...' : '按姓名、技能或關鍵字搜尋...',
     filters: language === 'en' ? 'Filters' : language === 'zh-CN' ? '筛' : '篩選',
     skills: language === 'en' ? 'Skills' : language === 'zh-CN' ? '技能' : '技能',
@@ -962,7 +962,7 @@ export default function TalentPool() {
 
                     // 組合主題和訊息內容
                     const fullMessage = contactSubject 
-                      ? `**${contactSubject}**\n\n${contactMessage}` 
+                      ? `**${contactSubject}**\\n\\n${contactMessage}` 
                       : contactMessage;
 
                     const response = await fetch(
@@ -981,6 +981,32 @@ export default function TalentPool() {
                     );
 
                     if (response.ok) {
+                      // ✅ 訊息發送成功，記錄聯絡次數
+                      try {
+                        const recordResponse = await fetch(
+                          `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/premium-contacts/record`,
+                          {
+                            method: 'POST',
+                            headers: {
+                              'Authorization': `Bearer ${accessToken}`,
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              talentUserId: selectedFreelancer.id,
+                            }),
+                          }
+                        );
+                        
+                        if (recordResponse.ok) {
+                          console.log('✅ [TalentPool] Contact recorded successfully');
+                        } else {
+                          console.warn('⚠️ [TalentPool] Failed to record contact, but message was sent');
+                        }
+                      } catch (recordError) {
+                        console.error('❌ [TalentPool] Error recording contact:', recordError);
+                        // 不影響訊息發送成功的提示
+                      }
+
                       toast.success(t.messageSent);
                       setShowContactModal(false);
                       setContactMessage('');

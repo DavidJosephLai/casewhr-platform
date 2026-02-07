@@ -129,6 +129,39 @@ export function StartMessageDialog({
       }
 
       console.log('✅ [StartMessageDialog] Message sent successfully');
+      
+      // ✅ 訊息發送成功，記錄聯絡次數（如果是進階人才）
+      try {
+        const recordResponse = await fetch(
+          `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/premium-contacts/record`,
+          {
+            method: 'POST',
+            headers: isDevMode
+              ? {
+                  'X-Dev-Token': token,
+                  'Authorization': `Bearer ${publicAnonKey}`,
+                  'Content-Type': 'application/json',
+                }
+              : {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+            body: JSON.stringify({
+              talentUserId: recipientId,
+            }),
+          }
+        );
+        
+        if (recordResponse.ok) {
+          console.log('✅ [StartMessageDialog] Contact recorded successfully');
+        } else {
+          console.warn('⚠️ [StartMessageDialog] Failed to record contact, but message was sent');
+        }
+      } catch (recordError) {
+        console.error('❌ [StartMessageDialog] Error recording contact:', recordError);
+        // 不影響訊息發送成功的提示
+      }
+      
       toast.success(translations.success);
       setMessage("");
       onOpenChange(false);
