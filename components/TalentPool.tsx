@@ -1137,7 +1137,10 @@ export default function TalentPool() {
                 <button
                   onClick={() => {
                     setShowUpgradeModal(false);
-                    setView('pricing'); // ✅ 正確的跳轉方式
+                    // ✅ 關閉對話框後再跳轉
+                    setTimeout(() => {
+                      setView('pricing');
+                    }, 100);
                   }}
                   className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-lg font-medium transition-colors"
                 >
