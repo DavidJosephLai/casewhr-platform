@@ -30,6 +30,7 @@ window.addEventListener('error', (event) => {
   // 🛡️ 首先過濾可疑的第三方擴充功能錯誤
   const errorMessage = event.message?.toLowerCase() || '';
   const errorStack = event.error?.stack?.toLowerCase() || '';
+  const errorFilename = event.filename?.toLowerCase() || '';
   const suspiciousSources = [
     'crawler.com',
     'newpublid',
@@ -40,13 +41,16 @@ window.addEventListener('error', (event) => {
   ];
   
   const isSuspicious = suspiciousSources.some(source => 
-    errorMessage.includes(source) || errorStack.includes(source)
+    errorMessage.includes(source) || 
+    errorStack.includes(source) || 
+    errorFilename.includes(source)
   );
   
   if (isSuspicious) {
     console.warn('⚠️ [App] Blocked error from suspicious source (likely browser extension):', event.message);
     event.preventDefault();
     event.stopPropagation();
+    event.stopImmediatePropagation(); // 🔥 阻止事件繼續傳播到其他監聽器
     return false;
   }
   
@@ -86,7 +90,7 @@ window.addEventListener('error', (event) => {
     event.stopPropagation();
     return false;
   }
-});
+}, true); // 🔥 使用捕獲階段（capture phase）以最早攔截錯誤
 
 // 🛡️ Global Promise rejection handler for suspicious sources
 window.addEventListener('unhandledrejection', (event) => {
@@ -179,6 +183,7 @@ const DataSyncDiagnostic = lazy(() => import('./components/DataSyncDiagnostic'))
 const DeepDataDiagnostic = lazy(() => import('./components/DeepDataDiagnostic'));
 const ErrorDiagnosticPage = lazy(() => import('./components/ErrorDiagnosticPage'));
 const EdgeFunctionDiagnostic = lazy(() => import('./components/EdgeFunctionDiagnostic'));
+const SecurityTestPage = lazy(() => import('./components/SecurityTestPage'));
 
 //  內容頁 - Lazy Load（SEO 關頁面）
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
@@ -224,7 +229,7 @@ function AppContent() {
   // 將語言轉換為 AIChatbot 支持的格式
   const chatbotLanguage = language === 'zh' ? 'zh-TW' : language as 'en' | 'zh-TW' | 'zh-CN';
   
-  // 🛡️ 全局頁面卸載處理 - 防止 beforeunload 時的 DOM ��作錯誤
+  // 🛡️ 全局頁面卸載處理 - 防止 beforeunload 時的 DOM 作錯誤
   useEffect(() => {
     let isUnloading = false;
 
@@ -752,7 +757,7 @@ function AppContent() {
       {/* 🌐 域名 SEO 優化 */}
       <SEOHead />
       
-      {/* ✅ Wismachion 頁面不顯示主�� Header */}
+      {/* ✅ Wismachion 頁面不顯示主 Header */}
       {view !== 'wismachion' && <Header />}
       {view === 'dashboard' ? (
         <div className="pt-32">
@@ -1059,6 +1064,13 @@ function AppContent() {
           <SEO title="Edge Function Diagnostic" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
             <EdgeFunctionDiagnostic />
+          </Suspense>
+        </div>
+      ) : view === 'security-test' ? (
+        <div className="pt-20">
+          <SEO title="Security Test" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <SecurityTestPage />
           </Suspense>
         </div>
       ) : view === 'wismachion' ? (
