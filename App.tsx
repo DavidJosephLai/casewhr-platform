@@ -135,8 +135,6 @@ const DataSyncDiagnostic = lazy(() => import('./components/DataSyncDiagnostic'))
 const DeepDataDiagnostic = lazy(() => import('./components/DeepDataDiagnostic'));
 const ErrorDiagnosticPage = lazy(() => import('./components/ErrorDiagnosticPage'));
 const EdgeFunctionDiagnostic = lazy(() => import('./components/EdgeFunctionDiagnostic'));
-const ErrorDiagnosticTool = lazy(() => import('./components/ErrorDiagnosticTool'));
-const SecurityTestPage = lazy(() => import('./components/SecurityTestPage'));
 
 //  內容頁 - Lazy Load（SEO 關頁面）
 const PrivacyPolicyPage = lazy(() => import('./components/PrivacyPolicyPage'));
@@ -1017,13 +1015,6 @@ function AppContent() {
           <SEO title="Edge Function Diagnostic" description="" keywords="" noindex />
           <Suspense fallback={<PageLoadingFallback />}>
             <EdgeFunctionDiagnostic />
-          </Suspense>
-        </div>
-      ) : view === 'security-test' ? (
-        <div className="pt-20">
-          <SEO title="Security Test" description="" keywords="" noindex />
-          <Suspense fallback={<PageLoadingFallback />}>
-            <SecurityTestPage />
           </Suspense>
         </div>
       ) : view === 'wismachion' ? (
