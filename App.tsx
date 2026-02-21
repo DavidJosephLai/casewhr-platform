@@ -27,39 +27,11 @@ console.log('🚀 [App v2.1.63] 移除重複路由和診斷組件 - 緩存已清
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
-  // 🛡️ 首先過濾可疑的第三方擴充功能錯誤
-  const errorMessage = event.message?.toLowerCase() || '';
-  const errorStack = event.error?.stack?.toLowerCase() || '';
-  const errorFilename = event.filename?.toLowerCase() || '';
-  const suspiciousSources = [
-    'crawler.com',
-    'newpublid',
-    'dynamicid',
-    'chrome-extension://',
-    'moz-extension://',
-    'safari-extension://',
-  ];
-  
-  const isSuspicious = suspiciousSources.some(source => 
-    errorMessage.includes(source) || 
-    errorStack.includes(source) || 
-    errorFilename.includes(source)
-  );
-  
-  if (isSuspicious) {
-    console.warn('⚠️ [App] Blocked error from suspicious source (likely browser extension):', event.message);
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation(); // 🔥 阻止事件繼續傳播到其他監聽器
-    return false;
-  }
-  
   // Check if it's a chunk loading error
   if (
     event.message?.includes('Failed to fetch dynamically imported module') ||
     event.message?.includes('Importing a module script failed') ||
-    event.message?.includes('chunk') ||
-    event.filename?.includes('/assets/')
+    event.message?.includes('chunk')
   ) {
     console.error('🔥 [App] Chunk loading failed, attempting recovery...');
     console.error('Error details:', event.message);
@@ -90,31 +62,11 @@ window.addEventListener('error', (event) => {
     event.stopPropagation();
     return false;
   }
-}, true); // 🔥 使用捕獲階段（capture phase）以最早攔截錯誤
+});
 
-// 🛡️ Global Promise rejection handler for suspicious sources
+// 🛡️ Global Promise rejection handler
 window.addEventListener('unhandledrejection', (event) => {
-  const reason = event.reason?.toString()?.toLowerCase() || '';
-  const stack = event.reason?.stack?.toLowerCase() || '';
-  
-  const suspiciousSources = [
-    'crawler.com',
-    'newpublid',
-    'dynamicid',
-    'chrome-extension://',
-    'moz-extension://',
-    'safari-extension://',
-  ];
-  
-  const isSuspicious = suspiciousSources.some(source => 
-    reason.includes(source) || stack.includes(source)
-  );
-  
-  if (isSuspicious) {
-    console.warn('⚠️ [App] Blocked promise rejection from suspicious source:', event.reason);
-    event.preventDefault();
-    return false;
-  }
+  console.error('❌ [App] Unhandled promise rejection:', event.reason);
 });
 
 // ⚡ 首頁組件 - 直接入（不使用 lazy）以提升首屏性能
@@ -183,6 +135,7 @@ const DataSyncDiagnostic = lazy(() => import('./components/DataSyncDiagnostic'))
 const DeepDataDiagnostic = lazy(() => import('./components/DeepDataDiagnostic'));
 const ErrorDiagnosticPage = lazy(() => import('./components/ErrorDiagnosticPage'));
 const EdgeFunctionDiagnostic = lazy(() => import('./components/EdgeFunctionDiagnostic'));
+const ErrorDiagnosticTool = lazy(() => import('./components/ErrorDiagnosticTool'));
 const SecurityTestPage = lazy(() => import('./components/SecurityTestPage'));
 
 //  內容頁 - Lazy Load（SEO 關頁面）

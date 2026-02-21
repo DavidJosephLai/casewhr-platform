@@ -20,57 +20,12 @@ export class ErrorBoundary extends Component<Props, State> {
     errorInfo: null,
   };
 
-  // 🛡️ 檢查錯誤是否來自可疑來源的輔助方法
-  private isSuspiciousError(error: Error): boolean {
-    const errorString = error.toString().toLowerCase();
-    const errorStack = (error.stack || '').toLowerCase();
-    const suspiciousSources = [
-      'crawler.com',
-      'newpublid',
-      'dynamicid',
-      'chrome-extension://',
-      'moz-extension://',
-      'safari-extension://',
-    ];
-    
-    return suspiciousSources.some(source => 
-      errorString.includes(source) || errorStack.includes(source)
-    );
-  }
-
   public static getDerivedStateFromError(error: Error): State {
-    // 🛡️ 檢查是否為可疑的第三方擴充功能錯誤
-    const errorString = error.toString().toLowerCase();
-    const errorStack = (error.stack || '').toLowerCase();
-    const suspiciousSources = [
-      'crawler.com',
-      'newpublid',
-      'dynamicid',
-      'chrome-extension://',
-      'moz-extension://',
-      'safari-extension://',
-    ];
-    
-    const isSuspicious = suspiciousSources.some(source => 
-      errorString.includes(source) || errorStack.includes(source)
-    );
-    
-    if (isSuspicious) {
-      console.warn('⚠️ [ErrorBoundary] Ignoring error from suspicious source:', error.message);
-      // 返回不改變狀態，讓應用繼續運行
-      return { hasError: false, error: null, errorInfo: null };
-    }
-    
+    // 捕獲所有錯誤並顯示
     return { hasError: true, error, errorInfo: null };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // 🛡️ 在記錄錯誤之前再次檢查是否為可疑來源
-    if (this.isSuspiciousError(error)) {
-      console.warn('⚠️ [ErrorBoundary] Suppressed error from suspicious source in componentDidCatch');
-      return; // 直接返回，不記錄錯誤
-    }
-    
     console.error('❌❌❌ [ErrorBoundary] Uncaught error:', error);
     console.error('❌❌❌ [ErrorBoundary] Error message:', error.message);
     console.error('❌❌❌ [ErrorBoundary] Error stack:', error.stack);
