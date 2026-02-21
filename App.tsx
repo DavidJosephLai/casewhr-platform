@@ -18,12 +18,12 @@ import { EmailRequiredModal } from './components/EmailRequiredModal';
 // 🔄 自動修復企業 LOGO 同步問題
 import { AutoLogoSyncFix } from './components/AutoLogoSyncFix';
 
-// 🔥 Version marker to force cache invalidation - v2.1.63-REMOVE-DIAGNOSTIC-ROUTES
-// 🎯 FIX: Removed duplicate enterprise logo routes causing ReferenceError
-// ✅ REMOVED: logo_debugger_routes.tsx and logo_setup_routes.tsx
-// 🧹 CLEANUP: Removed EnterpriseLogoDiagnostic component references
-// 🚀 CACHE: Force browser cache invalidation
-console.log('🚀 [App v2.1.63] 移除重複路由和診斷組件 - 緩存已清除！');
+// 🔥 Version marker to force cache invalidation - v2.1.64-FIX-SCREENREADER-ERROR
+// 🐛 FIX: Investigating "screenreader-string is not defined" error
+// ✅ ENABLED: Sourcemap for debugging
+// 🔄 FORCED: Dependency rebuild to clear cache
+// 🚀 CACHE: Cleared .vite cache and forced rebuild
+console.log('🚀 [App v2.1.64] 修復 screenreader-string 錯誤 - 強制清除緩存！');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -327,7 +327,7 @@ function AppContent() {
     const urlPath = window.location.pathname;
     const urlParams = new URLSearchParams(window.location.search);
     
-    console.log('🚀 [App] Initial route check');
+    console.log('���� [App] Initial route check');
     console.log('🚀 [App] Pathname:', urlPath);
     console.log('🚀 [App] Search:', window.location.search);
     console.log('🚀 [App] Hash:', window.location.hash);

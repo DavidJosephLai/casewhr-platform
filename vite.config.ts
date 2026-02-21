@@ -9,7 +9,7 @@ export default defineConfig({
     target: 'es2015',
     outDir: 'dist',
     assetsDir: 'assets',
-    sourcemap: false,
+    sourcemap: true, // 啟用 sourcemap 幫助調試
     minify: 'esbuild',
     rollupOptions: {
       output: {
@@ -21,6 +21,9 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom'], // 明確包含 React
     exclude: [],
+    force: true, // 🔥 強制重新構建依賴
   },
   publicDir: 'public',
+  // 🔥 清除緩存
+  cacheDir: '.vite',
 });
