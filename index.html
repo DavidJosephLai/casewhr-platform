@@ -148,6 +148,105 @@
     <title>CaseWHR 接得準 - 全球專業接案平台 | 台灣最佳自由工作者媒合平台</title>
     <meta name="description" content="台灣領先的全球接案平台，提供專業的自由工作者媒合服務。支援新台幣、美金、人民幣三幣計價，整合 ECPay 綠界金流與 PayPal 國際支付。包含合約管理、發票系統、企業品牌客製化等完整功能。超過 10,000 位專業人才，服務遍及全球。" />
     <meta name="keywords" content="接案平台, 自由工作者, 台灣接案, 遠距工作, 外包平台, 接案網站, 斜槓工作, 兼職平台, 專案外包, 在家工作, 接案媒合, 人才平台, 台灣外包, 綠界金流, ECPay, freelance, remote work, global freelancing, 合約管理, 發票系統" />
+    
+    <!-- 🛡️ 超早期安全防護 - 在所有腳本載入前執行 -->
+    <script>
+      // 🛡️ 第一道防線：立即攔截全局錯誤（在 React 載入前）
+      (function() {
+        'use strict';
+        
+        console.log('🛡️ [Security] Early protection layer activated');
+        
+        // 可疑來源列表
+        const SUSPICIOUS_SOURCES = [
+          'crawler.com',
+          'newpublid',
+          'dynamicid',
+          'chrome-extension://',
+          'moz-extension://',
+          'safari-extension://',
+        ];
+        
+        // 檢查是否為可疑來源
+        function isSuspiciousSource(str) {
+          if (!str) return false;
+          const lowerStr = String(str).toLowerCase();
+          return SUSPICIOUS_SOURCES.some(source => lowerStr.includes(source));
+        }
+        
+        // 🛡️ 全局錯誤攔截器（捕獲階段，最早攔截）
+        window.addEventListener('error', function(event) {
+          const isSuspicious = 
+            isSuspiciousSource(event.message) ||
+            isSuspiciousSource(event.filename) ||
+            isSuspiciousSource(event.error?.stack);
+          
+          if (isSuspicious) {
+            console.warn('🛡️ [Security] Blocked suspicious error:', {
+              message: event.message,
+              filename: event.filename,
+              source: 'Early Protection Layer'
+            });
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            return false;
+          }
+        }, true); // 使用捕獲階段
+        
+        // 🛡️ Promise rejection 攔截器
+        window.addEventListener('unhandledrejection', function(event) {
+          const isSuspicious = 
+            isSuspiciousSource(event.reason?.toString()) ||
+            isSuspiciousSource(event.reason?.stack);
+          
+          if (isSuspicious) {
+            console.warn('🛡️ [Security] Blocked suspicious promise rejection:', event.reason);
+            event.preventDefault();
+            return false;
+          }
+        });
+        
+        // 🛡️ 監控並移除可疑的 script 標籤
+        const observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+              if (node.nodeName === 'SCRIPT') {
+                const src = node.src || '';
+                const content = node.textContent || '';
+                
+                if (isSuspiciousSource(src) || isSuspiciousSource(content)) {
+                  console.warn('🛡️ [Security] Removed suspicious script:', src || 'inline script');
+                  node.remove();
+                }
+              }
+            });
+          });
+        });
+        
+        // 開始監控 DOM 變化
+        observer.observe(document.documentElement, {
+          childList: true,
+          subtree: true
+        });
+        
+        console.log('✅ [Security] Early protection layer ready');
+      })();
+    </script>
+    
+    <!-- 🛡️ Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self' https:;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://*.supabase.co https://www.googletagmanager.com;
+      style-src 'self' 'unsafe-inline' https:;
+      img-src 'self' data: https: blob:;
+      font-src 'self' data: https:;
+      connect-src 'self' https://*.supabase.co https://api.openai.com https://api.brevo.com https://api.paypal.com https://*.ecpay.com.tw wss://*.supabase.co;
+      frame-src 'self' https://www.google.com https://www.paypal.com https://payment-stage.ecpay.com.tw https://payment.ecpay.com.tw;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self' https://payment-stage.ecpay.com.tw https://payment.ecpay.com.tw;
+    ">
   </head>
   <body>
     <div id="root">

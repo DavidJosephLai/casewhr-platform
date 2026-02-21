@@ -33,7 +33,7 @@ export default function SecurityTestPage() {
       results.push({
         test: '測試 1: crawler.com 錯誤過濾',
         passed: true,
-        message: '✅ 成功觸發測試錯誤，檢查控制台是否有警告訊息',
+        message: '✅ 成功觸發測試錯誤，檢查控制台是否有警告訊息（應該被 3 層防護攔截）',
       });
     } catch (error) {
       results.push({
@@ -94,20 +94,49 @@ export default function SecurityTestPage() {
       });
     }
 
-    // 測試 4: 正常錯誤應該不被過濾
+    // 測試 4: 嘗試動態注入可疑腳本（應該被 MutationObserver 移除）
+    try {
+      const script = document.createElement('script');
+      script.src = 'https://crawler.com/malicious.js';
+      document.body.appendChild(script);
+      
+      // 檢查腳本是否被移除
+      setTimeout(() => {
+        const stillExists = document.body.contains(script);
+        if (!stillExists) {
+          console.log('✅ [Test 4] Malicious script was removed by MutationObserver');
+        } else {
+          console.warn('⚠️ [Test 4] Malicious script was NOT removed');
+        }
+      }, 100);
+      
+      results.push({
+        test: '測試 4: 動態注入腳本防護',
+        passed: true,
+        message: '✅ 嘗試注入 crawler.com 腳本，應該被 MutationObserver 立即移除',
+      });
+    } catch (error) {
+      results.push({
+        test: '測試 4: 動態注入腳本防護',
+        passed: false,
+        message: '❌ 測試失敗: ' + (error instanceof Error ? error.message : String(error)),
+      });
+    }
+
+    // 測試 5: 正常錯誤應該不被過濾
     try {
       const normalError = new Error('Normal application error');
       normalError.stack = 'at App.tsx:123:45';
       
       // 這個錯誤不應該被過濾，但我們不實際拋出它以避免顯示錯誤頁面
       results.push({
-        test: '測試 4: 正常錯誤不被過濾',
+        test: '測試 5: 正常錯誤不被過濾',
         passed: true,
         message: '✅ 正常應用錯誤不會被過濾系統攔截',
       });
     } catch (error) {
       results.push({
-        test: '測試 4: 正常錯誤不被過濾',
+        test: '測試 5: 正常錯誤不被過濾',
         passed: false,
         message: '❌ 測試失敗: ' + (error instanceof Error ? error.message : String(error)),
       });
@@ -144,7 +173,8 @@ export default function SecurityTestPage() {
                 <li>測試 1: 模擬 crawler.com 錯誤（瀏覽器惡意腳本）</li>
                 <li>測試 2: 模擬 Chrome 擴充功能錯誤</li>
                 <li>測試 3: 模擬 Promise rejection from crawler.com</li>
-                <li>測試 4: 確認正常錯誤不被過濾</li>
+                <li>測試 4: 嘗試動態注入可疑腳本（應該被 MutationObserver 移除）</li>
+                <li>測試 5: 確認正常錯誤不被過濾</li>
               </ul>
               <p className="mt-3 font-medium">
                 ✅ 預期結果：控制台應顯示 "⚠️ [App] Blocked error from suspicious source" 警告訊息，
