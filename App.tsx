@@ -1,3 +1,4 @@
+import './utils/radixUIPolyfill';
 import './utils/globalFetchInterceptor';
 
 import { lazy, Suspense, useEffect, useState } from 'react';
@@ -18,12 +19,12 @@ import { EmailRequiredModal } from './components/EmailRequiredModal';
 // 🔄 自動修復企業 LOGO 同步問題
 import { AutoLogoSyncFix } from './components/AutoLogoSyncFix';
 
-// 🔥 Version marker to force cache invalidation - v2.1.65-FIX-RADIX-UI-SCREENREADER
-// 🐛 FIX: Fixed "screenreader-string is not defined" error by explicitly including all Radix UI deps in Vite config
-// ✅ OPTIMIZED: Added all @radix-ui/* packages to optimizeDeps.include
-// 🔄 FORCED: Dependency rebuild with force: true
-// 🚀 RESOLVED: Radix UI Select component bundling issue
-console.log('🚀 [App v2.1.65] 修復 Radix UI screenreader-string 錯誤 - 優化依賴打包！');
+// 🔥 Version marker to force cache invalidation - v2.1.66-POLYFILL-SCREENREADER
+// 🐛 FIX: Added global polyfill for screenreader-string in index.html
+// ✅ POLYFILL: Defined window['screenreader-string'] before React loads
+// 🔄 DUAL-FIX: Both index.html and radixUIPolyfill.ts define the variable
+// 🚀 SOLVED: Radix UI Select component screenreader-string undefined error
+console.log('🚀 [App v2.1.66] Radix UI Polyfill 全局修復 - screenreader-string 已定義！');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
