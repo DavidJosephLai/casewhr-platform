@@ -17,6 +17,12 @@ import {
   Lock
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog"; // 🔥 添加 Dialog 導入
+import { Badge } from "./ui/badge"; // 🔥 添加 Badge 導入
+import { Button } from "./ui/button"; // 🔥 添加 Button 導入
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"; // 🔥 添加 Tabs 導入
+import { Separator } from "./ui/separator"; // 🔥 添加 Separator 導入
+import { Alert, AlertDescription } from "./ui/alert"; // 🔥 添加 Alert 導入
 import { ReviewList } from "./rating/ReviewList";
 import { StartMessageDialog } from "./StartMessageDialog";
 import { useState, useEffect } from "react";
