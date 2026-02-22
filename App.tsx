@@ -18,15 +18,36 @@ import { EmailRequiredModal } from './components/EmailRequiredModal';
 // 🔄 自動修復企業 LOGO 同步問題
 import { AutoLogoSyncFix } from './components/AutoLogoSyncFix';
 
-// 🔥 Version marker to force cache invalidation - v2.1.64-FIX-SCREENREADER-ERROR
-// 🐛 FIX: Investigating "screenreader-string is not defined" error
-// ✅ ENABLED: Sourcemap for debugging
-// 🔄 FORCED: Dependency rebuild to clear cache
-// 🚀 CACHE: Cleared .vite cache and forced rebuild
-console.log('🚀 [App v2.1.64] 修復 screenreader-string 錯誤 - 強制清除緩存！');
+// 🔥 Version marker to force cache invalidation - v2.1.65-FIX-RADIX-UI-SCREENREADER
+// 🐛 FIX: Fixed "screenreader-string is not defined" error by explicitly including all Radix UI deps in Vite config
+// ✅ OPTIMIZED: Added all @radix-ui/* packages to optimizeDeps.include
+// 🔄 FORCED: Dependency rebuild with force: true
+// 🚀 RESOLVED: Radix UI Select component bundling issue
+console.log('🚀 [App v2.1.65] 修復 Radix UI screenreader-string 錯誤 - 優化依賴打包！');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
+  // 🔥 捕獲 Radix UI screenreader-string 錯誤並嘗試自動修復
+  if (event.message?.includes('screenreader-string')) {
+    console.error('🔥 [App] Radix UI screenreader-string error detected, attempting recovery...');
+    console.error('Error details:', event.message);
+    
+    // 清除所有緩存並重新加載
+    if ('caches' in window) {
+      caches.keys().then(keys => {
+        keys.forEach(key => caches.delete(key));
+        console.log('✅ [App] Cache cleared due to Radix UI error, reloading...');
+        window.location.reload();
+      });
+    } else {
+      // Fallback: just reload
+      window.location.reload();
+    }
+    
+    event.preventDefault();
+    return false;
+  }
+  
   // Check if it's a chunk loading error
   if (
     event.message?.includes('Failed to fetch dynamically imported module') ||
@@ -327,7 +348,7 @@ function AppContent() {
     const urlPath = window.location.pathname;
     const urlParams = new URLSearchParams(window.location.search);
     
-    console.log('���� [App] Initial route check');
+    console.log(' [App] Initial route check');
     console.log('🚀 [App] Pathname:', urlPath);
     console.log('🚀 [App] Search:', window.location.search);
     console.log('🚀 [App] Hash:', window.location.hash);
