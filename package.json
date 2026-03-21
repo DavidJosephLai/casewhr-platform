@@ -4,6 +4,12 @@
   "type": "module",
   "private": true,
   "description": "CaseWhr - Professional Global Freelancing Platform with Trilingual Support (EN/繁體中文/简体中文)",
+  "pnpm": {
+    "overrides": {
+      "@vitejs/plugin-react": "npm:empty-module@1.0.0",
+      "@vitejs/plugin-react-swc": "npm:empty-module@1.0.0"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -56,8 +62,8 @@
   "devDependencies": {
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.2.0",
-    "vite": "^5.1.0",
+    "@vitejs/plugin-react-swc": "^3.5.0",
+    "vite": "latest",
     "typescript": "^5.5.3"
   }
 }

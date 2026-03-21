@@ -1,22 +1,14 @@
 import { defineConfig } from 'vite';
 
-// Minimal config without @vitejs/plugin-react to avoid compatibility issues
+// Pure esbuild config - no React plugin to avoid compatibility issues
 export default defineConfig({
   plugins: [],
   esbuild: {
+    jsx: 'automatic',
+    jsxDev: false,
     loader: 'tsx',
-    include: /src\/.*\.[tj]sx?$/,
+    include: /\.(tsx?|jsx?)$/,
     exclude: [],
-  },
-  optimizeDeps: {
-    esbuildOptions: {
-      loader: {
-        '.js': 'jsx',
-        '.ts': 'tsx',
-        '.jsx': 'jsx',
-        '.tsx': 'tsx',
-      },
-    },
   },
   clearScreen: false,
   build: {

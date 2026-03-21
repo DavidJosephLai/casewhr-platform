@@ -19,12 +19,12 @@ import { EmailRequiredModal } from './components/EmailRequiredModal';
 // 🔄 自動修復企業 LOGO 同步問題
 import { AutoLogoSyncFix } from './components/AutoLogoSyncFix';
 
-// 🔥 Version marker to force cache invalidation - v2.1.71-FIX-REMOVE-REACT-PLUGIN
-// 🔧 FIX: Removed @vitejs/plugin-react completely to avoid version conflicts
-// ✅ SOLUTION: Use esbuild directly with JSX/TSX loader
-// 🛠️ BENEFIT: No dependency on react plugin = no version conflicts
-// 🚀 STABLE: Using native Vite esbuild support for React
-console.log('🚀 [App v2.1.71] 移除 React 插件，使用 esbuild 原生支援！');
+// 🔥 Version marker to force cache invalidation - v2.1.76-FIX-PNPM-OVERRIDES
+// 🔧 FIX: Added pnpm overrides to block problematic @vitejs/plugin-react
+// ✅ SOLUTION: Use pure esbuild with jsx:'automatic' + pnpm overrides
+// 🚫 BLOCKED: @vitejs/plugin-react and @vitejs/plugin-react-swc via overrides
+// ⚡ RESULT: Forces pnpm to ignore problematic plugins completely
+console.log('🚀 [App v2.1.76] PNPM overrides + 純 esbuild！');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -316,7 +316,7 @@ function AppContent() {
       console.log('🧭 [App] Navigate to freelancer profile event received:', freelancerId);
       
       if (freelancerId) {
-        // 設置接案者 ID 到 sessionStorage
+        // 設接案者 ID 到 sessionStorage
         sessionStorage.setItem('current_freelancer_id', freelancerId);
         console.log('✅ [App] Set current_freelancer_id:', freelancerId);
         
