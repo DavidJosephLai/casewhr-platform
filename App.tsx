@@ -19,12 +19,12 @@ import { EmailRequiredModal } from './components/EmailRequiredModal';
 // 🔄 自動修復企業 LOGO 同步問題
 import { AutoLogoSyncFix } from './components/AutoLogoSyncFix';
 
-// 🔥 Version marker to force cache invalidation - v2.1.68-WISMACHION-BRANDING
-// 🏢 BRANDING: Added "Wismachion Soft & Tech Inc." company name to PerfectComm pages
-// ✅ ADDED: Company branding in Header, Hero, and Footer components
-// 🎨 ENHANCED: Professional branding with "by Wismachion Soft & Tech Inc."
-// 📝 UPDATED: Copyright notice with full company name
-console.log('🚀 [App v2.1.68] PerfectComm 頁面添加 Wismachion 公司品牌！');
+// 🔥 Version marker to force cache invalidation - v2.1.69-FIX-VITE-CONFIG
+// 🔧 FIX: Vite config compatibility issue with @vitejs/plugin-react
+// ✅ FIXED: "Package subpath './internal' is not defined" error
+// 🛠️ CHANGED: Use classic JSX runtime to avoid internal dependency issues
+// 🚀 SOLUTION: Simplified Vite plugin configuration
+console.log('🚀 [App v2.1.69] 修復 Vite 配置兼容性問題！');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {

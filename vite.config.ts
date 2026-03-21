@@ -3,13 +3,18 @@ import react from '@vitejs/plugin-react';
 
 // Minimal config optimized for Figma Make
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      // 🔥 使用經典 JSX runtime 避免內部依賴問題
+      jsxRuntime: 'classic',
+    })
+  ],
   clearScreen: false,
   build: {
     target: 'es2015',
     outDir: 'dist',
     assetsDir: 'assets',
-    sourcemap: true, // 啟用 sourcemap 幫助調試
+    sourcemap: true,
     minify: 'esbuild',
     rollupOptions: {
       output: {
@@ -46,12 +51,9 @@ export default defineConfig({
       '@radix-ui/react-aspect-ratio',
     ],
     exclude: [],
-    force: true, // 🔥 強制重新構建依賴
   },
   publicDir: 'public',
-  // 🔥 清除緩存
   cacheDir: '.vite',
-  // 🔥 明確解析策略
   resolve: {
     dedupe: ['react', 'react-dom'],
   },
