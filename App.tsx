@@ -19,12 +19,12 @@ import { EmailRequiredModal } from './components/EmailRequiredModal';
 // 🔄 自動修復企業 LOGO 同步問題
 import { AutoLogoSyncFix } from './components/AutoLogoSyncFix';
 
-// 🔥 Version marker to force cache invalidation - v2.1.69-FIX-VITE-CONFIG
-// 🔧 FIX: Vite config compatibility issue with @vitejs/plugin-react
-// ✅ FIXED: "Package subpath './internal' is not defined" error
-// 🛠️ CHANGED: Use classic JSX runtime to avoid internal dependency issues
-// 🚀 SOLUTION: Simplified Vite plugin configuration
-console.log('🚀 [App v2.1.69] 修復 Vite 配置兼容性問題！');
+// 🔥 Version marker to force cache invalidation - v2.1.71-FIX-REMOVE-REACT-PLUGIN
+// 🔧 FIX: Removed @vitejs/plugin-react completely to avoid version conflicts
+// ✅ SOLUTION: Use esbuild directly with JSX/TSX loader
+// 🛠️ BENEFIT: No dependency on react plugin = no version conflicts
+// 🚀 STABLE: Using native Vite esbuild support for React
+console.log('🚀 [App v2.1.71] 移除 React 插件，使用 esbuild 原生支援！');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
