@@ -19,12 +19,12 @@ import { EmailRequiredModal } from './components/EmailRequiredModal';
 // 🔄 自動修復企業 LOGO 同步問題
 import { AutoLogoSyncFix } from './components/AutoLogoSyncFix';
 
-// 🔥 Version marker to force cache invalidation - v2.1.67-FIX-DIALOG-IMPORTS
-// 🐛 FIX: Added missing Dialog, Tabs, Separator, Alert imports to TalentDetailDialog
-// ✅ FIXED: "Dialog is not defined" error when viewing talent profile
-// 🔄 IMPORTS: Added all missing UI component imports (Dialog, Tabs, Separator, Alert, Badge, Button)
-// 🚀 SOLVED: Talent card "View Profile" functionality now works correctly
-console.log('🚀 [App v2.1.67] 修復人才卡 Dialog 導入問題 - 查看簡歷功能已修復！');
+// 🔥 Version marker to force cache invalidation - v2.1.68-WISMACHION-BRANDING
+// 🏢 BRANDING: Added "Wismachion Soft & Tech Inc." company name to PerfectComm pages
+// ✅ ADDED: Company branding in Header, Hero, and Footer components
+// 🎨 ENHANCED: Professional branding with "by Wismachion Soft & Tech Inc."
+// 📝 UPDATED: Copyright notice with full company name
+console.log('🚀 [App v2.1.68] PerfectComm 頁面添加 Wismachion 公司品牌！');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -265,7 +265,7 @@ function AppContent() {
     });
   }, [language]);
   
-  // 🔥 監戶���入狀態變化，並為特殊用戶自動刷新訂閱
+  // 🔥 監戶入狀態變化，並為特殊用戶自動刷新訂閱
   useEffect(() => {
     if (!user) return;
     
@@ -933,7 +933,7 @@ function AppContent() {
       ) : view === 'cases' ? (
         <div className="pt-20">
           <SEO 
-            title={language === 'en' ? 'Success Stories | Case Where' : '成功案��� | Case Where 接得準'}
+            title={language === 'en' ? 'Success Stories | Case Where' : '成功案 | Case Where 接得準'}
             description={language === 'en' ? 'View success stories and client testimonials on Case Where platform.' : '查看 Case Where 台的成功案例和故事。'}
             keywords={language === 'en' ? 'success stories, testimonials, case studies' : '成功案例, 客戶見證, 案例研究'}
           />

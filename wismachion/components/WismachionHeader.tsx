@@ -21,7 +21,7 @@ export function WismachionHeader({ user, onLogin, onLogout, onPortal, onHome }: 
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">PerfectComm</h1>
-              <p className="text-xs text-gray-600">RS-232 Communication Software</p>
+              <p className="text-xs text-gray-600">by Wismachion Soft & Tech Inc.</p>
             </div>
           </div>
 

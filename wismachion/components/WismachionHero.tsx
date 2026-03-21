@@ -21,8 +21,12 @@ export function WismachionHero({ onGetStarted, onFreeTrial }: WismachionHeroProp
               PerfectComm
             </h1>
             
-            <p className="text-xl md:text-2xl mb-4 text-blue-100">
+            <p className="text-xl md:text-2xl mb-2 text-blue-100">
               RS-232 Communication Software
+            </p>
+            
+            <p className="text-sm mb-6 text-blue-200 font-medium">
+              by Wismachion Soft & Tech Inc.
             </p>
             
             <p className="text-lg mb-8 text-blue-50 leading-relaxed">

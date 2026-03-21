@@ -11,8 +11,11 @@ export function WismachionFooter() {
               </div>
               <span className="font-bold text-white">PerfectComm</span>
             </div>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-400 mb-2">
               Professional RS-232 communication software for protocol development and testing.
+            </p>
+            <p className="text-xs text-gray-500 font-medium">
+              by Wismachion Soft & Tech Inc.
             </p>
           </div>
 
@@ -50,7 +53,7 @@ export function WismachionFooter() {
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm text-gray-400">
-          <p>&copy; 2024 PerfectComm. All rights reserved.</p>
+          <p>&copy; 2024 Wismachion Soft & Tech Inc. All rights reserved.</p>
         </div>
       </div>
     </footer>
