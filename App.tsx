@@ -19,12 +19,12 @@ import { EmailRequiredModal } from './components/EmailRequiredModal';
 // 🔄 自動修復企業 LOGO 同步問題
 import { AutoLogoSyncFix } from './components/AutoLogoSyncFix';
 
-// 🔥 Version marker to force cache invalidation - v2.1.76-FIX-PNPM-OVERRIDES
-// 🔧 FIX: Added pnpm overrides to block problematic @vitejs/plugin-react
-// ✅ SOLUTION: Use pure esbuild with jsx:'automatic' + pnpm overrides
-// 🚫 BLOCKED: @vitejs/plugin-react and @vitejs/plugin-react-swc via overrides
-// ⚡ RESULT: Forces pnpm to ignore problematic plugins completely
-console.log('🚀 [App v2.1.76] PNPM overrides + 純 esbuild！');
+// 🔥 Version marker to force cache invalidation - v2.1.79-BLOCK-PLUGINS
+// 🔧 FIX: Added alias in vite.config.ts to block plugin loading
+// ✅ SOLUTION: Redirect @vitejs/plugin-react to /dev/null
+// 🚫 DISABLED: auto-install-peers in .npmrc
+// ⚡ RESULT: Plugins cannot be loaded even if installed
+console.log('🚀 [App v2.1.79] 阻止插件加載！');
 
 // 🛡️ Global error handler for chunk loading failures
 window.addEventListener('error', (event) => {
@@ -121,7 +121,7 @@ const TalentPool = lazy(() => import('./components/TalentPool').then(module => (
 const FreelancerProfile = lazy(() => import('./components/FreelancerProfile').then(module => ({ default: module.default })));
 const PortfolioManager = lazy(() => import('./components/PortfolioManager').then(module => ({ default: module.default })));
 
-// 🎯 全局組件 - 使用 lazy 但保持輕量級（這些組件需要 default export）
+// 🎯 全局組件 - 使��� lazy 但保持輕量級（這些組件需要 default export）
 const AdminFloatingButton = lazy(() => import('./components/AdminFloatingButton'));
 const QuickAdminPanel = lazy(() => import('./components/QuickAdminPanel').then(module => ({ default: module.QuickAdminPanel })));
 const AISEOFloatingButton = lazy(() => import('./components/AISEOFloatingButton').then(module => ({ default: module.AISEOFloatingButton })));

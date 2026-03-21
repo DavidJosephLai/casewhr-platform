@@ -21,5 +21,10 @@ export default defineConfig({
   publicDir: 'public',
   resolve: {
     dedupe: ['react', 'react-dom'],
+    alias: {
+      // Block problematic plugins from loading
+      '@vitejs/plugin-react': '/dev/null',
+      '@vitejs/plugin-react-swc': '/dev/null',
+    },
   },
 });
