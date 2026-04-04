@@ -72,7 +72,7 @@ export async function createTrialLicense(data: {
     trialDays: 90
   };
   
-  await kv.set(`wismachion:license:${licenseKey}`, license);
+  await kv.set(`wismachion:licenses:${licenseKey}`, license);
   await kv.set(`wismachion:customer:${data.email}:${licenseKey}`, licenseKey);
   
   console.log(`🎁 [Wismachion Trial] Created trial license for ${data.email}: ${licenseKey}`);
@@ -112,7 +112,7 @@ export async function createLicense(data: {
     currency: data.currency
   };
   
-  await kv.set(`wismachion:license:${licenseKey}`, license);
+  await kv.set(`wismachion:licenses:${licenseKey}`, license);
   await kv.set(`wismachion:customer:${data.email}:${licenseKey}`, licenseKey);
   
   // 🆕 記錄收入到平台統計系統
@@ -150,7 +150,7 @@ export async function verifyLicense(licenseKey: string, machineId?: string): Pro
   features?: string[];
   message?: string;
 }> {
-  const license = await kv.get(`wismachion:license:${licenseKey}`);
+  const license = await kv.get(`wismachion:licenses:${licenseKey}`);
   
   if (!license) {
     return { valid: false, message: 'Invalid license key' };
@@ -191,7 +191,7 @@ export async function verifyLicense(licenseKey: string, machineId?: string): Pro
           activatedAt: new Date().toISOString()
         });
         license.activations = activations;
-        await kv.set(`wismachion:license:${licenseKey}`, license);
+        await kv.set(`wismachion:licenses:${licenseKey}`, license);
       }
     }
     
@@ -223,7 +223,7 @@ export async function verifyLicense(licenseKey: string, machineId?: string): Pro
         activatedAt: new Date().toISOString()
       });
       license.activations = activations;
-      await kv.set(`wismachion:license:${licenseKey}`, license);
+      await kv.set(`wismachion:licenses:${licenseKey}`, license);
     }
   }
   
@@ -243,7 +243,7 @@ export async function getCustomerLicenses(email: string): Promise<any[]> {
   
   for (const key of keys) {
     const licenseKey = key.value;
-    const license = await kv.get(`wismachion:license:${licenseKey}`);
+    const license = await kv.get(`wismachion:licenses:${licenseKey}`);
     if (license) {
       licenses.push(license);
     }
@@ -254,7 +254,7 @@ export async function getCustomerLicenses(email: string): Promise<any[]> {
 
 // Deactivate machine
 export async function deactivateMachine(licenseKey: string, machineId: string): Promise<boolean> {
-  const license = await kv.get(`wismachion:license:${licenseKey}`);
+  const license = await kv.get(`wismachion:licenses:${licenseKey}`);
   
   if (!license) {
     return false;
@@ -263,7 +263,7 @@ export async function deactivateMachine(licenseKey: string, machineId: string): 
   const activations = license.activations || [];
   license.activations = activations.filter((a: any) => a.machineId !== machineId);
   
-  await kv.set(`wismachion:license:${licenseKey}`, license);
+  await kv.set(`wismachion:licenses:${licenseKey}`, license);
   return true;
 }
 
@@ -294,7 +294,7 @@ function getPlanFeatures(plan: string): string[] {
 
 // Admin: Get all licenses
 export async function getAllLicenses(): Promise<any[]> {
-  const keys = await kv.getByPrefix('wismachion:license:');
+  const keys = await kv.getByPrefix('wismachion:licenses:');
   const licenses = [];
   
   for (const key of keys) {
@@ -308,21 +308,21 @@ export async function getAllLicenses(): Promise<any[]> {
 
 // Admin: Revoke license
 export async function revokeLicense(licenseKey: string): Promise<boolean> {
-  const license = await kv.get(`wismachion:license:${licenseKey}`);
+  const license = await kv.get(`wismachion:licenses:${licenseKey}`);
   
   if (!license) {
     return false;
   }
   
   license.status = 'revoked';
-  await kv.set(`wismachion:license:${licenseKey}`, license);
+  await kv.set(`wismachion:licenses:${licenseKey}`, license);
   
   return true;
 }
 
 // Admin: Extend license
 export async function extendLicense(licenseKey: string, days: number): Promise<boolean> {
-  const license = await kv.get(`wismachion:license:${licenseKey}`);
+  const license = await kv.get(`wismachion:licenses:${licenseKey}`);
   
   if (!license) {
     return false;
@@ -336,7 +336,7 @@ export async function extendLicense(licenseKey: string, days: number): Promise<b
   const newExpiry = new Date(currentExpiry.getTime() + days * 24 * 60 * 60 * 1000);
   
   license.expiryDate = newExpiry.toISOString();
-  await kv.set(`wismachion:license:${licenseKey}`, license);
+  await kv.set(`wismachion:licenses:${licenseKey}`, license);
   
   return true;
 }
