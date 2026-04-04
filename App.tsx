@@ -121,7 +121,7 @@ const TalentPool = lazy(() => import('./components/TalentPool').then(module => (
 const FreelancerProfile = lazy(() => import('./components/FreelancerProfile').then(module => ({ default: module.default })));
 const PortfolioManager = lazy(() => import('./components/PortfolioManager').then(module => ({ default: module.default })));
 
-// 🎯 全局組件 - 使��� lazy 但保持輕量級（這些組件需要 default export）
+// 🎯 全局組件 - 使 lazy 但���持輕量級（這些組件需要 default export）
 const AdminFloatingButton = lazy(() => import('./components/AdminFloatingButton'));
 const QuickAdminPanel = lazy(() => import('./components/QuickAdminPanel').then(module => ({ default: module.QuickAdminPanel })));
 const AISEOFloatingButton = lazy(() => import('./components/AISEOFloatingButton').then(module => ({ default: module.AISEOFloatingButton })));
@@ -180,6 +180,7 @@ const BlogManagementPage = lazy(() => import('./components/BlogManagementPage'))
 
 // 💼 Wismachion - License Management Platform - ⚡ 直接導入以加快載入速度
 import WismachionApp from './wismachion/WismachionApp';
+import { StorageFixTool } from './wismachion/admin/StorageFixTool'; // 🔧 Storage Admin Tool
 
 // Loading fallback components - 🚀 化：移除刺眼的藍色載入器
 function LoadingFallback() {
@@ -534,7 +535,7 @@ function AppContent() {
             // 定 LINE User ID 並顯示 Email Modal
             setLineUserId(data.user.id);
             setShowEmailModal(true);
-            // 不繼續後續的自動登入流程，等待用戶輸入 email
+            // 不繼續後���的自動登入流程，等待用戶輸入 email
             return;
           }
           
@@ -1048,6 +1049,13 @@ function AppContent() {
           />
           <Suspense fallback={<PageLoadingFallback />}>
             <WismachionApp />
+          </Suspense>
+        </div>
+      ) : view === 'wismachion-storage-fix' ? (
+        <div className="pt-0">
+          <SEO title="Storage Fix Tool - Wismachion Admin" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <StorageFixTool />
           </Suspense>
         </div>
       ) : view === 'blog' ? (
