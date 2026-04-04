@@ -27,25 +27,31 @@ export function generateLicenseKey(plan: 'standard' | 'enterprise' | 'trial'): s
   return `${prefix}-${segments.join('-')}`;
 }
 
-// 🆕 Create trial license (30 days free)
+// 🆕 Create trial license (90 days free - EXTENDED!)
 export async function createTrialLicense(data: {
   email: string;
   name: string;
   company?: string;
 }): Promise<string> {
-  // Check if user already has a trial license
+  // 🔥 RELAXED: Allow multiple trials per email (removed restriction)
+  // Check if email already has trial - NOW COMMENTED OUT
+  /*
   const existingTrials = await kv.getByPrefix(`wismachion:customer:${data.email}:`);
-  const hasTrialBefore = existingTrials.some((key: any) => {
-    return key.includes('PC-TRIAL');
-  });
-  
-  if (hasTrialBefore) {
-    throw new Error('You have already used a trial license. Please purchase a license to continue using PerfectComm.');
+  if (existingTrials && existingTrials.length > 0) {
+    // Check if any existing license is a trial
+    for (const trial of existingTrials) {
+      const licenseKey = trial as string;
+      const license: any = await kv.get(`wismachion:license:${licenseKey}`);
+      if (license?.isTrial) {
+        throw new Error('You have already used a trial license. Please purchase a license to continue using PerfectComm.');
+      }
+    }
   }
+  */
   
   const licenseKey = generateLicenseKey('trial');
   const now = new Date();
-  const expiryDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+  const expiryDate = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000); // 🔥 EXTENDED: 90 days (was 30)
   
   const license = {
     licenseKey,
@@ -63,7 +69,7 @@ export async function createTrialLicense(data: {
     amount: 0,
     currency: 'TWD',
     isTrial: true,
-    trialDays: 30
+    trialDays: 90
   };
   
   await kv.set(`wismachion:license:${licenseKey}`, license);

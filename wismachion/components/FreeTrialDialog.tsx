@@ -57,6 +57,7 @@ export function FreeTrialDialog({ open, onClose }: FreeTrialDialogProps) {
         toast.success('🎉 Trial license created! Check your email for details.');
       } else {
         if (data.alreadyUsed) {
+          // 🔥 RELAXED: This should never happen now since we removed the restriction
           setError('You have already used a trial license. Please purchase a license to continue.');
         } else {
           setError(data.error || 'Failed to create trial license');
@@ -95,7 +96,7 @@ export function FreeTrialDialog({ open, onClose }: FreeTrialDialogProps) {
                 <div>
                   <DialogTitle className="text-2xl">Start Your Free Trial</DialogTitle>
                   <DialogDescription className="mt-1">
-                    Get 30 days of PerfectComm - No credit card required
+                    Get 90 days of PerfectComm - No credit card required
                   </DialogDescription>
                 </div>
               </div>
@@ -170,7 +171,7 @@ export function FreeTrialDialog({ open, onClose }: FreeTrialDialogProps) {
                   <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
                     <li>Full RS-232 communication features</li>
                     <li>Protocol development tools</li>
-                    <li>30 days free access</li>
+                    <li>90 days free access</li>
                     <li>No credit card required</li>
                     <li>Email support</li>
                   </ul>
@@ -218,7 +219,7 @@ export function FreeTrialDialog({ open, onClose }: FreeTrialDialogProps) {
                 <div>
                   <DialogTitle className="text-2xl">Trial Activated! 🎉</DialogTitle>
                   <DialogDescription className="mt-2">
-                    Your 30-day free trial has been created successfully
+                    Your 90-day free trial has been created successfully
                   </DialogDescription>
                 </div>
               </div>

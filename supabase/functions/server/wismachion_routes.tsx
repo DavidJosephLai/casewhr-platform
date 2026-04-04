@@ -1008,7 +1008,7 @@ wismachion.post('/admin/generate-license', async (c) => {
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 🎁 FREE TRIAL (30 Days)
+// 🎁 FREE TRIAL (90 Days - EXTENDED!)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 wismachion.post('/make-server-215f78a5/wismachion/trial', async (c: any) => {
@@ -1044,7 +1044,7 @@ wismachion.post('/make-server-215f78a5/wismachion/trial', async (c: any) => {
         success: true, 
         licenseKey,
         message: 'Trial license created successfully! Check your email for details.',
-        trialDays: 30
+        trialDays: 90
       });
     } catch (error: any) {
       console.error('❌ [Wismachion Trial] Error:', error);
@@ -1067,9 +1067,9 @@ wismachion.post('/make-server-215f78a5/wismachion/trial', async (c: any) => {
 
 // Send trial license email
 async function sendTrialLicenseEmail(email: string, name: string, licenseKey: string) {
-  const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const expiryDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
   
-  const subject = '🎁 Your PerfectComm 30-Day Free Trial License';
+  const subject = '🎁 Your PerfectComm 90-Day Free Trial License';
   
   const htmlContent = `
 <!DOCTYPE html>
@@ -1094,7 +1094,7 @@ async function sendTrialLicenseEmail(email: string, name: string, licenseKey: st
   <div class="container">
     <div class="header">
       <h1>🎁 Welcome to PerfectComm!</h1>
-      <p>Your 30-Day Free Trial Starts Now</p>
+      <p>Your 90-Day Free Trial Starts Now</p>
     </div>
     
     <div class="content">
@@ -1109,7 +1109,7 @@ async function sendTrialLicenseEmail(email: string, name: string, licenseKey: st
       </div>
       
       <div class="warning">
-        ⏰ <strong>Trial Period:</strong> 30 days from today<br>
+        ⏰ <strong>Trial Period:</strong> 90 days from today<br>
         📅 <strong>Expires on:</strong> ${expiryDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
       </div>
       
