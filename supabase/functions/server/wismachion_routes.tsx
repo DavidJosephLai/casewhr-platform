@@ -1035,8 +1035,14 @@ wismachion.post('/make-server-215f78a5/wismachion/trial', async (c: any) => {
         company: company || ''
       });
       
-      // Send trial license email
-      await sendTrialLicenseEmail(email, name, licenseKey);
+      // Send trial license email (non-blocking - don't fail if email fails)
+      try {
+        await sendTrialLicenseEmail(email, name, licenseKey);
+        console.log(`📧 [Wismachion Trial] Email sent to: ${email}`);
+      } catch (emailError: any) {
+        console.error('⚠️ [Wismachion Trial] Email failed (but license created):', emailError);
+        // Continue anyway - license was created successfully
+      }
       
       console.log(`✅ [Wismachion Trial] Trial license created: ${licenseKey}`);
       
