@@ -1,6 +1,7 @@
 import { Hono } from 'npm:hono@3.11.7';
 import * as licenseService from './wismachion_license_service.tsx';
 import * as downloadService from './wismachion_download_service.tsx'; // 🆕
+import * as storageAdmin from './wismachion_storage_admin.tsx'; // 🆕 Storage Admin
 import { createClient } from 'npm:@supabase/supabase-js@2.39.3';
 import Stripe from 'npm:stripe@14.10.0';
 import * as kv from './kv_store.tsx';
@@ -1326,6 +1327,87 @@ wismachion.get('/admin/list-installers', async (c: any) => {
   } catch (error: any) {
     console.error('❌ [List Installers] Error:', error);
     return c.json({ error: 'Failed to list installers' }, 500);
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 🗂️ STORAGE ADMIN - File Management
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// List all files in storage
+wismachion.get('/admin/storage/list', async (c: any) => {
+  try {
+    console.log('📋 [Storage Admin] Listing files...');
+    const result = await storageAdmin.listStorageFiles();
+    return c.json(result);
+  } catch (error: any) {
+    console.error('❌ [Storage Admin] Error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Auto-fix filename typos
+wismachion.post('/admin/storage/auto-fix', async (c: any) => {
+  try {
+    console.log('🔧 [Storage Admin] Auto-fixing filenames...');
+    const result = await storageAdmin.autoFixFileNames();
+    return c.json(result);
+  } catch (error: any) {
+    console.error('❌ [Storage Admin] Error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Rename a file
+wismachion.post('/admin/storage/rename', async (c: any) => {
+  try {
+    const { oldName, newName } = await c.req.json();
+    
+    if (!oldName || !newName) {
+      return c.json({ error: 'oldName and newName are required' }, 400);
+    }
+    
+    console.log(`🔄 [Storage Admin] Renaming: ${oldName} → ${newName}`);
+    const result = await storageAdmin.renameStorageFile(oldName, newName);
+    return c.json(result);
+  } catch (error: any) {
+    console.error('❌ [Storage Admin] Error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Delete a file
+wismachion.post('/admin/storage/delete', async (c: any) => {
+  try {
+    const { fileName } = await c.req.json();
+    
+    if (!fileName) {
+      return c.json({ error: 'fileName is required' }, 400);
+    }
+    
+    console.log(`🗑️ [Storage Admin] Deleting: ${fileName}`);
+    const result = await storageAdmin.deleteStorageFile(fileName);
+    return c.json(result);
+  } catch (error: any) {
+    console.error('❌ [Storage Admin] Error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// Check if file exists
+wismachion.post('/admin/storage/check', async (c: any) => {
+  try {
+    const { fileName } = await c.req.json();
+    
+    if (!fileName) {
+      return c.json({ error: 'fileName is required' }, 400);
+    }
+    
+    const result = await storageAdmin.checkFileExists(fileName);
+    return c.json(result);
+  } catch (error: any) {
+    console.error('❌ [Storage Admin] Error:', error);
+    return c.json({ error: error.message }, 500);
   }
 });
 
