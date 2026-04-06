@@ -3,7 +3,7 @@ import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Loader2, CheckCircle2, AlertCircle, FileCheck, Wrench } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { projectId } from '../../utils/supabase/info';
 
 export function StorageFixTool() {

@@ -454,41 +454,41 @@ export const ProjectList = memo(function ProjectList({ clientId, refreshKey, sor
               </CardDescription>
               <CardDescription className="text-sm text-gray-500">
                 {project.deadline ? (
-                  <div className="flex items-center">
+                  <span className="flex items-center">
                     <Calendar className="h-4 w-4 text-gray-500 mr-1" />
                     {formatDate(project.deadline)}
-                  </div>
+                  </span>
                 ) : (
-                  <div className="flex items-center">
+                  <span className="flex items-center">
                     <Calendar className="h-4 w-4 text-gray-500 mr-1" />
                     {language === 'en' ? 'No deadline' : '無截止日期'}
-                  </div>
+                  </span>
                 )}
               </CardDescription>
               <CardDescription className="text-sm text-gray-500">
                 {project.budget_min || project.budget_max ? (
-                  <div className="flex items-center">
+                  <span className="flex items-center">
                     <DollarSign className="h-4 w-4 text-gray-500 mr-1" />
                     {formatBudget(project.budget_min, project.budget_max)}
-                  </div>
+                  </span>
                 ) : (
-                  <div className="flex items-center">
+                  <span className="flex items-center">
                     <DollarSign className="h-4 w-4 text-gray-500 mr-1" />
                     {language === 'en' ? 'Budget not specified' : '未指定預算'}
-                  </div>
+                  </span>
                 )}
               </CardDescription>
               <CardDescription className="text-sm text-gray-500">
                 {project.proposal_count ? (
-                  <div className="flex items-center">
+                  <span className="flex items-center">
                     <MessageSquare className="h-4 w-4 text-gray-500 mr-1" />
                     {project.proposal_count} {language === 'en' ? 'proposals' : '提案'}
-                  </div>
+                  </span>
                 ) : (
-                  <div className="flex items-center">
+                  <span className="flex items-center">
                     <MessageSquare className="h-4 w-4 text-gray-500 mr-1" />
                     {language === 'en' ? 'No proposals' : '無提案'}
-                  </div>
+                  </span>
                 )}
               </CardDescription>
               <CardDescription className="text-sm text-gray-500">
