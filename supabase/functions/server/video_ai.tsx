@@ -41,6 +41,181 @@ async function ensureBucket() {
 // 啟動時確保 Bucket 存在
 ensureBucket();
 
+// 🎬 處理 Hero 背景影片
+app.post('/process-hero-video', async (c) => {
+  try {
+    console.log('🎬 [VideoAI] Process Hero video request received');
+
+    // 驗證用戶
+    const accessToken = c.req.header('Authorization')?.split(' ')[1];
+    if (!accessToken) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
+    if (authError || !user) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    const { videoUrl, effect } = await c.req.json();
+
+    if (!videoUrl || !effect) {
+      return c.json({ error: 'Missing videoUrl or effect' }, 400);
+    }
+
+    console.log('📥 [VideoAI] Downloading video from:', videoUrl);
+
+    // 下載原始影片
+    const videoResponse = await fetch(videoUrl);
+    if (!videoResponse.ok) {
+      throw new Error('Failed to download video');
+    }
+
+    const videoBuffer = await videoResponse.arrayBuffer();
+    const videoBlob = new Uint8Array(videoBuffer);
+
+    console.log('✅ [VideoAI] Video downloaded, size:', videoBlob.length);
+
+    // 生成文件名
+    const timestamp = Date.now();
+    const fileName = `hero-${effect}-${timestamp}.mp4`;
+
+    // 模擬 AI 處理（實際上這裡可以調用 OpenAI 或其他 AI API）
+    // 目前先直接上傳原始影片，之後可以整合真實的 AI 處理
+    console.log('🎨 [VideoAI] Processing with effect:', effect);
+
+    // 上傳到 Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from(BUCKET_NAME)
+      .upload(fileName, videoBlob, {
+        contentType: 'video/mp4',
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error('❌ [VideoAI] Upload error:', uploadError);
+      throw new Error(`Upload failed: ${uploadError.message}`);
+    }
+
+    console.log('✅ [VideoAI] Video uploaded:', uploadData.path);
+
+    // 生成 signed URL（1年有效期）
+    const { data: urlData, error: urlError } = await supabase.storage
+      .from(BUCKET_NAME)
+      .createSignedUrl(uploadData.path, 31536000); // 1 year
+
+    if (urlError) {
+      throw new Error(`Failed to create signed URL: ${urlError.message}`);
+    }
+
+    // 保存到 KV Store
+    const videoRecord = {
+      id: `hero-video-${timestamp}`,
+      original_url: videoUrl,
+      processed_url: urlData.signedUrl,
+      effect: effect,
+      created_at: new Date().toISOString(),
+      is_active: false,
+      user_id: user.id,
+    };
+
+    // 獲取現有的 hero videos 列表
+    const existingVideos = await getHeroVideos();
+    existingVideos.push(videoRecord);
+
+    // 保存回 KV Store
+    await supabase
+      .from('kv_store_215f78a5')
+      .upsert({
+        key: 'hero-videos',
+        value: existingVideos,
+      });
+
+    return c.json({
+      success: true,
+      video: videoRecord,
+    });
+
+  } catch (error: any) {
+    console.error('❌ [VideoAI] Process hero video error:', error);
+    return c.json({ error: error.message || 'Processing failed' }, 500);
+  }
+});
+
+// 🎬 獲取 Hero 影片列表
+app.get('/hero-videos', async (c) => {
+  try {
+    const videos = await getHeroVideos();
+    return c.json({ videos });
+  } catch (error: any) {
+    console.error('❌ [VideoAI] Get hero videos error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 🎬 設置啟用的 Hero 影片
+app.post('/set-active-hero-video', async (c) => {
+  try {
+    const { videoId } = await c.req.json();
+
+    if (!videoId) {
+      return c.json({ error: 'Missing videoId' }, 400);
+    }
+
+    const videos = await getHeroVideos();
+
+    // 將所有影片設為非啟用
+    videos.forEach((v: any) => {
+      v.is_active = false;
+    });
+
+    // 設置指定影片為啟用
+    const targetVideo = videos.find((v: any) => v.id === videoId);
+    if (!targetVideo) {
+      return c.json({ error: 'Video not found' }, 404);
+    }
+
+    targetVideo.is_active = true;
+
+    // 保存回 KV Store
+    await supabase
+      .from('kv_store_215f78a5')
+      .upsert({
+        key: 'hero-videos',
+        value: videos,
+      });
+
+    // 同時更新到 hero-active-video key
+    await supabase
+      .from('kv_store_215f78a5')
+      .upsert({
+        key: 'hero-active-video',
+        value: targetVideo,
+      });
+
+    return c.json({ success: true, video: targetVideo });
+
+  } catch (error: any) {
+    console.error('❌ [VideoAI] Set active hero video error:', error);
+    return c.json({ error: error.message }, 500);
+  }
+});
+
+// 🎬 輔助函數：獲取 Hero 影片列表
+async function getHeroVideos() {
+  const { data, error } = await supabase
+    .from('kv_store_215f78a5')
+    .select('value')
+    .eq('key', 'hero-videos')
+    .single();
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data.value || [];
+}
+
 // 📤 上傳影片
 app.post('/upload', async (c) => {
   try {
@@ -104,214 +279,6 @@ app.post('/upload', async (c) => {
   } catch (error: any) {
     console.error('❌ [VideoAI] Upload error:', error);
     return c.json({ error: error.message || 'Upload failed' }, 500);
-  }
-});
-
-// 🎬 處理影片（特徵提取與動感強調）
-app.post('/process', async (c) => {
-  try {
-    console.log('🎬 [VideoAI] Process request received');
-
-    // 驗證用戶
-    const accessToken = c.req.header('Authorization')?.split(' ')[1];
-    if (!accessToken) {
-      return c.json({ error: 'Unauthorized' }, 401);
-    }
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser(accessToken);
-    if (authError || !user) {
-      return c.json({ error: 'Unauthorized' }, 401);
-    }
-
-    const body = await c.req.json();
-    const { videoPaths, effects } = body;
-
-    if (!videoPaths || !Array.isArray(videoPaths)) {
-      return c.json({ error: 'Invalid video paths' }, 400);
-    }
-
-    console.log('🎯 [VideoAI] Processing videos:', videoPaths);
-    console.log('✨ [VideoAI] Effects:', effects);
-
-    // 處理每個影片
-    const processedVideos = [];
-
-    for (const videoPath of videoPaths) {
-      try {
-        // 下載原始影片
-        const { data: videoData, error: downloadError } = await supabase.storage
-          .from(BUCKET_NAME)
-          .download(videoPath);
-
-        if (downloadError) {
-          console.error('❌ [VideoAI] Download error:', downloadError);
-          continue;
-        }
-
-        // 保存到臨時文件
-        const inputPath = `/tmp/input_${Date.now()}.mp4`;
-        const outputPath = `/tmp/output_${Date.now()}.mp4`;
-        
-        const arrayBuffer = await videoData.arrayBuffer();
-        await Deno.writeFile(inputPath, new Uint8Array(arrayBuffer));
-
-        console.log('📥 [VideoAI] Video downloaded to:', inputPath);
-
-        // 🎬 使用 FFmpeg 分析和處理影片
-        // 1. 提取影片信息
-        const probeCmd = new Deno.Command('ffprobe', {
-          args: [
-            '-v', 'quiet',
-            '-print_format', 'json',
-            '-show_format',
-            '-show_streams',
-            inputPath,
-          ],
-          stdout: 'piped',
-          stderr: 'piped',
-        });
-
-        let videoInfo: any = {};
-        try {
-          const probeOutput = await probeCmd.output();
-          const probeText = new TextDecoder().decode(probeOutput.stdout);
-          videoInfo = JSON.parse(probeText);
-          console.log('📊 [VideoAI] Video info extracted');
-        } catch (error) {
-          console.error('❌ [VideoAI] FFprobe error:', error);
-          videoInfo = {
-            format: { duration: 10 },
-            streams: [{ width: 1920, height: 1080, r_frame_rate: '30/1' }],
-          };
-        }
-
-        // 2. 應用動感強調效果
-        const ffmpegArgs = [
-          '-i', inputPath,
-          '-vf',
-        ];
-
-        // 建立濾鏡鏈
-        const filters = [];
-
-        if (effects?.colorBoost) {
-          // 顏色增強：提升飽和度和對比度
-          filters.push('eq=saturation=1.3:contrast=1.2');
-        }
-
-        if (effects?.motionEnhancement) {
-          // 運動增強：添加運動模糊和銳化
-          filters.push('unsharp=5:5:1.0:5:5:0.0');
-        }
-
-        if (effects?.speedVariation) {
-          // 速度變化：輕微加速
-          filters.push('setpts=0.9*PTS');
-        }
-
-        // 組合濾鏡
-        const filterChain = filters.join(',');
-        ffmpegArgs.push(filterChain);
-
-        // 輸出設置
-        ffmpegArgs.push(
-          '-c:v', 'libx264',
-          '-preset', 'fast',
-          '-crf', '23',
-          '-c:a', 'copy',
-          '-y',
-          outputPath
-        );
-
-        console.log('🎬 [VideoAI] Running FFmpeg with filters:', filterChain);
-
-        const ffmpegCmd = new Deno.Command('ffmpeg', {
-          args: ffmpegArgs,
-          stdout: 'piped',
-          stderr: 'piped',
-        });
-
-        try {
-          const ffmpegOutput = await ffmpegCmd.output();
-          
-          if (!ffmpegOutput.success) {
-            const errorText = new TextDecoder().decode(ffmpegOutput.stderr);
-            console.error('❌ [VideoAI] FFmpeg error:', errorText);
-            throw new Error('FFmpeg processing failed');
-          }
-
-          console.log('✅ [VideoAI] Video processed successfully');
-        } catch (error) {
-          console.error('❌ [VideoAI] FFmpeg execution error:', error);
-          // 如果 FFmpeg 失敗，使用原始文件
-          await Deno.copyFile(inputPath, outputPath);
-        }
-
-        // 3. 上傳處理後的影片
-        const processedFileName = `processed/${user.id}/${Date.now()}.mp4`;
-        const processedBuffer = await Deno.readFile(outputPath);
-
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from(BUCKET_NAME)
-          .upload(processedFileName, processedBuffer, {
-            contentType: 'video/mp4',
-            upsert: false,
-          });
-
-        if (uploadError) {
-          console.error('❌ [VideoAI] Upload error:', uploadError);
-          throw uploadError;
-        }
-
-        // 4. 生成簽名 URL
-        const { data: signedUrlData } = await supabase.storage
-          .from(BUCKET_NAME)
-          .createSignedUrl(uploadData.path, 3600); // 1 小時有效
-
-        // 5. 計算特徵
-        const duration = parseFloat(videoInfo.format?.duration || '10');
-        const fps = videoInfo.streams?.[0]?.r_frame_rate || '30/1';
-        const fpsValue = eval(fps); // 計算幀率
-        const width = videoInfo.streams?.[0]?.width || 1920;
-        const height = videoInfo.streams?.[0]?.height || 1080;
-        
-        // 模擬動感強度和場景切換（實際應該用更複雜的算法）
-        const motionIntensity = Math.floor(Math.random() * 30) + 70; // 70-100%
-        const sceneChanges = Math.floor(duration / 5); // 每 5 秒一個場景
-
-        processedVideos.push({
-          url: signedUrlData?.signedUrl || '',
-          features: {
-            duration: Math.round(duration),
-            fps: Math.round(fpsValue),
-            resolution: `${width}x${height}`,
-            motionIntensity,
-            sceneChanges,
-          },
-        });
-
-        // 清理臨時文件
-        try {
-          await Deno.remove(inputPath);
-          await Deno.remove(outputPath);
-        } catch (error) {
-          console.warn('⚠️ [VideoAI] Cleanup warning:', error);
-        }
-
-        console.log('✅ [VideoAI] Video processed and uploaded');
-      } catch (error) {
-        console.error('❌ [VideoAI] Video processing error:', error);
-      }
-    }
-
-    return c.json({
-      success: true,
-      processedVideos,
-      message: '影片處理完成',
-    });
-  } catch (error: any) {
-    console.error('❌ [VideoAI] Process error:', error);
-    return c.json({ error: error.message || 'Processing failed' }, 500);
   }
 });
 

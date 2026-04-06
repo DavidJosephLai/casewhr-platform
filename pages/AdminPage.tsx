@@ -40,6 +40,7 @@ import DataSyncDiagnostic from '../components/DataSyncDiagnostic';
 import { WismachionAdminPanel } from '../wismachion/admin/WismachionAdminPanel';
 import { SEOManagementCenter } from '../components/seo/SEOManagementCenter';
 import BlogManagementPage from '../components/BlogManagementPage';
+import { HeroVideoManager } from '../components/HeroVideoManager';
 import { Button } from '../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Shield, Crown, UserCog, Eye, LogOut, Loader2 } from 'lucide-react';
@@ -57,19 +58,6 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminLevel, setAdminLevel] = useState<AdminLevel | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
-
-  // 🔍 調試：監控 adminLevel 的變化
-  useEffect(() => {
-    console.log('🔍 [AdminPage] adminLevel changed:', adminLevel);
-  }, [adminLevel]);
-
-  // 🔍 調試：監控組件渲染
-  console.log('🔍 [AdminPage] Rendering with:', {
-    loading,
-    isAdmin,
-    adminLevel,
-    userEmail: user?.email,
-  });
 
   const content = {
     en: {
@@ -94,17 +82,18 @@ export default function AdminPage() {
         memberships: 'Membership Management',
         bankAccounts: 'Bank Accounts',
         ecpayPayments: 'ECPay Payments',
-        invoices: 'E-Invoice',
+        invoices: 'E-Invoices',
         emailSender: '💌 EMAIL 💌',
-        settings: 'Settings',
+        settings: 'System Settings',
         messages: 'Message Monitoring',
         administrators: 'Administrators',
         paymentManager: 'Payment Manager',
         seoTools: 'AI SEO',
         sitemap: 'Sitemap Generator',
         dataSync: 'Data Sync',
-        wismachion: 'Wismachion License',
+        wismachion: 'Wismachion Licenses',
         blog: 'Blog Management',
+        heroVideo: '🎬 Hero Video',
       },
     },
     'zh-TW': {
@@ -140,6 +129,7 @@ export default function AdminPage() {
         dataSync: '數據同步',
         wismachion: 'Wismachion 授權',
         blog: 'Blog 管理',
+        heroVideo: '🎬 Hero Video',
       },
     },
     'zh-CN': {
@@ -175,6 +165,7 @@ export default function AdminPage() {
         dataSync: '数据同步',
         wismachion: 'Wismachion 授权',
         blog: 'Blog 管理',
+        heroVideo: '🎬 Hero Video',
       },
     }
   };
@@ -187,23 +178,16 @@ export default function AdminPage() {
   }, [user, profile]);
 
   const checkAdminPermission = async () => {
-    console.log('🔍 [AdminPage] Checking admin permission...');
-    console.log('🔍 [AdminPage] User:', user?.email);
-    console.log('🔍 [AdminPage] Profile:', profile);
-    
     if (!user) {
-      console.error('❌ [AdminPage] No user found');
-      toast.error('未經權的訪問');
+      toast.error('未經授權的訪問');
       setView('home');
       setManualOverride(true);
       return;
     }
 
     const userIsAdmin = isAnyAdmin(user.email || '', profile);
-    console.log('🔍 [AdminPage] isAnyAdmin result:', userIsAdmin);
 
     if (!userIsAdmin) {
-      console.error('❌ [AdminPage] User is not admin:', user.email);
       toast.error('未經授權的訪問');
       setView('home');
       setManualOverride(true);
@@ -211,7 +195,6 @@ export default function AdminPage() {
     }
 
     const level = getAdminLevel(user.email || '', profile);
-    console.log('✅ [AdminPage] Admin level:', level);
     setAdminLevel(level);
     setIsAdmin(true);
     setLoading(false);
@@ -219,22 +202,14 @@ export default function AdminPage() {
 
   const handleLogout = async () => {
     try {
-      console.log('🔓 [Admin] Starting sign out...');
       await signOut();
-      console.log('✅ [Admin] Sign out successful');
-      
-      // 強制跳轉到首頁並刷新（這比 reload 更可靠）
       window.location.href = window.location.origin;
     } catch (error) {
-      console.error('❌ [Admin] Sign out error:', error);
-      // 即使出錯也嘗試清除本地狀態並刷新頁面
       try {
         localStorage.clear();
         sessionStorage.clear();
         window.location.href = window.location.origin;
       } catch (e) {
-        console.error('❌ [Admin] Failed to clear storage:', e);
-        // 最後手段：強制刷新當前頁面
         window.location.reload();
       }
     }
@@ -276,7 +251,6 @@ export default function AdminPage() {
     
     // 如果找不到對應的 badge，回默認的 Admin badge
     if (!badge) {
-      console.warn('Unknown admin level:', adminLevel);
       return (
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border text-gray-600 bg-gray-50 border-gray-200">
           <Shield className="h-4 w-4" />
@@ -298,22 +272,6 @@ export default function AdminPage() {
   // Check if tab should be visible based on admin level
   const canViewTab = (tabName: string): boolean => {
     if (!adminLevel) return false;
-
-    // 🔍 Debug logging for withdrawals and SEO tabs
-    if (tabName === 'withdrawals' || tabName === 'seoTools' || tabName === 'sitemap') {
-      console.log(`🔍 [canViewTab] Checking "${tabName}":`, {
-        adminLevel,
-        isSuperAdmin: adminLevel === AdminLevel.SUPER_ADMIN || adminLevel === 'SUPERADMIN',
-        isAdmin: adminLevel === AdminLevel.ADMIN,
-        isModerator: adminLevel === AdminLevel.MODERATOR,
-      });
-    }
-
-    // 🚨 臨時強制顯示提現管理標籤（調試用）
-    if (tabName === 'withdrawals') {
-      console.log('🚨 [DEBUG] 強制顯示提現管理標籤');
-      return true;
-    }
 
     // SUPER_ADMIN 和 SUPERADMIN (舊版) 可以查看所有標籤
     if (adminLevel === AdminLevel.SUPER_ADMIN || adminLevel === 'SUPERADMIN') return true;
@@ -474,6 +432,11 @@ export default function AdminPage() {
                 {t.tabs.blog}
               </TabsTrigger>
             )}
+            {canViewTab('heroVideo') && (
+              <TabsTrigger key="heroVideo" value="heroVideo" className="text-xs sm:text-sm">
+                {t.tabs.heroVideo}
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <div className="mt-6">
@@ -614,6 +577,10 @@ export default function AdminPage() {
 
             <TabsContent value="blog" className="mt-0">
               <BlogManagementPage />
+            </TabsContent>
+
+            <TabsContent value="heroVideo" className="mt-0">
+              <HeroVideoManager />
             </TabsContent>
           </div>
         </Tabs>
