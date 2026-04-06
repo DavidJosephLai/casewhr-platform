@@ -111,6 +111,7 @@ import { PlatformComparison } from './components/PlatformComparison';
 import { WhitepaperDownload } from './components/WhitepaperDownload';
 import { PostProjectBenefits } from './components/PostProjectBenefits';
 import { BlogFloatingCarousel } from './components/BlogFloatingCarousel';
+import { VideoAIFloatingButton } from './components/VideoAIFloatingButton';
 
 // ✅ 只對大型頁面使用 Lazy Load（真正需要代碼分割的）
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -182,6 +183,8 @@ const BlogManagementPage = lazy(() => import('./components/BlogManagementPage'))
 import WismachionApp from './wismachion/WismachionApp';
 // 🔧 Storage Admin Tool - Lazy Load 以避免 Suspense 錯誤
 const StorageFixTool = lazy(() => import('./wismachion/admin/StorageFixTool').then(module => ({ default: module.StorageFixTool })));
+// 🎬 AI 影片處理工具
+const VideoAIProcessor = lazy(() => import('./components/VideoAIProcessor').then(module => ({ default: module.VideoAIProcessor })));
 
 // Loading fallback components - 🚀 化：移除刺眼的藍色載入器
 function LoadingFallback() {
@@ -733,7 +736,7 @@ function AppContent() {
       <SEO 
         {...getPageSEO(view === 'home' ? 'home' : view, language)}
       />
-      {/* 🌐 域名 SEO 優化 */}
+      {/* 🌐 域名 SEO 優�� */}
       <SEOHead />
       
       {/* ✅ Wismachion 頁面不顯示主 Header */}
@@ -1063,6 +1066,13 @@ function AppContent() {
             <StorageFixTool />
           </Suspense>
         </div>
+      ) : view === 'video-ai-processor' ? (
+        <div className="pt-20">
+          <SEO title="AI Video Processor" description="" keywords="" noindex />
+          <Suspense fallback={<PageLoadingFallback />}>
+            <VideoAIProcessor />
+          </Suspense>
+        </div>
       ) : view === 'blog' ? (
         <>
           {console.log('🔥🔥🔥 [App.tsx] Rendering BlogListPage! view =', view)}
@@ -1150,6 +1160,8 @@ function AppContent() {
           <LatestSEOReports />
           {/* 📚 左下角部落格輪播 */}
           <BlogFloatingCarousel />
+          {/* 🎬 右下角 Video AI 浮動按鈕 */}
+          <VideoAIFloatingButton />
         </>
       )}
       {/* ✅ Wismachion 頁面不顯示主站 Footer */}
