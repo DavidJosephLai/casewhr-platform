@@ -111,7 +111,6 @@ import { PlatformComparison } from './components/PlatformComparison';
 import { WhitepaperDownload } from './components/WhitepaperDownload';
 import { PostProjectBenefits } from './components/PostProjectBenefits';
 import { BlogFloatingCarousel } from './components/BlogFloatingCarousel';
-import { VideoAIFloatingButton } from './components/VideoAIFloatingButton';
 
 // ✅ 只對大型頁面使用 Lazy Load（真正需要代碼分割的）
 const Dashboard = lazy(() => import('./components/Dashboard'));
@@ -736,7 +735,7 @@ function AppContent() {
       <SEO 
         {...getPageSEO(view === 'home' ? 'home' : view, language)}
       />
-      {/* 🌐 域名 SEO 優�� */}
+      {/* 🌐 域名 SEO 優 */}
       <SEOHead />
       
       {/* ✅ Wismachion 頁面不顯示主 Header */}
@@ -1160,8 +1159,6 @@ function AppContent() {
           <LatestSEOReports />
           {/* 📚 左下角部落格輪播 */}
           <BlogFloatingCarousel />
-          {/* 🎬 右下角 Video AI 浮動按鈕 */}
-          <VideoAIFloatingButton />
         </>
       )}
       {/* ✅ Wismachion 頁面不顯示主站 Footer */}
