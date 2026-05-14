@@ -19,12 +19,12 @@ export function FreeTrialDialog({ open, onClose }: FreeTrialDialogProps) {
   const [company, setCompany] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [licenseKey, setLicenseKey] = useState('');
+  const [downloadUrl, setDownloadUrl] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!email || !name) {
       toast.error('Please fill in all required fields');
       return;
@@ -34,38 +34,37 @@ export function FreeTrialDialog({ open, onClose }: FreeTrialDialogProps) {
     setError('');
 
     try {
+      console.log('🎁 [Trial Frontend] Requesting trial download:', { email, name, company });
+
+      // 直接獲取下載連結，不需要授權碼
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/wismachion/trial`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/wismachion/download/trial?email=${encodeURIComponent(email)}`,
         {
-          method: 'POST',
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            email,
-            name,
-            company: company || undefined
-          }),
         }
       );
 
+      console.log('🎁 [Trial Frontend] Response status:', response.status);
       const data = await response.json();
+      console.log('🎁 [Trial Frontend] Response data:', data);
 
-      if (response.ok && data.success) {
+      if (response.ok && data.success && data.downloadUrl) {
         setSuccess(true);
-        setLicenseKey(data.licenseKey);
-        toast.success('🎉 Trial license created! Check your email for details.');
+        setDownloadUrl(data.downloadUrl);
+        toast.success('🎉 Trial download ready! Starting download...');
+
+        // 自動開始下載
+        window.open(data.downloadUrl, '_blank');
       } else {
-        if (data.alreadyUsed) {
-          // 🔥 RELAXED: This should never happen now since we removed the restriction
-          setError('You have already used a trial license. Please purchase a license to continue.');
-        } else {
-          setError(data.error || 'Failed to create trial license');
-        }
-        toast.error(data.error || 'Failed to create trial license');
+        setError(data.error || 'Failed to get download link');
+        console.error('🎁 [Trial Frontend] Error:', data.error);
+        toast.error(data.error || 'Failed to get download link');
       }
     } catch (error) {
-      console.error('Error creating trial:', error);
+      console.error('🎁 [Trial Frontend] Network error:', error);
       setError('Network error. Please try again.');
       toast.error('Network error. Please try again.');
     } finally {
@@ -78,7 +77,7 @@ export function FreeTrialDialog({ open, onClose }: FreeTrialDialogProps) {
     setName('');
     setCompany('');
     setSuccess(false);
-    setLicenseKey('');
+    setDownloadUrl('');
     setError('');
     onClose();
   };
@@ -94,9 +93,9 @@ export function FreeTrialDialog({ open, onClose }: FreeTrialDialogProps) {
                   <Gift className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <DialogTitle className="text-2xl">Start Your Free Trial</DialogTitle>
+                  <DialogTitle className="text-2xl">Download Free Trial</DialogTitle>
                   <DialogDescription className="mt-1">
-                    Get 90 days of PerfectComm - No credit card required
+                    Try PerfectComm free - No license key required
                   </DialogDescription>
                 </div>
               </div>
@@ -167,13 +166,13 @@ export function FreeTrialDialog({ open, onClose }: FreeTrialDialogProps) {
               <Alert>
                 <Gift className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>What's included:</strong>
+                  <strong>Trial version features:</strong>
                   <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
                     <li>Full RS-232 communication features</li>
                     <li>Protocol development tools</li>
-                    <li>90 days free access</li>
+                    <li>No license key required</li>
                     <li>No credit card required</li>
-                    <li>Email support</li>
+                    <li>Download and use immediately</li>
                   </ul>
                 </AlertDescription>
               </Alert>
@@ -197,12 +196,12 @@ export function FreeTrialDialog({ open, onClose }: FreeTrialDialogProps) {
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creating...
+                      Preparing...
                     </>
                   ) : (
                     <>
                       <Gift className="w-4 h-4 mr-2" />
-                      Start Free Trial
+                      Download Trial Version
                     </>
                   )}
                 </Button>
@@ -217,53 +216,58 @@ export function FreeTrialDialog({ open, onClose }: FreeTrialDialogProps) {
                   <CheckCircle2 className="w-12 h-12 text-green-600" />
                 </div>
                 <div>
-                  <DialogTitle className="text-2xl">Trial Activated! 🎉</DialogTitle>
+                  <DialogTitle className="text-2xl">Download Started! 🎉</DialogTitle>
                   <DialogDescription className="mt-2">
-                    Your 90-day free trial has been created successfully
+                    Your trial version download has begun
                   </DialogDescription>
                 </div>
               </div>
             </DialogHeader>
 
             <div className="space-y-4">
-              {/* License Key Display */}
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-6">
-                <p className="text-sm text-gray-600 mb-2 text-center">Your Trial License Key:</p>
-                <div className="bg-white rounded-lg p-4 border border-purple-300">
-                  <code className="text-xl font-bold text-purple-600 tracking-wider block text-center font-mono">
-                    {licenseKey}
-                  </code>
-                </div>
-              </div>
-
-              {/* Instructions */}
+              {/* Download Notice */}
               <Alert>
-                <Mail className="h-4 w-4" />
+                <CheckCircle2 className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Check your email!</strong>
+                  <strong>No license key needed!</strong>
                   <p className="mt-2 text-sm">
-                    We've sent detailed instructions and your license key to <strong>{email}</strong>
+                    The trial version works immediately after installation. Just download, install, and start using PerfectComm.
                   </p>
                 </AlertDescription>
               </Alert>
+
+              {/* Download Again Button */}
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
+                <p className="text-sm text-gray-600 mb-3 text-center">
+                  If the download didn't start automatically:
+                </p>
+                <Button
+                  onClick={() => window.open(downloadUrl, '_blank')}
+                  className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                >
+                  <Gift className="w-4 h-4 mr-2" />
+                  Download Again
+                </Button>
+              </div>
 
               {/* Next Steps */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h4 className="font-semibold text-blue-900 mb-2">Next Steps:</h4>
                 <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800">
-                  <li>Download PerfectComm from the email link</li>
-                  <li>Install on your Windows machine</li>
-                  <li>Enter your license key when prompted</li>
-                  <li>Start testing your RS-232 communication!</li>
+                  <li>Wait for the download to complete</li>
+                  <li>Install PerfectComm on your Windows machine</li>
+                  <li>Launch the application</li>
+                  <li>Start testing your RS-232 communication immediately!</li>
                 </ol>
               </div>
 
               {/* Close Button */}
               <Button
                 onClick={handleClose}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                variant="outline"
+                className="w-full"
               >
-                Got it, thanks!
+                Close
               </Button>
             </div>
           </>
