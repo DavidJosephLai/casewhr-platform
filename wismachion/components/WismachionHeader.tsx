@@ -1,5 +1,5 @@
 import { Button } from '../../components/ui/button';
-import { User, LogOut, Home, Settings } from 'lucide-react';
+import { User, LogOut, Home, Settings, Info } from 'lucide-react';
 
 interface WismachionHeaderProps {
   user: any;
@@ -7,9 +7,10 @@ interface WismachionHeaderProps {
   onLogout: () => void;
   onPortal: () => void;
   onHome: () => void;
+  onAbout: () => void;
 }
 
-export function WismachionHeader({ user, onLogin, onLogout, onPortal, onHome }: WismachionHeaderProps) {
+export function WismachionHeader({ user, onLogin, onLogout, onPortal, onHome, onAbout }: WismachionHeaderProps) {
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b-2 border-gray-200 shadow-sm">
       <div className="container mx-auto px-4 py-4">
@@ -27,6 +28,13 @@ export function WismachionHeader({ user, onLogin, onLogout, onPortal, onHome }: 
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-6">
+            <button
+              onClick={onAbout}
+              className="text-gray-700 hover:text-blue-600 transition-colors font-medium flex items-center gap-1"
+            >
+              <Info className="w-4 h-4" />
+              About
+            </button>
             <a href="#features" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
               Features
             </a>

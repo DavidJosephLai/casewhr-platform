@@ -6,6 +6,7 @@ import { ProductFeatures } from './components/ProductFeatures';
 import { PricingPlans } from './components/PricingPlans';
 import { CustomerPortal } from './components/CustomerPortal';
 import { WismachionFooter } from './components/WismachionFooter';
+import { WismachionAbout } from './components/WismachionAbout';
 import { PurchaseDialog } from './components/PurchaseDialog';
 import { LoginDialog } from './components/LoginDialog';
 import { FreeTrialDialog } from './components/FreeTrialDialog'; // 🆕
@@ -13,9 +14,10 @@ import { PayPalTestPage } from './components/PayPalTestPage';
 import { HealthCheckTest } from './components/HealthCheckTest';
 import { SimpleHealthTest } from './components/SimpleHealthTest';
 import { PayPalDiagnostic } from './components/PayPalDiagnostic';
+import { StorageFixTool } from './admin/StorageFixTool'; // 🔧 Storage Fix Tool
 
 export default function WismachionApp() {
-  const [currentView, setCurrentView] = useState<'home' | 'portal' | 'test' | 'health' | 'simple' | 'diagnostic'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'about' | 'portal' | 'test' | 'health' | 'simple' | 'diagnostic' | 'storage-fix'>('home');
   const [showPurchase, setShowPurchase] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showFreeTrial, setShowFreeTrial] = useState(false); // 🆕
@@ -33,6 +35,8 @@ export default function WismachionApp() {
       setCurrentView('simple');
     } else if (params.get('test') === 'diagnostic') {
       setCurrentView('diagnostic');
+    } else if (params.get('admin') === 'storage-fix') {
+      setCurrentView('storage-fix');
     }
   }, []);
 
@@ -54,24 +58,27 @@ export default function WismachionApp() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <Toaster position="top-center" richColors />
       
-      <WismachionHeader 
+      <WismachionHeader
         user={user}
         onLogin={handleLogin}
         onLogout={handleLogout}
         onPortal={() => setCurrentView('portal')}
         onHome={() => setCurrentView('home')}
+        onAbout={() => setCurrentView('about')}
       />
 
       {currentView === 'home' ? (
         <>
-          <WismachionHero 
-            onGetStarted={() => handlePurchase('standard')} 
-            onFreeTrial={() => setShowFreeTrial(true)} 
+          <WismachionHero
+            onGetStarted={() => handlePurchase('standard')}
+            onFreeTrial={() => setShowFreeTrial(true)}
           />
           <ProductFeatures />
           <PricingPlans onSelectPlan={handlePurchase} />
           <WismachionFooter />
         </>
+      ) : currentView === 'about' ? (
+        <WismachionAbout />
       ) : currentView === 'portal' ? (
         <CustomerPortal user={user} />
       ) : currentView === 'test' ? (
@@ -80,8 +87,10 @@ export default function WismachionApp() {
         <HealthCheckTest />
       ) : currentView === 'simple' ? (
         <SimpleHealthTest />
-      ) : (
+      ) : currentView === 'diagnostic' ? (
         <PayPalDiagnostic />
+      ) : (
+        <StorageFixTool />
       )}
 
       <PurchaseDialog
