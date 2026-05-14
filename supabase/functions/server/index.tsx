@@ -43,6 +43,7 @@ import * as internalLinkScanner from "./internal_link_scanner.tsx";
 import * as videoUploadService from "./video_upload_service.tsx";
 import * as subscriptionRecurring from "./subscription_recurring_service.tsx";
 import * as subscriptionMonitor from "./subscription_monitor.tsx";
+import videoAiRoutes from "./video_ai.tsx"; // 🎬 AI 影片處理
 
 // ✅ 驗證關鍵服務已正確導入
 if (!enterpriseLogoService || typeof enterpriseLogoService.getUserEnterpriseLogo !== 'function') {
@@ -1332,6 +1333,10 @@ app.get('/make-server-215f78a5/wismachion/health-test', (c) => {
 // Register Wismachion License APIs
 app.route('/make-server-215f78a5/wismachion', wismachionRoutes);
 console.log('✅ [SERVER] Wismachion License APIs registered');
+
+// Register Video AI Processing APIs
+app.route('/make-server-215f78a5/video-ai', videoAiRoutes);
+console.log('✅ [SERVER] Video AI Processing APIs registered');
 
 // Register Invoice Management APIs
 app.route('/make-server-215f78a5', invoiceService.default);
