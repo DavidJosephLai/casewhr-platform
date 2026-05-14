@@ -1012,7 +1012,7 @@ wismachion.post('/admin/generate-license', async (c) => {
 // 🎁 FREE TRIAL (90 Days - EXTENDED!)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-wismachion.post('/make-server-215f78a5/wismachion/trial', async (c: any) => {
+wismachion.post('/trial', async (c: any) => {
   try {
     const { email, name, company } = await c.req.json();
     
@@ -1202,7 +1202,7 @@ async function sendTrialLicenseEmail(email: string, name: string, licenseKey: st
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // Get download URL (public - anyone can download)
-wismachion.get('/make-server-215f78a5/wismachion/download/:type', async (c: any) => {
+wismachion.get('/download/:type', async (c: any) => {
   try {
     const type = c.req.param('type'); // 'trial', 'standard', 'enterprise'
     const email = c.req.query('email') || 'anonymous';
@@ -1257,7 +1257,7 @@ wismachion.get('/make-server-215f78a5/wismachion/download/:type', async (c: any)
 });
 
 // Get download statistics (admin only)
-wismachion.get('/make-server-215f78a5/wismachion/admin/download-stats', async (c: any) => {
+wismachion.get('/admin/download-stats', async (c: any) => {
   try {
     // TODO: Add admin authentication
     

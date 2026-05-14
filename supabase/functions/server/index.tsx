@@ -1169,11 +1169,10 @@ app.get('/make-server-215f78a5/blog/posts', async (c) => {
     
     const allItems = await kv.getByPrefix('blog_post_');
     console.log('📋 [BLOG API] Raw items from KV:', allItems.length);
-    
+
     // 轉換為文章對象並按發布日期排序（最新的在前）
     let posts = allItems
-      .map(item => item.value)
-      .filter((post: any) => post && post.publishedAt) // 過濾掉無效數據
+      .filter((post: any) => post != null && typeof post === 'object' && post.publishedAt) // 過濾掉無效數據
       .sort((a: any, b: any) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
     
     console.log('📋 [BLOG API] Sorted posts:', posts.length);
@@ -2648,12 +2647,12 @@ app.get("/make-server-215f78a5/projects", async (c) => {
 
     const projects = allProjectsData;
     console.log('📥 [GET /projects] Total projects fetched from KV:', projects.length);
-    
-    let filteredProjects = projects.filter(p => p !== null);
-    console.log('📥 [GET /projects] Non-null projects:', filteredProjects.length);
+
+    let filteredProjects = projects.filter(p => p != null && typeof p === 'object');
+    console.log('📥 [GET /projects] Valid projects:', filteredProjects.length);
 
     if (status) {
-      filteredProjects = filteredProjects.filter(p => p.status === status);
+      filteredProjects = filteredProjects.filter(p => p?.status === status);
       console.log('📥 [GET /projects] After status filter:', filteredProjects.length);
     }
 
@@ -2742,31 +2741,31 @@ app.get("/make-server-215f78a5/projects", async (c) => {
       
       // 支持跨語言模糊匹配
       filteredProjects = filteredProjects.filter(p => {
-        if (!p.category) return false;
-        
+        if (!p?.category) return false;
+
         const projectCategory = p.category.toLowerCase();
         const searchCategory = category.toLowerCase();
         const normalizedProjectCategory = normalizeCategoryName(p.category);
-        
+
         // 1. 完全匹配
         if (projectCategory === searchCategory) return true;
-        
+
         // 2. 部分匹配
         if (projectCategory.includes(searchCategory) || searchCategory.includes(projectCategory)) {
           return true;
         }
-        
+
         // 3. 標準化後匹配（跨語言）
         if (normalizedProjectCategory === normalizedSearchCategory) {
           console.log('✅ [GET /projects] Project matched category (normalized):', {
-            projectId: p.id,
+            projectId: p?.id,
             projectCategory: p.category,
             searchCategory: category,
             normalizedMatch: normalizedProjectCategory
           });
           return true;
         }
-        
+
         return false;
       });
       console.log('📥 [GET /projects] After category filter:', filteredProjects.length);
@@ -5981,11 +5980,11 @@ app.get("/make-server-215f78a5/profiles/freelancers", async (c) => {
     console.log('📥 [GET /profiles/freelancers] Request received');
     
     // Get all profiles using prefix search (new format: underscore)
-    const newFormatProfiles = (await kv.getByPrefix('profile_') || []).map(item => item.value);
+    const newFormatProfiles = (await kv.getByPrefix('profile_') || []).filter(p => p != null && typeof p === 'object');
     console.log('📥 [GET /profiles/freelancers] New format profiles found:', newFormatProfiles.length);
-    
+
     // Also get old format profiles for backward compatibility
-    const oldFormatProfiles = (await kv.getByPrefix('profile:') || []).map(item => item.value);
+    const oldFormatProfiles = (await kv.getByPrefix('profile:') || []).filter(p => p != null && typeof p === 'object');
     console.log('📥 [GET /profiles/freelancers] Old format profiles found:', oldFormatProfiles.length);
     
     // Combine both formats, preferring new format if duplicate user_id exists
@@ -6009,12 +6008,12 @@ app.get("/make-server-215f78a5/profiles/freelancers", async (c) => {
     console.log('📥 [GET /profiles/freelancers] Total unique profiles:', allProfiles.length);
     
     // Get all subscriptions to add plan info to profiles
-    const allSubscriptions = (await kv.getByPrefix('subscription_') || []).map(item => item.value);
-    
+    const allSubscriptions = (await kv.getByPrefix('subscription_') || []).filter(s => s != null && typeof s === 'object');
+
     // Create a map of user_id -> subscription_plan
     const subscriptionMap = new Map();
     allSubscriptions.forEach((sub: any) => {
-      if (sub.user_id) {
+      if (sub?.user_id) {
         subscriptionMap.set(sub.user_id, sub.plan || 'free');
       }
     });
