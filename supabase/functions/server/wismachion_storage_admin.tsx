@@ -171,7 +171,9 @@ export async function autoFixFileNames() {
       'PrefectComm_Tril.zip': 'PerfectComm_Trial.zip',
       'PrefectComm_Trial.zip': 'PerfectComm_Trial.zip',
       'PerfectComm_Tril.zip': 'PerfectComm_Trial.zip',
+      'PerfectComm_Standerd.zip': 'PerfectComm_Standard.zip', // ✅ 修正 Standard 拼寫錯誤
       'PrefectComm_Standard.zip': 'PerfectComm_Standard.zip',
+      'PrefectComm_Standerd.zip': 'PerfectComm_Standard.zip',
       'PrefectComm_Enterprise.zip': 'PerfectComm_Enterprise.zip',
     };
     
