@@ -5978,37 +5978,59 @@ app.get("/make-server-215f78a5/profile/:userId", async (c) => {
 app.get("/make-server-215f78a5/profiles/freelancers", async (c) => {
   try {
     console.log('📥 [GET /profiles/freelancers] Request received');
-    
+
     // Get all profiles using prefix search (new format: underscore)
-    const newFormatProfiles = (await kv.getByPrefix('profile_') || []).filter(p => p != null && typeof p === 'object');
-    console.log('📥 [GET /profiles/freelancers] New format profiles found:', newFormatProfiles.length);
+    let newFormatProfiles = [];
+    try {
+      const rawNewProfiles = await kv.getByPrefix('profile_');
+      newFormatProfiles = (rawNewProfiles || []).filter(p => p != null && typeof p === 'object');
+      console.log('📥 [GET /profiles/freelancers] New format profiles found:', newFormatProfiles.length);
+    } catch (error) {
+      console.error('❌ [GET /profiles/freelancers] Error loading new format profiles:', error);
+      newFormatProfiles = [];
+    }
 
     // Also get old format profiles for backward compatibility
-    const oldFormatProfiles = (await kv.getByPrefix('profile:') || []).filter(p => p != null && typeof p === 'object');
-    console.log('📥 [GET /profiles/freelancers] Old format profiles found:', oldFormatProfiles.length);
+    let oldFormatProfiles = [];
+    try {
+      const rawOldProfiles = await kv.getByPrefix('profile:');
+      oldFormatProfiles = (rawOldProfiles || []).filter(p => p != null && typeof p === 'object');
+      console.log('📥 [GET /profiles/freelancers] Old format profiles found:', oldFormatProfiles.length);
+    } catch (error) {
+      console.error('❌ [GET /profiles/freelancers] Error loading old format profiles:', error);
+      oldFormatProfiles = [];
+    }
     
     // Combine both formats, preferring new format if duplicate user_id exists
     const profileMap = new Map();
     
     // Add old format first
     oldFormatProfiles.forEach((profile: any) => {
-      if (profile.user_id) {
+      if (profile?.user_id) {
         profileMap.set(profile.user_id, profile);
       }
     });
-    
+
     // Add new format (overwrites old if exists)
     newFormatProfiles.forEach((profile: any) => {
-      if (profile.user_id) {
+      if (profile?.user_id) {
         profileMap.set(profile.user_id, profile);
       }
     });
     
     const allProfiles = Array.from(profileMap.values());
     console.log('📥 [GET /profiles/freelancers] Total unique profiles:', allProfiles.length);
-    
+
     // Get all subscriptions to add plan info to profiles
-    const allSubscriptions = (await kv.getByPrefix('subscription_') || []).filter(s => s != null && typeof s === 'object');
+    let allSubscriptions = [];
+    try {
+      const rawSubscriptions = await kv.getByPrefix('subscription_');
+      allSubscriptions = (rawSubscriptions || []).filter(s => s != null && typeof s === 'object');
+      console.log('📥 [GET /profiles/freelancers] Subscriptions found:', allSubscriptions.length);
+    } catch (error) {
+      console.error('❌ [GET /profiles/freelancers] Error loading subscriptions:', error);
+      allSubscriptions = [];
+    }
 
     // Create a map of user_id -> subscription_plan
     const subscriptionMap = new Map();
@@ -6021,24 +6043,25 @@ app.get("/make-server-215f78a5/profiles/freelancers", async (c) => {
     // Filter for freelancers and normalize field names
     const freelancerProfiles = allProfiles
       .filter((profile: any) => {
+        if (!profile?.account_type) return false;
         const accountTypes = Array.isArray(profile.account_type) ? profile.account_type : [profile.account_type];
         return accountTypes.includes('freelancer');
       })
       .map((profile: any) => ({
         ...profile,
         // Add missing id field (use user_id as fallback)
-        id: profile.id || profile.user_id,
+        id: profile?.id || profile?.user_id,
         // Normalize full_name field
-        full_name: profile.full_name || profile.name || profile.email,
+        full_name: profile?.full_name || profile?.name || profile?.email,
         // Add subscription plan from subscription data
-        subscription_plan: subscriptionMap.get(profile.user_id) || 'free',
+        subscription_plan: subscriptionMap.get(profile?.user_id) || 'free',
       }));
     
     // 🔥 為每個 profile 添加 portfolio_count
     for (const profile of freelancerProfiles) {
       try {
         const portfolioData = await kv.get(`portfolio:user:${profile.user_id}`) || { items: [] };
-        profile.portfolio_count = Array.isArray(portfolioData.items) ? portfolioData.items.length : 0;
+        profile.portfolio_count = Array.isArray(portfolioData?.items) ? portfolioData.items.length : 0;
       } catch (error) {
         console.log(`⚠️ [GET /profiles/freelancers] Failed to get portfolio for user ${profile.user_id}`);
         profile.portfolio_count = 0;
@@ -6057,7 +6080,121 @@ app.get("/make-server-215f78a5/profiles/freelancers", async (c) => {
     });
   } catch (error) {
     console.error('❌ [GET /profiles/freelancers] Error:', error);
-    return c.json({ error: 'Failed to fetch freelancer profiles' }, 500);
+    return c.json({
+      error: 'Failed to fetch freelancer profiles',
+      profiles: [],
+      total: 0
+    }, 500);
+  }
+});
+
+// Alias endpoint: /freelancers (returns same data as /profiles/freelancers but with 'freelancers' key)
+app.get("/make-server-215f78a5/freelancers", async (c) => {
+  try {
+    console.log('📥 [GET /freelancers] Request received');
+
+    // Get all profiles using prefix search (new format: underscore)
+    let newFormatProfiles = [];
+    try {
+      const rawNewProfiles = await kv.getByPrefix('profile_');
+      newFormatProfiles = (rawNewProfiles || []).filter(p => p != null && typeof p === 'object');
+      console.log('📥 [GET /freelancers] New format profiles found:', newFormatProfiles.length);
+    } catch (error) {
+      console.error('❌ [GET /freelancers] Error loading new format profiles:', error);
+      newFormatProfiles = [];
+    }
+
+    // Also get old format profiles for backward compatibility
+    let oldFormatProfiles = [];
+    try {
+      const rawOldProfiles = await kv.getByPrefix('profile:');
+      oldFormatProfiles = (rawOldProfiles || []).filter(p => p != null && typeof p === 'object');
+      console.log('📥 [GET /freelancers] Old format profiles found:', oldFormatProfiles.length);
+    } catch (error) {
+      console.error('❌ [GET /freelancers] Error loading old format profiles:', error);
+      oldFormatProfiles = [];
+    }
+
+    // Combine both formats, preferring new format if duplicate user_id exists
+    const profileMap = new Map();
+
+    // Add old format first
+    oldFormatProfiles.forEach((profile: any) => {
+      if (profile?.user_id) {
+        profileMap.set(profile.user_id, profile);
+      }
+    });
+
+    // Add new format (overwrites old if exists)
+    newFormatProfiles.forEach((profile: any) => {
+      if (profile?.user_id) {
+        profileMap.set(profile.user_id, profile);
+      }
+    });
+
+    const allProfiles = Array.from(profileMap.values());
+    console.log('📥 [GET /freelancers] Total unique profiles:', allProfiles.length);
+
+    // Get all subscriptions to add plan info to profiles
+    let allSubscriptions = [];
+    try {
+      const rawSubscriptions = await kv.getByPrefix('subscription_');
+      allSubscriptions = (rawSubscriptions || []).filter(s => s != null && typeof s === 'object');
+      console.log('📥 [GET /freelancers] Subscriptions found:', allSubscriptions.length);
+    } catch (error) {
+      console.error('❌ [GET /freelancers] Error loading subscriptions:', error);
+      allSubscriptions = [];
+    }
+
+    // Create a map of user_id -> subscription_plan
+    const subscriptionMap = new Map();
+    allSubscriptions.forEach((sub: any) => {
+      if (sub?.user_id) {
+        subscriptionMap.set(sub.user_id, sub.plan || 'free');
+      }
+    });
+
+    // Filter for freelancers and normalize field names
+    const freelancerProfiles = allProfiles
+      .filter((profile: any) => {
+        if (!profile?.account_type) return false;
+        const accountTypes = Array.isArray(profile.account_type) ? profile.account_type : [profile.account_type];
+        return accountTypes.includes('freelancer');
+      })
+      .map((profile: any) => ({
+        ...profile,
+        // Add missing id field (use user_id as fallback)
+        id: profile?.id || profile?.user_id,
+        // Normalize full_name field
+        full_name: profile?.full_name || profile?.name || profile?.email,
+        // Add subscription plan from subscription data
+        subscription_plan: subscriptionMap.get(profile?.user_id) || 'free',
+      }));
+
+    // 🔥 為每個 profile 添加 portfolio_count
+    for (const profile of freelancerProfiles) {
+      try {
+        const portfolioData = await kv.get(`portfolio:user:${profile.user_id}`) || { items: [] };
+        profile.portfolio_count = Array.isArray(portfolioData?.items) ? portfolioData.items.length : 0;
+      } catch (error) {
+        console.log(`⚠️ [GET /freelancers] Failed to get portfolio for user ${profile.user_id}`);
+        profile.portfolio_count = 0;
+      }
+    }
+
+    console.log('📥 [GET /freelancers] Freelancer profiles:', freelancerProfiles.length);
+
+    return c.json({
+      freelancers: freelancerProfiles,
+      total: freelancerProfiles.length
+    });
+  } catch (error) {
+    console.error('❌ [GET /freelancers] Error:', error);
+    return c.json({
+      error: 'Failed to fetch freelancers',
+      freelancers: [],
+      total: 0
+    }, 500);
   }
 });
 

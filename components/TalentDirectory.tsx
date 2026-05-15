@@ -99,7 +99,7 @@ export function TalentDirectory() {
     
     try {
       const response = await fetchWithRetry(
-        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/profiles/freelancers`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/freelancers`,
         {
           headers: {
             'Authorization': `Bearer ${publicAnonKey}`,
@@ -111,12 +111,12 @@ export function TalentDirectory() {
         throw new Error('Failed to fetch freelancers');
       }
 
-      const { profiles } = await parseJsonResponse(response);
+      const { freelancers } = await parseJsonResponse(response);
       console.log('📊 [TalentDirectory] Loaded talents:', {
-        count: profiles?.length || 0,
+        count: freelancers?.length || 0,
       });
-      setTalents(profiles || []);
-      setFilteredTalents(profiles || []);
+      setTalents(freelancers || []);
+      setFilteredTalents(freelancers || []);
     } catch (error) {
       console.error('Exception loading talents:', error);
       setTalents([]);
