@@ -15,7 +15,12 @@ export const translations = {
       vision: "Find the Right Solution in the Right Place - Making Project Support More Professional and Sustainable。",
       cta1: "Browse Talent",
       cta2: "Post a Project",
-      cta3: "Browse Projects"
+      cta3: "Browse Projects",
+      cta4: "View Portfolio",
+      badge: "Global Bilingual Platform",
+      statsFreelancers: "Professional Freelancers",
+      statsProjects: "Completed Successful Projects",
+      statsClients: "Satisfied Clients"
     },
     coreValues: {
       title: "Core Values",
@@ -313,6 +318,7 @@ export const translations = {
       companyLinks: {
         about: "About Us",
         cases: "Success Stories",
+        blog: "Blog",
         resources: "Resource Center",
         contact: "Contact Us"
       },
@@ -696,7 +702,12 @@ export const translations = {
       vision: "在正確的地方, 找到正確的解決方案, 讓專案支持更專業, 更可持續。",
       cta1: "瀏覽人才",
       cta2: "發布項目",
-      cta3: "瀏覽發案項目"
+      cta3: "瀏覽發案項目",
+      cta4: "查看作品集",
+      badge: "全球雙語平台",
+      statsFreelancers: "專業自由職業者",
+      statsProjects: "已完成的成功項目",
+      statsClients: "滿意客戶"
     },
     coreValues: {
       title: "核心價值",
@@ -821,7 +832,7 @@ export const translations = {
     },
     categories: {
       title: "專業人才分類",
-      subtitle: "連接各專業領域的專家",
+      subtitle: "連接��專業領域的專家",
       items: [
         {
           value: "development",
@@ -994,6 +1005,7 @@ export const translations = {
       companyLinks: {
         about: "關於我們",
         cases: "成功案例",
+        blog: "部落格",
         resources: "資源中心",
         contact: "聯絡我們"
       },

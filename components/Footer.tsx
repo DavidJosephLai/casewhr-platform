@@ -98,7 +98,7 @@ export function Footer() {
                 </button>
               </li>
               <li>
-                <button 
+                <button
                   onClick={() => {
                     setView('cases');
                     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -109,7 +109,18 @@ export function Footer() {
                 </button>
               </li>
               <li>
-                <button 
+                <button
+                  onClick={() => {
+                    setView('blog');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="hover:text-white transition-colors text-left"
+                >
+                  {t.companyLinks.blog}
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={scrollToContact}
                   className="hover:text-white transition-colors text-left"
                 >
