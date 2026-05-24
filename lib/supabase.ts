@@ -11,6 +11,19 @@ const isSupabaseConfigured = Boolean(projectId && publicAnonKey);
 // 創建單例 Supabase 客戶端
 let supabaseInstance: SupabaseClient | null = null;
 
+// Safe localStorage accessor — sandboxed iframes may throw SecurityError on access
+function getSafeStorage(): Storage | undefined {
+  try {
+    if (typeof window !== 'undefined') {
+      window.localStorage.getItem('__test__');
+      return window.localStorage;
+    }
+  } catch {
+    // localStorage blocked (e.g. sandboxed iframe)
+  }
+  return undefined;
+}
+
 const getSupabaseInstance = (): SupabaseClient => {
   if (!supabaseInstance) {
     supabaseInstance = createClient(
@@ -21,7 +34,7 @@ const getSupabaseInstance = (): SupabaseClient => {
           persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: true,
-          storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+          storage: getSafeStorage(),
         }
       }
     );

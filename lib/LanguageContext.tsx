@@ -34,29 +34,30 @@ function getBrowserLanguage(): Language {
 export function LanguageProvider({ children }: { children: ReactNode }) {
   // Initialize with browser language or localStorage
   const [language, setLanguageState] = useState<Language>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('preferred-language');
-      
-      // ⚠️ MIGRATION: 將舊的 'zh' 自動轉換為 'zh-TW'
-      if (stored === 'zh') {
-        console.log('🔄 [LanguageContext] Migrating old language value from "zh" to "zh-TW"');
-        localStorage.setItem('preferred-language', 'zh-TW');
-        return 'zh-TW';
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('preferred-language');
+        if (stored === 'zh') {
+          localStorage.setItem('preferred-language', 'zh-TW');
+          return 'zh-TW';
+        }
+        if (stored && (stored === 'en' || stored === 'zh-TW' || stored === 'zh-CN')) {
+          return stored as Language;
+        }
       }
-      
-      if (stored && (stored === 'en' || stored === 'zh-TW' || stored === 'zh-CN')) {
-        return stored as Language;
-      }
+    } catch {
+      // localStorage blocked in sandboxed iframes
     }
     return getBrowserLanguage();
   });
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
-    // Save to localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('preferred-language', lang);
-    }
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('preferred-language', lang);
+      }
+    } catch { /* localStorage blocked */ }
   }, []);
 
   // Initialize with default currency or localStorage
@@ -112,7 +113,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 export function useLanguage() {
   const context = useContext(LanguageContext);
   if (context === undefined) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
+    return {
+      language: 'zh-TW' as Language,
+      setLanguage: () => {},
+      currency: 'TWD' as Currency,
+      setCurrency: () => {},
+    };
   }
   return context;
 }

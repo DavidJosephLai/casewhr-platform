@@ -19,6 +19,10 @@ import { EmailRequiredModal } from './components/EmailRequiredModal';
 // 🔄 自動修復企業 LOGO 同步問題
 import { AutoLogoSyncFix } from './components/AutoLogoSyncFix';
 
+// 🎯 常駐全局組件 - 直接導入（避免熱更新時 lazy 同步 suspend 錯誤）
+import AIChatbot from './components/AIChatbot';
+import AdminFloatingButton from './components/AdminFloatingButton';
+
 // 🔥 Version marker to force cache invalidation - v2.1.79-BLOCK-PLUGINS
 // 🔧 FIX: Added alias in vite.config.ts to block plugin loading
 // ✅ SOLUTION: Redirect @vitejs/plugin-react to /dev/null
@@ -121,11 +125,9 @@ const TalentPool = lazy(() => import('./components/TalentPool').then(module => (
 const FreelancerProfile = lazy(() => import('./components/FreelancerProfile').then(module => ({ default: module.default })));
 const PortfolioManager = lazy(() => import('./components/PortfolioManager').then(module => ({ default: module.default })));
 
-// 🎯 全局組件 - 使 lazy 但保持輕量級（這些組件需要 default export）
-const AdminFloatingButton = lazy(() => import('./components/AdminFloatingButton'));
+// 🎯 全局組件 - lazy（非常駐頁面）
 const QuickAdminPanel = lazy(() => import('./components/QuickAdminPanel').then(module => ({ default: module.QuickAdminPanel })));
 const AISEOFloatingButton = lazy(() => import('./components/AISEOFloatingButton').then(module => ({ default: module.AISEOFloatingButton })));
-const AIChatbot = lazy(() => import('./components/AIChatbot'));
 const AISEOManager = lazy(() => import('./components/AISEOManager').then(module => ({ default: module.AISEOManager })));
 
 // 🔧 測試和診斷頁面 - Lazy Load（不常用）
@@ -178,7 +180,7 @@ const BlogListPage = lazy(() => import('./components/BlogListPage'));
 const BlogPostPage = lazy(() => import('./components/BlogPostPage'));
 const BlogManagementPage = lazy(() => import('./components/BlogManagementPage'));
 
-// 💼 Wismachion - License Management Platform - ⚡ 直接導入以加快載入速度
+// 💼 Wismachion - License Management Platform
 import WismachionApp from './wismachion/WismachionApp';
 // 🔧 Storage Admin Tool - Lazy Load 以避免 Suspense 錯誤
 const StorageFixTool = lazy(() => import('./wismachion/admin/StorageFixTool').then(module => ({ default: module.StorageFixTool })));
