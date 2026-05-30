@@ -31,11 +31,30 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('❌❌❌ [ErrorBoundary] Error stack:', error.stack);
     console.error('❌❌❌ [ErrorBoundary] Component stack:', errorInfo.componentStack);
     console.error('❌❌❌ [ErrorBoundary] Error toString:', error.toString());
-    
-    this.setState({
-      error,
-      errorInfo,
-    });
+
+    // Chunk loading failures (stale Vercel deploy) → auto reload once
+    const isChunkError =
+      error.message?.includes('Failed to fetch dynamically imported module') ||
+      error.message?.includes('Importing a module script failed') ||
+      error.message?.includes('Unable to preload CSS') ||
+      error.message?.includes('chunk');
+
+    if (isChunkError) {
+      const reloadKey = 'chunk_error_reloaded';
+      if (!sessionStorage.getItem(reloadKey)) {
+        sessionStorage.setItem(reloadKey, '1');
+        console.warn('⚠️ [ErrorBoundary] Chunk load failed — clearing cache and reloading...');
+        if ('caches' in window) {
+          caches.keys().then(keys => keys.forEach(k => caches.delete(k))).finally(() => window.location.reload());
+        } else {
+          window.location.reload();
+        }
+        return;
+      }
+      sessionStorage.removeItem(reloadKey);
+    }
+
+    this.setState({ error, errorInfo });
   }
 
   private handleReset = () => {
