@@ -115,8 +115,9 @@ export function TalentDirectory() {
       console.log('📊 [TalentDirectory] Loaded talents:', {
         count: freelancers?.length || 0,
       });
-      setTalents(freelancers || []);
-      setFilteredTalents(freelancers || []);
+      const normalized = (freelancers || []).map((t: any, i: number) => t.id ? t : { ...t, id: t.user_id || t.email || `talent-${i}` });
+      setTalents(normalized);
+      setFilteredTalents(normalized);
     } catch (error) {
       console.error('Exception loading talents:', error);
       setTalents([]);
