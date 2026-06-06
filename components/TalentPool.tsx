@@ -137,18 +137,18 @@ export default function TalentPool() {
           'Authorization': `Bearer ${accessToken || publicAnonKey}`
         };
 
-        // 🔥 使用與 TalentDirectory 相同的 API 端點
+        // 使用與 TalentDirectory 相同的 API 端點
         const response = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/profiles/freelancers`,
+          `https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/freelancers`,
           { headers }
         );
 
         if (!isCancelled && response.ok) {
           const data = await response.json();
-          console.log('✅ [TalentPool] Loaded profiles:', data.profiles?.length);
-          
+          console.log('✅ [TalentPool] Loaded freelancers:', data.freelancers?.length);
+
           // 🔄 轉換資料格式以符合 Freelancer 介面
-          const freelancerData = (data.profiles || []).map((profile: any) => ({
+          const freelancerData = (data.freelancers || []).map((profile: any) => ({
             id: profile.user_id || profile.id,
             email: profile.email,
             name: profile.full_name || profile.name || profile.email?.split('@')[0],
@@ -321,10 +321,15 @@ export default function TalentPool() {
         if (!matchName && !matchTitle && !matchSkills) return false;
       }
 
-      // Skills filter
+      // Skills filter (OR logic - match any selected skill)
       if (selectedSkills.length > 0) {
-        const hasSkill = selectedSkills.every(skill =>
-          freelancer.skills?.some(s => s.toLowerCase().includes(skill.toLowerCase()))
+        const skillsList = Array.isArray(freelancer.skills)
+          ? freelancer.skills
+          : typeof freelancer.skills === 'string'
+            ? (freelancer.skills as string).split(',').map((s: string) => s.trim())
+            : [];
+        const hasSkill = selectedSkills.some(skill =>
+          skillsList.some((s: string) => s.toLowerCase().includes(skill.toLowerCase()))
         );
         if (!hasSkill) return false;
       }
