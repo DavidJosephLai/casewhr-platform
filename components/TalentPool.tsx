@@ -406,16 +406,39 @@ export default function TalentPool() {
       }
     });
 
-  // Build skills list dynamically from loaded freelancers
-  const allSkills = Array.from(new Set(
-    freelancers.flatMap(f => {
-      if (!f.skills) return [];
-      if (Array.isArray(f.skills)) return f.skills.map((s: string) => String(s).trim()).filter(Boolean);
-      const str = String(f.skills).trim();
-      if (str.startsWith('[')) { try { const p = JSON.parse(str); if (Array.isArray(p)) return p.map((s: any) => String(s).trim()).filter(Boolean); } catch {} }
-      return str.split(',').map(s => s.trim()).filter(Boolean);
-    })
-  )).sort();
+  // Popular modern skills base list (shown even if no freelancer has tagged them yet)
+  const POPULAR_SKILLS = [
+    // Frontend
+    'React', 'Vue.js', 'Angular', 'Next.js', 'Nuxt.js', 'TypeScript', 'JavaScript', 'HTML/CSS', 'Tailwind CSS', 'Svelte',
+    // Backend
+    'Node.js', 'Python', 'PHP', 'Java', 'Go', 'Ruby', 'Rust', 'C#', 'C++', '.NET', 'Laravel', 'Django', 'FastAPI', 'Spring Boot',
+    // Mobile
+    'React Native', 'Flutter', 'Swift', 'Kotlin', 'iOS', 'Android',
+    // Database
+    'PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'Supabase', 'Firebase',
+    // Cloud / DevOps
+    'AWS', 'Google Cloud', 'Azure', 'Docker', 'Kubernetes', 'CI/CD', 'DevOps', 'Linux',
+    // AI / Data
+    'AI', 'Machine Learning', 'LLM', 'ChatGPT API', 'Data Science', 'TensorFlow', 'PyTorch', 'OpenAI',
+    // Design
+    'UI/UX Design', 'Web Design', 'Figma', 'Graphic Design', 'Product Design', 'Motion Design', 'Illustration', '3D Modeling',
+    // Marketing
+    'SEO', 'SEM', 'Digital Marketing', 'Content Marketing', 'Social Media', 'Email Marketing', 'Google Ads',
+    // Other
+    'Project Management', 'Business Analysis', 'Consulting', 'Copywriting', 'Translation', 'Video Editing', 'Photography',
+    // 中文技能
+    '網頁設計', '前端開發', '後端開發', '手機應用開發', '軟體工程', '資料科學', '人工智慧', '平面設計', '影片剪輯', '文案撰寫', '翻譯', '行銷', '專案管理',
+  ];
+
+  // Combine popular skills with actual skills from loaded freelancers
+  const actualSkills = freelancers.flatMap(f => {
+    if (!f.skills) return [];
+    if (Array.isArray(f.skills)) return f.skills.map((s: string) => String(s).trim()).filter(Boolean);
+    const str = String(f.skills).trim();
+    if (str.startsWith('[')) { try { const p = JSON.parse(str); if (Array.isArray(p)) return p.map((s: any) => String(s).trim()).filter(Boolean); } catch {} }
+    return str.split(',').map(s => s.trim()).filter(Boolean);
+  });
+  const allSkills = Array.from(new Set([...POPULAR_SKILLS, ...actualSkills])).sort();
   const uniqueLocations = Array.from(new Set(freelancers.map(f => f.location).filter(Boolean))) as string[];
 
   // 📄 分頁計算
