@@ -68,14 +68,17 @@ export function TalentCard({ talent, onViewProfile }: TalentCardProps) {
     fetchRating();
   }, [fetchRating]);
 
-  // Handle both string and array formats for skills
-  const skillsArray = talent.skills
-    ? (typeof talent.skills === 'string' 
-        ? talent.skills.split(',').map(s => s.trim()).filter(Boolean)
-        : Array.isArray(talent.skills)
-          ? talent.skills
-          : [])
-    : [];
+  // Parse skills regardless of format (array, comma-string, JSON-stringified array)
+  const skillsArray = (() => {
+    const s = talent.skills;
+    if (!s) return [];
+    if (Array.isArray(s)) return s.map(x => String(x).trim()).filter(Boolean);
+    const trimmed = String(s).trim();
+    if (trimmed.startsWith('[')) {
+      try { const p = JSON.parse(trimmed); if (Array.isArray(p)) return p.map(x => String(x).trim()).filter(Boolean); } catch {}
+    }
+    return trimmed.split(',').map(x => x.trim()).filter(Boolean);
+  })();
 
   const displaySkills = skillsArray.slice(0, 3);
   const remainingSkills = skillsArray.length - 3;

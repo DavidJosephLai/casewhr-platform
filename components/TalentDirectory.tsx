@@ -1,4 +1,21 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+
+// Parse skills regardless of storage format (array, comma-string, or JSON-stringified array)
+function parseSkills(skills: any): string[] {
+  if (!skills) return [];
+  if (Array.isArray(skills)) return skills.map((s: any) => String(s).trim()).filter(Boolean);
+  if (typeof skills === 'string') {
+    const trimmed = skills.trim();
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed.map((s: any) => String(s).trim()).filter(Boolean);
+      } catch {}
+    }
+    return trimmed.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  return [];
+}
 import { Search, Filter, X, Users, Loader2, Code, Palette, PenTool, TrendingUp, Video, Smartphone, BarChart, Headphones, Calculator, Scale, Building2, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { useLanguage } from "../lib/LanguageContext";
 import { getTranslation } from "../lib/translations";
@@ -69,20 +86,7 @@ export function TalentDirectory() {
   // Extract unique skills from all talents - memoize to prevent recalculation
   const allSkills = useMemo(() => {
     return Array.from(
-      new Set(
-        talents
-          .flatMap(t => {
-            if (!t.skills) return [];
-            if (typeof t.skills === 'string') {
-              return t.skills.split(',').map(s => s.trim());
-            }
-            if (Array.isArray(t.skills)) {
-              return t.skills;
-            }
-            return [];
-          })
-          .filter(Boolean)
-      )
+      new Set(talents.flatMap(t => parseSkills(t.skills)))
     ).sort();
   }, [talents]);
 
@@ -451,12 +455,9 @@ export function TalentDirectory() {
     // Skill filter
     if (selectedSkills.length > 0) {
       filtered = filtered.filter(talent => {
-        const skillsStr = Array.isArray(talent.skills) 
-          ? talent.skills.join(',') 
-          : (talent.skills || '');
-        
-        return selectedSkills.some(skill => 
-          skillsStr.toLowerCase().includes(skill.toLowerCase())
+        const talentSkills = parseSkills(talent.skills).map(s => s.toLowerCase());
+        return selectedSkills.some(skill =>
+          talentSkills.some(ts => ts.includes(skill.toLowerCase()))
         );
       });
     }
