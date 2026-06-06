@@ -650,12 +650,14 @@ export function UserProfile({ open, onOpenChange }: UserProfileProps) {
               {/* Avatar Upload */}
               <div className="flex flex-col items-center gap-4 p-6 bg-gray-50 rounded-lg">
                 <div className="relative">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src={profileData.avatar_url} alt="Profile" />
-                    <AvatarFallback className="bg-blue-100">
+                  {/* 二吋照 3:4 比例 */}
+                  <div className="w-[90px] h-[120px] rounded-lg overflow-hidden border-2 border-gray-200 bg-blue-100 flex items-center justify-center">
+                    {profileData.avatar_url ? (
+                      <img src={profileData.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
                       <User className="h-12 w-12 text-blue-600" />
-                    </AvatarFallback>
-                  </Avatar>
+                    )}
+                  </div>
                   <label
                     htmlFor="avatar-upload"
                     className="absolute bottom-0 right-0 h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors shadow-lg border-2 border-white"
