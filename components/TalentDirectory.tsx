@@ -450,12 +450,19 @@ export function TalentDirectory() {
 
     // Skill filter
     if (selectedSkills.length > 0) {
+      console.log('🔍 [SkillFilter] selectedSkills:', selectedSkills);
+      console.log('🔍 [SkillFilter] total before filter:', filtered.length);
+      filtered.forEach(t => {
+        console.log('🔍 [SkillFilter] talent skills raw:', t.full_name, JSON.stringify(t.skills));
+        console.log('🔍 [SkillFilter] talent skills parsed:', parseSkills(t.skills));
+      });
       filtered = filtered.filter(talent => {
         const talentSkills = parseSkills(talent.skills).map(s => s.toLowerCase());
         return selectedSkills.some(skill =>
           talentSkills.some(ts => ts.includes(skill.toLowerCase()))
         );
       });
+      console.log('🔍 [SkillFilter] total after filter:', filtered.length);
     }
 
     // Priority sorting
