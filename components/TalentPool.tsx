@@ -328,15 +328,38 @@ export default function TalentPool() {
         if (!matchName && !matchTitle && !matchSkills) return false;
       }
 
-      // Skills filter (OR logic - match any selected skill)
+      // Skills filter (OR logic + synonym matching)
       if (selectedSkills.length > 0) {
-        const skillsList = Array.isArray(freelancer.skills)
-          ? freelancer.skills
+        const skillsList: string[] = Array.isArray(freelancer.skills)
+          ? freelancer.skills.map((s: any) => String(s).trim())
           : typeof freelancer.skills === 'string'
             ? (freelancer.skills as string).split(',').map((s: string) => s.trim())
             : [];
-        const hasSkill = selectedSkills.some(skill =>
-          skillsList.some((s: string) => s.toLowerCase().includes(skill.toLowerCase()))
+        const hasSkill = selectedSkills.some(filterSkill =>
+          skillsList.some(s => {
+            const ts = s.toLowerCase();
+            const fs = filterSkill.toLowerCase();
+            if (ts.includes(fs) || fs.includes(ts)) return true;
+            const synonymGroups: string[][] = [
+              ['web design', 'web 設計', '網站設計', '網頁設計', '網站開發', 'web development', '前端', 'frontend'],
+              ['ui/ux', 'ui design', 'ux design', 'ui設計', 'ux設計'],
+              ['react', 'reactjs', 'react.js'],
+              ['node', 'nodejs', 'node.js'],
+              ['javascript', 'js'], ['typescript', 'ts'],
+              ['graphic design', '平面設計', '視覺設計'],
+              ['mobile', 'ios', 'android', 'react native', 'app開發'],
+              ['marketing', '行銷', 'digital marketing'],
+              ['c#', 'csharp', '.net'], ['c++', 'cpp'], ['vb.net', 'visual basic'],
+              ['software engineer', '軟體工程師', '工程師', 'developer', '開發'],
+              ['designer', '設計師'],
+            ];
+            for (const group of synonymGroups) {
+              if (group.some(a => fs.includes(a) || a.includes(fs))) {
+                if (group.some(a => ts.includes(a) || a.includes(ts))) return true;
+              }
+            }
+            return false;
+          })
         );
         if (!hasSkill) return false;
       }
@@ -383,7 +406,16 @@ export default function TalentPool() {
       }
     });
 
-  const allSkills = Object.values(SKILL_CATEGORIES).flat();
+  // Build skills list dynamically from loaded freelancers
+  const allSkills = Array.from(new Set(
+    freelancers.flatMap(f => {
+      if (!f.skills) return [];
+      if (Array.isArray(f.skills)) return f.skills.map((s: string) => String(s).trim()).filter(Boolean);
+      const str = String(f.skills).trim();
+      if (str.startsWith('[')) { try { const p = JSON.parse(str); if (Array.isArray(p)) return p.map((s: any) => String(s).trim()).filter(Boolean); } catch {} }
+      return str.split(',').map(s => s.trim()).filter(Boolean);
+    })
+  )).sort();
   const uniqueLocations = Array.from(new Set(freelancers.map(f => f.location).filter(Boolean))) as string[];
 
   // 📄 分頁計算

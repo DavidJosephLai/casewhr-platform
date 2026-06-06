@@ -1,5 +1,51 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 
+// Skill synonyms: selecting any one term also matches the others
+const SKILL_SYNONYMS: string[][] = [
+  ['web design', 'web 設計', '網站設計', '網頁設計', '網站開發', 'web development', '前端', 'frontend', 'front-end'],
+  ['ui/ux', 'ui ux', 'ui design', 'ux design', 'ui設計', 'ux設計', '使用者介面', '使用者體驗'],
+  ['react', 'reactjs', 'react.js'],
+  ['vue', 'vuejs', 'vue.js'],
+  ['node', 'nodejs', 'node.js'],
+  ['typescript', 'ts'],
+  ['javascript', 'js'],
+  ['python', 'py'],
+  ['php', 'laravel'],
+  ['graphic design', '平面設計', '視覺設計', 'visual design'],
+  ['mobile', 'ios', 'android', 'react native', '手機應用', 'app開發', 'app 開發'],
+  ['seo', '搜尋引擎優化', '搜索引擎優化'],
+  ['marketing', '行銷', '营销', '數位行銷', 'digital marketing'],
+  ['video', '影片', '剪輯', '後製', 'video editing'],
+  ['translation', '翻譯', '筆譯', '口譯'],
+  ['writing', '寫作', '文案', 'copywriting', 'content writing'],
+  ['data science', '資料科學', '数据科学', 'machine learning', 'ai', '人工智慧'],
+  ['devops', 'docker', 'kubernetes', 'aws', 'cloud', '雲端'],
+  ['project management', '專案管理', '项目管理', 'pm'],
+  ['c#', 'csharp', '.net', 'dotnet'],
+  ['c++', 'cpp'],
+  ['vb.net', 'vb', 'visual basic'],
+  ['software engineer', '軟體工程師', '软件工程师', '工程師', 'developer', '開發', '開發者'],
+  ['designer', '設計師', '设计师'],
+];
+
+function getSkillAliases(skill: string): string[] {
+  const lower = skill.toLowerCase();
+  for (const group of SKILL_SYNONYMS) {
+    if (group.some(s => lower.includes(s) || s.includes(lower))) {
+      return group;
+    }
+  }
+  return [lower];
+}
+
+function skillMatches(talentSkill: string, filterSkill: string): boolean {
+  const ts = talentSkill.toLowerCase();
+  const fs = filterSkill.toLowerCase();
+  if (ts.includes(fs) || fs.includes(ts)) return true;
+  const aliases = getSkillAliases(fs);
+  return aliases.some(a => ts.includes(a) || a.includes(ts));
+}
+
 // Parse skills regardless of storage format (array, comma-string, or JSON-stringified array)
 function parseSkills(skills: any): string[] {
   if (!skills) return [];
@@ -448,21 +494,14 @@ export function TalentDirectory() {
       });
     }
 
-    // Skill filter
+    // Skill filter (with synonym matching)
     if (selectedSkills.length > 0) {
-      console.log('🔍 [SkillFilter] selectedSkills:', selectedSkills);
-      console.log('🔍 [SkillFilter] total before filter:', filtered.length);
-      filtered.forEach(t => {
-        console.log('🔍 [SkillFilter] talent skills raw:', t.full_name, JSON.stringify(t.skills));
-        console.log('🔍 [SkillFilter] talent skills parsed:', parseSkills(t.skills));
-      });
       filtered = filtered.filter(talent => {
-        const talentSkills = parseSkills(talent.skills).map(s => s.toLowerCase());
-        return selectedSkills.some(skill =>
-          talentSkills.some(ts => ts.includes(skill.toLowerCase()))
+        const talentSkills = parseSkills(talent.skills);
+        return selectedSkills.some(filterSkill =>
+          talentSkills.some(ts => skillMatches(ts, filterSkill))
         );
       });
-      console.log('🔍 [SkillFilter] total after filter:', filtered.length);
     }
 
     // Priority sorting
