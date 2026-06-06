@@ -258,16 +258,14 @@ export function TalentDirectory() {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(talent => {
-        const skillsStr = Array.isArray(talent.skills) 
-          ? talent.skills.join(',') 
-          : String(talent.skills || '');
-        
+        const skillsStr = parseSkills(talent.skills).join(' ').toLowerCase();
         return (
           talent.full_name?.toLowerCase().includes(query) ||
           talent.email?.toLowerCase().includes(query) ||
           talent.company?.toLowerCase().includes(query) ||
           talent.job_title?.toLowerCase().includes(query) ||
-          skillsStr?.toLowerCase().includes(query)
+          talent.bio?.toLowerCase().includes(query) ||
+          skillsStr.includes(query)
         );
       });
     }
@@ -305,9 +303,7 @@ export function TalentDirectory() {
         }
         
         // ✅ 如果沒有 category 欄位，則使用關鍵詞匹配（向下兼容）
-        const skillsStr = Array.isArray(talent.skills) 
-          ? talent.skills.join(',') 
-          : (talent.skills || '');
+        const skillsStr = parseSkills(talent.skills).join(' ').toLowerCase();
         
         const jobTitle = (talent.job_title || '').toLowerCase();
         const company = (talent.company || '').toLowerCase();
