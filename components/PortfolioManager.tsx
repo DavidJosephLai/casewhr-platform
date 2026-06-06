@@ -28,6 +28,7 @@ export default function PortfolioManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [myUserId, setMyUserId] = useState<string | null>(null);
   
   // 表單狀態
   const [formData, setFormData] = useState({
@@ -96,9 +97,10 @@ export default function PortfolioManager() {
       if (response.ok) {
         const data = await response.json();
         const userId = data.profile?.user_id;
-        
+
         console.log('👤 [PortfolioManager] User ID:', userId);
-        
+        if (userId) setMyUserId(userId);
+
         if (userId) {
           // Load portfolio
           const portfolioResponse = await fetch(
@@ -439,8 +441,24 @@ export default function PortfolioManager() {
             <ArrowLeft className="w-5 h-5" />
             {t.backToProfile}
           </button>
-          <h1 className="text-4xl font-bold mb-2">{t.title}</h1>
-          <p className="text-purple-100">{t.subtitle}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">{t.title}</h1>
+              <p className="text-purple-100">{t.subtitle}</p>
+            </div>
+            {myUserId && (
+              <button
+                onClick={() => {
+                  sessionStorage.setItem('current_freelancer_id', myUserId);
+                  setView('freelancer-profile');
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg font-medium transition-colors border border-white/30"
+              >
+                <ExternalLink className="w-4 h-4" />
+                {language === 'en' ? 'View My Profile' : language === 'zh-CN' ? '查看我的主页' : '查看我的公開頁面'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
