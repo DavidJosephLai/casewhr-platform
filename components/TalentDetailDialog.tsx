@@ -25,7 +25,7 @@ import { Separator } from "./ui/separator"; // 🔥 添加 Separator 導入
 import { Alert, AlertDescription } from "./ui/alert"; // 🔥 添加 Alert 導入
 import { ReviewList } from "./rating/ReviewList";
 import { StartMessageDialog } from "./StartMessageDialog";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { projectId, publicAnonKey } from "../utils/supabase/info";
 
 interface TalentDetailDialogProps {

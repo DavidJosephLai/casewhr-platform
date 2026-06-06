@@ -57,9 +57,11 @@ export default function FreelancerProfile() {
 
   const [profile, setProfile] = useState<FreelancerProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const initialTab = (sessionStorage.getItem('freelancer_initial_tab') as Tab) || 'overview';
-  sessionStorage.removeItem('freelancer_initial_tab');
-  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const t = (sessionStorage.getItem('freelancer_initial_tab') as Tab) || 'overview';
+    sessionStorage.removeItem('freelancer_initial_tab');
+    return t;
+  });
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [myProjects, setMyProjects] = useState<any[]>([]);
 
