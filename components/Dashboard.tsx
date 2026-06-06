@@ -824,13 +824,28 @@ export const Dashboard = memo(function Dashboard({ initialTab, onTabChange }: Da
                       : '展示您的最佳作品以吸引客戶'}
                   </p>
                 </div>
-                <Button
-                  onClick={() => setView('portfolio-manager')}
-                  className="bg-purple-600 hover:bg-purple-700"
-                >
-                  <Briefcase className="h-4 w-4 mr-2" />
-                  {language === 'en' ? 'Manage Portfolio' : language === 'zh-CN' ? '管理作品集' : '管理作品集'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (user?.id) {
+                        sessionStorage.setItem('current_freelancer_id', user.id);
+                        sessionStorage.setItem('freelancer_initial_tab', 'portfolio');
+                        setView('freelancer-profile');
+                      }
+                    }}
+                    className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                  >
+                    {language === 'en' ? 'View Portfolio' : language === 'zh-CN' ? '查看作品集' : '查看作品集'}
+                  </Button>
+                  <Button
+                    onClick={() => setView('portfolio-manager')}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    <Briefcase className="h-4 w-4 mr-2" />
+                    {language === 'en' ? 'Manage Portfolio' : language === 'zh-CN' ? '管理作品集' : '管理作品集'}
+                  </Button>
+                </div>
               </div>
               
               <RoleSwitcher />
