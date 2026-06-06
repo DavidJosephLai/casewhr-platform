@@ -254,7 +254,12 @@ export const auth = {
       },
     });
     
-    if (error) throw error;
+    if (error) {
+      if (error.message?.includes('provider is not enabled') || error.message?.includes('Unsupported provider')) {
+        throw new Error('Facebook 登入未在 Supabase 後台啟用。請至 Supabase Dashboard → Authentication → Providers 啟用 Facebook。');
+      }
+      throw error;
+    }
     return data;
   },
 
