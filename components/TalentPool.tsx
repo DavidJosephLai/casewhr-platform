@@ -172,7 +172,14 @@ export default function TalentPool() {
             created_at: profile.created_at
           }));
 
-          setFreelancers(freelancerData);
+          // Deduplicate by id to prevent duplicate key warnings
+          const seen = new Set<string>();
+          const unique = freelancerData.filter((f: Freelancer) => {
+            if (seen.has(f.id)) return false;
+            seen.add(f.id);
+            return true;
+          });
+          setFreelancers(unique);
         }
       } catch (error) {
         if (!isCancelled) {
@@ -713,7 +720,7 @@ export default function TalentPool() {
                           <div className="flex flex-wrap gap-2 mb-3">
                             {freelancer.skills.slice(0, 3).map((skill, idx) => (
                               <span
-                                key={idx}
+                                key={`${skill}-${idx}`}
                                 className="px-2 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded"
                               >
                                 {skill}
