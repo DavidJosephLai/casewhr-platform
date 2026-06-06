@@ -671,6 +671,17 @@ export function TalentDirectory() {
           </p>
         </div>
 
+        {/* 🔍 TEMP DEBUG - 待確認問題後移除 */}
+        {selectedSkills.length > 0 && talents.length > 0 && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-300 rounded text-xs font-mono overflow-auto max-h-40">
+            <p className="font-bold">DEBUG: selectedSkills = {JSON.stringify(selectedSkills)}</p>
+            <p className="font-bold">talents count = {talents.length}</p>
+            {talents.slice(0, 3).map((t, i) => (
+              <p key={i}>#{i} {t.full_name}: raw={JSON.stringify(t.skills)} | parsed={JSON.stringify(parseSkills(t.skills))}</p>
+            ))}
+          </div>
+        )}
+
         {/* Talents Grid */}
         {showLoader ? (
           <div className="flex flex-col items-center justify-center py-20">
