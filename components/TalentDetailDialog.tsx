@@ -25,7 +25,7 @@ import { Separator } from "./ui/separator"; // 🔥 添加 Separator 導入
 import { Alert, AlertDescription } from "./ui/alert"; // 🔥 添加 Alert 導入
 import { ReviewList } from "./rating/ReviewList";
 import { StartMessageDialog } from "./StartMessageDialog";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { projectId, publicAnonKey } from "../utils/supabase/info";
 
 interface TalentDetailDialogProps {
@@ -65,6 +65,10 @@ export function TalentDetailDialog({
     limit: number;
   } | null>(null);
   const [showUpgradeAlert, setShowUpgradeAlert] = useState(false);
+  const [portfolioItems, setPortfolioItems] = useState<Array<{
+    id: string; title: string; description: string; image?: string; url?: string; tags?: string[];
+  }>>([]);
+  const [portfolioLoading, setPortfolioLoading] = useState(false);
 
   // Check contact limit when dialog opens
   useEffect(() => {
@@ -104,6 +108,18 @@ export function TalentDetailDialog({
 
     checkContactLimit();
   }, [user, accessToken, talent, open]);
+
+  useEffect(() => {
+    if (!talent || !open) return;
+    setPortfolioLoading(true);
+    fetch(`https://${projectId}.supabase.co/functions/v1/make-server-215f78a5/portfolio/${talent.user_id}`, {
+      headers: { Authorization: `Bearer ${publicAnonKey}` }
+    })
+      .then(r => r.ok ? r.json() : { portfolio_items: [] })
+      .then(data => setPortfolioItems(data.portfolio_items || []))
+      .catch(() => setPortfolioItems([]))
+      .finally(() => setPortfolioLoading(false));
+  }, [talent, open]);
 
   if (!talent) return null;
 
@@ -156,8 +172,16 @@ export function TalentDetailDialog({
         </DialogHeader>
 
         <Tabs defaultValue="profile">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="profile">{t.profile}</TabsTrigger>
+            <TabsTrigger value="portfolio">
+              {language === 'en' ? 'Portfolio' : '作品集'}
+              {portfolioItems.length > 0 && (
+                <span className="ml-1 text-xs bg-blue-100 text-blue-700 rounded-full px-1.5">
+                  {portfolioItems.length}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="reviews">{t.reviews}</TabsTrigger>
           </TabsList>
           <TabsContent value="profile">
@@ -257,6 +281,68 @@ export function TalentDetailDialog({
                   </div>
                 </>
               )}
+            </div>
+          </TabsContent>
+          <TabsContent value="portfolio">
+            <div className="mt-4">
+              {portfolioLoading ? (
+                <div className="text-center py-8 text-gray-500">
+                  {language === 'en' ? 'Loading portfolio...' : '載入作品集中...'}
+                </div>
+              ) : portfolioItems.length === 0 ? (
+                <div className="text-center py-10 text-gray-400">
+                  <Briefcase className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                  <p>{language === 'en' ? 'No portfolio items yet' : '尚無作品集項目'}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {portfolioItems.map(item => (
+                    <div key={item.id} className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                      {item.image && (
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="w-full h-36 object-cover"
+                        />
+                      )}
+                      <div className="p-3">
+                        <h4 className="font-medium text-gray-900 text-sm">{item.title}</h4>
+                        {item.description && (
+                          <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.description}</p>
+                        )}
+                        {item.url && (
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline mt-2"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            {language === 'en' ? 'View Project' : '查看專案'}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="mt-4 pt-4 border-t text-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    onOpenChange(false);
+                    setTimeout(() => {
+                      sessionStorage.setItem('current_freelancer_id', talent.user_id);
+                      sessionStorage.setItem('freelancer_initial_tab', 'portfolio');
+                      setView('freelancer-profile');
+                    }, 200);
+                  }}
+                >
+                  <ExternalLink className="h-3 w-3 mr-2" />
+                  {language === 'en' ? 'View Full Profile' : '查看完整個人頁面'}
+                </Button>
+              </div>
             </div>
           </TabsContent>
           <TabsContent value="reviews">
