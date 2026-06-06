@@ -90,15 +90,18 @@ export function TalentCard({ talent, onViewProfile }: TalentCardProps) {
     <Card className="hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
       <CardHeader>
         <div className="flex items-start gap-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage
-              src={talent.avatar_url}
-              alt={talent.full_name || talent.email}
-            />
-            <AvatarFallback className="bg-blue-100">
+          {/* 二吋大頭貼 3:4 比例 */}
+          <div className="w-[54px] h-[72px] rounded-md overflow-hidden flex-shrink-0 bg-blue-100 flex items-center justify-center border border-gray-200">
+            {talent.avatar_url ? (
+              <img
+                src={talent.avatar_url}
+                alt={talent.full_name || talent.email}
+                className="w-full h-full object-cover"
+              />
+            ) : (
               <User className="h-8 w-8 text-blue-600" />
-            </AvatarFallback>
-          </Avatar>
+            )}
+          </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2 mb-1">
               <div className="flex items-center gap-2 flex-1 min-w-0">

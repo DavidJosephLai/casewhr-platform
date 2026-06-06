@@ -238,16 +238,19 @@ export default function FreelancerProfile() {
 
               <div className="px-6 pb-6">
                 {/* Avatar */}
-                <div className="flex justify-between items-end -mt-12 mb-4">
+                <div className="flex justify-between items-end -mt-16 mb-4">
                   <div className="relative">
+                    {/* 二吋照片比例 3:4 */}
                     {profile.avatar ? (
-                      <img
-                        src={profile.avatar}
-                        alt={profile.name}
-                        className="w-20 h-20 rounded-2xl border-4 border-white shadow-md object-cover"
-                      />
+                      <div className="w-[78px] h-[104px] rounded-lg border-4 border-white shadow-md overflow-hidden">
+                        <img
+                          src={profile.avatar}
+                          alt={profile.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                     ) : (
-                      <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-md bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-2xl font-bold">
+                      <div className="w-[78px] h-[104px] rounded-lg border-4 border-white shadow-md bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-2xl font-bold">
                         {avatarInitial}
                       </div>
                     )}
