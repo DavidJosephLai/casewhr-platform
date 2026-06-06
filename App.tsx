@@ -1,7 +1,7 @@
 import './utils/radixUIPolyfill';
 import './utils/globalFetchInterceptor';
 
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState, useTransition } from 'react';
 import { LanguageProvider, useLanguage } from './lib/LanguageContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ViewProvider, useView } from './contexts/ViewContext';
@@ -116,16 +116,16 @@ import { WhitepaperDownload } from './components/WhitepaperDownload';
 import { PostProjectBenefits } from './components/PostProjectBenefits';
 import { BlogFloatingCarousel } from './components/BlogFloatingCarousel';
 
-// ✅ 只對大型頁面使用 Lazy Load（真正需要代碼分割的）
-const Dashboard = lazy(() => import('./components/Dashboard'));
-const PricingPage = lazy(() => import('./components/PricingPage'));
+// ✅ 直接 import 主要頁面（避免 Make inspector 的 lazy suspension 錯誤）
+import Dashboard from './components/Dashboard';
+import PricingPage from './components/PricingPage';
+import TalentPool from './components/TalentPool';
+import FreelancerProfile from './components/FreelancerProfile';
+import PortfolioManager from './components/PortfolioManager';
+
+// 🎯 較少使用的頁面仍用 lazy
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const DynamicSEOPage = lazy(() => import('./components/DynamicSEOPage').then(module => ({ default: module.DynamicSEOPage })));
-const TalentPool = lazy(() => import('./components/TalentPool').then(module => ({ default: module.default })));
-const FreelancerProfile = lazy(() => import('./components/FreelancerProfile').then(module => ({ default: module.default })));
-const PortfolioManager = lazy(() => import('./components/PortfolioManager').then(module => ({ default: module.default })));
-
-// 🎯 全局組件 - lazy（非常駐頁面）
 const QuickAdminPanel = lazy(() => import('./components/QuickAdminPanel').then(module => ({ default: module.QuickAdminPanel })));
 const AISEOFloatingButton = lazy(() => import('./components/AISEOFloatingButton').then(module => ({ default: module.AISEOFloatingButton })));
 const AISEOManager = lazy(() => import('./components/AISEOManager').then(module => ({ default: module.AISEOManager })));
@@ -200,6 +200,8 @@ function AppContent() {
   const { language } = useLanguage();
   const { view, setView, manualOverride } = useView();
   const { user, accessToken, signOut } = useAuth();
+  const [, startTransition] = useTransition();
+  const safeSetView = (v: Parameters<typeof setView>[0]) => startTransition(() => setView(v));
   
   // 🔧 DEBUG: 檢查當前 view
   console.log('🔧 [App] Current view:', view);
