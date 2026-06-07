@@ -412,13 +412,16 @@ export function BlogListPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {currentPagePosts.map((post, index) => (
-              <Card 
-                key={post.slug} 
+              <Card
+                key={post.slug}
                 className="overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer group"
                 onClick={() => {
-                  // 🔥 直接使用瀏覽器導航，不走 ViewContext
-                  console.log('🖱️ [BlogList] Navigating to:', `/blog/${post.slug}`);
-                  window.location.href = `/blog/${post.slug}`;
+                  console.log('🖱️ [BlogList] Navigating to post:', post.slug);
+                  sessionStorage.setItem('current_blog_slug', post.slug);
+                  if (typeof history !== 'undefined') {
+                    history.pushState({}, '', `/blog/${post.slug}`);
+                  }
+                  setView('blog-post');
                 }}
               >
                 {/* 封面圖片 */}
@@ -538,7 +541,7 @@ export function BlogListPage() {
             <Button
               onClick={() => {
                 console.log('🔧 [BlogList] Navigating to Blog Admin');
-                window.location.href = '/blog/admin';
+                setView('blog-admin');
               }}
               variant="outline"
               size="lg"
@@ -566,7 +569,7 @@ export function BlogListPage() {
                 window.dispatchEvent(new Event('openLoginDialog'));
               } else {
                 console.log('✍️ [BlogList] Navigating to Create Post');
-                window.location.href = '/blog/admin?action=new';
+                setView('blog-admin');
               }
             }}
             size="lg"

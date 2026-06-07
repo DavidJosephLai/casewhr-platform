@@ -9,6 +9,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useView } from '../contexts/ViewContext';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { 
   ArrowLeft, 
@@ -54,21 +55,28 @@ interface BlogPostPageProps {
 export function BlogPostPage({ slug }: BlogPostPageProps) {
   const { language } = useLanguage();
   const { user } = useAuth();
+  const { setView } = useView();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 從 URL 獲取 slug（使用 useMemo 確保只在客戶端執行）
+  // 從 prop、sessionStorage 或 URL 獲取 slug
   const postSlug = useMemo(() => {
     if (slug) return slug;
-    
     try {
       if (typeof window === 'undefined') return null;
+      // 優先從 sessionStorage 讀取（ViewContext 導航方式）
+      const stored = sessionStorage.getItem('current_blog_slug');
+      if (stored) {
+        sessionStorage.removeItem('current_blog_slug');
+        return stored;
+      }
+      // 再從 URL 路徑讀取（直接連結 / 全頁刷新）
       const pathname = window.location.pathname;
       const match = pathname.match(/\/blog\/(.+)/);
       return match ? match[1] : null;
     } catch (error) {
-      console.error('❌ [BlogPostPage] Error getting slug from URL:', error);
+      console.error('❌ [BlogPostPage] Error getting slug:', error);
       return null;
     }
   }, [slug]);
@@ -244,19 +252,14 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
     window.open(urls[platform], '_blank', 'width=600,height=400');
   };
 
-  // ✅ 載入文章數據（在所有條件渲染之前）
+  // ✅ 載入文章數據（開放所有人瀏覽，無需登入）
   useEffect(() => {
-    const userId = user?.id || null;
-    console.log('🔍 [BlogPostPage] useEffect triggered:', { postSlug, userId, loading });
-    if (postSlug && userId) {
+    if (postSlug) {
       console.log('📥 [BlogPostPage] Loading post:', postSlug);
       loadPost(postSlug);
-    } else if (postSlug && !userId) {
-      console.log('🔒 [BlogPostPage] User not logged in, stopping loading');
-      setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [postSlug, user?.id]);
+  }, [postSlug]);
 
   if (loading) {
     return (
@@ -269,65 +272,7 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
     );
   }
 
-  // 🔒 登入檢查 - 只有會員可以閱讀文章詳情
-  if (!user) {
-    console.log('🔒 [BlogPostPage] User not logged in, showing login screen');
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-4">
-        <div className="max-w-md w-full">
-          <Card className="p-6 sm:p-8 text-center shadow-2xl border-2">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-              <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
-            </div>
-            
-            <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              🔒 {t.loginRequired}
-            </h2>
-            
-            <p className="text-gray-600 mb-4 sm:mb-6 text-base sm:text-lg">
-              {t.loginMessage}
-            </p>
-            
-            <p className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8 bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-200">
-              💡 {t.loginHint}
-            </p>
-            
-            <div className="space-y-3">
-              <Button 
-                onClick={() => {
-                  console.log('🔐 [BlogPost] Opening login dialog...');
-                  window.dispatchEvent(new Event('openLoginDialog'));
-                }}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 sm:py-6 text-base sm:text-lg font-semibold"
-              >
-                {t.loginButton}
-              </Button>
-              
-              <Button 
-                onClick={() => {
-                  console.log('📝 [BlogPost] Opening signup dialog...');
-                  window.dispatchEvent(new CustomEvent('openAuthDialog', { detail: 'signup' }));
-                }}
-                variant="outline"
-                className="w-full py-4 sm:py-6 text-base sm:text-lg font-semibold border-2 hover:bg-gray-50"
-              >
-                {t.signupButton}
-              </Button>
-              
-              <Button 
-                onClick={() => window.location.href = '/blog'}
-                variant="ghost"
-                className="w-full py-2 text-sm text-gray-600"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                {t.backToBlog}
-              </Button>
-            </div>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+  // 🔓 開放所有人瀏覽，無需登入
 
   if (!post) {
     return (
@@ -335,7 +280,7 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
         <Card className="p-12 text-center max-w-md">
           <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-400" />
           <h2 className="text-2xl font-bold mb-2">{t.notFound}</h2>
-          <Button onClick={() => window.location.href = '/blog'} className="mt-4">
+          <Button onClick={() => setView('blog')} className="mt-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             {t.backToBlog}
           </Button>
@@ -356,7 +301,7 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
       {/* 返回按鈕 */}
       <div className="bg-white border-b sticky top-0 z-10 shadow-sm">
         <div className="container mx-auto px-4 py-4">
-          <Button variant="ghost" onClick={() => window.location.href = '/blog'}>
+          <Button variant="ghost" onClick={() => setView('blog')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             {t.backToBlog}
           </Button>
@@ -469,7 +414,11 @@ export function BlogPostPage({ slug }: BlogPostPageProps) {
                   <Card 
                     key={relatedPost.slug}
                     className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                    onClick={() => window.location.href = `/blog/${relatedPost.slug}`}
+                    onClick={() => {
+                      sessionStorage.setItem('current_blog_slug', relatedPost.slug);
+                      if (typeof history !== 'undefined') history.pushState({}, '', `/blog/${relatedPost.slug}`);
+                      setView('blog-post');
+                    }}
                   >
                     {relatedPost.coverImage && (
                       <img 

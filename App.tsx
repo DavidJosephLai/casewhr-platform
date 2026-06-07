@@ -175,10 +175,10 @@ const PublicSEOReport = lazy(() => import('./components/PublicSEOReport').then(m
 // 🎯 SEO 管理中心
 const SEOManagementCenter = lazy(() => import('./components/seo/SEOManagementCenter'));
 
-//  Blog 相關組件
-const BlogListPage = lazy(() => import('./components/BlogListPage'));
-const BlogPostPage = lazy(() => import('./components/BlogPostPage'));
-const BlogManagementPage = lazy(() => import('./components/BlogManagementPage'));
+// Blog 相關組件（直接 import 避免 lazy suspension 錯誤）
+import BlogListPage from './components/BlogListPage';
+import BlogPostPage from './components/BlogPostPage';
+import BlogManagementPage from './components/BlogManagementPage';
 
 // 💼 Wismachion - License Management Platform
 import WismachionApp from './wismachion/WismachionApp';
