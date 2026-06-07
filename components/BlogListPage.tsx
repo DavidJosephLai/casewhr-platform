@@ -426,11 +426,12 @@ export function BlogListPage() {
               >
                 {/* 封面圖片 */}
                 {post.coverImage && (
-                  <div className="relative h-48 overflow-hidden">
-                    <img 
-                      src={post.coverImage} 
+                  <div className="relative h-48 overflow-hidden bg-gray-100">
+                    <img
+                      src={post.coverImage}
                       alt={getLocalizedField(post, 'title')}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                     />
                     {index === 0 && (
                       <Badge className="absolute top-4 right-4 bg-yellow-500 text-white border-0">
@@ -462,7 +463,7 @@ export function BlogListPage() {
                     <div className="flex items-center gap-4">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        {new Date(post.publishedAt).toLocaleDateString(language === 'en' ? 'en-US' : 'zh-TW')}
+                        {post.publishedAt ? new Date(post.publishedAt).toLocaleDateString(language === 'en' ? 'en-US' : 'zh-TW') : ''}
                       </span>
                       <span className="flex items-center gap-1">
                         <Clock className="w-4 h-4" />

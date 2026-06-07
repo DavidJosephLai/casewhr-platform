@@ -14,6 +14,7 @@ import { Textarea } from './ui/textarea';
 import { useLanguage } from '../lib/LanguageContext';
 import { projectId, publicAnonKey } from '../utils/supabase/info';
 import { useAuth } from '../contexts/AuthContext';
+import { useView } from '../contexts/ViewContext';
 import { 
   Plus, 
   Edit, 
@@ -81,6 +82,7 @@ interface BlogPost {
 export function BlogManagementPage() {
   const { language } = useLanguage();
   const { user, accessToken } = useAuth();
+  const { setView } = useView();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -453,7 +455,9 @@ export function BlogManagementPage() {
   };
 
   const handlePreview = (post: BlogPost) => {
-    window.open(`/blog/${post.slug}`, '_blank');
+    sessionStorage.setItem('current_blog_slug', post.slug);
+    if (typeof history !== 'undefined') history.pushState({}, '', `/blog/${post.slug}`);
+    setView('blog-post');
   };
 
   const filteredPosts = posts.filter(post => {
@@ -705,6 +709,19 @@ export function BlogManagementPage() {
                     {language === 'en' ? 'Gallery' : language === 'zh-CN' ? '图库' : '圖庫'}
                   </Button>
                 </div>
+                {/* 封面圖片即時預覽 */}
+                {editingPost.coverImage && (
+                  <div className="mt-3 rounded-lg overflow-hidden border border-gray-200 h-40 bg-gray-100">
+                    <img
+                      src={editingPost.coverImage}
+                      alt="Cover preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
                 
                 {/* 🎨 預設圖片選擇器 */}
                 {showImagePicker && (

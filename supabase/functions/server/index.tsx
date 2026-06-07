@@ -374,21 +374,23 @@ app.put("/make-server-215f78a5/proposals/:id", async (c) => {
 // GET /blog/posts - Get blog posts
 app.get("/make-server-215f78a5/blog/posts", async (c) => {
   try {
-    const limit = c.req.query('limit') || '10';
-    const offset = c.req.query('offset') || '0';
+    const limit = parseInt(c.req.query('limit') || '200');
+    const offset = parseInt(c.req.query('offset') || '0');
 
     console.log('📝 [GET /blog/posts] Fetching blog posts');
     const allPosts = await kv.getByPrefix('blog:post:').catch(() => []);
     console.log('📝 [GET /blog/posts] Found posts:', allPosts.length);
 
     // Filter out null/undefined values and sort by date (newest first)
-    const posts = allPosts
+    // Support both camelCase (publishedAt/createdAt) and snake_case (published_at/created_at)
+    const posts = (allPosts as any[])
       .filter((p: any) => p != null && typeof p === 'object')
-      .sort((a: any, b: any) =>
-        new Date(b?.published_at || b?.created_at || 0).getTime() -
-        new Date(a?.published_at || a?.created_at || 0).getTime()
-      )
-      .slice(parseInt(offset), parseInt(offset) + parseInt(limit));
+      .sort((a: any, b: any) => {
+        const dateA = a?.publishedAt || a?.published_at || a?.createdAt || a?.created_at || 0;
+        const dateB = b?.publishedAt || b?.published_at || b?.createdAt || b?.created_at || 0;
+        return new Date(dateB).getTime() - new Date(dateA).getTime();
+      })
+      .slice(offset, offset + limit);
 
     console.log(`✅ [GET /blog/posts] Returning ${posts.length} posts`);
 
