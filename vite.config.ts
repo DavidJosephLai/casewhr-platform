@@ -1,30 +1,23 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vite'
+import path from 'path'
+import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
 
-// Pure esbuild config - no React plugin to avoid compatibility issues
 export default defineConfig({
-  plugins: [],
-  esbuild: {
-    jsx: 'automatic',
-    jsxDev: false,
-    loader: 'tsx',
-    include: /\.(tsx?|jsx?)$/,
-    exclude: [],
-  },
-  clearScreen: false,
-  build: {
-    target: 'es2015',
-    outDir: 'dist',
-    assetsDir: 'assets',
-    sourcemap: true,
-    minify: 'esbuild',
-  },
-  publicDir: 'public',
+  plugins: [
+    // The React and Tailwind plugins are both required for Make, even if
+    // Tailwind is not being actively used – do not remove them
+    react(),
+    tailwindcss(),
+  ],
   resolve: {
-    dedupe: ['react', 'react-dom'],
     alias: {
-      // Block problematic plugins from loading
-      '@vitejs/plugin-react': '/dev/null',
-      '@vitejs/plugin-react-swc': '/dev/null',
+      '@': path.resolve(__dirname, './src/app'),
+      '@supabase/supabase-js': path.resolve(__dirname, 'node_modules/@supabase/supabase-js/dist/index.mjs'),
     },
   },
-});
+  optimizeDeps: {
+    include: ['@supabase/supabase-js'],
+    force: true,
+  },
+})
