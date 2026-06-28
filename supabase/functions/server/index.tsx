@@ -1170,10 +1170,13 @@ app.get('/make-server-215f78a5/blog/posts', async (c) => {
     const allItems = await kv.getByPrefix('blog_post_');
     console.log('📋 [BLOG API] Raw items from KV:', allItems.length);
 
+    // getByPrefix returns { key, value } objects — extract values
+    const rawPosts = allItems.map((item: any) => item?.value ?? item);
+
     // 轉換為文章對象並按發布日期排序（最新的在前）
-    let posts = allItems
-      .filter((post: any) => post != null && typeof post === 'object' && post.publishedAt) // 過濾掉無效數據
-      .sort((a: any, b: any) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    let posts = rawPosts
+      .filter((post: any) => post != null && typeof post === 'object' && (post.publishedAt || post.createdAt)) // 過濾掉無效數據
+      .sort((a: any, b: any) => new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime());
     
     console.log('📋 [BLOG API] Sorted posts:', posts.length);
     
@@ -1210,7 +1213,8 @@ app.get('/make-server-215f78a5/blog/posts/:slug', async (c) => {
     }
     
     // 獲取相關文章（同類別的其他文章）
-    const allPosts = (await kv.getByPrefix('blog_post_')).map(item => item.value);
+    const allItems2 = await kv.getByPrefix('blog_post_');
+    const allPosts = allItems2.map((item: any) => item?.value ?? item);
     const relatedPosts = allPosts
       .filter((p: any) => p.slug !== slug && p.category === post.category)
       .slice(0, 3);
